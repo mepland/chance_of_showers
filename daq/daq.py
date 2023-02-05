@@ -26,7 +26,6 @@ chan = AnalogIn(mcp, MCP.P0)
 starting_time_minutes_mod = 5
 averaging_period_seconds = starting_time_minutes_mod*60
 polling_period_seconds = 1
-verbose = False
 
 DAQ_max_value = 65472
 
@@ -53,18 +52,21 @@ while True:
 		break
 
 # start main loop
+mean_value = -1
 while True:
 	t_start = datetime.now()
 	t_stop = t_start
-
 	# average over averaging_period_seconds
 	_i = 0
 	polling_samples.fill(np.nan)
 	while t_stop - t_start < timedelta(seconds=averaging_period_seconds):
 		# save data point to array
-		if verbose:
-			print(f'_i = {_i}, Raw ADC Value: {chan.value:5d}, ADC Voltage: {chan.voltage:.2f} V')
 		polling_samples[_i] = chan.value
+
+		# continually display the current value and most recent mean https://stackoverflow.com/a/39177802
+		sys.stdout.write('\x1b[1A\x1b[2K'+f'{t_utc_str} UTC Mean Value: {mean_value:5d}, {mean_value/DAQ_max_value:4.0%}\n')
+		sys.stdout.write(f'             i = {_i:3d} Current Value: {polling_samples[_i]:5.0f}, {polling_samples[_i]/DAQ_max_value:4.0%}\r')
+		sys.stdout.flush()
 
 		# wait polling_period_seconds between data points to average
 		while datetime.now() - t_stop < timedelta(seconds=polling_period_seconds):
@@ -72,16 +74,10 @@ while True:
 		_i += 1
 		t_stop = datetime.now()
 
-	# take mean
+	# take mean and save data point to csv in tmp_data
 	mean_value = int(np.nanmean(polling_samples))
-
-	# continually display the most recent mean
 	t_utc_str = t_stop.astimezone(ZoneInfo('UTC')).strftime(datetime_fmt)
-	print(f'{t_utc_str} UTC Mean Value: {mean_value:5d}, {mean_value/DAQ_max_value:4.0%}', end='\r')
-	sys.stdout.flush()
-
-	# save data point to csv in tmp_data
-	new_row = [t_stop.astimezone(ZoneInfo('UTC')).strftime(datetime_fmt), mean_value]
+	new_row = [t_utc_str, mean_value]
 
 	fname = f"data_{t_stop.astimezone(ZoneInfo('UTC')).strftime('%Y-%m-%d')}"
 	with open(f'{m_path}/{fname}.csv', 'a') as f:
