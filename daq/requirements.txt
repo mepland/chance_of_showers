@@ -1,7 +1,3 @@
 adafruit-circuitpython-mcp3xxx
-jupyterlab
-matplotlib
+luma.oled
 numpy
-pandas
-scikit-learn
-scipy
