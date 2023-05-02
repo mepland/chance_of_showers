@@ -104,8 +104,10 @@ def normalize_pressure_value(pressure_value):
 # start main loop
 mean_pressure_value = -1
 while True:
-    t_start = datetime.now()
+    # Set seconds to 0 to avoid drift over multiple hours / days
+    t_start = datetime.now().replace(second=0, microsecond=0)
     t_stop = t_start
+
     # average over averaging_period_seconds
     _i = 0
     polling_pressure_samples.fill(np.nan)
