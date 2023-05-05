@@ -96,7 +96,7 @@ observed_pressure_max = observed_pressure_max_prior
 
 
 def normalize_pressure_value(pressure_value):
-    return (pressure_value - observed_pressure_min_prior) / observed_pressure_max_prior
+    return (pressure_value - observed_pressure_min_prior) / (observed_pressure_max_prior - observed_pressure_min_prior)
 
 
 # flow variables and functions TODO
