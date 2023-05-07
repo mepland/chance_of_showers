@@ -1,6 +1,7 @@
 # Adapted from https://blog.driftking.tw/en/2019/11/Using-Raspberry-Pi-to-Control-a-PWM-Fan-and-Monitor-its-Speed/
 
-import sys, os
+import sys
+import os
 import time
 import RPi.GPIO as GPIO
 
