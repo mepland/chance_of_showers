@@ -30,9 +30,9 @@ import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
-cs = digitalio.DigitalInOut(board.D5)
+cs = digitalio.DigitalInOut(board.D5) # GPIO pin 5
 mcp = MCP.MCP3008(spi, cs, ref_voltage=5)  # 5 Volts
-chan_0 = AnalogIn(mcp, MCP.P0)  # pin 0
+chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
