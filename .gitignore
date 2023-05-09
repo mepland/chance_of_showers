@@ -7,5 +7,5 @@ output
 *.pdf
 *.png
 
-daq/tmp_data/
+daq/raw_data/
 saved_data/
