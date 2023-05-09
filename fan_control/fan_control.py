@@ -26,8 +26,8 @@ t = time.time()
 rpm = 0
 
 
-# Get CPU's temperature
-def getCpuTemperature():
+# Get SoC's temperature
+def get_SoC_temp():
     res = os.popen("vcgencmd measure_temp").readline()
     temp = float(res.replace("temp=", "").replace("'C\n", ""))
 
@@ -59,7 +59,7 @@ def fell(n):
 def handleFanSpeed():
     global rpm
 
-    temp = getCpuTemperature()
+    temp = get_SoC_temp()
     fan_commanded_speed = FAN_MAX
 
     # Turn off the fan if temperature is below MIN_TEMP
