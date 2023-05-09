@@ -1,3 +1,0 @@
-adafruit-circuitpython-mcp3xxx
-luma.oled
-numpy

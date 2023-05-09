@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "chance-of-showers"
+version = "0.0.0"
+description = "DAQ and analysis code for chance_of_showers water metrics project"
+authors = ["Matthew Epland"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "chance_of_showers"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.24.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+flake8 = "^6.0.0"
+
+[tool.poetry.group.daq]
+optional = true
+
+[tool.poetry.group.daq.dependencies]
+rpi-gpio = "^0.7.1"
+adafruit-circuitpython-mcp3xxx = "^1.4.14"
+"luma.oled" = "^3.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
