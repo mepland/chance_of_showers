@@ -16,3 +16,6 @@ git clone https://github.com/mepland/chance_of_showers.git
 
 ## Installing Dependencies with Poetry
 TODO
+```bash
+poetry install --with daq
+```
