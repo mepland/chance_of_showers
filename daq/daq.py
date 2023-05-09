@@ -88,7 +88,7 @@ def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False)
 
 
 # DAQ parameters
-starting_time_minutes_mod = 5
+starting_time_minutes_mod = 1
 averaging_period_seconds = starting_time_minutes_mod * 60
 polling_period_seconds = 1
 # DAQ_max_value = 65472
