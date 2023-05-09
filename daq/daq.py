@@ -141,7 +141,7 @@ t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
-print(f"Will start taking data at {t_utc_str} UTC, {t_est_str} EST")
+print(f"  Start taking data at {t_utc_str} UTC, {t_est_str} EST")
 
 # write to OLED display
 paint_oled([f"Will start at:", t_est_str_short, get_SoC_temp()], bounding_box=True)
