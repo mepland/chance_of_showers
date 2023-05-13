@@ -2,7 +2,7 @@
 import os
 import sys
 import signal
-from datetime import datetime, timedelta
+import datetime
 from zoneinfo import ZoneInfo
 import pause
 import numpy as np
@@ -100,8 +100,8 @@ datetime_fmt = f"{date_fmt} {time_fmt}"
 m_path = os.path.expanduser("~/chance_of_showers/daq/raw_data")
 
 # pressure variables and functions
-observed_pressure_min = 5000
-observed_pressure_max = 20000
+observed_pressure_min = 4500
+observed_pressure_max = 14000
 
 
 def normalize_pressure_value(pressure_value):
@@ -131,7 +131,7 @@ def get_SoC_temp():
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
 
-t_start = datetime.now()
+t_start = datetime.datetime.now()
 t_start_minute = (
     t_start.minute
     - (t_start.minute % starting_time_minutes_mod)
@@ -141,14 +141,14 @@ t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
-print(f"  Start taking data at {t_utc_str} UTC, {t_est_str} EST")
+print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
 
 # write to OLED display
 paint_oled([f"Will start at:", t_est_str_short, get_SoC_temp()], bounding_box=True)
 
 pause.until(t_start)
 
-t_start = datetime.now()
+t_start = datetime.datetime.now()
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 print(f"\nStarted taking data at {t_utc_str} UTC, {t_est_str} EST\n\n")
@@ -158,14 +158,14 @@ mean_pressure_value = -1
 past_had_flow = -1
 while True:
     # Set seconds to 0 to avoid drift over multiple hours / days
-    t_start = datetime.now().replace(second=0, microsecond=0)
+    t_start = datetime.datetime.now().replace(second=0, microsecond=0)
     t_stop = t_start
 
     # average over averaging_period_seconds
     _i = 0
     polling_pressure_samples.fill(np.nan)
     polling_flow_samples = np.zeros(n_polling)
-    while t_stop - t_start < timedelta(seconds=averaging_period_seconds):
+    while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
         # save data point to array
         pressure_value = chan_0.value
         polling_pressure_samples[_i] = pressure_value
@@ -197,11 +197,13 @@ while True:
         )
 
         # wait polling_period_seconds between data points to average
-        while datetime.now() - t_stop < timedelta(seconds=polling_period_seconds):
+        while datetime.datetime.now() - t_stop < datetime.timedelta(
+            seconds=polling_period_seconds
+        ):
             pass
 
         _i += 1
-        t_stop = datetime.now()
+        t_stop = datetime.datetime.now()
 
     # take mean and save data point to csv in tmp_data
     t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
