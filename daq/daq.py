@@ -214,6 +214,6 @@ while True:
         w = writer(f)
         if f.tell() == 0:
             # empty file, create header
-            w.writerow(["time_utc", "mean_pressure_value", "had_flow"])
+            w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
         w.writerow(new_row)
         f.close()
