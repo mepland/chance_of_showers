@@ -25,6 +25,15 @@ rpi-gpio = "^0.7.1"
 "luma.oled" = "^3.12.0"
 pause = "^0.3"
 
+[tool.poetry.group.ana]
+optional = true
+
+[tool.poetry.group.ana.dependencies]
+pandas = "^2.0.1"
+matplotlib = "^3.7.1"
+jupyterlab = "^3.6.3"
+statsmodels = "^0.14.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
