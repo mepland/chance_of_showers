@@ -163,6 +163,8 @@ while True:
 
     # average over averaging_period_seconds
     _i = 0
+    # reset variables
+    had_flow = 0
     polling_pressure_samples.fill(np.nan)
     polling_flow_samples = np.zeros(n_polling)
     while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
