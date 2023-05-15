@@ -100,7 +100,7 @@ datetime_fmt = f"{date_fmt} {time_fmt}"
 m_path = os.path.expanduser("~/chance_of_showers/daq/raw_data")
 
 # pressure variables and functions
-observed_pressure_min = 4500
+observed_pressure_min = 6400
 observed_pressure_max = 14000
 
 
