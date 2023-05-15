@@ -34,6 +34,8 @@ matplotlib = "^3.7.1"
 jupyterlab = "^3.6.3"
 statsmodels = "^0.14.0"
 jupytext = "^1.14.5"
+jupyter-dash = "^0.4.2"
+plotly = "^5.14.1"
 
 [build-system]
 requires = ["poetry-core"]
