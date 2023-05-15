@@ -15162,6 +15162,22 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 </div>
 
+</div><div id="cell-id=1f530109-aa7d-4b3b-a3e0-c54cf5263d7d" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
 </div><div id="cell-id=ac3f13e3-ed39-4b2b-862e-b80a6e1988be" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -15171,7 +15187,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># plotting code from plotting.py</span>
-<span class="c1"># from plotting import plot_func</span>
+<span class="kn">from</span> <span class="nn">plotting</span> <span class="kn">import</span> <span class="n">plot_func</span>
 <span class="c1"># marker_styles = [&#39;o&#39;, &#39;^&#39;, &#39;v&#39;, &#39;+&#39;]</span>
 </pre></div>
 
@@ -15264,6 +15280,23 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 </div>
 
+</div><div id="cell-id=323a587d-7cb1-4df0-bbfa-2759c0f8f538" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># TODO use to draw reference hlines, get from config yaml shared between all scripts</span>
+<span class="c1"># full_pressure_value = 14000</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
 </div><div id="cell-id=2e8ced3e-4002-41d2-81f5-39bacbac4cce" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -15302,10 +15335,11 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
     <span class="n">dfp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfp_list</span><span class="p">)</span>
     <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">],</span> <span class="n">utc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">datetime_fmt</span><span class="p">)</span>
     <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="s1">&#39;US/Eastern&#39;</span><span class="p">)</span>
+    <span class="c1"># Add more date columns</span>
     <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;day_of_week_int&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">dayofweek</span>
     <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;day_of_week_str&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">day_name</span><span class="p">()</span>
     <span class="c1"># dfp[&#39;time&#39;] = dfp[&#39;datetime_est&#39;].dt.strftime(time_hm_fmt)</span>
-    
+
     <span class="n">dfp</span> <span class="o">=</span> <span class="n">dfp</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">dfp_drift_seconds_records</span> <span class="o">=</span> <span class="n">dfp</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span> <span class="p">(</span><span class="n">dt_end_of_drifting_seconds</span> <span class="o">&lt;</span> <span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dfp</span><span class="p">[</span><span class="s1">&#39;datetime_utc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">second</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">)]</span>
@@ -15345,7 +15379,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dfp_data</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># dfp_data</span>
 </pre></div>
 
      </div>
@@ -15378,6 +15412,198 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;mean_pressure_value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div id="cell-id=2ffabb45-5884-469e-aa53-badd2e08d236" class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Minute-Time-Series">Minute Time Series<a class="anchor-link" href="#Minute-Time-Series">&#182;</a></h3>
+</div>
+</div>
+</div>
+</div><div id="cell-id=187f9683-4b88-479f-aaa3-1dbef45663a2" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dfp_data</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">to_period</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=0d3617d7-2f2f-47ac-b86b-8b09d2670bf0" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># TODO</span>
+<span class="c1"># convert to DatetimeIndex, with T (minute) fequency</span>
+<span class="c1"># create null rows between min and max datetime if they do not exist</span>
+<span class="c1"># dfp.index = pd.DatetimeIndex(dfp[&#39;datetime_est&#39;]).tz_localize(None)</span>
+<span class="c1"># dfp = dfp.asfreq(&#39;T&#39;)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=aa0650b4-e410-469b-a975-603c4ea73079" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dfp_data</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=afe9be2a-74a6-4511-b82c-44efd410de79" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dfp_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;had_flow&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()]</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=609e4614-e836-4009-b06c-95e29e407897" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_objs_ts</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">plot_objs_ts</span><span class="p">[</span><span class="s1">&#39;minutes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;scatter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">],</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;mean_pressure_value&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;C0&#39;</span><span class="p">,</span> <span class="s1">&#39;ms&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=ac67f26c-6cf7-4074-825d-2680ccada189" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plot_func</span><span class="p">(</span><span class="n">plot_objs_ts</span><span class="p">,</span> <span class="s1">&#39;Minute&#39;</span><span class="p">,</span> <span class="s1">&#39;Mean Pressure Value&#39;</span><span class="p">,</span> <span class="n">fig_size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div id="cell-id=37e3a10c-7ead-4f86-bd44-316a976b1704" class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;datetime_est&#39;</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">dfp_data</span><span class="p">[</span><span class="s1">&#39;mean_pressure_value&#39;</span><span class="p">]))</span>
+
+<span class="c1"># Add range slider</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">xaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">rangeselector</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">buttons</span><span class="o">=</span><span class="nb">list</span><span class="p">([</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1h&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;hour&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;todate&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;12h&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;hour&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;todate&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1d&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;day&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1w&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;day&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1m&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;month&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;6m&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;month&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;YTD&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;todate&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                     <span class="n">label</span><span class="o">=</span><span class="s2">&quot;1y&quot;</span><span class="p">,</span>
+                     <span class="n">step</span><span class="o">=</span><span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                     <span class="n">stepmode</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+            <span class="p">])</span>
+        <span class="p">),</span>
+        <span class="n">rangeslider</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">visible</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;date&quot;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s2">&quot;Pressure DAQ Value&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">minor</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">ticks</span><span class="o">=</span><span class="s2">&quot;inside&quot;</span><span class="p">,</span> <span class="n">showgrid</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 
      </div>
