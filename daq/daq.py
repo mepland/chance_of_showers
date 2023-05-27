@@ -78,13 +78,20 @@ except OSError:
 
 
 def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
-    with canvas(i2c_device) as draw:
-        if bounding_box:
-            draw.rectangle(i2c_device.bounding_box, outline="white", fill="black")
-        for i_line, line in enumerate(lines):
-            draw.text(
-                (lpad, vpad + i_line * line_height), line, fill="white", font=oled_font
-            )
+    try:
+        with canvas(i2c_device) as draw:
+            if bounding_box:
+                draw.rectangle(i2c_device.bounding_box, outline="white", fill="black")
+            for i_line, line in enumerate(lines):
+                draw.text(
+                    (lpad, vpad + i_line * line_height),
+                    line,
+                    fill="white",
+                    font=oled_font,
+                )
+    except:
+        # don't want to kill the daq just because of an OLED problem
+        pass
 
 
 # DAQ parameters
