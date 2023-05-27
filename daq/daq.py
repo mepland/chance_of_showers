@@ -1,3 +1,4 @@
+################################################################################
 # python imports
 import os
 import sys
@@ -18,6 +19,7 @@ def signal_handler(signal, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
+################################################################################
 # Setup connection to MCP3008 ADC
 # https://docs.circuitpython.org/projects/mcp3xxx/en/stable/index.html#mcp3008-single-ended
 # https://docs.circuitpython.org/projects/mcp3xxx/en/stable/api.html#adafruit_mcp3xxx.analog_in.AnalogIn
@@ -35,6 +37,7 @@ cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5
 mcp = MCP.MCP3008(spi, cs, ref_voltage=5)  # 5 Volts
 chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 
+################################################################################
 # Setup connection for reading the flow sensor as a switch
 # https://gpiozero.readthedocs.io/en/stable/api_input.html?highlight=Button#gpiozero.Button
 # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
@@ -60,6 +63,7 @@ flow_switch.when_held = rise
 flow_switch.when_released = fall
 
 
+################################################################################
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
 from luma.core.interface.serial import i2c
@@ -94,6 +98,15 @@ def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False)
         pass
 
 
+################################################################################
+# Setup web page
+# following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
+import json
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO
+from threading import Lock
+
+################################################################################
 # DAQ parameters
 starting_time_minutes_mod = 1
 averaging_period_seconds = starting_time_minutes_mod * 60
@@ -135,6 +148,7 @@ def get_SoC_temp():
     return f"SoC: {temp}"
 
 
+################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
 
@@ -160,6 +174,7 @@ t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 print(f"\nStarted taking data at {t_utc_str} UTC, {t_est_str} EST\n\n")
 
+################################################################################
 # start main loop
 mean_pressure_value = -1
 past_had_flow = -1
