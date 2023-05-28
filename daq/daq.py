@@ -1,4 +1,27 @@
 ################################################################################
+# display options
+display_terminal = True
+display_oled = True
+# display_web = True # must be true as we are using socketio to run our DAQ thread TODo disconnect these
+
+################################################################################
+# DAQ parameters
+starting_time_minutes_mod = 1
+averaging_period_seconds = starting_time_minutes_mod * 60
+polling_period_seconds = 1
+# DAQ_max_value = 65472
+
+date_fmt = "%Y-%m-%d"
+time_fmt = "%H:%M:%S"
+datetime_fmt = f"{date_fmt} {time_fmt}"
+
+m_path = "~/chance_of_showers/daq/raw_data"
+
+# pressure variables and functions
+observed_pressure_min = 6400
+observed_pressure_max = 14000
+
+################################################################################
 # python imports
 import os
 import sys
@@ -12,7 +35,8 @@ from csv import writer
 
 # catch ctrl+c and kill, shut down gracefully https://stackoverflow.com/a/38665760
 def signal_handler(signal, frame):
-    print("\nDAQ exiting gracefully")
+    if display_terminal:
+        print("\nDAQ exiting gracefully")
 
     sys.exit(0)
 
@@ -44,7 +68,7 @@ chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
 from gpiozero import Button
 
-had_flow = 0
+had_flow = int(0)
 
 
 def rise(n):
@@ -66,71 +90,66 @@ flow_switch.when_released = fall
 ################################################################################
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
-from luma.core.interface.serial import i2c
-from luma.core.render import canvas
-from luma.oled.device import sh1106
-from PIL import ImageFont
+if display_oled:
+    from luma.core.interface.serial import i2c
+    from luma.core.render import canvas
+    from luma.oled.device import sh1106
+    from PIL import ImageFont
 
-i2c_device = sh1106(i2c(port=1, address=0x3C), rotate=0)
+    i2c_device = sh1106(i2c(port=1, address=0x3C), rotate=0)
 
-try:
-    font_size = 14
-    oled_font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
-except OSError:
-    font_size = 12
-    oled_font = ImageFont.load_default()
-
-
-def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
     try:
-        with canvas(i2c_device) as draw:
-            if bounding_box:
-                draw.rectangle(i2c_device.bounding_box, outline="white", fill="black")
-            for i_line, line in enumerate(lines):
-                draw.text(
-                    (lpad, vpad + i_line * line_height),
-                    line,
-                    fill="white",
-                    font=oled_font,
-                )
-    except:
-        # don't want to kill the daq just because of an OLED problem
-        pass
+        font_size = 14
+        oled_font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
+    except OSError:
+        font_size = 12
+        oled_font = ImageFont.load_default()
+
+    def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
+        try:
+            with canvas(i2c_device) as draw:
+                if bounding_box:
+                    draw.rectangle(
+                        i2c_device.bounding_box, outline="white", fill="black"
+                    )
+                for i_line, line in enumerate(lines):
+                    draw.text(
+                        (lpad, vpad + i_line * line_height),
+                        line,
+                        fill="white",
+                        font=oled_font,
+                    )
+        except:
+            # don't want to kill the daq just because of an OLED problem
+            pass
 
 
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
+# if display_web:
 import json
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 from threading import Lock
 
+thread = None
+thread_lock = Lock()
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "test"
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+
 ################################################################################
-# DAQ parameters
-starting_time_minutes_mod = 1
-averaging_period_seconds = starting_time_minutes_mod * 60
-polling_period_seconds = 1
-# DAQ_max_value = 65472
-
-date_fmt = "%Y-%m-%d"
-time_fmt = "%H:%M:%S"
-datetime_fmt = f"{date_fmt} {time_fmt}"
-
-m_path = os.path.expanduser("~/chance_of_showers/daq/raw_data")
-
-# pressure variables and functions
-observed_pressure_min = 6400
-observed_pressure_max = 14000
-
-
+# helper variables and functions
 def normalize_pressure_value(pressure_value):
     return (pressure_value - observed_pressure_min) / (
         observed_pressure_max - observed_pressure_min
     )
 
 
-# other variables
+m_path = os.path.expanduser(m_path)
 os.makedirs(m_path, exist_ok=True)
 
 n_polling = int(np.ceil(averaging_period_seconds / polling_period_seconds))
@@ -141,11 +160,12 @@ polling_pressure_samples.fill(np.nan)
 polling_flow_samples = np.zeros(n_polling)
 
 
-# Get CPU's temperature
+# Get SoC's temperature
 def get_SoC_temp():
     res = os.popen("vcgencmd measure_temp").readline()
-    temp = res.replace("temp=", "").replace("'C\n", " C")
-    return f"SoC: {temp}"
+    temp = float(res.replace("temp=", "").replace("'C\n", ""))
+
+    return temp
 
 
 ################################################################################
@@ -159,87 +179,121 @@ t_start_minute = (
     + starting_time_minutes_mod
 )
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
-t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
-print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
 
-# write to OLED display
-paint_oled([f"Will start at:", t_est_str_short, get_SoC_temp()], bounding_box=True)
+t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+if display_terminal:
+    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+    print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
+
+if display_oled:
+    # write to OLED display
+    t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
+    paint_oled(
+        [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
+        bounding_box=True,
+    )
 
 pause.until(t_start)
 
 t_start = datetime.datetime.now()
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-print(f"\nStarted taking data at {t_utc_str} UTC, {t_est_str} EST\n\n")
+if display_terminal:
+    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+    print(f"\nStarted taking data at {t_utc_str} UTC, {t_est_str} EST\n\n")
+
 
 ################################################################################
-# start main loop
-mean_pressure_value = -1
-past_had_flow = -1
-while True:
-    # Set seconds to 0 to avoid drift over multiple hours / days
-    t_start = datetime.datetime.now().replace(second=0, microsecond=0)
-    t_stop = t_start
+# daq loop
+def daq_loop():
+    global t_utc_str
+    mean_pressure_value = -1
+    mean_pressure_value_normalized = -1
+    past_had_flow = -1
+    while True:
+        # Set seconds to 0 to avoid drift over multiple hours / days
+        t_start = datetime.datetime.now().replace(second=0, microsecond=0)
+        t_stop = t_start
 
-    # average over averaging_period_seconds
-    _i = 0
-    # reset variables
-    had_flow = 0
-    polling_pressure_samples.fill(np.nan)
-    polling_flow_samples = np.zeros(n_polling)
-    while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
-        # save data point to array
-        pressure_value = chan_0.value
-        polling_pressure_samples[_i] = pressure_value
+        # average over averaging_period_seconds
+        _i = 0
+        # reset variables
+        had_flow = 0
+        polling_pressure_samples.fill(np.nan)
+        polling_flow_samples = np.zeros(n_polling)
+        while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
+            # sample pressure and flow
+            pressure_value = int(chan_0.value)
+            flow_value = int(had_flow)
 
-        polling_flow_samples[_i] = had_flow
+            # save data point to array
+            polling_pressure_samples[_i] = pressure_value
+            polling_flow_samples[_i] = flow_value
 
-        # continually display the current value and most recent mean https://stackoverflow.com/a/39177802
-        current_pressure_value_percent_str = (
-            f"{normalize_pressure_value(pressure_value):4.0%}"
-        )
-        current_pressure_value_str = f"Current Pressure: {pressure_value:5.0f}, {current_pressure_value_percent_str}"
-        sys.stdout.write(
-            "\x1b[1A\x1b[2K"
-            + f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {normalize_pressure_value(mean_pressure_value):4.0%}, Flow: {past_had_flow}\n"
-        )
-        sys.stdout.write(
-            f"i = {_i:3d}              {current_pressure_value_str}, Flow: {had_flow}\r"
-        )
-        sys.stdout.flush()
+            # continually display the current value and most recent mean on terminal
+            # https://stackoverflow.com/a/39177802
+            pressure_value_normalized = normalize_pressure_value(pressure_value)
 
-        # write to OLED display
-        paint_oled(
-            [
-                f"Pressure: {current_pressure_value_percent_str}",
-                f"Pressure: {pressure_value:5.0f}",
-                f"Flow: {had_flow}",
-                get_SoC_temp(),
-            ]
-        )
+            if display_terminal:
+                sys.stdout.write(
+                    "\x1b[1A\x1b[2K"
+                    + f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}\n"
+                    + f"i = {_i:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}\r"
+                )
+                sys.stdout.flush()
 
-        # wait polling_period_seconds between data points to average
-        while datetime.datetime.now() - t_stop < datetime.timedelta(
-            seconds=polling_period_seconds
-        ):
-            pass
+            if display_oled:
+                # write to OLED display
+                paint_oled(
+                    [
+                        f"Pressure: {pressure_value_normalized:4.0%}",
+                        f"Pressure: {pressure_value:5.0f}",
+                        f"Flow: {flow_value}",
+                        f"SoC: {get_SoC_temp()}",
+                    ]
+                )
 
-        _i += 1
-        t_stop = datetime.datetime.now()
+            # if display_web:
+            # send data to socket
+            _data = {
+                "utc_str": t_utc_str,
+                "i": _i,
+                "pressure_value": pressure_value,
+                "pressure_value_normalized": pressure_value_normalized,
+                "had_flow": flow_value,
+                "mean_pressure_value": mean_pressure_value,
+                "mean_pressure_value_normalized": mean_pressure_value_normalized,
+                "past_had_flow": past_had_flow,
+            }
+            socketio.emit("updateData", json.dumps(_data))
 
-    # take mean and save data point to csv in tmp_data
-    t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-    mean_pressure_value = int(np.nanmean(polling_pressure_samples))
-    past_had_flow = int(np.max(polling_flow_samples))
-    new_row = [t_utc_str, mean_pressure_value, past_had_flow]
+            # wait polling_period_seconds between data points to average
+            while datetime.datetime.now() - t_stop < datetime.timedelta(
+                seconds=polling_period_seconds
+            ):
+                pass
 
-    fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
-    with open(f"{m_path}/date_{fname_date}.csv", "a") as f:
-        w = writer(f)
-        if f.tell() == 0:
-            # empty file, create header
-            w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
-        w.writerow(new_row)
-        f.close()
+            _i += 1
+            t_stop = datetime.datetime.now()
+
+        # take mean and save data point to csv in m_path
+        t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+        mean_pressure_value = int(np.nanmean(polling_pressure_samples))
+        mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
+        past_had_flow = int(np.max(polling_flow_samples))
+        new_row = [t_utc_str, mean_pressure_value, past_had_flow]
+
+        fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
+        with open(f"{m_path}/date_{fname_date}.csv", "a") as f:
+            w = writer(f)
+            if f.tell() == 0:
+                # empty file, create header
+                w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
+            w.writerow(new_row)
+            f.close()
+
+
+################################################################################
+# run daq loop
+with thread_lock:
+    if thread is None:
+        thread = socketio.start_background_task(daq_loop)
