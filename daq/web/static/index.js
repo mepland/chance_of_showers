@@ -28,7 +28,6 @@ function updateBoxes(t_str, i_polling, pressure_value, had_flow) {
 // gauge
 var pressure_value_normalized_gauge_data = [
   {
-    // domain: { x: [0, 1], y: [0, 1] },
     domain: {x: [0.1, 0.9], y: [0.1, 1]},
     value: 0,
     title: { text: "%" },
@@ -45,7 +44,7 @@ var pressure_value_normalized_gauge_data = [
   },
 ];
 
-var gauge_layout = { width: 350, height: 250, margin: { t: 0, b: 0, l: 0, r: 0 } };
+var gauge_layout = { width: 400, height: 100, margin: { t: 0, b: 0, l: 0, r: 0 } };
 
 Plotly.newPlot(pressure_value_normalized_gauge_div, pressure_value_normalized_gauge_data, gauge_layout, graph_config);
 
@@ -62,23 +61,20 @@ var mean_pressure_value_normalized_trace = {
   x: [],
   y: [],
   name: "Mean Pressure %",
-  // mode: "lines+markers",
-  mode: "markers",
+  mode: "lines+markers",
   type: "line",
 };
 var past_had_flow_trace = {
   x: [],
   y: [],
   name: "Past Had Flow",
-  // mode: "lines+markers",
-  mode: "markers",
+  mode: "lines+markers",
   type: "line",
 };
 var pressure_value_normalized_trace = {
   x: [],
   y: [],
   name: "Pressure %",
-  // mode: "lines+markers",
   mode: "markers",
   type: "line",
 };
@@ -86,12 +82,11 @@ var had_flow_trace = {
   x: [],
   y: [],
   name: "Had Flow",
-  // mode: "lines+markers",
   mode: "markers",
   type: "line",
 };
 
-var pressure_value_mean_trace_layout = {
+var mean_pressure_value_trace_layout = {
   autosize: true,
   title: {
     text: "Mean Pressure %",
@@ -101,7 +96,7 @@ var pressure_value_mean_trace_layout = {
     color: "#7f7f7f",
   },
   colorway: ["#B22222"],
-  margin: { t: 30, b: 20, l: 30, r: 20, pad: 0 },
+  margin: { t: 30, b: 100, l: 40, r: 20, pad: 0 },
 };
 var past_had_flow_trace_layout = {
   autosize: true,
@@ -113,9 +108,9 @@ var past_had_flow_trace_layout = {
     color: "#7f7f7f",
   },
   colorway: ["#00008B"],
-  margin: { t: 30, b: 20, l: 30, r: 20, pad: 0 },
+  margin: { t: 30, b: 100, l: 30, r: 20, pad: 0 },
 };
-var pressure_value_polling_trace_layout = {
+var pressure_value_trace_layout = {
   autosize: true,
   title: {
     text: "Pressure %",
@@ -125,7 +120,7 @@ var pressure_value_polling_trace_layout = {
     color: "#7f7f7f",
   },
   colorway: ["#B22222"],
-  margin: { t: 30, b: 20, l: 30, r: 20, pad: 0 },
+  margin: { t: 30, b: 20, l: 40, r: 20, pad: 0 },
 };
 var had_flow_trace_layout = {
   autosize: true,
@@ -143,7 +138,7 @@ var had_flow_trace_layout = {
 Plotly.newPlot(
   mean_pressure_value_normalized_trace_div,
   [mean_pressure_value_normalized_trace],
-  pressure_value_mean_trace_layout,
+  mean_pressure_value_trace_layout,
   graph_config
 );
 Plotly.newPlot(
@@ -155,7 +150,7 @@ Plotly.newPlot(
 Plotly.newPlot(
   pressure_value_normalized_trace_div,
   [pressure_value_normalized_trace],
-  pressure_value_polling_trace_layout,
+  pressure_value_trace_layout,
   graph_config
 );
 Plotly.newPlot(
@@ -207,7 +202,7 @@ function updateAll(jsonResponse) {
 
   updateGauge(pressure_value_normalized);
 
-  if (i_polling = 0) {
+  if (i_polling == 0) {
     updateChart(
       mean_pressure_value_normalized_trace_div,
       mean_pressure_value_normalized_x_array,

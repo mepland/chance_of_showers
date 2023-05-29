@@ -68,7 +68,7 @@
             <ul class="nav flex-column">
               <li class="nav-item">
                 <a
-                  class="nav-link active link-danger"
+                  class="nav-link active link my-primary"
                   aria-current="page"
                   href="#"
                 >
@@ -81,79 +81,82 @@
         </nav>
         <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
           <div class="row">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-danger">
-              <h1 class="h2 text-danger">Dashboard</h1>
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border my-primary">
+              <h1 class="h2 text my-primary">Dashboard</h1>
               <div class="row"></div>
             </div>
           </div>
+
           <!-- boxes -->
           <div class="row">
-            <!-- <div class="d-flex p-2 overview-boxes justify-content-evenly justify-content-center"> -->
-            <div class="d-flex p-2 overview-boxes flex-column align-items-center">
+            <!-- TODO get flex working -->
+            <div class="d-flex p-2 overview-boxes justify-content-evenly justify-content-center">
+            <!-- <div class="d-flex p-2 overview-boxes flex-column align-items-center"> -->
 
-              <div class="box d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="box d-flex align-items-center justify-content-center p-1 shadow">
                 <div class="right-side">
-                  <div class="box-topic">Time</div>
-                  <div class="number" id="datetime_box">NULL</div>
+                  <div class="box-topic text-center">Time</div>
+                  <div class="number text-center" id="datetime_box">NULL</div>
                 </div>
-                <span class="indicator material-symbols-outlined">schedule</span>
               </div>
 
-              <div class="box d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="box d-flex align-items-center justify-content-center p-1 shadow">
                 <div class="right-side">
-                  <div class="box-topic">Pressure</div>
-                  <div class="number" id="pressure_value_box">NULL</div>
+                  <div class="box-topic text-center">Pressure</div>
+                  <div class="number text-center" id="pressure_value_box">NULL</div>
                 </div>
-                <span class="indicator material-symbols-outlined">raw_on</span>
               </div>
 
-              <div class="box d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="box d-flex align-items-center justify-content-center p-1 shadow">
                 <div class="right-side">
-                  <div class="box-topic">Flow</div>
-                  <div class="number" id="had_flow_box">NULL</div>
+                  <div class="box-topic text-center">Flow</div>
+                  <div class="number text-center" id="had_flow_box">NULL</div>
                 </div>
-                <span class="indicator material-symbols-outlined">air</span>
               </div>
 
             </div>
           </div>
-          <!-- gauge and traces -->
+
+          <!-- gauge -->
           <div class="row">
 
             <div class="col-md-12 col-lg-4 d-flex flex-column align-items-center">
-              <div class="row p-3 bg-light border-top border-3 border-danger bg-white">
+              <div class="row p-3 bg-light border-top border-3 border my-primary bg-white">
                 <div id="pressure_value_normalized_gauge"></div>
               </div>
             </div>
+          </div>
 
-            <!-- mean_trace -->
+          <!-- traces -->
+          <div class="row">
+            <!-- mean trace -->
             <div class="col-md-12 col-lg-8 bg-white">
-              <div class="p-3 border-top border-3 border-danger">
+              <div class="p-3 border-top border-3 border my-primary">
                 <div class="row mt-3 gx-5">
 
                   <div class="col-md-12 col-lg-6 history-divs">
-                    <div id="pressure_value_normalized_mean_trace"></div>
+                    <div id="mean_pressure_value_normalized_trace"></div>
                   </div>
 
                   <div class="col-md-12 col-lg-6 history-divs">
-                    <div id="had_flow_history_mean_trace"></div>
+                    <div id="past_had_flow_trace"></div>
                   </div>
 
                 </div>
               </div>
             </div>
 
-            <!-- polling_trace -->
+            <!-- polling trace -->
             <div class="col-md-12 col-lg-8 bg-white">
-              <div class="p-3 border-top border-3 border-danger">
+              <div class="p-3 border-top border-3 border my-primary">
                 <div class="row mt-3 gx-5">
 
                   <div class="col-md-12 col-lg-6 history-divs">
-                    <div id="pressure_value_normalized_polling_trace"></div>
+                    <div id="pressure_value_normalized_trace"></div>
                   </div>
 
                   <div class="col-md-12 col-lg-6 history-divs">
-                    <div id="had_flow_polling_trace"></div>
+                    <div id="had_flow_trace"></div>
                   </div>
 
                 </div>
