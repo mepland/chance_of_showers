@@ -146,7 +146,7 @@ if display_web:
     )
 
     app.config["SECRET_KEY"] = "test"
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    sio = SocketIO(app, cors_allowed_origins="*")
 
     # if display_web:
     @app.route("/")
@@ -155,12 +155,12 @@ if display_web:
 
     if display_web_logging_terminal:
         # Decorator for connect
-        @socketio.on("connect")
+        @sio.on("connect")
         def connect():
             print("Client connected")
 
         # Decorator for disconnect
-        @socketio.on("disconnect")
+        @sio.on("disconnect")
         def disconnect():
             print("Client disconnected", request.sid)
 
@@ -308,7 +308,7 @@ def daq_loop():
                     "mean_pressure_value_normalized": mean_pressure_value_normalized,
                     "past_had_flow": past_had_flow,
                 }
-                socketio.emit("updateData", json.dumps(_data))
+                sio.emit("updateData", json.dumps(_data))
 
             # wait polling_period_seconds between data points to average
             while datetime.datetime.now() - t_stop < datetime.timedelta(
@@ -346,9 +346,9 @@ def daq_loop():
 # TODO get control C working on threads
 with thread_lock:
     if thread is None:
-        thread = socketio.start_background_task(daq_loop)
+        thread = sio.start_background_task(daq_loop)
 
 ################################################################################
 # serve index.html
 if display_web:
-    socketio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
+    sio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
