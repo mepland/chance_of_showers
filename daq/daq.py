@@ -146,9 +146,7 @@ if display_web:
     )
 
     app.config["SECRET_KEY"] = "test"
-    socketio = SocketIO(
-        app, cors_allowed_origins="*"
-    )
+    socketio = SocketIO(app, cors_allowed_origins="*")
 
     # if display_web:
     @app.route("/")
@@ -214,7 +212,8 @@ t_start_minute = (
     t_start.minute
     - (t_start.minute % starting_time_minutes_mod)
     + starting_time_minutes_mod
-)
+) % 60
+
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
