@@ -1,8 +1,10 @@
 ################################################################################
 # display options
 display_terminal = True
+display_terminal_overwrite = True
 display_oled = True
-# display_web = True # must be true as we are using socketio to run our DAQ thread TODo disconnect these
+display_web = True  # MUST BE TRUE FOR NOW as we are using socketio to run our DAQ thread TODO disconnect these!
+display_web_logging_terminal = False
 
 ################################################################################
 # DAQ parameters
@@ -127,18 +129,53 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
-# if display_web:
-import json
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO
-from threading import Lock
+if display_web:
+    import json
+    from flask import Flask, render_template, request
+    from flask_socketio import SocketIO
+    from threading import Lock
 
-thread = None
-thread_lock = Lock()
+    thread = None
+    thread_lock = Lock()
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "test"
-socketio = SocketIO(app, cors_allowed_origins="*")
+    app = Flask(
+        __name__,
+        static_url_path="",
+        static_folder="web/static",
+        template_folder="web/templates",
+    )
+
+    app.config["SECRET_KEY"] = "test"
+    socketio = SocketIO(
+        app, cors_allowed_origins="*"
+    )
+
+    # if display_web:
+    @app.route("/")
+    def index():
+        return render_template("index.html")
+
+    if display_web_logging_terminal:
+        # Decorator for connect
+        @socketio.on("connect")
+        def connect():
+            print("Client connected")
+
+        # Decorator for disconnect
+        @socketio.on("disconnect")
+        def disconnect():
+            print("Client disconnected", request.sid)
+
+    else:
+        # No messages in terminal
+        import flask.cli
+
+        flask.cli.show_server_banner = lambda *args: None
+
+        import logging
+
+        log = logging.getLogger("werkzeug")
+        log.setLevel(logging.ERROR)
 
 
 ################################################################################
@@ -181,6 +218,7 @@ t_start_minute = (
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+t_est_str = ""
 if display_terminal:
     t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
     print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
@@ -206,6 +244,7 @@ if display_terminal:
 # daq loop
 def daq_loop():
     global t_utc_str
+    global t_est_str
     mean_pressure_value = -1
     mean_pressure_value_normalized = -1
     past_had_flow = -1
@@ -215,9 +254,9 @@ def daq_loop():
         t_stop = t_start
 
         # average over averaging_period_seconds
-        _i = 0
+        i_polling = 0
         # reset variables
-        had_flow = 0
+        had_flow = 0  # avoid sticking high if we lose pressure while flowing
         polling_pressure_samples.fill(np.nan)
         polling_flow_samples = np.zeros(n_polling)
         while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
@@ -226,20 +265,22 @@ def daq_loop():
             flow_value = int(had_flow)
 
             # save data point to array
-            polling_pressure_samples[_i] = pressure_value
-            polling_flow_samples[_i] = flow_value
+            polling_pressure_samples[i_polling] = pressure_value
+            polling_flow_samples[i_polling] = flow_value
 
-            # continually display the current value and most recent mean on terminal
-            # https://stackoverflow.com/a/39177802
+            # display
             pressure_value_normalized = normalize_pressure_value(pressure_value)
 
             if display_terminal:
-                sys.stdout.write(
-                    "\x1b[1A\x1b[2K"
-                    + f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}\n"
-                    + f"i = {_i:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}\r"
-                )
-                sys.stdout.flush()
+                line1 = f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}"
+                line2 = f"i = {i_polling:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}\r"
+                if display_terminal_overwrite:
+                    # https://stackoverflow.com/a/39177802
+                    sys.stdout.write("\x1b[1A\x1b[2K" + line1 + "\n" + line2 + "\r")
+                    sys.stdout.flush()
+                else:
+                    print(line1)
+                    print(line2)
 
             if display_oled:
                 # write to OLED display
@@ -252,19 +293,23 @@ def daq_loop():
                     ]
                 )
 
-            # if display_web:
-            # send data to socket
-            _data = {
-                "utc_str": t_utc_str,
-                "i": _i,
-                "pressure_value": pressure_value,
-                "pressure_value_normalized": pressure_value_normalized,
-                "had_flow": flow_value,
-                "mean_pressure_value": mean_pressure_value,
-                "mean_pressure_value_normalized": mean_pressure_value_normalized,
-                "past_had_flow": past_had_flow,
-            }
-            socketio.emit("updateData", json.dumps(_data))
+            if display_web:
+                # send data to socket
+                _data = {
+                    # time
+                    "t_utc_str": t_utc_str,
+                    "t_est_str": t_est_str,
+                    "i_polling": i_polling,
+                    # live values
+                    "pressure_value": pressure_value,
+                    "pressure_value_normalized": pressure_value_normalized,
+                    "had_flow": flow_value,
+                    # last mean value
+                    "mean_pressure_value": mean_pressure_value,
+                    "mean_pressure_value_normalized": mean_pressure_value_normalized,
+                    "past_had_flow": past_had_flow,
+                }
+                socketio.emit("updateData", json.dumps(_data))
 
             # wait polling_period_seconds between data points to average
             while datetime.datetime.now() - t_stop < datetime.timedelta(
@@ -272,11 +317,15 @@ def daq_loop():
             ):
                 pass
 
-            _i += 1
+            i_polling += 1
             t_stop = datetime.datetime.now()
 
         # take mean and save data point to csv in m_path
         t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+        if display_web:
+            t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(
+                datetime_fmt
+            )
         mean_pressure_value = int(np.nanmean(polling_pressure_samples))
         mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
         past_had_flow = int(np.max(polling_flow_samples))
@@ -294,6 +343,13 @@ def daq_loop():
 
 ################################################################################
 # run daq loop
+# TODO if display_web:
+# TODO get control C working on threads
 with thread_lock:
     if thread is None:
         thread = socketio.start_background_task(daq_loop)
+
+################################################################################
+# serve index.html
+if display_web:
+    socketio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)

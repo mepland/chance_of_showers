@@ -1071,6 +1071,18 @@ doc = ["sphinx", "sphinx-rtd-theme"]
 test = ["RPi.GPIO", "coverage", "mock", "pigpio", "pytest"]
 
 [[package]]
+name = "h11"
+version = "0.14.0"
+description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761"},
+    {file = "h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d"},
+]
+
+[[package]]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -3134,6 +3146,21 @@ testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8 (<5)", "flake8-202
 testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
+name = "simple-websocket"
+version = "0.10.0"
+description = "Simple WebSocket server and client for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "simple-websocket-0.10.0.tar.gz", hash = "sha256:82c0b0b1006d5490f09ff66392394d90dd758285635edad241e093e9a8abd3eb"},
+    {file = "simple_websocket-0.10.0-py3-none-any.whl", hash = "sha256:fc1bc56c393a187e7268f8ab99da1a8e8da9b5dfb7769a2f3b8dada00067745b"},
+]
+
+[package.dependencies]
+wsproto = "*"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -3513,6 +3540,21 @@ MarkupSafe = ">=2.1.1"
 watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
+name = "wsproto"
+version = "1.2.0"
+description = "WebSockets state-machine based protocol implementation"
+category = "dev"
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "wsproto-1.2.0-py3-none-any.whl", hash = "sha256:b9acddd652b585d75b20477888c56642fdade28bdfd3579aa24a4d2c037dd736"},
+    {file = "wsproto-1.2.0.tar.gz", hash = "sha256:ad565f26ecb92588a3e43bc3d96164de84cd9902482b130d0ddbaa9664a85065"},
+]
+
+[package.dependencies]
+h11 = ">=0.9.0,<1"
+
+[[package]]
 name = "y-py"
 version = "0.5.9"
 description = "Python bindings for the Y-CRDT built from yrs (Rust)"
@@ -3627,4 +3669,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "8b7a8312a3aaf12f41a43793384c3c5846a72b733f61cf3ab6a5cbde459fc51d"
+content-hash = "b0afe0b6ed8affadd8f0e1bd591cdad1f369944ff3855fae80943c51a85f3904"
