@@ -22,7 +22,6 @@ body {
   margin-top: -6px;
   font-weight: 500;
 }
-
-.box .indicator {
-  font-size: 48px;
+.my-primary{
+  color: #012169 ;
 }
