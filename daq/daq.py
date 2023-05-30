@@ -354,8 +354,8 @@ def daq_loop():
             mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
             past_had_flow_n_last.append(past_had_flow)
 
-            if n_last < len(mean_pressure_value_normalized_n_last):
-                del past_had_flow_n_last[0]
+            if n_last < len(t_est_str_n_last):
+                del t_est_str_n_last[0]
                 del mean_pressure_value_normalized_n_last[0]
                 del past_had_flow_n_last[0]
 
