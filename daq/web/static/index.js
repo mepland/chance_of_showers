@@ -19,7 +19,6 @@ var graph_config = {
 
 // boxes
 function updateBoxes(t_str, i_polling, pressure_value, had_flow) {
-
   datetime_box_div.innerHTML = t_str.substr(0,t_str.length-3) + ", i = " + i_polling;
   pressure_value_box_div.innerHTML = pressure_value;
   had_flow_box_div.innerHTML = had_flow;
@@ -160,24 +159,22 @@ Plotly.newPlot(
   graph_config
 );
 
-let mean_pressure_value_normalized_x_array = [];
-let mean_pressure_value_normalized_y_array = [];
-let past_had_flow_x_array = [];
-let past_had_flow_y_array = [];
 let pressure_value_normalized_x_array = [];
 let pressure_value_normalized_y_array = [];
 let had_flow_x_array = [];
 let had_flow_y_array = [];
 
 function updateChart(lineChartDiv, xArray, yArray, xValue, yValue, max_graph_points) {
-  if (xArray.length >= max_graph_points) {
-    xArray.shift();
+  if ( 0 < max_graph_points) {
+    if (xArray.length >= max_graph_points) {
+      xArray.shift();
+    }
+    if (yArray.length >= max_graph_points) {
+      yArray.shift();
+    }
+    xArray.push(xValue);
+    yArray.push(yValue);
   }
-  if (yArray.length >= max_graph_points) {
-    yArray.shift();
-  }
-  xArray.push(xValue)
-  yArray.push(yValue);
 
   var data_update = {
     x: [xArray],
@@ -195,29 +192,41 @@ function updateAll(jsonResponse) {
   let pressure_value_normalized = (100*parseFloat(jsonResponse.pressure_value_normalized)).toFixed(2);
   let had_flow = parseInt(jsonResponse.had_flow);
 
-  let mean_pressure_value_normalized = (100*parseFloat(jsonResponse.mean_pressure_value_normalized)).toFixed(2);
-  let past_had_flow = parseInt(jsonResponse.past_had_flow);
 
   updateBoxes(t_str, i_polling, pressure_value, had_flow);
 
   updateGauge(pressure_value_normalized);
 
   if (i_polling == 0) {
+    let t_str_n_last = jsonResponse.t_est_str_n_last
+    let mean_pressure_value_normalized_n_last = jsonResponse.mean_pressure_value_normalized_n_last
+    let past_had_flow_n_last = jsonResponse.past_had_flow_n_last
+    // use loops instead of map for compatibility
+    for (var i = 0; i < mean_pressure_value_normalized_n_last.length; i++) {
+      mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
+    }
+    for (var i = 0; i < past_had_flow_n_last.length; i++) {
+      past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
+    }
+    // console.log(t_str_n_last);
+    // console.log(mean_pressure_value_normalized_n_last);
+    // console.log(past_had_flow_n_last);
+
     updateChart(
       mean_pressure_value_normalized_trace_div,
-      mean_pressure_value_normalized_x_array,
-      mean_pressure_value_normalized_y_array,
-      t_str,
-      mean_pressure_value_normalized,
-      15 
+      t_str_n_last,
+      mean_pressure_value_normalized_n_last,
+      null,
+      null,
+      -1
     );
     updateChart(
       past_had_flow_trace_div,
-      past_had_flow_x_array,
-      past_had_flow_y_array,
-      t_str,
-      past_had_flow,
-      15 
+      t_str_n_last,
+      past_had_flow_n_last,
+      null,
+      null,
+      -1
     );
   }
 

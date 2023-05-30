@@ -175,6 +175,11 @@ if display_web:
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
 
+    n_last = 15
+    t_est_str_n_last = []
+    mean_pressure_value_normalized_n_last = []
+    past_had_flow_n_last = []
+
 
 ################################################################################
 # helper variables and functions
@@ -296,18 +301,22 @@ def daq_loop():
                 # send data to socket
                 _data = {
                     # time
-                    "t_utc_str": t_utc_str,
+                    # "t_utc_str": t_utc_str,
                     "t_est_str": t_est_str,
                     "i_polling": i_polling,
                     # live values
                     "pressure_value": pressure_value,
                     "pressure_value_normalized": pressure_value_normalized,
                     "had_flow": flow_value,
-                    # last mean value
-                    "mean_pressure_value": mean_pressure_value,
-                    "mean_pressure_value_normalized": mean_pressure_value_normalized,
-                    "past_had_flow": past_had_flow,
                 }
+                # n_last mean values
+                if i_polling == 0:
+                    _data["t_est_str_n_last"] = t_est_str_n_last
+                    _data[
+                        "mean_pressure_value_normalized_n_last"
+                    ] = mean_pressure_value_normalized_n_last
+                    _data["past_had_flow_n_last"] = past_had_flow_n_last
+
                 sio.emit("updateData", json.dumps(_data))
 
             # wait polling_period_seconds between data points to average
@@ -338,6 +347,17 @@ def daq_loop():
                 w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
             w.writerow(new_row)
             f.close()
+
+        if display_web:
+            # save n_last mean values
+            t_est_str_n_last.append(t_est_str)
+            mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
+            past_had_flow_n_last.append(past_had_flow)
+
+            if n_last < len(mean_pressure_value_normalized_n_last):
+                del past_had_flow_n_last[0]
+                del mean_pressure_value_normalized_n_last[0]
+                del past_had_flow_n_last[0]
 
 
 ################################################################################
