@@ -129,14 +129,16 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
+new_connection = bool(False)
 if display_web:
     import json
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
-    from threading import Lock
 
-    thread = None
-    thread_lock = Lock()
+    # from threading import Lock
+
+    # thread = None
+    # thread_lock = Lock()
 
     app = Flask(
         __name__,
@@ -146,19 +148,23 @@ if display_web:
     )
 
     app.config["SECRET_KEY"] = "test"
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+
     sio = SocketIO(app, cors_allowed_origins="*")
 
-    # if display_web:
     @app.route("/")
     def index():
         return render_template("index.html")
 
-    if display_web_logging_terminal:
-        # Decorator for connect
-        @sio.on("connect")
-        def connect():
+    # Decorator for connect
+    @sio.on("connect")
+    def connect():
+        global new_connection
+        new_connection = True
+        if display_web_logging_terminal:
             print("Client connected")
 
+    if display_web_logging_terminal:
         # Decorator for disconnect
         @sio.on("disconnect")
         def disconnect():
@@ -222,9 +228,8 @@ t_start_minute = (
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = ""
+t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 if display_terminal:
-    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
     print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
 
 if display_oled:
@@ -247,6 +252,7 @@ if display_terminal:
 ################################################################################
 # daq loop
 def daq_loop():
+    global new_connection
     global t_utc_str
     global t_est_str
     global had_flow
@@ -284,7 +290,7 @@ def daq_loop():
                     sys.stdout.write("\x1b[1A\x1b[2K" + line1 + "\n" + line2 + "\r")
                     sys.stdout.flush()
                 else:
-                    print(line1)
+                    # print(line1)
                     print(line2)
 
             if display_oled:
@@ -311,14 +317,15 @@ def daq_loop():
                     "had_flow": flow_value,
                 }
                 # n_last mean values
-                if i_polling == 0:
+                if i_polling == 0 or new_connection:
+                    new_connection = False
                     _data["t_est_str_n_last"] = t_est_str_n_last
                     _data[
                         "mean_pressure_value_normalized_n_last"
                     ] = mean_pressure_value_normalized_n_last
                     _data["past_had_flow_n_last"] = past_had_flow_n_last
 
-                sio.emit("updateData", json.dumps(_data))
+                sio.emit("emit_data", json.dumps(_data))
 
             # wait polling_period_seconds between data points to average
             while datetime.datetime.now() - t_stop < datetime.timedelta(
@@ -363,11 +370,13 @@ def daq_loop():
 
 ################################################################################
 # run daq loop
-# TODO if display_web:
+# if display_web:
+# TODO sometimes multiple threads start, even with thread_lock!
+# with thread_lock:
+#    if thread is None:
 # TODO get control C working on threads
-with thread_lock:
-    if thread is None:
-        thread = sio.start_background_task(daq_loop)
+#        thread = sio.start_background_task(daq_loop)
+sio.start_background_task(daq_loop)
 
 ################################################################################
 # serve index.html
