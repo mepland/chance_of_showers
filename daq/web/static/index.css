@@ -1,6 +1,9 @@
 body {
   background-color: #f5f5f5;
 }
+.bg-body {
+  background-color: #f5f5f5;
+}
 .bg-white {
   background-color: #fff;
 }
@@ -9,7 +12,6 @@ body {
 }
 .box {
   background: #012169;
-  width: calc(100% / 2 - 20px);
   color: #fff;
 }
 .box .box-topic {
@@ -17,11 +19,10 @@ body {
   font-weight: 500;
 }
 .box .number {
-  display: inline-block;
-  font-size: 35px;
+  font-size: 30px;
   margin-top: -6px;
   font-weight: 500;
 }
 .my-primary{
-  color: #012169 ;
+  color: #012169;
 }

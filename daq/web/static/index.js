@@ -27,7 +27,7 @@ function updateBoxes(t_str, i_polling, pressure_value, had_flow) {
 // gauge
 var pressure_value_normalized_gauge_data = [
   {
-    domain: {x: [0.1, 0.9], y: [0.1, 1]},
+    domain: {x: [0.1, 0.9], y: [0.2, 1]},
     value: 0,
     title: { text: "%" },
     type: "indicator",
@@ -36,8 +36,9 @@ var pressure_value_normalized_gauge_data = [
     gauge: {
       shape: "bullet",
       axis: { range: [0, 150] },
+      bar: {color: "#262626"},
       steps: [
-        { range: [0, 50], color: "lightsalmon" },
+        { range: [0, 50], color: "#C84E00" },
       ],
     },
   },
@@ -94,8 +95,8 @@ var mean_pressure_value_trace_layout = {
     size: 14,
     color: "#7f7f7f",
   },
-  colorway: ["#B22222"],
-  margin: { t: 30, b: 100, l: 40, r: 20, pad: 0 },
+  colorway: ["#012169"],
+  margin: { t: 30, b: 80, l: 40, r: 20, pad: 0 },
 };
 var past_had_flow_trace_layout = {
   autosize: true,
@@ -106,8 +107,8 @@ var past_had_flow_trace_layout = {
     size: 14,
     color: "#7f7f7f",
   },
-  colorway: ["#00008B"],
-  margin: { t: 30, b: 100, l: 30, r: 20, pad: 0 },
+  colorway: ["#993399"],
+  margin: { t: 30, b: 50, l: 30, r: 20, pad: 0 },
 };
 var pressure_value_trace_layout = {
   autosize: true,
@@ -118,7 +119,7 @@ var pressure_value_trace_layout = {
     size: 14,
     color: "#7f7f7f",
   },
-  colorway: ["#B22222"],
+  colorway: ["#012169"],
   margin: { t: 30, b: 20, l: 40, r: 20, pad: 0 },
 };
 var had_flow_trace_layout = {
@@ -130,7 +131,7 @@ var had_flow_trace_layout = {
     size: 14,
     color: "#7f7f7f",
   },
-  colorway: ["#00008B"],
+  colorway: ["#993399"],
   margin: { t: 30, b: 20, l: 30, r: 20, pad: 0 },
 };
 
@@ -185,22 +186,30 @@ function updateChart(lineChartDiv, xArray, yArray, xValue, yValue, max_graph_poi
 }
 
 // update everything each msg
-function updateAll(jsonResponse) {
-  let t_str = jsonResponse.t_est_str;
-  let i_polling = parseInt(jsonResponse.i_polling);
-  let pressure_value = parseInt(jsonResponse.pressure_value);
-  let pressure_value_normalized = (100*parseFloat(jsonResponse.pressure_value_normalized)).toFixed(2);
-  let had_flow = parseInt(jsonResponse.had_flow);
+function updateAll(data) {
+  let t_str = data.t_est_str;
+  let i_polling = parseInt(data.i_polling);
+  let pressure_value = parseInt(data.pressure_value);
+  let pressure_value_normalized = (100*parseFloat(data.pressure_value_normalized)).toFixed(2);
+  let had_flow = parseInt(data.had_flow);
 
 
   updateBoxes(t_str, i_polling, pressure_value, had_flow);
 
   updateGauge(pressure_value_normalized);
 
-  if (i_polling == 0) {
-    let t_str_n_last = jsonResponse.t_est_str_n_last
-    let mean_pressure_value_normalized_n_last = jsonResponse.mean_pressure_value_normalized_n_last
-    let past_had_flow_n_last = jsonResponse.past_had_flow_n_last
+  var updated_past = false;
+  for (const prop in data) {
+    if (prop == 't_est_str_n_last') {
+       updated_past = true;
+       break;
+    }
+  }
+
+  if (updated_past) {
+    let t_str_n_last = data.t_est_str_n_last
+    let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last
+    let past_had_flow_n_last = data.past_had_flow_n_last
     // use loops instead of map for compatibility
     for (var i = 0; i < mean_pressure_value_normalized_n_last.length; i++) {
       mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
@@ -208,9 +217,6 @@ function updateAll(jsonResponse) {
     for (var i = 0; i < past_had_flow_n_last.length; i++) {
       past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
     }
-    // console.log(t_str_n_last);
-    // console.log(mean_pressure_value_normalized_n_last);
-    // console.log(past_had_flow_n_last);
 
     updateChart(
       mean_pressure_value_normalized_trace_div,
@@ -255,7 +261,7 @@ function updateAll(jsonResponse) {
 var socket = io.connect();
 
 // receive data from server
-socket.on("updateData", function (msg) {
+socket.on("emit_data", function (msg) {
   var data = JSON.parse(msg);
   // write data to console for debugging
   // console.log(msg);
