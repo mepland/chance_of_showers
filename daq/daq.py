@@ -249,6 +249,7 @@ if display_terminal:
 def daq_loop():
     global t_utc_str
     global t_est_str
+    global had_flow
     mean_pressure_value = -1
     mean_pressure_value_normalized = -1
     past_had_flow = -1
