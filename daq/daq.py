@@ -305,27 +305,31 @@ def daq_loop():
                 )
 
             if display_web:
-                # send data to socket
-                _data = {
-                    # time
-                    # "t_utc_str": t_utc_str,
-                    "t_est_str": t_est_str,
-                    "i_polling": i_polling,
-                    # live values
-                    "pressure_value": pressure_value,
-                    "pressure_value_normalized": pressure_value_normalized,
-                    "had_flow": flow_value,
-                }
-                # n_last mean values
-                if i_polling == 0 or new_connection:
-                    new_connection = False
-                    _data["t_est_str_n_last"] = t_est_str_n_last
-                    _data[
-                        "mean_pressure_value_normalized_n_last"
-                    ] = mean_pressure_value_normalized_n_last
-                    _data["past_had_flow_n_last"] = past_had_flow_n_last
+                try:
+                    # send data to socket
+                    _data = {
+                        # time
+                        # "t_utc_str": t_utc_str,
+                        "t_est_str": t_est_str,
+                        "i_polling": i_polling,
+                        # live values
+                        "pressure_value": pressure_value,
+                        "pressure_value_normalized": pressure_value_normalized,
+                        "had_flow": flow_value,
+                    }
+                    # n_last mean values
+                    if i_polling == 0 or new_connection:
+                        new_connection = False
+                        _data["t_est_str_n_last"] = t_est_str_n_last
+                        _data[
+                            "mean_pressure_value_normalized_n_last"
+                        ] = mean_pressure_value_normalized_n_last
+                        _data["past_had_flow_n_last"] = past_had_flow_n_last
 
-                sio.emit("emit_data", json.dumps(_data))
+                    sio.emit("emit_data", json.dumps(_data))
+                except:
+                    # don't want to kill the daq just because of a web problem
+                    pass
 
             # wait polling_period_seconds between data points to average
             while datetime.datetime.now() - t_stop < datetime.timedelta(
@@ -357,15 +361,21 @@ def daq_loop():
             f.close()
 
         if display_web:
-            # save n_last mean values
-            t_est_str_n_last.append(t_est_str)
-            mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
-            past_had_flow_n_last.append(past_had_flow)
+            try:
+                # save n_last mean values
+                t_est_str_n_last.append(t_est_str)
+                mean_pressure_value_normalized_n_last.append(
+                    mean_pressure_value_normalized
+                )
+                past_had_flow_n_last.append(past_had_flow)
 
-            if n_last < len(t_est_str_n_last):
-                del t_est_str_n_last[0]
-                del mean_pressure_value_normalized_n_last[0]
-                del past_had_flow_n_last[0]
+                if n_last < len(t_est_str_n_last):
+                    del t_est_str_n_last[0]
+                    del mean_pressure_value_normalized_n_last[0]
+                    del past_had_flow_n_last[0]
+            except:
+                # don't want to kill the daq just because of a web problem
+                pass
 
 
 ################################################################################
@@ -381,4 +391,8 @@ sio.start_background_task(daq_loop)
 ################################################################################
 # serve index.html
 if display_web:
-    sio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
+    try:
+        sio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
+    except:
+        # don't want to kill the daq just because of a web problem
+        pass
