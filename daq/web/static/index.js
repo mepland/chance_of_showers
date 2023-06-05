@@ -5,27 +5,44 @@ var had_flow_box_div = document.getElementById("had_flow_box");
 
 var pressure_value_normalized_gauge_div = document.getElementById("pressure_value_normalized_gauge");
 
-var mean_div = document.getElementById("mean_trace_div");
-
-var pressure_value_normalized_trace_div = document.getElementById("pressure_value_normalized_trace");
-var had_flow_trace_div = document.getElementById("had_flow_trace");
+var mean_div = document.getElementById("mean_div");
+var live_div = document.getElementById("live_div");
 
 // colors
 var c0 = "#012169";
-var c1 = "#993399";
+// var c1 = "#993399";
 var c_grey = "#7f7f7f";
 
 // markers
+var marker_symbol_flow_0 = "bowtie";
+var marker_symbol_flow_1 = "bowtie-open";
 var marker_size_large = 12;
-var marker_flow_0 = {
-  size: marker_size_large,
-  line: {width: 1.5},
-  symbol: "bowtie",
+var marker_size_small = 8;
+
+// flow null traces
+var flow_0 = {
+  x: [null],
+  y: [null],
+  name: "No Flow",
+  type: "scatter",
+  mode: "markers",
+  marker: {
+    size: marker_size_large,
+    line: {width: 1.5},
+    symbol: marker_symbol_flow_0,
+  },
 };
-var marker_flow_1 = {
-  size: marker_size_large,
-  line: {width: 1.5},
-  symbol: "bowtie-open",
+var flow_1 = {
+  x: [null],
+  y: [null],
+  name: "Had Flow",
+  type: "scatter",
+  mode: "markers",
+  marker: {
+    size: marker_size_large,
+    line: {width: 1.5},
+    symbol: marker_symbol_flow_1,
+  },
 };
 
 // config for all graphs
@@ -73,7 +90,7 @@ function updateGauge(pressure_value_normalized) {
   Plotly.update(pressure_value_normalized_gauge_div, pressure_value_normalized_update);
 }
 
-// traces
+// trace layout
 var mean_layout = {
   xaxis: {title: "1 Min Samples"},
   yaxis: {title: "Mean Pressure %"},
@@ -84,13 +101,14 @@ var mean_layout = {
     xanchor: "center",
     yanchor: "bottom",
     x: 0.5,
-    y: 1.02,
+    y: 1.0,
   },
   autosize: true,
   margin: {t: 0, b: 70, l: 55, r: 0},
   font: {color: c_grey, size: 14},
 };
 
+/*
 var pressure_value_normalized_trace = {
   x: [],
   y: [],
@@ -168,6 +186,7 @@ function updateChart(lineChartDiv, xArray, yArray, xValue, yValue, max_graph_poi
 
   Plotly.update(lineChartDiv, data_update);
 }
+*/
 
 // update everything each msg
 function updateAll(data) {
@@ -177,25 +196,24 @@ function updateAll(data) {
   let pressure_value_normalized = (100*parseFloat(data.pressure_value_normalized)).toFixed(2);
   let had_flow = parseInt(data.had_flow);
 
-
   updateBoxes(t_str, i_polling, pressure_value, had_flow);
 
   updateGauge(pressure_value_normalized);
 
-  var updated_past = false;
+  var updated_mean = false;
   for (const prop in data) {
     if (prop == "t_est_str_n_last") {
-       updated_past = true;
+       updated_mean = true;
        break;
     }
   }
 
-  if (updated_past) {
+  if (updated_mean) {
     let t_str_n_last = data.t_est_str_n_last
     let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last
     let past_had_flow_n_last = data.past_had_flow_n_last
     let past_had_flow_n_last_symbol = []
-    // use loops instead of map for compatibility
+
     for (var i = 0; i < mean_pressure_value_normalized_n_last.length; i++) {
       mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
       past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
@@ -205,11 +223,11 @@ function updateAll(data) {
         past_had_flow_n_last[i] = 1;
       } // TODo end testing
 
-      if (past_had_flow_n_last[i] == 1) {
-        past_had_flow_n_last_symbol[i] = "bowtie-open";
+      if (past_had_flow_n_last[i] == 0) {
+        past_had_flow_n_last_symbol[i] = marker_symbol_flow_0;
       }
       else {
-        past_had_flow_n_last_symbol[i] = "bowtie";
+        past_had_flow_n_last_symbol[i] = marker_symbol_flow_1;
       }
     }
 
@@ -226,27 +244,9 @@ function updateAll(data) {
       showlegend: false, 
     };
 
-    var flow_0 = {
-      x: [null],
-      y: [null],
-      name: "No Flow",
-      type: "scatter",
-      mode: "markers",
-      marker: marker_flow_0,
-    };
-
-    var flow_1 = {
-      x: [null],
-      y: [null],
-      name: "Had Flow",
-      type: "scatter",
-      mode: "markers",
-      marker: marker_flow_1,
-    };
-
     Plotly.react(mean_div, [mean_pressure_value_normalized_trace, flow_0, flow_1], mean_layout, graph_config);
   }
-
+/*
   updateChart(
     pressure_value_normalized_trace_div,
     pressure_value_normalized_x_array,
@@ -264,6 +264,7 @@ function updateAll(data) {
     had_flow,
     60
   );
+*/
 }
 
 // SocketIO Code
