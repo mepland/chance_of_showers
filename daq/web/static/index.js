@@ -5,11 +5,15 @@ var had_flow_box_div = document.getElementById("had_flow_box");
 
 var pressure_value_normalized_gauge_div = document.getElementById("pressure_value_normalized_gauge");
 
-var mean_pressure_value_normalized_trace_div = document.getElementById("mean_pressure_value_normalized_trace");
-var past_had_flow_trace_div = document.getElementById("past_had_flow_trace");
+var mean_div = document.getElementById("mean_trace_div");
 
 var pressure_value_normalized_trace_div = document.getElementById("pressure_value_normalized_trace");
 var had_flow_trace_div = document.getElementById("had_flow_trace");
+
+// colors
+var c0 = "#012169";
+var c1 = "#993399";
+var c_grey = "#7f7f7f";
 
 // config for all graphs
 var graph_config = {
@@ -57,20 +61,6 @@ function updateGauge(pressure_value_normalized) {
 }
 
 // traces
-var mean_pressure_value_normalized_trace = {
-  x: [],
-  y: [],
-  name: "Mean Pressure %",
-  mode: "lines+markers",
-  type: "line",
-};
-var past_had_flow_trace = {
-  x: [],
-  y: [],
-  name: "Past Had Flow",
-  mode: "lines+markers",
-  type: "line",
-};
 var pressure_value_normalized_trace = {
   x: [],
   y: [],
@@ -86,30 +76,34 @@ var had_flow_trace = {
   type: "line",
 };
 
-var mean_pressure_value_trace_layout = {
+var mean_layout = {
   autosize: true,
   title: {
-    text: "Mean Pressure %",
+    text: '1 Min Sample',
+  },
+  yaxis: {title: 'Mean Pressure %'},
+  yaxis2: {
+    title: 'Past Had Flow',
+    titlefont: {color: c1},
+    tickfont: {color: c1},
+    overlaying: 'y',
+    side: 'right',
+    range: [0, 1],
+    dtick: 1,
+    fixedrange: true,
+    showgrid: false,
+    zeroline: false,
   },
   font: {
     size: 14,
-    color: "#7f7f7f",
+    color: c_grey,
   },
-  colorway: ["#012169"],
-  margin: { t: 30, b: 80, l: 40, r: 20, pad: 0 },
+  colorway: [c0, c1],
+  showlegend: false,
+  bargap: 0,
+ // margin: { t: 80, b: 80, l: 80, r: 80, pad: 10 },
 };
-var past_had_flow_trace_layout = {
-  autosize: true,
-  title: {
-    text: "Past Had Flow",
-  },
-  font: {
-    size: 14,
-    color: "#7f7f7f",
-  },
-  colorway: ["#993399"],
-  margin: { t: 30, b: 50, l: 30, r: 20, pad: 0 },
-};
+
 var pressure_value_trace_layout = {
   autosize: true,
   title: {
@@ -117,9 +111,9 @@ var pressure_value_trace_layout = {
   },
   font: {
     size: 14,
-    color: "#7f7f7f",
+    color: c_grey,
   },
-  colorway: ["#012169"],
+  colorway: [c0],
   margin: { t: 30, b: 20, l: 40, r: 20, pad: 0 },
 };
 var had_flow_trace_layout = {
@@ -129,24 +123,12 @@ var had_flow_trace_layout = {
   },
   font: {
     size: 14,
-    color: "#7f7f7f",
+    color: c_grey,
   },
-  colorway: ["#993399"],
+  colorway: [c1],
   margin: { t: 30, b: 20, l: 30, r: 20, pad: 0 },
 };
 
-Plotly.newPlot(
-  mean_pressure_value_normalized_trace_div,
-  [mean_pressure_value_normalized_trace],
-  mean_pressure_value_trace_layout,
-  graph_config
-);
-Plotly.newPlot(
-  past_had_flow_trace_div,
-  [past_had_flow_trace],
-  past_had_flow_trace_layout,
-  graph_config
-);
 Plotly.newPlot(
   pressure_value_normalized_trace_div,
   [pressure_value_normalized_trace],
@@ -185,6 +167,18 @@ function updateChart(lineChartDiv, xArray, yArray, xValue, yValue, max_graph_poi
   Plotly.update(lineChartDiv, data_update);
 }
 
+function updateChart2(xArray, yArray1, yArray2) {
+  var trace1 = {
+    x: [xArray],
+    y: [yArray1],
+  };
+  var trace2 = {
+    x: [xArray],
+    y: [yArray2],
+  };
+
+}
+
 // update everything each msg
 function updateAll(data) {
   let t_str = data.t_est_str;
@@ -217,23 +211,29 @@ function updateAll(data) {
     for (var i = 0; i < past_had_flow_n_last.length; i++) {
       past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
     }
+	// past_had_flow_n_last[1] = 1 // TODO
+	// past_had_flow_n_last[2] = 1 // TODO
 
-    updateChart(
-      mean_pressure_value_normalized_trace_div,
-      t_str_n_last,
-      mean_pressure_value_normalized_n_last,
-      null,
-      null,
-      -1
-    );
-    updateChart(
-      past_had_flow_trace_div,
-      t_str_n_last,
-      past_had_flow_n_last,
-      null,
-      null,
-      -1
-    );
+    var mean_pressure_value_normalized_trace = {
+      x: t_str_n_last,
+      y: mean_pressure_value_normalized_n_last,
+      type: "scatter",
+      mode: "lines+markers",
+      // marker: {symbol: "circle-open" },//*past_had_flow_n_last
+    };
+    var past_had_flow_trace = {
+      x: t_str_n_last,
+      y: past_had_flow_n_last,
+      type: "bar",
+      yaxis: "y2",
+      // opacity: 0.2,
+      'marker': {
+        'color': 'rgba(0, 0, 0, 0.0)',
+        'line': {'color': c1, 'width': 2},
+      },
+    };
+
+    Plotly.react(mean_div, [mean_pressure_value_normalized_trace, past_had_flow_trace], mean_layout, graph_config);
   }
 
   updateChart(
