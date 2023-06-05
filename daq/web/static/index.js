@@ -15,6 +15,19 @@ var c0 = "#012169";
 var c1 = "#993399";
 var c_grey = "#7f7f7f";
 
+// markers
+var marker_size_large = 12;
+var marker_flow_0 = {
+  size: marker_size_large,
+  line: {width: 1.5},
+  symbol: "bowtie",
+};
+var marker_flow_1 = {
+  size: marker_size_large,
+  line: {width: 1.5},
+  symbol: "bowtie-open",
+};
+
 // config for all graphs
 var graph_config = {
   displayModeBar: false,
@@ -61,6 +74,23 @@ function updateGauge(pressure_value_normalized) {
 }
 
 // traces
+var mean_layout = {
+  xaxis: {title: "1 Min Samples"},
+  yaxis: {title: "Mean Pressure %"},
+  colorway: [c0],
+  showlegend: true,
+  legend: {
+    orientation: "h",
+    xanchor: "center",
+    yanchor: "bottom",
+    x: 0.5,
+    y: 1.02,
+  },
+  autosize: true,
+  margin: {t: 0, b: 70, l: 55, r: 0},
+  font: {color: c_grey, size: 14},
+};
+
 var pressure_value_normalized_trace = {
   x: [],
   y: [],
@@ -74,34 +104,6 @@ var had_flow_trace = {
   name: "Had Flow",
   mode: "markers",
   type: "line",
-};
-
-var mean_layout = {
-  autosize: true,
-  title: {
-    text: '1 Min Sample',
-  },
-  yaxis: {title: 'Mean Pressure %'},
-  yaxis2: {
-    title: 'Past Had Flow',
-    titlefont: {color: c1},
-    tickfont: {color: c1},
-    overlaying: 'y',
-    side: 'right',
-    range: [0, 1],
-    dtick: 1,
-    fixedrange: true,
-    showgrid: false,
-    zeroline: false,
-  },
-  font: {
-    size: 14,
-    color: c_grey,
-  },
-  colorway: [c0, c1],
-  showlegend: false,
-  bargap: 0,
- // margin: { t: 80, b: 80, l: 80, r: 80, pad: 10 },
 };
 
 var pressure_value_trace_layout = {
@@ -167,18 +169,6 @@ function updateChart(lineChartDiv, xArray, yArray, xValue, yValue, max_graph_poi
   Plotly.update(lineChartDiv, data_update);
 }
 
-function updateChart2(xArray, yArray1, yArray2) {
-  var trace1 = {
-    x: [xArray],
-    y: [yArray1],
-  };
-  var trace2 = {
-    x: [xArray],
-    y: [yArray2],
-  };
-
-}
-
 // update everything each msg
 function updateAll(data) {
   let t_str = data.t_est_str;
@@ -194,7 +184,7 @@ function updateAll(data) {
 
   var updated_past = false;
   for (const prop in data) {
-    if (prop == 't_est_str_n_last') {
+    if (prop == "t_est_str_n_last") {
        updated_past = true;
        break;
     }
@@ -204,36 +194,57 @@ function updateAll(data) {
     let t_str_n_last = data.t_est_str_n_last
     let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last
     let past_had_flow_n_last = data.past_had_flow_n_last
+    let past_had_flow_n_last_symbol = []
     // use loops instead of map for compatibility
     for (var i = 0; i < mean_pressure_value_normalized_n_last.length; i++) {
       mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
-    }
-    for (var i = 0; i < past_had_flow_n_last.length; i++) {
       past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
+
+      // TODo testing
+      if (i < 5) {
+        past_had_flow_n_last[i] = 1;
+      } // TODo end testing
+
+      if (past_had_flow_n_last[i] == 1) {
+        past_had_flow_n_last_symbol[i] = "bowtie-open";
+      }
+      else {
+        past_had_flow_n_last_symbol[i] = "bowtie";
+      }
     }
-	// past_had_flow_n_last[1] = 1 // TODO
-	// past_had_flow_n_last[2] = 1 // TODO
 
     var mean_pressure_value_normalized_trace = {
       x: t_str_n_last,
       y: mean_pressure_value_normalized_n_last,
       type: "scatter",
       mode: "lines+markers",
-      // marker: {symbol: "circle-open" },//*past_had_flow_n_last
-    };
-    var past_had_flow_trace = {
-      x: t_str_n_last,
-      y: past_had_flow_n_last,
-      type: "bar",
-      yaxis: "y2",
-      // opacity: 0.2,
-      'marker': {
-        'color': 'rgba(0, 0, 0, 0.0)',
-        'line': {'color': c1, 'width': 2},
+      marker: {
+        size: marker_size_large,
+		line: {width: 1.5},
+        symbol: past_had_flow_n_last_symbol,
       },
+      showlegend: false, 
     };
 
-    Plotly.react(mean_div, [mean_pressure_value_normalized_trace, past_had_flow_trace], mean_layout, graph_config);
+    var flow_0 = {
+      x: [null],
+      y: [null],
+      name: "No Flow",
+      type: "scatter",
+      mode: "markers",
+      marker: marker_flow_0,
+    };
+
+    var flow_1 = {
+      x: [null],
+      y: [null],
+      name: "Had Flow",
+      type: "scatter",
+      mode: "markers",
+      marker: marker_flow_1,
+    };
+
+    Plotly.react(mean_div, [mean_pressure_value_normalized_trace, flow_0, flow_1], mean_layout, graph_config);
   }
 
   updateChart(
