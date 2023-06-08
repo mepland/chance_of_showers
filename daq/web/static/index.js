@@ -12,6 +12,8 @@ let live_div = document.getElementById("live_div");
 const c0 = "#012169";
 const c1 = "#993399";
 const c_grey = "#7f7f7f";
+const c_yellow = "#FFD960";
+const c_orange = "#E89923";
 
 // markers
 const ms_flow_0 = "bowtie";
@@ -30,7 +32,10 @@ const legend_trace_flow_0 = {
   mode: "markers",
   marker: {
     size: marker_size_large,
-    line: {width: 1.5},
+    line: {
+      width: 1.5,
+      color: mc_flow_0,
+    },
     symbol: ms_flow_0,
     color: mc_flow_0,
   },
@@ -43,7 +48,10 @@ const legend_trace_flow_1 = {
   mode: "markers",
   marker: {
     size: marker_size_large,
-    line: {width: 1.5},
+    line: {
+      width: 1.5,
+      color: mc_flow_1,
+    },
     symbol: ms_flow_1,
     color: mc_flow_1,
   },
@@ -63,26 +71,91 @@ function updateBoxes(t_str, i_polling, pressure_value, had_flow) {
 }
 
 // gauge
+let gauge_layout = {
+  title: {
+    text: "Live Pressure",
+    align: "center",
+  },
+  xaxis: {visible: false},
+  yaxis: {visible: false},
+  shapes: [{
+    type: 'line',
+    // xref="x", x0=x1=100 doesn't work with gauge, use xref="paper" and adjust by eye
+    xref: 'paper',
+    x0: 0.475,
+    x1: 0.475,
+    yref: 'paper',
+    y0: 0.1,
+    y1: 0.9,
+    line: {
+      color: c_grey,
+      width: 2,
+      dash: "dash",
+    },
+  }],
+  // let width be set automatically
+  height: 118,
+  autosize: true,
+  font: {
+    color: c_grey,
+    size: 12,
+  },
+  margin: {
+    t: 30,
+    b: 15,
+    l: 0,
+    r: 0,
+    p: 0,
+  },
+};
+
 let pressure_value_normalized_gauge_data = [
   {
-    domain: {x: [0.1, 0.9], y: [0.2, 1]},
-    value: 0,
-    title: { text: "%" },
     type: "indicator",
     mode: "gauge+number",
-    delta: { reference: 100 },
+    domain: {
+      x: [0.1, 0.9],
+      y: [0.1, 0.9],
+    },
+    value: 0,
+    number: {
+      suffix: "%",
+      valueformat: ".2f",
+    },
     gauge: {
       shape: "bullet",
-      axis: { range: [0, 150] },
-      bar: {color: "#262626"},
+      axis: {
+        range: [0, 160],
+        dtick: 20,
+        tickwidth: 1,
+        tickcolor: c_grey,
+      },
+      borderwidth: 1,
+      bordercolor: c_grey,
+      bar: {
+        color: c_grey,
+        thickness: 0.4,
+      },
       steps: [
-        { range: [0, 50], color: "#C84E00" },
+        {range: [0, 40], color: c_orange},
+        {range: [40, 60], color: c_yellow},
       ],
+      /*
+      // easy to set in axis coordinates, but dash doesn't work
+      // use shapes on page instead
+      threshold: {
+        line: {
+          color: "red",
+          dash: "dash",
+        },
+        thickness: 1,
+        value: 100,
+      },
+      */
     },
   },
 ];
 
-let gauge_layout = { width: 400, height: 100, margin: { t: 0, b: 0, l: 0, r: 0 } };
 
 Plotly.newPlot(pressure_value_normalized_gauge_div, pressure_value_normalized_gauge_data, gauge_layout, graph_config);
 
@@ -94,10 +167,16 @@ function updateGauge(pressure_value_normalized) {
   Plotly.update(pressure_value_normalized_gauge_div, pressure_value_normalized_update);
 }
 
-// trace layout
+// traces
 let mean_layout = {
-  xaxis: {title: "1 Min Samples"},
-  yaxis: {title: "Mean Pressure %"},
+  xaxis: {
+    title: "1 Min Samples",
+    zeroline: false,
+  },
+  yaxis: {
+    title: "Mean Pressure %",
+    zeroline: false,
+  },
   colorway: [c0],
   showlegend: true,
   legend: {
@@ -117,12 +196,22 @@ let mean_layout = {
     y1: 100,
     line: {
       color: c_grey,
+      width: 2,
       dash: "dash",
     },
   }],
   autosize: true,
-  margin: {t: 0, b: 70, l: 70, r: 0},
-  font: {color: c_grey, size: 14},
+  margin: {
+    t: 0,
+    b: 70,
+    l: 70,
+    r: 0,
+    p: 0,
+  },
+  font: {
+    color: c_grey,
+    size: 14
+  },
 };
 
 let mean_trace = {
@@ -132,17 +221,19 @@ let mean_trace = {
   mode: "lines+markers",
   marker: {
     size: marker_size_large,
-    line: {width: 1.5},
+    line: {
+      width: 1.5,
+    },
     symbol: [],
   },
-  showlegend: false, 
+  showlegend: false,
 };
 
-let live_layout = JSON.parse(JSON.stringify(mean_layout))
-let live_trace = JSON.parse(JSON.stringify(mean_trace))
+let live_layout = JSON.parse(JSON.stringify(mean_layout));
+let live_trace = JSON.parse(JSON.stringify(mean_trace));
 
 live_layout["xaxis"]["title"] = "Polling Samples";
-live_layout["xaxis"]["range"] = [0,60];
+live_layout["xaxis"]["range"] = [-2.5, 62.5];
 live_layout["yaxis"]["title"] = "Pressure %";
 live_layout["showlegend"] = false;
 live_trace["mode"] = "markers";
@@ -194,7 +285,10 @@ function update_chart(div, x_array, y_array, ms_array, mc_array, max_graph_point
     y: [y_array],
     marker: {
       size: marker_size,
-      line: {width: 1.5},
+      line: {
+        width: 1.5,
+        color: mc_array,
+      },
       symbol: ms_array,
       color: mc_array,
     },
@@ -225,11 +319,11 @@ function updateAll(data) {
   }
 
   if (updated_mean) {
-    let t_str_n_last = data.t_est_str_n_last
-    let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last
-    let past_had_flow_n_last = data.past_had_flow_n_last
-    let ms_n_last = []
-    let mc_n_last = []
+    let t_str_n_last = data.t_est_str_n_last;
+    let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last;
+    let past_had_flow_n_last = data.past_had_flow_n_last;
+    let ms_n_last = [];
+    let mc_n_last = [];
 
     for (let i = 0; i < mean_pressure_value_normalized_n_last.length; i++) {
       mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
@@ -265,7 +359,7 @@ function updateAll(data) {
     marker_size_small,
     i_polling,
     pressure_value_normalized,
-    had_flow
+    had_flow,
   );
 
 }
