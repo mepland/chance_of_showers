@@ -65,7 +65,7 @@ const graph_config = {
 
 // boxes
 function updateBoxes(t_str, i_polling, pressure_value, had_flow) {
-  datetime_box_div.innerHTML = t_str.substr(0,t_str.length-3) + ", i = " + i_polling;
+  datetime_box_div.innerHTML = t_str.substr(0, t_str.length-3) + " i=" + i_polling.toString().padStart(2, '0');
   pressure_value_box_div.innerHTML = pressure_value;
   had_flow_box_div.innerHTML = had_flow;
 }

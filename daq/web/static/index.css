@@ -19,9 +19,10 @@ body {
   font-weight: 500;
 }
 .box .number {
-  font-size: 28px;
+  font-size: 27px;
   margin-top: -6px;
   font-weight: 500;
+  font-family: monospace;
 }
 .my-primary{
   color: #012169;
