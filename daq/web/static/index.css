@@ -1,5 +1,8 @@
 body {
-  background-color: #f5f5f5;
+  background-color: #E2E6ED;
+}
+.bg-dark {
+  background-color: #666666;
 }
 .bg-white {
   background-color: #fff;
