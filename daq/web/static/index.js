@@ -126,7 +126,7 @@ let pressure_value_normalized_gauge_data = [
       shape: "bullet",
       axis: {
         range: [0, 160],
-        dtick: 20,
+        dtick: 40,
         tickwidth: 1,
         tickcolor: c_grey,
       },
