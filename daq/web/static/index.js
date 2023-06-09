@@ -23,8 +23,8 @@ const mc_flow_1 = c1;
 const marker_size_large = 12;
 const marker_size_small = 6;
 
-// flow null traces
-const legend_trace_flow_0 = {
+// flow null traces for legend entries
+const legend_entry_trace_flow_0 = {
   x: [null],
   y: [null],
   name: "No Flow",
@@ -40,7 +40,7 @@ const legend_trace_flow_0 = {
     color: mc_flow_0,
   },
 };
-const legend_trace_flow_1 = {
+const legend_entry_trace_flow_1 = {
   x: [null],
   y: [null],
   name: "Had Flow",
@@ -176,6 +176,8 @@ let mean_layout = {
   yaxis: {
     title: "Mean Pressure %",
     zeroline: false,
+	hoverformat: '.2f',
+
   },
   colorway: [c0],
   showlegend: true,
@@ -217,6 +219,7 @@ let mean_layout = {
 let mean_trace = {
   x: [],
   y: [],
+  customdata: [],
   type: "scatter",
   mode: "lines+markers",
   marker: {
@@ -227,6 +230,11 @@ let mean_trace = {
     symbol: [],
   },
   showlegend: false,
+  hovertemplate:
+    "1 Min Sample: %{x:%Y-%m-%d %H:%M:%S}<br>" +
+    "Mean Pressure: %{y:.2f}%<br>" +
+    "Had Flow: %{customdata:.0f}" +
+    "<extra></extra>"
 };
 
 let live_layout = JSON.parse(JSON.stringify(mean_layout));
@@ -238,36 +246,44 @@ live_layout["yaxis"]["title"] = "Pressure %";
 live_layout["showlegend"] = false;
 live_trace["mode"] = "markers";
 live_trace["marker"]["size"] = marker_size_small;
+live_trace["hovertemplate"] =
+    "i: %{x:.0f}<br>" +
+    "Pressure: %{y:.2f}%<br>" +
+    "Flow: %{customdata:.0f}" +
+    "<extra></extra>";
 
 Plotly.newPlot(
   mean_div,
-  [mean_trace, legend_trace_flow_0, legend_trace_flow_1],
+  [mean_trace, legend_entry_trace_flow_0, legend_entry_trace_flow_1],
   mean_layout,
   graph_config
 );
 
 Plotly.newPlot(
   live_div,
-  [live_trace, legend_trace_flow_0, legend_trace_flow_1],
+  [live_trace, legend_entry_trace_flow_0, legend_entry_trace_flow_1],
   live_layout,
   graph_config
 );
 
 let live_x_array = [];
 let live_y_array = [];
+let live_z_array = [];
 let live_ms_array = [];
 let live_mc_array = [];
 
-function update_chart(div, x_array, y_array, ms_array, mc_array, max_graph_points, marker_size=marker_size_large, x_value=null, y_value=null, z_value=null) {
+function update_chart(div, x_array, y_array, z_array, ms_array, mc_array, max_graph_points, marker_size=marker_size_large, x_value=null, y_value=null, z_value=null) {
   if ( 0 < max_graph_points) {
     if (max_graph_points <= x_array.length ) {
       x_array.shift();
       y_array.shift();
+      z_array.shift();
       ms_array.shift();
       mc_array.shift();
     }
     x_array.push(x_value);
     y_array.push(y_value);
+    z_array.push(z_value);
 
     if (z_value == 0) {
       ms_array.push(ms_flow_0);
@@ -283,6 +299,7 @@ function update_chart(div, x_array, y_array, ms_array, mc_array, max_graph_point
   let data_update = {
     x: [x_array],
     y: [y_array],
+    customdata: [z_array],
     marker: {
       size: marker_size,
       line: {
@@ -343,6 +360,7 @@ function updateAll(data) {
       mean_div,
       t_str_n_last,
       mean_pressure_value_normalized_n_last,
+      past_had_flow_n_last,
       ms_n_last,
       mc_n_last,
       -1,
@@ -353,6 +371,7 @@ function updateAll(data) {
     live_div,
     live_x_array,
     live_y_array,
+    live_z_array,
     live_ms_array,
     live_mc_array,
     60,
