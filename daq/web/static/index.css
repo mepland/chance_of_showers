@@ -1,13 +1,10 @@
 body {
   background-color: #E2E6ED;
 }
-.bg-dark {
-  background-color: #666666;
+.my-primary {
+  background-color: #012169;
 }
 .bg-white {
-  background-color: #fff;
-}
-.sidebar {
   background-color: #fff;
 }
 .box {
@@ -23,7 +20,4 @@ body {
   margin-top: -6px;
   font-weight: 500;
   font-family: monospace;
-}
-.my-primary{
-  color: #012169;
 }
