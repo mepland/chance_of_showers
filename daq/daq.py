@@ -1,5 +1,6 @@
 ################################################################################
 # display options
+log_to_file = True
 display_terminal = True
 display_terminal_overwrite = True
 display_oled = True
@@ -17,7 +18,7 @@ date_fmt = "%Y-%m-%d"
 time_fmt = "%H:%M:%S"
 datetime_fmt = f"{date_fmt} {time_fmt}"
 
-m_path = "~/chance_of_showers/daq/raw_data"
+m_path = "~/chance_of_showers/daq"
 
 # pressure variables and functions
 observed_pressure_min = 6400
@@ -27,6 +28,7 @@ observed_pressure_max = 14000
 # python imports
 import os
 import sys
+import logging
 import signal
 import datetime
 from zoneinfo import ZoneInfo
@@ -34,12 +36,102 @@ import pause
 import numpy as np
 from csv import writer
 
+################################################################################
+# paths
+m_path = os.path.expanduser(m_path)
+os.makedirs(f"{m_path}/raw_data", exist_ok=True)
+os.makedirs(f"{m_path}/logs", exist_ok=True)
+
+################################################################################
+# logging
+logger_daq = logging.getLogger("daq")
+logger_daq.setLevel(logging.INFO)
+
+if log_to_file:
+    log_datetime = (
+        datetime.datetime.now().astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M")
+    )
+
+    logging_fh = logging.FileHandler(f"{m_path}/logs/daq_{log_datetime}.log")
+    logging_fh.setLevel(logging.INFO)
+
+    logging_formatter = logging.Formatter(
+        "%(asctime)s [%(name)-8.8s] [%(threadName)-10.10s] [%(levelname)-8.8s] %(message)s",
+        datetime_fmt,
+    )
+
+    logging_fh.setFormatter(logging_formatter)
+
+    logger_daq.addHandler(logging_fh)
+
+
+# we could just add a StreamHandler to logger,
+# but as we also want to erase lines on stdout we will define our own print function instead
+def my_print(
+    line,
+    logger_level=logging.INFO,
+    use_print=display_terminal,
+    print_prefix="",
+    print_postfix="",
+    use_stdout_overwrite=False,
+):
+    if not log_to_file or logger_level is None:
+        pass
+    elif logger_level == logging.CRITICAL:
+        logger_daq.critical(line)
+    elif logger_level == logging.ERROR:
+        logger_daq.error(line)
+    elif logger_level == logging.WARNING:
+        logger_daq.warning(line)
+    elif logger_level == logging.INFO:
+        logger_daq.info(line)
+    elif logger_level == logging.DEBUG:
+        logger_daq.debug(line)
+    else:
+        logger_daq.critical(
+            f"Unknown {logger_level=}, {type(logger_level)=} in my_print, logging as {logging.CRITICAL=}"
+        )
+        logger_daq.critical(line)
+
+    if use_print:
+        print(f"{print_prefix}{line}{print_postfix}")
+
+    if use_stdout_overwrite:
+        # https://stackoverflow.com/a/39177802
+        sys.stdout.write("\x1b[1A\x1b[2K" + line + "\r")
+        sys.stdout.flush()
+
+
+################################################################################
+# helper variables and functions
+
+
+# pressure normalization
+def normalize_pressure_value(pressure_value):
+    return (pressure_value - observed_pressure_min) / (
+        observed_pressure_max - observed_pressure_min
+    )
+
+
+# DAQ variables
+n_polling = int(np.ceil(averaging_period_seconds / polling_period_seconds))
+# TODo test if defining here first saves memory?
+polling_pressure_samples = np.empty(n_polling)
+polling_pressure_samples.fill(np.nan)
+polling_flow_samples = np.zeros(n_polling)
+
+
+# Get SoC's temperature
+def get_SoC_temp():
+    res = os.popen("vcgencmd measure_temp").readline()
+    temp = float(res.replace("temp=", "").replace("'C\n", ""))
+
+    return temp
+
 
 # catch ctrl+c and kill, shut down gracefully https://stackoverflow.com/a/38665760
 def signal_handler(signal, frame):
-    if display_terminal:
-        print("\nDAQ exiting gracefully")
-
+    my_print("DAQ exiting gracefully", print_prefix="\n")
     sys.exit(0)
 
 
@@ -106,6 +198,11 @@ if display_oled:
     except OSError:
         font_size = 12
         oled_font = ImageFont.load_default()
+    except Exception as error:
+        my_print(
+            f"Unexpected {error=}, {type(error)=}, exiting!", logger_level=logging.ERROR
+        )
+        sys.exit(1)
 
     def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
         try:
@@ -121,8 +218,13 @@ if display_oled:
                         fill="white",
                         font=oled_font,
                     )
-        except:
+        except Exception as error:
             # don't want to kill the daq just because of an OLED problem
+            my_print(
+                f"Error in paint_oled() {error=}, {type(error)=}, continuing",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
             pass
 
 
@@ -150,7 +252,14 @@ if display_web:
     app.config["SECRET_KEY"] = "test"
     app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-    sio = SocketIO(app, cors_allowed_origins="*")
+    logger_sio = logging.getLogger("sio")
+    logger_sio.setLevel(logging.WARNING)
+    if log_to_file:
+        logger_sio.addHandler(logging_fh)
+
+    sio = SocketIO(
+        app, cors_allowed_origins="*", logger=logger_sio, engineio_logger=logger_sio
+    )
 
     @app.route("/")
     def index():
@@ -161,57 +270,35 @@ if display_web:
     def connect():
         global new_connection
         new_connection = True
-        if display_web_logging_terminal:
-            print("Client connected")
+        my_print(
+            "Client connected",
+            use_print=(display_terminal and display_web_logging_terminal),
+        )
 
-    if display_web_logging_terminal:
-        # Decorator for disconnect
-        @sio.on("disconnect")
-        def disconnect():
-            print("Client disconnected", request.sid)
+    # Decorator for disconnect
+    @sio.on("disconnect")
+    def disconnect():
+        my_print(
+            f"Client disconnected: {request.sid}",
+            use_print=(display_terminal and display_web_logging_terminal),
+        )
 
-    else:
+    if not display_web_logging_terminal:
         # No messages in terminal
         import flask.cli
 
         flask.cli.show_server_banner = lambda *args: None
 
-        import logging
-
-        log = logging.getLogger("werkzeug")
-        log.setLevel(logging.ERROR)
+    # never write werkzeug logs to terminal
+    log_werkzeug = logging.getLogger("werkzeug")
+    log_werkzeug.setLevel(logging.WARNING)
+    if log_to_file:
+        log_werkzeug.addHandler(logging_fh)
 
     n_last = 15
     t_est_str_n_last = []
     mean_pressure_value_normalized_n_last = []
     past_had_flow_n_last = []
-
-
-################################################################################
-# helper variables and functions
-def normalize_pressure_value(pressure_value):
-    return (pressure_value - observed_pressure_min) / (
-        observed_pressure_max - observed_pressure_min
-    )
-
-
-m_path = os.path.expanduser(m_path)
-os.makedirs(m_path, exist_ok=True)
-
-n_polling = int(np.ceil(averaging_period_seconds / polling_period_seconds))
-
-# TODo test if defining here first saves memory?
-polling_pressure_samples = np.empty(n_polling)
-polling_pressure_samples.fill(np.nan)
-polling_flow_samples = np.zeros(n_polling)
-
-
-# Get SoC's temperature
-def get_SoC_temp():
-    res = os.popen("vcgencmd measure_temp").readline()
-    temp = float(res.replace("temp=", "").replace("'C\n", ""))
-
-    return temp
 
 
 ################################################################################
@@ -229,8 +316,7 @@ t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-if display_terminal:
-    print(f"       Starting DAQ at {t_utc_str} UTC, {t_est_str} EST")
+my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       ")
 
 if display_oled:
     # write to OLED display
@@ -244,9 +330,12 @@ pause.until(t_start)
 
 t_start = datetime.datetime.now()
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-if display_terminal:
-    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-    print(f"\nStarted taking data at {t_utc_str} UTC, {t_est_str} EST\n\n")
+t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+my_print(
+    f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
+    print_prefix="\n",
+    print_postfix="\n\n",
+)
 
 
 ################################################################################
@@ -282,16 +371,14 @@ def daq_loop():
             # display
             pressure_value_normalized = normalize_pressure_value(pressure_value)
 
-            if display_terminal:
-                line1 = f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}"
-                line2 = f"i = {i_polling:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}\r"
-                if display_terminal_overwrite:
-                    # https://stackoverflow.com/a/39177802
-                    sys.stdout.write("\x1b[1A\x1b[2K" + line1 + "\n" + line2 + "\r")
-                    sys.stdout.flush()
-                else:
-                    # print(line1)
-                    print(line2)
+            line1 = f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}"
+            line2 = f"i = {i_polling:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}"
+            my_print(
+                f"{line1}\n{line2}",
+                logger_level=logging.DEBUG,
+                use_print=(display_terminal and not display_terminal_overwrite),
+                use_stdout_overwrite=(display_terminal and display_terminal_overwrite),
+            )
 
             if display_oled:
                 # write to OLED display
@@ -327,8 +414,13 @@ def daq_loop():
                         _data["past_had_flow_n_last"] = past_had_flow_n_last
 
                     sio.emit("emit_data", json.dumps(_data))
-                except:
+                except Exception as error:
                     # don't want to kill the daq just because of a web problem
+                    my_print(
+                        f"Error in sio.emit {error=}, {type(error)=}, continuing",
+                        logger_level=logging.DEBUG,
+                        use_print=False,
+                    )
                     pass
 
             # wait polling_period_seconds between data points to average
@@ -340,7 +432,7 @@ def daq_loop():
             i_polling += 1
             t_stop = datetime.datetime.now()
 
-        # take mean and save data point to csv in m_path
+        # take mean and save data point to csv in m_path/raw_data
         t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
         if display_web:
             t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(
@@ -352,7 +444,7 @@ def daq_loop():
         new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
         fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
-        with open(f"{m_path}/date_{fname_date}.csv", "a") as f:
+        with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a") as f:
             w = writer(f)
             if f.tell() == 0:
                 # empty file, create header
@@ -373,8 +465,13 @@ def daq_loop():
                     del t_est_str_n_last[0]
                     del mean_pressure_value_normalized_n_last[0]
                     del past_had_flow_n_last[0]
-            except:
+            except Exception as error:
                 # don't want to kill the daq just because of a web problem
+                my_print(
+                    f"Error updating _n_last lists {error=}, {type(error)=}, continuing",
+                    logger_level=logging.DEBUG,
+                    use_print=False,
+                )
                 pass
 
 
@@ -393,6 +490,11 @@ sio.start_background_task(daq_loop)
 if display_web:
     try:
         sio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
-    except:
+    except Exception as error:
         # don't want to kill the daq just because of a web problem
+        my_print(
+            f"Error in sio.run {error=}, {type(error)=}, continuing",
+            logger_level=logging.DEBUG,
+            use_print=False,
+        )
         pass
