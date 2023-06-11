@@ -272,6 +272,7 @@ if display_web:
     import json
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
+    import python_arptable
 
     flask_app = Flask(
         __name__,
@@ -301,13 +302,24 @@ if display_web:
     def index():
         return render_template("index.html")
 
+    def conn_details():
+        ip_address = request.remote_addr
+        mac_address = "Unknown"
+        for _ in python_arptable.get_arp_table():
+            if _.get("IP address", None) == ip_address:
+                mac_address = _.get("HW address", mac_address)
+                break
+        return (
+            f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
+        )
+
     # Decorator for connect
     @sio.on("connect")
     def connect():
         global new_connection
         new_connection = True
         my_print(
-            f"Client connected, sid = {request.sid}, remote_addr = {request.remote_addr}",
+            f"Client connected {conn_details()}",
             use_print=(display_terminal and display_web_logging_terminal),
         )
 
@@ -315,7 +327,7 @@ if display_web:
     @sio.on("disconnect")
     def disconnect():
         my_print(
-            f"Client disconnected, sid = {request.sid}, remote_addr = {request.remote_addr}",
+            f"Client disconnected {conn_details()}",
             use_print=(display_terminal and display_web_logging_terminal),
         )
 
