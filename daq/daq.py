@@ -2,11 +2,11 @@
 # display options
 log_to_file = True
 display_terminal = True
-display_terminal_overwrite = False
+display_terminal_overwrite = True
 display_oled = True
 display_web = True
 display_web_logging_terminal = False
-verbose = 1
+verbose = 0
 
 ################################################################################
 # DAQ parameters
@@ -204,7 +204,6 @@ flow_switch = Button(pin=19, pull_up=False, bounce_time=0.1, hold_time=1)
 flow_switch.when_held = rise
 flow_switch.when_released = fall
 
-
 ################################################################################
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
@@ -339,47 +338,43 @@ if display_web:
     mean_pressure_value_normalized_n_last = []
     past_had_flow_n_last = []
 
-
 ################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
-if __name__ == "__main__":
-    t_start = datetime.datetime.now()
-    t_start_minute = (
-        t_start.minute
-        - (t_start.minute % starting_time_minutes_mod)
-        + starting_time_minutes_mod
-    ) % 60
+t_start = datetime.datetime.now()
+t_start_minute = (
+    t_start.minute
+    - (t_start.minute % starting_time_minutes_mod)
+    + starting_time_minutes_mod
+) % 60
 
-    t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
+t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
-    t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 
-    if log_to_file:
-        my_print(f"Logging to {fname_log}", print_postfix="\n")
-    my_print(
-        f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       "
+if log_to_file:
+    my_print(f"Logging to {fname_log}", print_postfix="\n")
+my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       ")
+
+if display_oled:
+    # write to OLED display
+    t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
+    paint_oled(
+        [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
+        bounding_box=True,
     )
 
-    if display_oled:
-        # write to OLED display
-        t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
-        paint_oled(
-            [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
-            bounding_box=True,
-        )
+pause.until(t_start)
 
-    pause.until(t_start)
-
-    t_start = datetime.datetime.now()
-    t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-    my_print(
-        f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
-        print_prefix="\n",
-        print_postfix="\n\n",
-    )
+t_start = datetime.datetime.now()
+t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+my_print(
+    f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
+    print_prefix="\n",
+    print_postfix="\n\n",
+)
 
 
 ################################################################################
@@ -533,14 +528,14 @@ if thread_daq_loop is None:
 
 ################################################################################
 # serve index.html
-if False: # display_web and __name__ == "__main__":
+if display_web:
     try:
-        # TODO multiple threads of the whole script start here, one per connection
         sio.run(
             flask_app,
             port=5000,
             host="0.0.0.0",
-            debug=0 < verbose or display_web_logging_terminal,
+            # debug must be false to avoid duplicate threads of the entire script!
+            debug=False,
         )
     except Exception as error:
         # don't want to kill the daq just because of a web problem
