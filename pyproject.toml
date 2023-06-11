@@ -32,6 +32,7 @@ optional = true
 flask = "^2.3.2"
 flask-socketio = "^5.3.4"
 simple-websocket = "^0.10.0"
+python-arptable = "^0.0.2"
 
 [tool.poetry.group.ana]
 optional = true

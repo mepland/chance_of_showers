@@ -2726,6 +2726,17 @@ files = [
 cp2110 = ["hidapi"]
 
 [[package]]
+name = "python-arptable"
+version = "0.0.2"
+description = "Python simple arp table reader"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "python_arptable-0.0.2.tar.gz", hash = "sha256:5304cb119e8cce031229f3fc195ad5d9dd669c356891b5598b0e8d27bbce5bfe"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -3669,4 +3680,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "b0afe0b6ed8affadd8f0e1bd591cdad1f369944ff3855fae80943c51a85f3904"
+content-hash = "ae4f64f5662f4a07d7157e55e533c3647654c881e03c1b566015886806321510"
