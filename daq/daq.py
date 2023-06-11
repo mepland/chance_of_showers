@@ -119,9 +119,20 @@ def my_print(
 
 # pressure normalization
 def normalize_pressure_value(pressure_value):
-    return (pressure_value - observed_pressure_min) / (
-        observed_pressure_max - observed_pressure_min
-    )
+    try:
+        normalize_pressure_value_float = (pressure_value - observed_pressure_min) / (
+            observed_pressure_max - observed_pressure_min
+        )
+    except Exception as error:
+        # don't want to kill the DAQ just because of a display problem
+        # Note normalize_pressure_value() is only used to populate the displays, not save the raw data
+        my_print(
+            f"Unexpected error in normalize_pressure_value():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+            logger_level=logging.DEBUG,
+            use_print=False,
+        )
+        normalize_pressure_value_float = -1
+    return normalize_pressure_value_float
 
 
 # DAQ variables
@@ -134,8 +145,17 @@ polling_flow_samples = np.zeros(n_polling)
 
 # Get SoC's temperature
 def get_SoC_temp():
-    res = os.popen("vcgencmd measure_temp").readline()
-    temp = float(res.replace("temp=", "").replace("'C\n", ""))
+    try:
+        res = os.popen("vcgencmd measure_temp").readline()
+        temp = float(res.replace("temp=", "").replace("'C\n", ""))
+    except Exception as error:
+        # don't want to kill the DAQ just because of a problem reading the SoC temp
+        my_print(
+            f"Unexpected error in get_SoC_temp():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+            logger_level=logging.DEBUG,
+            use_print=False,
+        )
+        pass
 
     return temp
 
@@ -255,7 +275,7 @@ if display_oled:
             )
             pass
         except Exception as error:
-            # don't want to kill the daq just because of an OLED problem
+            # don't want to kill the DAQ just because of an OLED problem
             my_print(
                 f"Unexpected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                 logger_level=logging.DEBUG,
@@ -300,36 +320,73 @@ if display_web:
 
     @flask_app.route("/")
     def index():
-        return render_template("index.html")
+        try:
+            return render_template("index.html")
+        except Exception as error:
+            # don't want to kill the DAQ just because of a web problem
+            my_print(
+                f"Unexpected error in index():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
+            pass
 
     def conn_details():
-        ip_address = request.remote_addr
-        mac_address = "Unknown"
-        for _ in python_arptable.get_arp_table():
-            if _.get("IP address", None) == ip_address:
-                mac_address = _.get("HW address", mac_address)
-                break
-        return (
-            f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
-        )
+        try:
+            ip_address = request.remote_addr
+            mac_address = "Unknown"
+            for _ in python_arptable.get_arp_table():
+                if _.get("IP address", None) == ip_address:
+                    mac_address = _.get("HW address", mac_address)
+                    break
+            conn_details_str = f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
+
+        except Exception as error:
+            # don't want to kill the DAQ just because of a web problem
+            my_print(
+                f"Unexpected error in conn_details():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
+            conn_details_str = "ERROR"
+
+        return conn_details_str
 
     # Decorator for connect
     @sio.on("connect")
     def connect():
-        global new_connection
-        new_connection = True
-        my_print(
-            f"Client connected {conn_details()}",
-            use_print=(display_terminal and display_web_logging_terminal),
-        )
+        try:
+            global new_connection
+            new_connection = True
+            my_print(
+                f"Client connected {conn_details()}",
+                use_print=(display_terminal and display_web_logging_terminal),
+            )
+        except Exception as error:
+            # don't want to kill the DAQ just because of a web problem
+            my_print(
+                f"Unexpected error in connect():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
+            pass
 
     # Decorator for disconnect
     @sio.on("disconnect")
     def disconnect():
-        my_print(
-            f"Client disconnected {conn_details()}",
-            use_print=(display_terminal and display_web_logging_terminal),
-        )
+        try:
+            my_print(
+                f"Client disconnected {conn_details()}",
+                use_print=(display_terminal and display_web_logging_terminal),
+            )
+        except Exception as error:
+            # don't want to kill the DAQ just because of a web problem
+            my_print(
+                f"Unexpected error in disconnect():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
+            pass
 
     if not (0 < verbose or display_web_logging_terminal):
         # No messages in terminal
@@ -469,7 +526,7 @@ def daq_loop():
 
                     sio.emit("emit_data", json.dumps(_data))
                 except Exception as error:
-                    # don't want to kill the daq just because of a web problem
+                    # don't want to kill the DAQ just because of a web problem
                     my_print(
                         f"Unexpected error in sio.emit():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                         logger_level=logging.DEBUG,
@@ -520,7 +577,7 @@ def daq_loop():
                     del mean_pressure_value_normalized_n_last[0]
                     del past_had_flow_n_last[0]
             except Exception as error:
-                # don't want to kill the daq just because of a web problem
+                # don't want to kill the DAQ just because of a web problem
                 my_print(
                     f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
@@ -550,7 +607,7 @@ if display_web:
             debug=False,
         )
     except Exception as error:
-        # don't want to kill the daq just because of a web problem
+        # don't want to kill the DAQ just because of a web problem
         my_print(
             f"Unexpected error in sio.run():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
             logger_level=logging.DEBUG,
