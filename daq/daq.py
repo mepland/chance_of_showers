@@ -293,6 +293,7 @@ if display_web:
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
     import python_arptable
+    import socket
 
     flask_app = Flask(
         __name__,
@@ -407,6 +408,24 @@ if display_web:
     mean_pressure_value_normalized_n_last = []
     past_had_flow_n_last = []
 
+    # display link to dashboard
+    # https://stackoverflow.com/a/28950776
+    def get_ip_address():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            # doesn't even have to be reachable
+            s.connect(("10.254.254.254", 1))
+            ip_address = s.getsockname()[0]
+        except Exception:
+            ip_address = "127.0.0.1"
+        finally:
+            s.close()
+        return ip_address
+
+    port_number = 5000
+    host_ip_address = get_ip_address()
+
 ################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
@@ -423,8 +442,10 @@ t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 
 if log_to_file:
-    my_print(f"Logging to {fname_log}", print_postfix="\n")
-my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       ")
+    my_print(f"Logging to {fname_log}", print_prefix="\n")
+if display_web:
+    my_print(f"Live dashboard hosted at: http://{host_ip_address}:{port_number}", print_prefix="\n")
+my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="\n       ")
 
 if display_oled:
     # write to OLED display
@@ -601,7 +622,7 @@ if display_web:
     try:
         sio.run(
             flask_app,
-            port=5000,
+            port=port_number,
             host="0.0.0.0",
             # debug must be false to avoid duplicate threads of the entire script!
             debug=False,
