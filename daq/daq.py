@@ -2,10 +2,11 @@
 # display options
 log_to_file = True
 display_terminal = True
-display_terminal_overwrite = True
+display_terminal_overwrite = False
 display_oled = True
-display_web = True  # MUST BE TRUE FOR NOW as we are using socketio to run our DAQ thread TODO disconnect these!
+display_web = True
 display_web_logging_terminal = False
+verbose = 1
 
 ################################################################################
 # DAQ parameters
@@ -28,13 +29,16 @@ observed_pressure_max = 14000
 # python imports
 import os
 import sys
+import traceback
 import logging
 import signal
 import datetime
 from zoneinfo import ZoneInfo
+import time
 import pause
 import numpy as np
 from csv import writer
+import threading
 
 ################################################################################
 # paths
@@ -46,14 +50,21 @@ os.makedirs(f"{m_path}/logs", exist_ok=True)
 # logging
 logger_daq = logging.getLogger("daq")
 logger_daq.setLevel(logging.INFO)
+if 0 < verbose:
+    logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
     log_datetime = (
-        datetime.datetime.now().astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M")
+        datetime.datetime.now()
+        .astimezone(ZoneInfo("UTC"))
+        .strftime("%Y-%m-%d-%H-%M-%S")
     )
 
-    logging_fh = logging.FileHandler(f"{m_path}/logs/daq_{log_datetime}.log")
+    fname_log = f"daq_{log_datetime}.log"
+    logging_fh = logging.FileHandler(f"{m_path}/logs/{fname_log}")
     logging_fh.setLevel(logging.INFO)
+    if 0 < verbose:
+        logging_fh.setLevel(logging.DEBUG)
 
     logging_formatter = logging.Formatter(
         "%(asctime)s [%(name)-8.8s] [%(threadName)-10.10s] [%(levelname)-8.8s] %(message)s",
@@ -129,8 +140,21 @@ def get_SoC_temp():
     return temp
 
 
-# catch ctrl+c and kill, shut down gracefully https://stackoverflow.com/a/38665760
+# catch ctrl+c and kill, and shut down gracefully
+# https://stackoverflow.com/a/38665760
+# Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
+thread_daq_loop = None
+running_daq_loop = True
+
+
 def signal_handler(signal, frame):
+    global running_daq_loop
+    my_print(
+        f"DAQ loop will exit gracefully in {2 * polling_period_seconds} seconds",
+        print_prefix="\n",
+    )
+    running_daq_loop = False
+    time.sleep(2 * polling_period_seconds)
     my_print("DAQ exiting gracefully", print_prefix="\n")
     sys.exit(0)
 
@@ -188,6 +212,7 @@ if display_oled:
     from luma.core.interface.serial import i2c
     from luma.core.render import canvas
     from luma.oled.device import sh1106
+    from luma.core.error import DeviceNotFoundError
     from PIL import ImageFont
 
     i2c_device = sh1106(i2c(port=1, address=0x3C), rotate=0)
@@ -200,7 +225,8 @@ if display_oled:
         oled_font = ImageFont.load_default()
     except Exception as error:
         my_print(
-            f"Unexpected {error=}, {type(error)=}, exiting!", logger_level=logging.ERROR
+            f"Unexpected error in ImageFont:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nExiting!",
+            logger_level=logging.ERROR,
         )
         sys.exit(1)
 
@@ -218,10 +244,21 @@ if display_oled:
                         fill="white",
                         font=oled_font,
                     )
+        except (OSError, DeviceNotFoundError, TypeError) as error:
+            # do not log device not connected errors, OLED power is probably just off
+            my_print(
+                # f"Expected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                # f"Expected error in paint_oled(): {error=}, Continuing",
+                # logger_level=logging.DEBUG,
+                line="",
+                logger_level=None,
+                use_print=False,
+            )
+            pass
         except Exception as error:
             # don't want to kill the daq just because of an OLED problem
             my_print(
-                f"Error in paint_oled() {error=}, {type(error)=}, continuing",
+                f"Unexpected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
@@ -231,37 +268,37 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
-new_connection = bool(False)
+new_connection = False
 if display_web:
     import json
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
 
-    # from threading import Lock
-
-    # thread = None
-    # thread_lock = Lock()
-
-    app = Flask(
+    flask_app = Flask(
         __name__,
         static_url_path="",
         static_folder="web/static",
         template_folder="web/templates",
     )
 
-    app.config["SECRET_KEY"] = "test"
-    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    flask_app.config["SECRET_KEY"] = "test"
+    flask_app.config["TEMPLATES_AUTO_RELOAD"] = True
 
     logger_sio = logging.getLogger("sio")
     logger_sio.setLevel(logging.WARNING)
+    if 1 < verbose:
+        logger_sio.setLevel(logging.DEBUG)
     if log_to_file:
         logger_sio.addHandler(logging_fh)
 
     sio = SocketIO(
-        app, cors_allowed_origins="*", logger=logger_sio, engineio_logger=logger_sio
+        flask_app,
+        cors_allowed_origins="*",
+        logger=logger_sio,
+        engineio_logger=logger_sio,
     )
 
-    @app.route("/")
+    @flask_app.route("/")
     def index():
         return render_template("index.html")
 
@@ -271,7 +308,7 @@ if display_web:
         global new_connection
         new_connection = True
         my_print(
-            "Client connected",
+            f"Client connected, sid = {request.sid}, remote_addr = {request.remote_addr}",
             use_print=(display_terminal and display_web_logging_terminal),
         )
 
@@ -279,11 +316,11 @@ if display_web:
     @sio.on("disconnect")
     def disconnect():
         my_print(
-            f"Client disconnected: {request.sid}",
+            f"Client disconnected, sid = {request.sid}, remote_addr = {request.remote_addr}",
             use_print=(display_terminal and display_web_logging_terminal),
         )
 
-    if not display_web_logging_terminal:
+    if not (0 < verbose or display_web_logging_terminal):
         # No messages in terminal
         import flask.cli
 
@@ -292,6 +329,8 @@ if display_web:
     # never write werkzeug logs to terminal
     log_werkzeug = logging.getLogger("werkzeug")
     log_werkzeug.setLevel(logging.WARNING)
+    if 0 < verbose:
+        log_werkzeug.setLevel(logging.DEBUG)
     if log_to_file:
         log_werkzeug.addHandler(logging_fh)
 
@@ -304,43 +343,49 @@ if display_web:
 ################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
+if __name__ == "__main__":
+    t_start = datetime.datetime.now()
+    t_start_minute = (
+        t_start.minute
+        - (t_start.minute % starting_time_minutes_mod)
+        + starting_time_minutes_mod
+    ) % 60
 
-t_start = datetime.datetime.now()
-t_start_minute = (
-    t_start.minute
-    - (t_start.minute % starting_time_minutes_mod)
-    + starting_time_minutes_mod
-) % 60
+    t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
-t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
+    t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 
-t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       ")
-
-if display_oled:
-    # write to OLED display
-    t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
-    paint_oled(
-        [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
-        bounding_box=True,
+    if log_to_file:
+        my_print(f"Logging to {fname_log}", print_postfix="\n")
+    my_print(
+        f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="       "
     )
 
-pause.until(t_start)
+    if display_oled:
+        # write to OLED display
+        t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
+        paint_oled(
+            [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
+            bounding_box=True,
+        )
 
-t_start = datetime.datetime.now()
-t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
-my_print(
-    f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
-    print_prefix="\n",
-    print_postfix="\n\n",
-)
+    pause.until(t_start)
+
+    t_start = datetime.datetime.now()
+    t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+    t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+    my_print(
+        f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
+        print_prefix="\n",
+        print_postfix="\n\n",
+    )
 
 
 ################################################################################
 # daq loop
 def daq_loop():
+    global running_daq_loop
     global new_connection
     global t_utc_str
     global t_est_str
@@ -348,7 +393,7 @@ def daq_loop():
     mean_pressure_value = -1
     mean_pressure_value_normalized = -1
     past_had_flow = -1
-    while True:
+    while running_daq_loop:
         # Set seconds to 0 to avoid drift over multiple hours / days
         t_start = datetime.datetime.now().replace(second=0, microsecond=0)
         t_stop = t_start
@@ -359,7 +404,9 @@ def daq_loop():
         had_flow = 0  # avoid sticking high if we lose pressure while flowing
         polling_pressure_samples.fill(np.nan)
         polling_flow_samples = np.zeros(n_polling)
-        while t_stop - t_start < datetime.timedelta(seconds=averaging_period_seconds):
+        while running_daq_loop and t_stop - t_start < datetime.timedelta(
+            seconds=averaging_period_seconds
+        ):
             # sample pressure and flow
             pressure_value = int(chan_0.value)
             flow_value = int(had_flow)
@@ -417,7 +464,7 @@ def daq_loop():
                 except Exception as error:
                     # don't want to kill the daq just because of a web problem
                     my_print(
-                        f"Error in sio.emit {error=}, {type(error)=}, continuing",
+                        f"Unexpected error in sio.emit():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                         logger_level=logging.DEBUG,
                         use_print=False,
                     )
@@ -468,33 +515,43 @@ def daq_loop():
             except Exception as error:
                 # don't want to kill the daq just because of a web problem
                 my_print(
-                    f"Error updating _n_last lists {error=}, {type(error)=}, continuing",
+                    f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
                 pass
 
+    my_print(f"Exiting daq_loop() via {running_daq_loop=}")
+
 
 ################################################################################
-# run daq loop
-# if display_web:
-# TODO sometimes multiple threads start, even with thread_lock!
-# with thread_lock:
-#    if thread is None:
-# TODO get control C working on threads
-#        thread = sio.start_background_task(daq_loop)
-sio.start_background_task(daq_loop)
+# start daq_loop()
+if thread_daq_loop is None:
+    # kill gracefully via running_daq_loop
+    thread_daq_loop = threading.Thread(target=daq_loop)
+    thread_daq_loop.start()
 
 ################################################################################
 # serve index.html
-if display_web:
+if False: # display_web and __name__ == "__main__":
     try:
-        sio.run(app, port=5000, host="0.0.0.0", debug=display_web_logging_terminal)
+        # TODO multiple threads of the whole script start here, one per connection
+        sio.run(
+            flask_app,
+            port=5000,
+            host="0.0.0.0",
+            debug=0 < verbose or display_web_logging_terminal,
+        )
     except Exception as error:
         # don't want to kill the daq just because of a web problem
         my_print(
-            f"Error in sio.run {error=}, {type(error)=}, continuing",
+            f"Unexpected error in sio.run():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
             logger_level=logging.DEBUG,
             use_print=False,
         )
         pass
+
+################################################################################
+# run daq_loop() until we exit the main thread
+if thread_daq_loop is not None:
+    thread_daq_loop.join()
