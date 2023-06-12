@@ -1,0 +1,23 @@
+body {
+  background-color: #E2E6ED;
+}
+.my-primary {
+  background-color: #012169;
+}
+.bg-white {
+  background-color: #fff;
+}
+.box {
+  background: #012169;
+  color: #fff;
+}
+.box .box-topic {
+  font-size: 20px;
+  font-weight: 500;
+}
+.box .number {
+  font-size: 27px;
+  margin-top: -6px;
+  font-weight: 500;
+  font-family: monospace;
+}

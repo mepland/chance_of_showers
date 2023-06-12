@@ -21,13 +21,18 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```
 Then install the `python` packages needed for this installation. Groups include:
 - `daq` for packages needed to run the DAQ script on a Raspbery Pi, optional
+- `web` for packages needed to run the live dashboard from the DAQ script, optional
 - `ana` for analysis tools, optional
 - `dev` for CI and linting tools
 
 ```bash
-poetry install --with daq
+poetry install --with daq,web,dev
 ```
 or
 ```bash
-poetry install --with ana
+poetry install --with ana,dev
 ```
+
+## Opening the Web Dashboard
+If `daq.py` is running with `display_web = True`,
+the local IP address and port of the dashboard will be logged on startup.

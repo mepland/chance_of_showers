@@ -6,6 +6,7 @@ output
 *style_file*.html
 *.pdf
 *.png
+*.log
 
 daq/raw_data/
 saved_data/
