@@ -206,7 +206,7 @@ chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
 from gpiozero import Button
 
-had_flow = int(0)
+had_flow = 0
 
 
 def rise(n):
