@@ -310,7 +310,6 @@ function update_chart(div, x_array, y_array, z_array, ms_array, mc_array, max_gr
       color: mc_array,
     },
   };
-  // console.log(data_update);
 
   Plotly.update(div, data_update, {}, [0]);
 }
@@ -384,14 +383,11 @@ function updateAll(data) {
 }
 
 // SocketIO Code
-// let socket = io.connect("http://" + document.domain + ":" + location.port);
-
 let socket = io.connect();
 
 // receive data from server
 socket.on("emit_data", function (msg) {
   let data = JSON.parse(msg);
-  // write data to console for debugging
   // console.log(msg);
   updateAll(data);
 });
