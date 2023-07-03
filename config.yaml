@@ -13,6 +13,12 @@ daq:
 etl:
   saved_data: "daq/saved_data"
 # no hydra logging
+# https://stackoverflow.com/a/70777327
 defaults:
-  hydra/hydra_logging: none
-  hydra/job_logging: none
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+hydra:
+  output_subdir: null
+  run:
+    dir: .
