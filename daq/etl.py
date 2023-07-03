@@ -19,7 +19,8 @@ def etl(cfg):
     time_fmt = cfg["general"]["time_fmt"]
     datetime_fmt = f"{date_fmt} {time_fmt}"
 
-    # when t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0) fixed the issue of drifting seconds
+    # when the issue of drifting seconds was fixed by
+    # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
     dt_end_of_drifting_seconds = datetime.datetime.strptime(
         cfg["daq"]["end_of_drifting_seconds"], datetime_fmt
     ).replace(tzinfo=ZoneInfo("UTC"))

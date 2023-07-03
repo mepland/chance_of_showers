@@ -6,7 +6,8 @@ general:
   time_fmt: "%H:%M:%S"
 daq:
   raw_data: "daq/raw_data"
-  # when t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0) fixed the issue of drifting seconds
+  # when the issue of drifting seconds was fixed by
+  # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
   end_of_drifting_seconds: "2023-05-02 01:22:08"
   # when web threading was fixed, eliminating duplicate records from multiple threads
   end_of_threading_duplicates: "2023-05-31 04:36:00"
