@@ -9,4 +9,4 @@ output
 *.log
 
 daq/raw_data/
-saved_data/
+daq/saved_data/

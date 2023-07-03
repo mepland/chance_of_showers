@@ -10,10 +10,13 @@ packages = [{include = "chance_of_showers"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 numpy = "^1.24.3"
+hydra-core = "^1.3.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 flake8 = "^6.0.0"
+yamllint = "^1.32.0"
+powerline-status = "^2.7"
 
 [tool.poetry.group.daq]
 optional = true
@@ -24,6 +27,7 @@ gpiozero = "^1.6.2"
 rpi-gpio = "^0.7.1"
 "luma.oled" = "^3.12.0"
 pause = "^0.3"
+polars = "^0.18.4"
 
 [tool.poetry.group.web]
 optional = true

@@ -444,7 +444,10 @@ t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 if log_to_file:
     my_print(f"Logging to {fname_log}", print_prefix="\n")
 if display_web:
-    my_print(f"Live dashboard hosted at: http://{host_ip_address}:{port_number}", print_prefix="\n")
+    my_print(
+        f"Live dashboard hosted at: http://{host_ip_address}:{port_number}",
+        print_prefix="\n",
+    )
 my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="\n       ")
 
 if display_oled:

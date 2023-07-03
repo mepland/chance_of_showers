@@ -1,0 +1,25 @@
+general:
+  observed_pressure_min: 6400
+  observed_pressure_max: 14000
+  package_path: "~/chance_of_showers"
+  date_fmt: "%Y-%m-%d"
+  time_fmt: "%H:%M:%S"
+daq:
+  raw_data: "daq/raw_data"
+  # when the issue of drifting seconds was fixed by
+  # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
+  end_of_drifting_seconds: "2023-05-02 01:22:08"
+  # when web threading was fixed, eliminating duplicate records from multiple threads
+  end_of_threading_duplicates: "2023-05-31 04:36:00"
+etl:
+  saved_data: "daq/saved_data"
+# no hydra logging
+# https://stackoverflow.com/a/70777327
+defaults:
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+hydra:
+  output_subdir: null
+  run:
+    dir: .
