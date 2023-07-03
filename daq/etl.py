@@ -13,7 +13,7 @@ def etl(cfg):
     # setup variables
     package_path = cfg["general"]["package_path"]
     raw_data = cfg["daq"]["raw_data"]
-    saved_data = cfg["daq"]["saved_data"]
+    saved_data = cfg["etl"]["saved_data"]
 
     date_fmt = cfg["general"]["date_fmt"]
     time_fmt = cfg["general"]["time_fmt"]
@@ -31,7 +31,10 @@ def etl(cfg):
 
     # load raw csv files
     dfpl_list = []
-    for f in glob.glob(os.path.join(package_path, raw_data, "*.csv")):
+
+    for f in glob.glob(
+        os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))
+    ):
         try:
             dfpl = pl.scan_csv(f)
             dfpl = dfpl.with_columns(pl.lit(f.split("/")[-1]).alias("fname"))
@@ -55,7 +58,7 @@ def etl(cfg):
         .with_columns(
             pl.col("datetime_est").dt.weekday().alias("day_of_week_int"),
             pl.col("datetime_est").dt.to_string("%A").alias("day_of_week_str"),
-            # pl.col('datetime_est').dt.to_string(time_hm_fmt).alias('time'),
+            # pl.col("datetime_est").dt.to_string(time_hm_fmt).alias("time"),
         )
     )
 
@@ -118,15 +121,23 @@ def etl(cfg):
             f"Found {n_rows_drift_seconds = } after {dt_end_of_drifting_seconds.strftime(datetime_fmt)} UTC!"
         )
 
-    # print(dfpl.fetch(1).limit(10))
+    print(
+        "\nETL Summary:",
+        dfpl.select("datetime_utc", "mean_pressure_value")
+        .collect(streaming=True)
+        .describe(),
+    )
 
-    print(dfpl.collect(streaming=True).describe())
-    # print(dfpl.select(pl.col("mean_pressure_value")).collect(streaming=True).describe())
+    os.makedirs(
+        os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True
+    )
 
-    # dfpl.sink_parquet(path, maintain_order=False)
-    dfpl.collect(streaming=True).write_parquet(
+    f_parquet = os.path.expanduser(
         os.path.join(package_path, saved_data, "etl_data.parquet")
     )
+    dfpl.collect(streaming=True).write_parquet(f_parquet)
+
+    print(f"\nCombined parquet saved to {f_parquet}\n")
 
 
 if __name__ == "__main__":
