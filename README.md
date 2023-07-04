@@ -1,15 +1,19 @@
 # chance\_of\_showers
-Matthew Epland, PhD  
+Matthew Epland, PhD
 
 TODO
 
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
 ## Cloning the Repository
-ssh  
+ssh
 ```bash
 git clone git@github.com:mepland/chance_of_showers.git
 ```
 
-https  
+https
 ```bash
 git clone https://github.com/mepland/chance_of_showers.git
 ```

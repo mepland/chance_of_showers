@@ -1,0 +1,75 @@
+# See https://pre-commit.com for more information
+repos:
+  # black
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black-jupyter
+        language_version: python3.9
+  # yamllint
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args: [--strict]
+  # pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      #### python
+      # simply checks whether the files parse as valid python
+      - id: check-ast
+      # requires literal syntax when initializing empty or zero python builtin types
+      - id: check-builtin-literals
+      # checks for debugger imports and py37+ `breakpoint()` calls in python source
+      - id: debug-statements
+      # checks a common error of defining a docstring after code
+      - id: check-docstring-first
+      # verifies that test files are named correctly
+      - id: name-tests-test
+      #### files and file systems
+      # trims trailing whitespace
+      - id: trailing-whitespace
+      # ensures that a file is either empty, or ends with one newline
+      - id: end-of-file-fixer
+      # replaces or checks mixed line ending
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      # removes utf-8 byte order marker
+      - id: fix-byte-order-marker
+      # checks for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+      # checks for symlinks which do not point to anything
+      - id: check-symlinks
+      # detects symlinks which are changed to regular files with
+      # a content of a path which that symlink was pointing to
+      - id: destroyed-symlinks
+      # ensures that (non-binary) executables have a shebang
+      - id: check-executables-have-shebangs
+      # ensures that (non-binary) files with a shebang are executable
+      - id: check-shebang-scripts-are-executable
+      #### parseable
+      # checks json files for parseable syntax
+      - id: check-json
+      # checks toml files for parseable syntax
+      - id: check-toml
+      # checks xml files for parseable syntax
+      - id: check-xml
+      # checks yaml files for parseable syntax
+      - id: check-yaml
+      #### git
+      # don't commit to main
+      - id: no-commit-to-branch
+        args: [-b main]
+      # checks for files that contain merge conflict strings
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
+      # prevents giant files from being committed
+      - id: check-added-large-files
+        args: [--maxkb=128]
+      #### secrets
+      # detects *your* aws credentials from the aws cli credentials file
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+      # detects the presence of private keys
+      - id: detect-private-key
