@@ -80,8 +80,7 @@ def handleFanSpeed():
 
     if verbose:
         sys.stdout.write(
-            "\x1b[2K"
-            + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
+            "\x1b[2K" + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
         )
         sys.stdout.flush()
 
