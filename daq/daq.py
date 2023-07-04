@@ -471,7 +471,7 @@ my_print(
 
 
 ################################################################################
-# daq loop
+# DAQ loop
 def daq_loop():
     global running_daq_loop
     global new_connection
@@ -567,47 +567,51 @@ def daq_loop():
             i_polling += 1
             t_stop = datetime.datetime.now()
 
-        # take mean and save data point to csv in m_path/raw_data
-        t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-        if display_web:
-            t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(
-                datetime_fmt
+        # process polling results if DAQ is still running
+        if running_daq_loop:
+            # take mean and save data point to csv
+            t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+            if display_web:
+                t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(
+                    datetime_fmt
+                )
+            mean_pressure_value = int(np.nanmean(polling_pressure_samples))
+            mean_pressure_value_normalized = normalize_pressure_value(
+                mean_pressure_value
             )
-        mean_pressure_value = int(np.nanmean(polling_pressure_samples))
-        mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
-        past_had_flow = int(np.max(polling_flow_samples))
-        new_row = [t_utc_str, mean_pressure_value, past_had_flow]
+            past_had_flow = int(np.max(polling_flow_samples))
+            new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
-        fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
-        with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a") as f:
-            w = writer(f)
-            if f.tell() == 0:
-                # empty file, create header
-                w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
-            w.writerow(new_row)
-            f.close()
+            fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
+            with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a") as f:
+                w = writer(f)
+                if f.tell() == 0:
+                    # empty file, create header
+                    w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
+                w.writerow(new_row)
+                f.close()
 
-        if display_web:
-            try:
-                # save n_last mean values
-                t_est_str_n_last.append(t_est_str)
-                mean_pressure_value_normalized_n_last.append(
-                    mean_pressure_value_normalized
-                )
-                past_had_flow_n_last.append(past_had_flow)
+            if display_web:
+                try:
+                    # save n_last mean values
+                    t_est_str_n_last.append(t_est_str)
+                    mean_pressure_value_normalized_n_last.append(
+                        mean_pressure_value_normalized
+                    )
+                    past_had_flow_n_last.append(past_had_flow)
 
-                if n_last < len(t_est_str_n_last):
-                    del t_est_str_n_last[0]
-                    del mean_pressure_value_normalized_n_last[0]
-                    del past_had_flow_n_last[0]
-            except Exception as error:
-                # don't want to kill the DAQ just because of a web problem
-                my_print(
-                    f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
-                    logger_level=logging.DEBUG,
-                    use_print=False,
-                )
-                pass
+                    if n_last < len(t_est_str_n_last):
+                        del t_est_str_n_last[0]
+                        del mean_pressure_value_normalized_n_last[0]
+                        del past_had_flow_n_last[0]
+                except Exception as error:
+                    # don't want to kill the DAQ just because of a web problem
+                    my_print(
+                        f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                        logger_level=logging.DEBUG,
+                        use_print=False,
+                    )
+                    pass
 
     my_print(f"Exiting daq_loop() via {running_daq_loop=}")
 
