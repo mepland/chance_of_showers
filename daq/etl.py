@@ -1,3 +1,7 @@
+"""Run ETL script.
+
+Cleans and combines raw_data/*.csv files into a single parquet file.
+"""
 ################################################################################
 # python imports
 import hydra
@@ -10,6 +14,7 @@ import polars as pl
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
 def etl(cfg):
+    """Run ETL script."""
     # setup variables
     package_path = cfg["general"]["package_path"]
     raw_data = cfg["daq"]["raw_data"]
@@ -38,7 +43,7 @@ def etl(cfg):
             dfpl = pl.scan_csv(f)
             dfpl = dfpl.with_columns(pl.lit(f.split("/")[-1]).alias("fname"))
             dfpl_list.append(dfpl)
-        except:
+        except:  # noqa: E722
             raise ValueError(f"Error loading file {f}")
 
     dfpl = pl.concat(dfpl_list)

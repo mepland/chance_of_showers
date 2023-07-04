@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 100
+max-complexity = 18
+docstring-convention = google
+ignore = E501, W503
+per-file-ignores =
+    daq/daq.py: E402
+exclude =
+    .git, .github,
+    __pycache__,
+    .env, .venv, .direnv

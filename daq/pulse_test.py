@@ -1,3 +1,4 @@
+"""Quick script to test reading pulses via GPIO."""
 import time
 import RPi.GPIO as GPIO
 
@@ -10,6 +11,7 @@ n_pulse = 0
 
 
 def fell(n):
+    """Fell action."""
     global n_pulse
     n_pulse += 1
 

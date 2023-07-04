@@ -1,3 +1,4 @@
+"""Run DAQ script."""
 ################################################################################
 # display options
 log_to_file = True
@@ -72,8 +73,6 @@ if log_to_file:
     logger_daq.addHandler(logging_fh)
 
 
-# we could just add a StreamHandler to logger,
-# but as we also want to erase lines on stdout we will define our own print function instead
 def my_print(
     line,
     logger_level=logging.INFO,
@@ -82,6 +81,11 @@ def my_print(
     print_postfix="",
     use_stdout_overwrite=False,
 ):
+    """Custom print function to print to screen, possibly with previous line overwriting, and log files.
+
+    We could just add a StreamHandler to logger,
+    but as we also want to erase lines on stdout we define our own print function instead.
+    """
     if not log_to_file or logger_level is None:
         pass
     elif logger_level == logging.CRITICAL:
@@ -113,8 +117,11 @@ def my_print(
 # helper variables and functions
 
 
-# pressure normalization
 def normalize_pressure_value(pressure_value):
+    """Normalize raw ADC pressure_value.
+
+    observed_pressure_min (observed_pressure_max) maps to 0 (1).
+    """
     try:
         normalize_pressure_value_float = (pressure_value - observed_pressure_min) / (
             observed_pressure_max - observed_pressure_min
@@ -139,8 +146,8 @@ polling_pressure_samples.fill(np.nan)
 polling_flow_samples = np.zeros(n_polling)
 
 
-# Get SoC's temperature
 def get_SoC_temp():
+    """Get SoC's temperature."""
     try:
         res = os.popen("vcgencmd measure_temp").readline()
         temp = float(res.replace("temp=", "").replace("'C\n", ""))
@@ -156,14 +163,16 @@ def get_SoC_temp():
     return temp
 
 
-# catch ctrl+c and kill, and shut down gracefully
-# https://stackoverflow.com/a/38665760
-# Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
 thread_daq_loop = None
 running_daq_loop = True
 
 
 def signal_handler(signal, frame):
+    """Catch ctrl+c and kill, and shut down gracefully.
+
+    https://stackoverflow.com/a/38665760
+    Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
+    """
     global running_daq_loop
     my_print(
         f"DAQ loop will exit gracefully in {2 * polling_period_seconds} seconds",
@@ -206,11 +215,13 @@ had_flow = 0
 
 
 def rise(n):
+    """Flow sensor rise action."""
     global had_flow
     had_flow = 1
 
 
 def fall(n):
+    """Flow sensor fall action."""
     global had_flow
     had_flow = 0
 
@@ -246,6 +257,7 @@ if display_oled:
         sys.exit(1)
 
     def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
+        """Function to paint OLED display."""
         try:
             with canvas(i2c_device) as draw:
                 if bounding_box:
@@ -257,7 +269,7 @@ if display_oled:
                         fill="white",
                         font=oled_font,
                     )
-        except (OSError, DeviceNotFoundError, TypeError) as error:
+        except (OSError, DeviceNotFoundError, TypeError):
             # do not log device not connected errors, OLED power is probably just off
             my_print(
                 # f"Expected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
@@ -282,7 +294,7 @@ if display_oled:
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
 new_connection = False
-if display_web:
+if display_web:  # noqa: C901
     import json
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
@@ -315,6 +327,7 @@ if display_web:
 
     @flask_app.route("/")
     def index():
+        """Serve index.html."""
         try:
             return render_template("index.html")
         except Exception as error:
@@ -327,6 +340,10 @@ if display_web:
             pass
 
     def conn_details():
+        """Get connection details.
+
+        ip address and mac address
+        """
         try:
             ip_address = request.remote_addr
             mac_address = "Unknown"
@@ -349,9 +366,9 @@ if display_web:
 
         return conn_details_str
 
-    # Decorator for connect
     @sio.on("connect")
     def connect():
+        """Decorator for connect."""
         try:
             global new_connection
             new_connection = True
@@ -368,9 +385,9 @@ if display_web:
             )
             pass
 
-    # Decorator for disconnect
     @sio.on("disconnect")
     def disconnect():
+        """Decorator for disconnect."""
         try:
             my_print(
                 f"Client disconnected {conn_details()}",
@@ -404,9 +421,11 @@ if display_web:
     mean_pressure_value_normalized_n_last = []
     past_had_flow_n_last = []
 
-    # display link to dashboard
-    # https://stackoverflow.com/a/28950776
     def get_ip_address():
+        """Get ip address of host machine.
+
+        https://stackoverflow.com/a/28950776
+        """
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(0)
         try:
@@ -448,7 +467,7 @@ if display_oled:
     # write to OLED display
     t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
     paint_oled(
-        [f"Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
+        ["Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
         bounding_box=True,
     )
 
@@ -465,8 +484,8 @@ my_print(
 
 
 ################################################################################
-# DAQ loop
 def daq_loop():
+    """DAQ loop."""
     global running_daq_loop
     global new_connection
     global t_utc_str

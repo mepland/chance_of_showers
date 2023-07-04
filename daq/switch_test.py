@@ -1,3 +1,4 @@
+"""Quick script to test reading switch via GPIO."""
 import time
 from gpiozero import Button
 
@@ -10,11 +11,13 @@ had_switch_on = False
 
 
 def rise(n):
+    """Switch rise action."""
     global had_switch_on
     had_switch_on = True
 
 
 def fall(n):
+    """Switch fall action."""
     global had_switch_on
     had_switch_on = False
 

@@ -1,3 +1,4 @@
+"""This module contains common plotting code."""
 # python
 import numpy as np
 
@@ -26,11 +27,12 @@ mpl.rcParams["ytick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["ytick.minor.size"] = 4.0  # minor tick size in points
 mpl.rcParams["ytick.major.pad"] = 1.5  # distance to major tick label in points
 mpl.rcParams["ytick.minor.pad"] = 1.4  # distance to the minor tick label in points
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
 
 ########################################################
 def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)):
+    """Plot scatter and linear fit."""
     plot_objs = dict(plot_objs_in)
     fig, ax = plt.subplots()
     fig.set_size_inches(fig_size)

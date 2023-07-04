@@ -1,4 +1,7 @@
-# Adapted from https://blog.driftking.tw/en/2019/11/Using-Raspberry-Pi-to-Control-a-PWM-Fan-and-Monitor-its-Speed/
+"""PWM fan control for Raspberry Pi.
+
+Adapted from https://blog.driftking.tw/en/2019/11/Using-Raspberry-Pi-to-Control-a-PWM-Fan-and-Monitor-its-Speed/
+"""
 
 import sys
 import os
@@ -26,23 +29,26 @@ t = time.time()
 rpm = 0
 
 
-# Get SoC's temperature
 def get_SoC_temp():
+    """Get SoC's temperature."""
     res = os.popen("vcgencmd measure_temp").readline()
     temp = float(res.replace("temp=", "").replace("'C\n", ""))
 
     return temp
 
 
-# Set fan speed
 def setFanSpeed(speed):
+    """Set fan speed."""
     fan.start(speed)
 
     return None
 
 
-# Caculate pulse frequency and RPM
 def fell(n):
+    """Fell action.
+
+    Caculate pulse frequency and RPM
+    """
     global t
     global rpm
 
@@ -55,8 +61,8 @@ def fell(n):
     t = time.time()
 
 
-# Handle fan speed
 def handleFanSpeed():
+    """Handle fan speed."""
     global rpm
 
     temp = get_SoC_temp()
