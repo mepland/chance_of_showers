@@ -33,9 +33,7 @@ def etl(cfg):
     # load raw csv files
     dfpl_list = []
 
-    for f in glob.glob(
-        os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))
-    ):
+    for f in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
         try:
             dfpl = pl.scan_csv(f)
             dfpl = dfpl.with_columns(pl.lit(f.split("/")[-1]).alias("fname"))
@@ -47,13 +45,9 @@ def etl(cfg):
     dfpl = (
         # convert date columns
         dfpl.with_columns(
-            pl.col("datetime_utc")
-            .str.to_datetime(datetime_fmt)
-            .dt.replace_time_zone("UTC")
+            pl.col("datetime_utc").str.to_datetime(datetime_fmt).dt.replace_time_zone("UTC")
         ).with_columns(
-            pl.col("datetime_utc")
-            .dt.convert_time_zone("US/Eastern")
-            .alias("datetime_est")
+            pl.col("datetime_utc").dt.convert_time_zone("US/Eastern").alias("datetime_est")
         )
         # Add more date columns
         .with_columns(
@@ -79,23 +73,17 @@ def etl(cfg):
     )
 
     n_duplicate_datetime_post_threading_fix = (
-        dfpl_duplicate_datetime_post_threading_fix.select(pl.count())
-        .collect(streaming=True)
-        .item()
+        dfpl_duplicate_datetime_post_threading_fix.select(pl.count()).collect(streaming=True).item()
     )
     if 0 < n_duplicate_datetime_post_threading_fix:
         duplicate_datetime_post_fix_min = (
-            dfpl_duplicate_datetime_post_threading_fix.select(
-                pl.col("datetime_utc").min()
-            )
+            dfpl_duplicate_datetime_post_threading_fix.select(pl.col("datetime_utc").min())
             .collect(streaming=True)
             .item()
             .strftime(datetime_fmt)
         )
         duplicate_datetime_post_fix_max = (
-            dfpl_duplicate_datetime_post_threading_fix.select(
-                pl.col("datetime_utc").max()
-            )
+            dfpl_duplicate_datetime_post_threading_fix.select(pl.col("datetime_utc").max())
             .collect(streaming=True)
             .item()
             .strftime(datetime_fmt)
@@ -124,18 +112,12 @@ def etl(cfg):
 
     print(
         "\nETL Summary:",
-        dfpl.select("datetime_utc", "mean_pressure_value")
-        .collect(streaming=True)
-        .describe(),
+        dfpl.select("datetime_utc", "mean_pressure_value").collect(streaming=True).describe(),
     )
 
-    os.makedirs(
-        os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True
-    )
+    os.makedirs(os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True)
 
-    f_parquet = os.path.expanduser(
-        os.path.join(package_path, saved_data, "etl_data.parquet")
-    )
+    f_parquet = os.path.expanduser(os.path.join(package_path, saved_data, "etl_data.parquet"))
     dfpl.collect(streaming=True).write_parquet(f_parquet)
 
     print(f"\nCombined parquet saved to {f_parquet}\n")

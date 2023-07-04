@@ -54,11 +54,7 @@ if 0 < verbose:
     logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
-    log_datetime = (
-        datetime.datetime.now()
-        .astimezone(ZoneInfo("UTC"))
-        .strftime("%Y-%m-%d-%H-%M-%S")
-    )
+    log_datetime = datetime.datetime.now().astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M-%S")
 
     fname_log = f"daq_{log_datetime}.log"
     logging_fh = logging.FileHandler(f"{m_path}/logs/{fname_log}")
@@ -253,9 +249,7 @@ if display_oled:
         try:
             with canvas(i2c_device) as draw:
                 if bounding_box:
-                    draw.rectangle(
-                        i2c_device.bounding_box, outline="white", fill="black"
-                    )
+                    draw.rectangle(i2c_device.bounding_box, outline="white", fill="black")
                 for i_line, line in enumerate(lines):
                     draw.text(
                         (lpad, vpad + i_line * line_height),
@@ -340,7 +334,9 @@ if display_web:
                 if _.get("IP address", None) == ip_address:
                     mac_address = _.get("HW address", mac_address)
                     break
-            conn_details_str = f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
+            conn_details_str = (
+                f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
+            )
 
         except Exception as error:
             # don't want to kill the DAQ just because of a web problem
@@ -431,9 +427,7 @@ if display_web:
 # Then if the script is interrupted, we can resume on the same cadence
 t_start = datetime.datetime.now()
 t_start_minute = (
-    t_start.minute
-    - (t_start.minute % starting_time_minutes_mod)
-    + starting_time_minutes_mod
+    t_start.minute - (t_start.minute % starting_time_minutes_mod) + starting_time_minutes_mod
 ) % 60
 
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
@@ -572,13 +566,9 @@ def daq_loop():
             # take mean and save data point to csv
             t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
             if display_web:
-                t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(
-                    datetime_fmt
-                )
+                t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
             mean_pressure_value = int(np.nanmean(polling_pressure_samples))
-            mean_pressure_value_normalized = normalize_pressure_value(
-                mean_pressure_value
-            )
+            mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
             past_had_flow = int(np.max(polling_flow_samples))
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
@@ -595,9 +585,7 @@ def daq_loop():
                 try:
                     # save n_last mean values
                     t_est_str_n_last.append(t_est_str)
-                    mean_pressure_value_normalized_n_last.append(
-                        mean_pressure_value_normalized
-                    )
+                    mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
                     past_had_flow_n_last.append(past_had_flow)
 
                     if n_last < len(t_est_str_n_last):
