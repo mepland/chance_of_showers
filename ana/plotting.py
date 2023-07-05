@@ -1,10 +1,8 @@
 """This module contains common plotting code."""
-# python
-import numpy as np
-
 ########################################################
-# plotting
+# imports
 import matplotlib as mpl
+import numpy as np
 
 mpl.rcParams["axes.labelsize"] = 16
 mpl.rcParams["xtick.top"] = True

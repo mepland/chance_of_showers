@@ -28,20 +28,21 @@ observed_pressure_max = 14000
 
 ################################################################################
 # python imports
-import os
-import sys
-import traceback
-import logging
-import signal
 import datetime
-from zoneinfo import ZoneInfo
-import time
-import pause
-import numpy as np
-from csv import writer
+import logging
+import os
+import signal
+import sys
 import threading
-from typing import List, Optional
+import time
+import traceback
+from csv import writer
 from types import FrameType
+from typing import List, Optional
+from zoneinfo import ZoneInfo
+
+import numpy as np
+import pause
 
 ################################################################################
 # paths
@@ -195,10 +196,10 @@ signal.signal(signal.SIGINT, signal_handler)
 # chan_0.value = Returns the value of an ADC pin as an integer. Due to 10-bit accuracy of the chip, the returned values range [0, 65472].
 # chan_0.voltage = Returns the voltage from the ADC pin as a floating point value. Due to the 10-bit accuracy of the chip, returned values range from 0 to (reference_voltage * 65472 / 65535)
 
+import adafruit_mcp3xxx.mcp3008 as MCP
+import board
 import busio
 import digitalio
-import board
-import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -237,10 +238,10 @@ flow_switch.when_released = fall
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
 if display_oled:
+    from luma.core.error import DeviceNotFoundError
     from luma.core.interface.serial import i2c
     from luma.core.render import canvas
     from luma.oled.device import sh1106
-    from luma.core.error import DeviceNotFoundError
     from PIL import ImageFont
 
     i2c_device = sh1106(i2c(port=1, address=0x3C), rotate=0)
@@ -305,10 +306,11 @@ if display_oled:
 new_connection = False
 if display_web:  # noqa: C901
     import json
+    import socket
+
+    import python_arptable
     from flask import Flask, render_template, request
     from flask_socketio import SocketIO
-    import python_arptable
-    import socket
 
     flask_app = Flask(
         __name__,

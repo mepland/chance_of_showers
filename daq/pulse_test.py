@@ -1,5 +1,6 @@
 """Quick script to test reading pulses via GPIO."""
 import time
+
 import RPi.GPIO as GPIO
 
 # Configuration

@@ -1,5 +1,6 @@
 """Quick script to test reading switch via GPIO."""
 import time
+
 from gpiozero import Button
 
 # Configuration

@@ -4,13 +4,14 @@ Cleans and combines raw_data/*.csv files into a single parquet file.
 """
 ################################################################################
 # python imports
-import hydra
-from omegaconf import DictConfig
-import os
-import glob
 import datetime
+import glob
+import os
 from zoneinfo import ZoneInfo
+
+import hydra
 import polars as pl
+from omegaconf import DictConfig
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")

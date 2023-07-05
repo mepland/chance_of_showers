@@ -17,6 +17,11 @@ repos:
     rev: 'v1.4.1'
     hooks:
       - id: mypy
+  # isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.32.0
