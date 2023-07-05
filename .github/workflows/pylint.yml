@@ -1,0 +1,20 @@
+name: pylint
+
+on: pull_request  # yamllint disable-line rule:truthy
+
+jobs:
+  pylint:
+    runs-on: ubuntu-latest
+    name: pylint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install Dependencies
+        run: pip install pylint
+      - name: pylint
+        # https://stackoverflow.com/a/63044665
+        run: pylint $(git ls-files '*.py')

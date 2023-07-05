@@ -7,7 +7,12 @@ format/black:
 format/isort:
 	poetry run isort .
 
-format: format/black format/isort
+# TODO rework bash here
+# https://stackoverflow.com/a/63044665
+#format/pylint:
+#	bash -c "pylint $(git ls-files '*.py')"
+
+format: format/black format/isort # format/pylint
 
 lint/flake8:
 	poetry run flake8

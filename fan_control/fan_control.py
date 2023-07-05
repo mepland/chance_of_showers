@@ -7,10 +7,11 @@ import os
 import sys
 import time
 
-import RPi.GPIO as GPIO
+# pylint: disable=no-member
+from RPi import GPIO
 
 # Configuration
-verbose = True  # print temp, PWM, RPM
+verbose = True  # print temp, PWM, RPM pylint: disable=C0103
 FAN_PIN = 18  # BCM pin used to drive PWM fan
 TACH_PIN = 23  # Fan's tachometer output pin
 WAIT_TIME = 5.0  # [s] Time to wait between each refresh
@@ -26,11 +27,11 @@ FAN_OFF = 0.0
 FAN_MAX = 100.0
 
 # Setup variables
-t = time.time()
-rpm = 0.0
+current_time = time.time()
+rpm = 0.0  # pylint: disable=C0103
 
 
-def get_SoC_temp() -> float:
+def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
     res = os.popen("vcgencmd measure_temp").readline()
     temp = float(res.replace("temp=", "").replace("'C\n", ""))
@@ -38,7 +39,7 @@ def get_SoC_temp() -> float:
     return temp
 
 
-def setFanSpeed(speed: float) -> None:
+def set_fan_speed(speed: float) -> None:
     """Set fan speed."""
     fan.start(speed)
 
@@ -50,19 +51,21 @@ def fell() -> None:
 
     Caculate pulse frequency and RPM
     """
-    global t
+    global current_time
     global rpm
 
-    dt = time.time() - t
-    if dt < 0.005:
+    delta_t = time.time() - current_time
+    if delta_t < 0.005:
         return None  # Reject spuriously short pulses
 
-    freq = 1 / dt
+    freq = 1 / delta_t
     rpm = (freq / PULSE) * 60
-    t = time.time()
+    current_time = time.time()
+
+    return None
 
 
-def handleFanSpeed() -> None:
+def hanlde_fan_speed() -> None:
     """Handle fan speed."""
     global rpm
 
@@ -83,7 +86,7 @@ def handleFanSpeed() -> None:
         fan_commanded_speed = FAN_LOW + step * round(temp - MIN_TEMP)
 
     # Set speed and display parameters
-    setFanSpeed(fan_commanded_speed)
+    set_fan_speed(fan_commanded_speed)
 
     if verbose:
         sys.stdout.write(
@@ -105,16 +108,16 @@ try:
     GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 
     fan = GPIO.PWM(FAN_PIN, PWM_FREQ)
-    setFanSpeed(FAN_OFF)
+    set_fan_speed(FAN_OFF)
 
     # Add event to detect
     GPIO.add_event_detect(TACH_PIN, GPIO.FALLING, fell)
 
     # Handle fan speed every WAIT_TIME sec
     while True:
-        handleFanSpeed()
+        hanlde_fan_speed()
         time.sleep(WAIT_TIME)
 
 except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt
-    setFanSpeed(FAN_HIGH)
+    set_fan_speed(FAN_HIGH)
     GPIO.cleanup()  # resets all GPIO ports used by this function

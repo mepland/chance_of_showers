@@ -1,7 +1,7 @@
 """This module contains common plotting code."""
 ########################################################
 # imports
-import matplotlib as mpl
+import matplotlib as mpl  # pylint: disable=import-error
 import numpy as np
 
 mpl.rcParams["axes.labelsize"] = 16
@@ -25,11 +25,11 @@ mpl.rcParams["ytick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["ytick.minor.size"] = 4.0  # minor tick size in points
 mpl.rcParams["ytick.major.pad"] = 1.5  # distance to major tick label in points
 mpl.rcParams["ytick.minor.pad"] = 1.4  # distance to the minor tick label in points
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402 pylint: disable=import-error
 
 
 ########################################################
-# TODO get types later if continuing to use this function
+# setup types later if continuing to use this function
 def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def]
     """Plot scatter and linear fit."""
     plot_objs = dict(plot_objs_in)
@@ -46,7 +46,7 @@ def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ign
                 color=plot_obj["c"],
                 label=plot_obj["label"],
             )
-            plot_objs[k]["leg_object"] = _[0]
+            plot_objs[k]["leg_object"] = _[0]  # pylint: disable=unnecessary-dict-index-lookup
 
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
@@ -65,7 +65,7 @@ def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ign
                 color=plot_obj["c"],
                 label=plot_obj["label"],
             )
-            plot_objs[k]["leg_object"] = _[0]
+            plot_objs[k]["leg_object"] = _[0]  # pylint: disable=unnecessary-dict-index-lookup
 
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)

@@ -1,6 +1,7 @@
 """Run DAQ script."""
 ################################################################################
 # display options
+# TEMPORARY pylint: disable=C0103
 log_to_file = True
 display_terminal = True
 display_terminal_overwrite = True
@@ -25,6 +26,7 @@ m_path = "~/chance_of_showers/daq"
 # pressure variables and functions
 observed_pressure_min = 6400
 observed_pressure_max = 14000
+# TEMPORARY pylint: enable=C0103
 
 ################################################################################
 # python imports
@@ -143,13 +145,13 @@ def normalize_pressure_value(pressure_value: int) -> float:
 
 # DAQ variables
 n_polling = int(np.ceil(averaging_period_seconds / polling_period_seconds))
-# TODo test if defining here first saves memory?
+# test if defining here first saves memory?
 polling_pressure_samples = np.empty(n_polling)
 polling_pressure_samples.fill(np.nan)
 polling_flow_samples = np.zeros(n_polling)
 
 
-def get_SoC_temp() -> float:
+def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
     try:
         res = os.popen("vcgencmd measure_temp").readline()
@@ -166,11 +168,13 @@ def get_SoC_temp() -> float:
     return temp
 
 
-thread_daq_loop = None
-running_daq_loop = True
+thread_daq_loop = None  # pylint: disable=C0103
+running_daq_loop = True  # pylint: disable=C0103
 
 
-def signal_handler(signal: int, frame: Optional[FrameType]) -> None:
+def signal_handler(
+    signal: int, frame: Optional[FrameType]  # pylint: disable=unused-argument,redefined-outer-name
+) -> None:
     """Catch ctrl+c and kill, and shut down gracefully.
 
     https://stackoverflow.com/a/38665760
@@ -214,7 +218,7 @@ chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
 from gpiozero import Button
 
-had_flow = 0
+had_flow = 0  # pylint: disable=C0103
 
 
 def rise() -> None:
@@ -247,15 +251,15 @@ if display_oled:
     i2c_device = sh1106(i2c(port=1, address=0x3C), rotate=0)
 
     try:
-        font_size = 14
-        oled_font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
+        OLED_FONT_SIZE = 14
+        OLED_FONT = ImageFont.truetype("DejaVuSans.ttf", size=OLED_FONT_SIZE)
     except OSError:
-        font_size = 12
+        OLED_FONT_SIZE = 12
         # ImageFont and FreeTypeFont behave the same in draw.text()
-        oled_font = ImageFont.load_default()  # type: ignore[assignment]
-    except Exception as error:
+        OLED_FONT = ImageFont.load_default()  # type: ignore[assignment]
+    except Exception as error_oled_font:
         my_print(
-            f"Unexpected error in ImageFont:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nExiting!",
+            f"Unexpected error in ImageFont:\n{error_oled_font=}\n{type(error_oled_font)=}\n{traceback.format_exc()}\nExiting!",
             logger_level=logging.ERROR,
         )
         sys.exit(1)
@@ -264,7 +268,7 @@ if display_oled:
         lines: List[str],
         lpad: float = 4.0,
         vpad: float = 0.0,
-        line_height: int = font_size,
+        line_height: int = OLED_FONT_SIZE,
         bounding_box: bool = False,
     ) -> None:
         """Function to paint OLED display."""
@@ -277,7 +281,7 @@ if display_oled:
                         (lpad, vpad + i_line * line_height),
                         line,
                         fill="white",
-                        font=oled_font,
+                        font=OLED_FONT,
                     )
         except (OSError, DeviceNotFoundError, TypeError):
             # do not log device not connected errors, OLED power is probably just off
@@ -303,7 +307,7 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
-new_connection = False
+new_connection = False  # pylint: disable=C0103
 if display_web:  # noqa: C901
     import json
     import socket
@@ -429,7 +433,7 @@ if display_web:  # noqa: C901
     if log_to_file:
         log_werkzeug.addHandler(logging_fh)
 
-    n_last = 15
+    N_LAST = 15
     t_est_str_n_last: List[str] = []
     mean_pressure_value_normalized_n_last: List[float] = []
     past_had_flow_n_last: List[int] = []
@@ -439,19 +443,19 @@ if display_web:  # noqa: C901
 
         https://stackoverflow.com/a/28950776
         """
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
+        m_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        m_socket.settimeout(0)
         try:
             # doesn't even have to be reachable
-            s.connect(("10.254.254.254", 1))
-            ip_address = s.getsockname()[0]
+            m_socket.connect(("10.254.254.254", 1))
+            ip_address = m_socket.getsockname()[0]
         except Exception:
             ip_address = "127.0.0.1"
         finally:
-            s.close()
+            m_socket.close()
         return ip_address
 
-    port_number = 5000
+    PORT_NUMBER = 5000
     host_ip_address = get_ip_address()
 
 ################################################################################
@@ -471,7 +475,7 @@ if log_to_file:
     my_print(f"Logging to {fname_log}", print_prefix="\n")
 if display_web:
     my_print(
-        f"Live dashboard hosted at: http://{host_ip_address}:{port_number}",
+        f"Live dashboard hosted at: http://{host_ip_address}:{PORT_NUMBER}",
         print_prefix="\n",
     )
 my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="\n       ")
@@ -499,11 +503,13 @@ my_print(
 ################################################################################
 def daq_loop() -> None:
     """DAQ loop."""
-    global running_daq_loop
     global new_connection
     global t_utc_str
     global t_est_str
+    global t_start
     global had_flow
+    global polling_pressure_samples  # pylint: disable=global-variable-not-assigned
+    global polling_flow_samples
     mean_pressure_value = -1
     mean_pressure_value_normalized = -1.0
     past_had_flow = -1
@@ -565,7 +571,7 @@ def daq_loop() -> None:
                         "pressure_value_normalized": pressure_value_normalized,
                         "had_flow": flow_value,
                     }
-                    # n_last mean values
+                    # N_LAST mean values
                     if i_polling == 0 or new_connection:
                         new_connection = False
                         _data["t_est_str_n_last"] = t_est_str_n_last
@@ -605,22 +611,22 @@ def daq_loop() -> None:
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
             fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
-            with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a") as f:
-                w = writer(f)
-                if f.tell() == 0:
+            with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a", encoding="utf-8") as f_csv:
+                m_writer = writer(f_csv)
+                if f_csv.tell() == 0:
                     # empty file, create header
-                    w.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
-                w.writerow(new_row)
-                f.close()
+                    m_writer.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
+                m_writer.writerow(new_row)
+                f_csv.close()
 
             if display_web:
                 try:
-                    # save n_last mean values
+                    # save N_LAST mean values
                     t_est_str_n_last.append(t_est_str)
                     mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
                     past_had_flow_n_last.append(past_had_flow)
 
-                    if n_last < len(t_est_str_n_last):
+                    if N_LAST < len(t_est_str_n_last):
                         del t_est_str_n_last[0]
                         del mean_pressure_value_normalized_n_last[0]
                         del past_had_flow_n_last[0]
@@ -649,15 +655,15 @@ if display_web:
     try:
         sio.run(
             flask_app,
-            port=port_number,
+            port=PORT_NUMBER,
             host="0.0.0.0",
             # debug must be false to avoid duplicate threads of the entire script!
             debug=False,
         )
-    except Exception as error:
+    except Exception as error_sio_run:
         # don't want to kill the DAQ just because of a web problem
         my_print(
-            f"Unexpected error in sio.run():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+            f"Unexpected error in sio.run():\n{error_sio_run=}\n{type(error_sio_run)=}\n{traceback.format_exc()}\nContinuing",
             logger_level=logging.DEBUG,
             use_print=False,
         )

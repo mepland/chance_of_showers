@@ -7,6 +7,7 @@ Cleans and combines raw_data/*.csv files into a single parquet file.
 import datetime
 import glob
 import os
+import traceback
 from zoneinfo import ZoneInfo
 
 import hydra
@@ -40,13 +41,15 @@ def etl(cfg: DictConfig) -> None:
     # load raw csv files
     dfpl_list = []
 
-    for f in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
+    for f_csv in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
         try:
-            dfpl = pl.scan_csv(f)
-            dfpl = dfpl.with_columns(pl.lit(f.split("/")[-1]).alias("fname"))
+            dfpl = pl.scan_csv(f_csv)
+            dfpl = dfpl.with_columns(pl.lit(f_csv.split("/")[-1]).alias("fname"))
             dfpl_list.append(dfpl)
-        except:  # noqa: E722
-            raise ValueError(f"Error loading file {f}")
+        except Exception as error:
+            raise OSError(
+                f"Error loading file {f_csv}!\n{error=}\n{type(error)=}\n{traceback.format_exc()}"
+            ) from error
 
     dfpl = pl.concat(dfpl_list)
     dfpl = (
@@ -131,4 +134,4 @@ def etl(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    etl()
+    etl()  # pylint: disable=no-value-for-parameter
