@@ -40,6 +40,8 @@ import pause
 import numpy as np
 from csv import writer
 import threading
+from typing import List, Optional
+from types import FrameType
 
 ################################################################################
 # paths
@@ -74,13 +76,13 @@ if log_to_file:
 
 
 def my_print(
-    line,
-    logger_level=logging.INFO,
-    use_print=display_terminal,
-    print_prefix="",
-    print_postfix="",
-    use_stdout_overwrite=False,
-):
+    line: str,
+    logger_level: Optional[int] = logging.INFO,
+    use_print: bool = display_terminal,
+    print_prefix: str = "",
+    print_postfix: str = "",
+    use_stdout_overwrite: bool = False,
+) -> None:
     """Custom print function to print to screen, possibly with previous line overwriting, and log files.
 
     We could just add a StreamHandler to logger,
@@ -117,7 +119,7 @@ def my_print(
 # helper variables and functions
 
 
-def normalize_pressure_value(pressure_value):
+def normalize_pressure_value(pressure_value: int) -> float:
     """Normalize raw ADC pressure_value.
 
     observed_pressure_min (observed_pressure_max) maps to 0 (1).
@@ -146,7 +148,7 @@ polling_pressure_samples.fill(np.nan)
 polling_flow_samples = np.zeros(n_polling)
 
 
-def get_SoC_temp():
+def get_SoC_temp() -> float:
     """Get SoC's temperature."""
     try:
         res = os.popen("vcgencmd measure_temp").readline()
@@ -167,7 +169,7 @@ thread_daq_loop = None
 running_daq_loop = True
 
 
-def signal_handler(signal, frame):
+def signal_handler(signal: int, frame: Optional[FrameType]) -> None:
     """Catch ctrl+c and kill, and shut down gracefully.
 
     https://stackoverflow.com/a/38665760
@@ -214,13 +216,13 @@ from gpiozero import Button
 had_flow = 0
 
 
-def rise(n):
+def rise() -> None:
     """Flow sensor rise action."""
     global had_flow
     had_flow = 1
 
 
-def fall(n):
+def fall() -> None:
     """Flow sensor fall action."""
     global had_flow
     had_flow = 0
@@ -248,7 +250,8 @@ if display_oled:
         oled_font = ImageFont.truetype("DejaVuSans.ttf", size=font_size)
     except OSError:
         font_size = 12
-        oled_font = ImageFont.load_default()
+        # ImageFont and FreeTypeFont behave the same in draw.text()
+        oled_font = ImageFont.load_default()  # type: ignore[assignment]
     except Exception as error:
         my_print(
             f"Unexpected error in ImageFont:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nExiting!",
@@ -256,7 +259,13 @@ if display_oled:
         )
         sys.exit(1)
 
-    def paint_oled(lines, lpad=4, vpad=0, line_height=font_size, bounding_box=False):
+    def paint_oled(
+        lines: List[str],
+        lpad: float = 4.0,
+        vpad: float = 0.0,
+        line_height: int = font_size,
+        bounding_box: bool = False,
+    ) -> None:
         """Function to paint OLED display."""
         try:
             with canvas(i2c_device) as draw:
@@ -326,7 +335,7 @@ if display_web:  # noqa: C901
     )
 
     @flask_app.route("/")
-    def index():
+    def index() -> str:
         """Serve index.html."""
         try:
             return render_template("index.html")
@@ -337,9 +346,9 @@ if display_web:  # noqa: C901
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            pass
+            return ""
 
-    def conn_details():
+    def conn_details() -> str:
         """Get connection details.
 
         ip address and mac address
@@ -352,7 +361,9 @@ if display_web:  # noqa: C901
                     mac_address = _.get("HW address", mac_address)
                     break
             conn_details_str = (
-                f"sid: {request.sid}, IP address: {ip_address}, MAC address: {mac_address}"
+                f"sid: {request.sid}"  # type: ignore[attr-defined]
+                + ", IP address: {ip_address}"
+                + ", MAC address: {mac_address}"
             )
 
         except Exception as error:
@@ -367,7 +378,7 @@ if display_web:  # noqa: C901
         return conn_details_str
 
     @sio.on("connect")
-    def connect():
+    def connect() -> None:
         """Decorator for connect."""
         try:
             global new_connection
@@ -386,7 +397,7 @@ if display_web:  # noqa: C901
             pass
 
     @sio.on("disconnect")
-    def disconnect():
+    def disconnect() -> None:
         """Decorator for disconnect."""
         try:
             my_print(
@@ -417,11 +428,11 @@ if display_web:  # noqa: C901
         log_werkzeug.addHandler(logging_fh)
 
     n_last = 15
-    t_est_str_n_last = []
-    mean_pressure_value_normalized_n_last = []
-    past_had_flow_n_last = []
+    t_est_str_n_last: List[str] = []
+    mean_pressure_value_normalized_n_last: List[float] = []
+    past_had_flow_n_last: List[int] = []
 
-    def get_ip_address():
+    def get_ip_address() -> str:
         """Get ip address of host machine.
 
         https://stackoverflow.com/a/28950776
@@ -484,7 +495,7 @@ my_print(
 
 
 ################################################################################
-def daq_loop():
+def daq_loop() -> None:
     """DAQ loop."""
     global running_daq_loop
     global new_connection
@@ -492,7 +503,7 @@ def daq_loop():
     global t_est_str
     global had_flow
     mean_pressure_value = -1
-    mean_pressure_value_normalized = -1
+    mean_pressure_value_normalized = -1.0
     past_had_flow = -1
     while running_daq_loop:
         # Set seconds to 0 to avoid drift over multiple hours / days

@@ -10,13 +10,13 @@ WAIT_TIME = 5  # [s] Time to wait between each refresh
 had_switch_on = False
 
 
-def rise(n):
+def rise() -> None:
     """Switch rise action."""
     global had_switch_on
     had_switch_on = True
 
 
-def fall(n):
+def fall() -> None:
     """Switch fall action."""
     global had_switch_on
     had_switch_on = False

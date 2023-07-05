@@ -10,7 +10,7 @@ WAIT_TIME = 5  # [s] Time to wait between each refresh
 n_pulse = 0
 
 
-def fell(n):
+def fell() -> None:
     """Fell action."""
     global n_pulse
     n_pulse += 1

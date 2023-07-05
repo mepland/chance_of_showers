@@ -12,6 +12,11 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies: [flake8-docstrings]
+  # mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.4.1'
+    hooks:
+      - id: mypy
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.32.0

@@ -17,8 +17,16 @@ pre-commit = "^3.3.3"
 black = {extras = ["jupyter"], version = "^23.3.0"}
 flake8 = "^6.0.0"
 flake8-docstrings = "^1.7.0"
+mypy = "^1.4.1"
 yamllint = "^1.32.0"
 powerline-status = "^2.7"
+pandas-stubs = "^2.0.2.230605"
+types-pillow = "^9.5.0.5"
+types-pyyaml = "^6.0.12.10"
+types-pygments = "^2.15.0.1"
+types-colorama = "^0.4.15.11"
+types-decorator = "^5.1.8.3"
+types-six = "^1.16.21.8"
 
 [tool.poetry.group.daq]
 optional = true
@@ -70,3 +78,15 @@ exclude = '''
   | __pycache__
 )/
 '''
+
+[tool.mypy]
+python_version = "3.9"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disable_error_code = [
+    "import",
+]
+# warn_unused_ignores = true is useful when upgrading mypy versions,
+# but leaving it as true all the time gives false positives when running mypy in the pre-commit env
+warn_unused_ignores = false

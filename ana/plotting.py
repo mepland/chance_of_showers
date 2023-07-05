@@ -31,7 +31,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 
 ########################################################
-def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)):
+# TODO get types later if continuing to use this function
+def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def]
     """Plot scatter and linear fit."""
     plot_objs = dict(plot_objs_in)
     fig, ax = plt.subplots()

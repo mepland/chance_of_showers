@@ -12,24 +12,24 @@ import RPi.GPIO as GPIO
 verbose = True  # print temp, PWM, RPM
 FAN_PIN = 18  # BCM pin used to drive PWM fan
 TACH_PIN = 23  # Fan's tachometer output pin
-WAIT_TIME = 5  # [s] Time to wait between each refresh
+WAIT_TIME = 5.0  # [s] Time to wait between each refresh
 PULSE = 2  # Noctua fans puts out two pluses per revolution
-PWM_FREQ = 25  # [kHz] 25kHz for Noctua PWM control
+PWM_FREQ = 25.0  # [kHz] 25kHz for Noctua PWM control
 
 # Configurable temperature and fan speed
-MIN_TEMP = 35
-MAX_TEMP = 50
-FAN_LOW = 30
-FAN_HIGH = 100
-FAN_OFF = 0
-FAN_MAX = 100
+MIN_TEMP = 35.0
+MAX_TEMP = 50.0
+FAN_LOW = 30.0
+FAN_HIGH = 100.0
+FAN_OFF = 0.0
+FAN_MAX = 100.0
 
 # Setup variables
 t = time.time()
-rpm = 0
+rpm = 0.0
 
 
-def get_SoC_temp():
+def get_SoC_temp() -> float:
     """Get SoC's temperature."""
     res = os.popen("vcgencmd measure_temp").readline()
     temp = float(res.replace("temp=", "").replace("'C\n", ""))
@@ -37,14 +37,14 @@ def get_SoC_temp():
     return temp
 
 
-def setFanSpeed(speed):
+def setFanSpeed(speed: float) -> None:
     """Set fan speed."""
     fan.start(speed)
 
     return None
 
 
-def fell(n):
+def fell() -> None:
     """Fell action.
 
     Caculate pulse frequency and RPM
@@ -61,7 +61,7 @@ def fell(n):
     t = time.time()
 
 
-def handleFanSpeed():
+def handleFanSpeed() -> None:
     """Handle fan speed."""
     global rpm
 

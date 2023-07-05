@@ -5,6 +5,7 @@ Cleans and combines raw_data/*.csv files into a single parquet file.
 ################################################################################
 # python imports
 import hydra
+from omegaconf import DictConfig
 import os
 import glob
 import datetime
@@ -13,7 +14,7 @@ import polars as pl
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def etl(cfg):
+def etl(cfg: DictConfig) -> None:
     """Run ETL script."""
     # setup variables
     package_path = cfg["general"]["package_path"]
