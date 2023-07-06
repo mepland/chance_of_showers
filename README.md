@@ -39,15 +39,15 @@ Then install the `python` packages needed for this installation. Groups include:
 - `dev` for CI and linting tools
 
 ```bash
-poetry install --with daq,web,dev
+poetry install --with daq,web
 ```
 or
 ```bash
-poetry install --with ana,dev
+poetry install --with ana
 ```
 
 ### Setting up pre-commit
-You should just need to [Install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `poetry` `dev` group.
+You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies.
 ```bash
 pre-commit install
 ```
