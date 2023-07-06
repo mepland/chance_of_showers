@@ -5,7 +5,6 @@ description = "DAQ and analysis code for chance_of_showers water metrics project
 authors = ["Matthew Epland"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "chance_of_showers"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
