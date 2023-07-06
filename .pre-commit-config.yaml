@@ -29,7 +29,7 @@ repos:
       - id: pylint
         name: pylint
         # https://stackoverflow.com/a/63044665
-        entry: bash -c "pylint $(git ls-files '*.py')"
+        entry: bash -c "pylint -sn $(git ls-files '*.py')"
         language: system
         types: [python]
         pass_filenames: false
@@ -38,6 +38,11 @@ repos:
     rev: '1.7.5'
     hooks:
       - id: bandit
+  # vulture
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: 'v2.7'
+    hooks:
+      - id: vulture
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.32.0
