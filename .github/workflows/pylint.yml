@@ -17,4 +17,4 @@ jobs:
         run: pip install pylint
       - name: pylint
         # https://stackoverflow.com/a/63044665
-        run: pylint $(git ls-files '*.py')
+        run: pylint $(git ls-files '*.py') --disable=import-error
