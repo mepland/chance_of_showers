@@ -1,11 +1,11 @@
-name: pylint
+name: bandit
 
 on: pull_request  # yamllint disable-line rule:truthy
 
 jobs:
-  pylint:
+  bandit:
     runs-on: ubuntu-latest
-    name: pylint
+    name: bandit
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3

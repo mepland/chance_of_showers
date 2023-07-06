@@ -3,9 +3,9 @@ name: flake8
 on: pull_request  # yamllint disable-line rule:truthy
 
 jobs:
-  flake8-lint:
+  flake8:
     runs-on: ubuntu-latest
-    name: Lint
+    name: flake8
     steps:
       - name: Check out source repository
         uses: actions/checkout@v3
@@ -13,7 +13,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.9"
-      - name: flake8 Lint
+      - name: flake8
         uses: py-actions/flake8@v2
         with:
           plugins: "flake8-docstrings"
