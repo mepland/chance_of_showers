@@ -1,4 +1,9 @@
+poetry:
+	poetry check
+	poetry lock
+
 pre-commit:
+	poetry run pre-commit autoupdate
 	poetry run pre-commit run --all-files
 
 black:
@@ -13,10 +18,9 @@ mypy:
 isort:
 	poetry run isort .
 
-#pylint:
-# https://stackoverflow.com/a/63044665
-# TODO rework bash here
-#	bash -c "pylint $(git ls-files '*.py')"
+pylint:
+	# https://stackoverflow.com/a/63044665
+	poetry run pylint $(shell git ls-files '*.py')
 
 bandit:
 	poetry run bandit -r .
