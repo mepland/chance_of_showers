@@ -3,6 +3,11 @@ Matthew Epland, PhD
 
 TODO
 
+## Opening the Web Dashboard
+If `daq.py` is running with `display_web = True`,
+the local IP address and port of the dashboard will be logged on startup.
+
+## Dev
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -10,7 +15,7 @@ TODO
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
-## Cloning the Repository
+### Cloning the Repository
 ssh
 ```bash
 git clone git@github.com:mepland/chance_of_showers.git
@@ -21,8 +26,8 @@ https
 git clone https://github.com/mepland/chance_of_showers.git
 ```
 
-## Installing Dependencies with Poetry
-Install poetry following the [instructions here](https://python-poetry.org/docs/#installation).
+### Installing Dependencies with Poetry
+Install `poetry` following the [instructions here](https://python-poetry.org/docs/#installation).
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
@@ -40,6 +45,8 @@ or
 poetry install --with ana,dev
 ```
 
-## Opening the Web Dashboard
-If `daq.py` is running with `display_web = True`,
-the local IP address and port of the dashboard will be logged on startup.
+### Setting up pre-commit
+You should just need to [Install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `poetry` `dev` group.
+```bash
+pre-commit install
+```
