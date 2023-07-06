@@ -154,7 +154,7 @@ polling_flow_samples = np.zeros(n_polling)
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
     try:
-        res = os.popen("vcgencmd measure_temp").readline()
+        res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607
         temp = float(res.replace("temp=", "").replace("'C\n", ""))
     except Exception as error:
         # don't want to kill the DAQ just because of a problem reading the SoC temp
@@ -323,7 +323,7 @@ if display_web:  # noqa: C901
         template_folder="web/templates",
     )
 
-    flask_app.config["SECRET_KEY"] = "test"
+    flask_app.config["SECRET_KEY"] = "test"  # nosec B105
     flask_app.config["TEMPLATES_AUTO_RELOAD"] = True
 
     logger_sio = logging.getLogger("sio")
@@ -656,7 +656,7 @@ if display_web:
         sio.run(
             flask_app,
             port=PORT_NUMBER,
-            host="0.0.0.0",
+            host="0.0.0.0",  # nosec B104
             # debug must be false to avoid duplicate threads of the entire script!
             debug=False,
         )

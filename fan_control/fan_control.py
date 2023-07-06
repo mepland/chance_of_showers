@@ -33,7 +33,7 @@ rpm = 0.0  # pylint: disable=C0103
 
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
-    res = os.popen("vcgencmd measure_temp").readline()
+    res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607
     temp = float(res.replace("temp=", "").replace("'C\n", ""))
 
     return temp
