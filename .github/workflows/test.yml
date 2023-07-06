@@ -1,0 +1,70 @@
+# This workflow will install Python dependencies and run tests
+# For more information see:
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: test
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+        poetry-version: ["1.5"]
+
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install Dependencies
+        run: poetry install --with dev
+
+      - name: black
+        uses: psf/black@stable
+        with:
+          options: "--check --diff"
+          src: "."
+          jupyter: true
+
+      - name: flake8
+        uses: py-actions/flake8@v2
+        with:
+          plugins: "flake8-docstrings"
+
+      - name: mypy
+        run: poetry run mypy .
+
+      - name: isort
+        uses: isort/isort-action@master
+
+      - name: pylint
+        # https://stackoverflow.com/a/63044665
+        run: poetry run pylint $(git ls-files '*.py')
+
+      - name: bandit
+        run: poetry run bandit -r .
+
+      - name: vulture
+        run: poetry run vulture
+
+      - name: yamllint
+        run: poetry run yamllint --strict .

@@ -29,7 +29,7 @@ repos:
       - id: pylint
         name: pylint
         # https://stackoverflow.com/a/63044665
-        entry: bash -c "pylint -sn $(git ls-files '*.py')"
+        entry: bash -c "poetry run pylint -sn $(git ls-files '*.py')"
         language: system
         types: [python]
         pass_filenames: false
