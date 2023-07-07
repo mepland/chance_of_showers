@@ -42,6 +42,9 @@ jobs:
       - name: Install Dependencies
         run: poetry install --with daq,web,ana,dev
 
+      - name: poetry
+        run: poetry check && poetry lock --no-update
+
       - name: black
         uses: psf/black@stable
         with:
@@ -73,5 +76,5 @@ jobs:
       - name: yamllint
         run: poetry run yamllint --strict .
 
-      - name: poetry
-        run: poetry check && poetry lock --no-update
+      - name: blocklint
+        run: blocklint

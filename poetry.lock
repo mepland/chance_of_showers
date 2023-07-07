@@ -467,6 +467,20 @@ files = [
 ]
 
 [[package]]
+name = "blocklint"
+version = "0.2.4"
+description = "Lint for blocklisted words."
+optional = false
+python-versions = "!=3.0,!=3.1,!=3.2,!=3.3,!=3.4,>=2.7"
+files = [
+    {file = "blocklint-0.2.4-py2.py3-none-any.whl", hash = "sha256:649355b3e6a6bec0953ee143caf5699231c98a90e50f4ad87ebfecdbe06d93b0"},
+    {file = "blocklint-0.2.4.tar.gz", hash = "sha256:7db8ba70b72b0360a691f577edde305f10abbcd99a102465296b682b3894285d"},
+]
+
+[package.extras]
+test = ["pytest", "pytest-mock", "tox"]
+
+[[package]]
 name = "cbor2"
 version = "5.4.6"
 description = "CBOR (de)serializer with extensive tag support"
@@ -4306,4 +4320,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "805ab83d61c5b475b85f179d48d1fb31a598fbf62011c028dcf314d99e3aa7f8"
+content-hash = "5034126f093992b137d38145d869769262bfd6eb9e2e18872a146a093e330a54"
