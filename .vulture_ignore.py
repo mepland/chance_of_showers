@@ -1,6 +1,6 @@
 # flake8: noqa
 # pylint: skip-file
-# type: ignore
+# mypy: disable-error-code="name-defined"
 plot_func  # unused function (ana/plotting.py:33)
 frame  # unused variable (daq/daq.py:176)
 _.when_held  # unused attribute (daq/daq.py:238)
