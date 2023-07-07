@@ -69,7 +69,6 @@ jobs:
         uses: isort/isort-action@master
 
       - name: pylint
-        # https://stackoverflow.com/a/63044665
         run: poetry run pylint $(git ls-files '*.py')
 
       - name: bandit
@@ -83,3 +82,8 @@ jobs:
 
       - name: blocklint
         run: poetry run blocklint
+
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
