@@ -6,6 +6,12 @@ repos:
     hooks:
       - id: black-jupyter
         language_version: python3.9
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: '1.14.0'
+    hooks:
+      - id: blacken-docs
+        args: [--line-length=100]
+        additional_dependencies: [black==23.3.0]
   # flake8
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0

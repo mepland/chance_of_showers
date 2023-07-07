@@ -16,6 +16,7 @@ pre-commit:
 
 black:
 	poetry run black .
+	poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py') $(shell git ls-files '*.md') $(shell git ls-files '*.rst')
 
 flake8:
 	poetry run flake8

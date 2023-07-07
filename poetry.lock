@@ -438,6 +438,20 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "blacken-docs"
+version = "1.14.0"
+description = "Run Black on Python code blocks in documentation files."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "blacken_docs-1.14.0-py3-none-any.whl", hash = "sha256:fd579c07522d46dc323e4826dfaf8885637d2654936f56e71144682933598812"},
+    {file = "blacken_docs-1.14.0.tar.gz", hash = "sha256:1ddda708c9a346ebd70c758d2847b5fd35b3801780261aa23787f19eb5d4d50d"},
+]
+
+[package.dependencies]
+black = ">=22.1.0"
+
+[[package]]
 name = "bleach"
 version = "6.0.0"
 description = "An easy safelist-based HTML-sanitizing tool."
@@ -4399,4 +4413,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5034126f093992b137d38145d869769262bfd6eb9e2e18872a146a093e330a54"
+content-hash = "57a75efea29b6c83a402236761a53d6fbf776a173196371ba625d1eb06b375b1"
