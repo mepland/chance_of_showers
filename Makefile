@@ -1,9 +1,17 @@
+setupDAQ:
+	poetry install --with daq,web,dev
+	pre-commit install
+
+setupANA:
+	poetry install --with ana,dev
+	pre-commit install
+
 poetry:
 	poetry check
 	poetry lock
 
 pre-commit:
-	# poetry run pre-commit autoupdate
+	poetry run pre-commit autoupdate
 	poetry run pre-commit run --all-files
 
 black:
