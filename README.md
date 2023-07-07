@@ -1,7 +1,7 @@
 # chance\_of\_showers
 Matthew Epland, PhD
 
-DESCRIPTION TODO
+TODO
 
 ## Opening the Web Dashboard
 If `daq.py` is running with `display_web = True`,
