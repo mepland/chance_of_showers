@@ -17,24 +17,13 @@ the local IP address and port of the dashboard will be logged on startup.
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
-### Cloning the Repository
-ssh
-```bash
-git clone git@github.com:mepland/chance_of_showers.git
-```
-
-https
-```bash
-git clone https://github.com/mepland/chance_of_showers.git
-```
-
 ### Installing Dependencies with Poetry
 Install `poetry` following the [instructions here](https://python-poetry.org/docs/#installation).
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 Then install the `python` packages needed for this installation. Groups include:
-- `daq` for packages needed to run the DAQ script on a Raspbery Pi, optional
+- `daq` for packages needed to run the DAQ script on a Raspberry Pi, optional
 - `web` for packages needed to run the live dashboard from the DAQ script, optional
 - `ana` for analysis tools, optional
 - `dev` for CI and linting tools
@@ -52,3 +41,8 @@ You should just need to [install the git hook scripts](https://pre-commit.com/#3
 ```bash
 pre-commit install
 ```
+
+### Using the Makefile
+A `Makefile` is provided convenience,
+with commands to `make setupDAQ` or `make setupANA`,
+as well run individual CI tests.
