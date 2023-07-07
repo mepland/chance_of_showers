@@ -45,6 +45,12 @@ repos:
     rev: '1.7.5'
     hooks:
       - id: bandit
+  # detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
   # vulture
   - repo: https://github.com/jendrikseipp/vulture
     rev: 'v2.7'
@@ -69,11 +75,6 @@ repos:
     rev: 'v0.2.4'
     hooks:
       - id: blocklint
-  # gitleaks
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.17.0
-    hooks:
-      - id: gitleaks
   # pre-commit-hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

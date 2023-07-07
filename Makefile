@@ -34,6 +34,9 @@ pylint:
 bandit:
 	poetry run bandit -r .
 
+detect-secrets:
+	poetry run detect-secrets scan --baseline=.secrets.baseline
+
 vulture:
 	poetry run vulture
 
