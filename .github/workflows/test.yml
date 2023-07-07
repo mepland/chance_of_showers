@@ -72,3 +72,6 @@ jobs:
 
       - name: yamllint
         run: poetry run yamllint --strict .
+
+      - name: poetry
+        run: poetry check && poetry lock --no-update
