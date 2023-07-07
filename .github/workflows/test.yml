@@ -77,4 +77,4 @@ jobs:
         run: poetry run yamllint --strict .
 
       - name: blocklint
-        run: blocklint
+        run: poetry run blocklint
