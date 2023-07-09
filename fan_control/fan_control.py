@@ -33,17 +33,14 @@ rpm = 0.0  # pylint: disable=C0103
 
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
-    res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607
-    temp = float(res.replace("temp=", "").replace("'C\n", ""))
+    res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
 
-    return temp
+    return float(res.replace("temp=", "").replace("'C\n", ""))
 
 
 def set_fan_speed(speed: float) -> None:
     """Set fan speed."""
     fan.start(speed)
-
-    return None
 
 
 def fell() -> None:
@@ -55,17 +52,14 @@ def fell() -> None:
     global rpm
 
     delta_t = time.time() - current_time
-    if delta_t < 0.005:
-        return None  # Reject spuriously short pulses
-
-    freq = 1 / delta_t
-    rpm = (freq / PULSE) * 60
-    current_time = time.time()
-
-    return None
+    # Reject spuriously short pulses
+    if 0.005 < delta_t:
+        freq = 1 / delta_t
+        rpm = (freq / PULSE) * 60
+        current_time = time.time()
 
 
-def hanlde_fan_speed() -> None:
+def handle_fan_speed() -> None:
     """Handle fan speed."""
     global rpm
 
@@ -96,8 +90,6 @@ def hanlde_fan_speed() -> None:
 
     rpm = 0
 
-    return None
-
 
 try:
     # Setup GPIO pins
@@ -115,7 +107,7 @@ try:
 
     # Handle fan speed every WAIT_TIME sec
     while True:
-        hanlde_fan_speed()
+        handle_fan_speed()
         time.sleep(WAIT_TIME)
 
 except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt

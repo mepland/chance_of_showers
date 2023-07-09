@@ -8,15 +8,18 @@ import datetime
 import glob
 import os
 import traceback
+from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 import hydra
 import polars as pl
-from omegaconf import DictConfig
+
+if TYPE_CHECKING:
+    from omegaconf import DictConfig
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def etl(cfg: DictConfig) -> None:
+def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
     """Run ETL script."""
     # setup variables
     package_path = cfg["general"]["package_path"]
@@ -27,8 +30,7 @@ def etl(cfg: DictConfig) -> None:
     time_fmt = cfg["general"]["time_fmt"]
     datetime_fmt = f"{date_fmt} {time_fmt}"
 
-    # when the issue of drifting seconds was fixed by
-    # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
+    # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
     dt_end_of_drifting_seconds = datetime.datetime.strptime(
         cfg["daq"]["end_of_drifting_seconds"], datetime_fmt
     ).replace(tzinfo=ZoneInfo("UTC"))
@@ -63,7 +65,6 @@ def etl(cfg: DictConfig) -> None:
         .with_columns(
             pl.col("datetime_est").dt.weekday().alias("day_of_week_int"),
             pl.col("datetime_est").dt.to_string("%A").alias("day_of_week_str"),
-            # pl.col("datetime_est").dt.to_string(time_hm_fmt).alias("time"),
         )
     )
 
@@ -99,11 +100,9 @@ def etl(cfg: DictConfig) -> None:
             .strftime(datetime_fmt)
         )
         raise ValueError(
-            (
-                f"Found {n_duplicate_datetime_post_threading_fix} datetimes with multiple entries"
-                f" after {dt_end_of_threading_duplicates.strftime(datetime_fmt)} UTC!"
-                f"\nDuplicates are between {duplicate_datetime_post_fix_min} and {duplicate_datetime_post_fix_max}."
-            )
+            f"Found {n_duplicate_datetime_post_threading_fix} datetimes with multiple entries"
+            + f" after {dt_end_of_threading_duplicates.strftime(datetime_fmt)} UTC!"
+            + f"\nDuplicates are between {duplicate_datetime_post_fix_min} and {duplicate_datetime_post_fix_max}."
         )
 
     # check for drifting seconds after fix implemented at dt_end_of_drifting_seconds

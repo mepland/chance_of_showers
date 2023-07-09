@@ -1,4 +1,6 @@
 """Run DAQ script."""
+from __future__ import annotations
+
 ################################################################################
 # display options
 # TEMPORARY pylint: disable=C0103
@@ -15,7 +17,7 @@ verbose = 0
 starting_time_minutes_mod = 1
 averaging_period_seconds = starting_time_minutes_mod * 60
 polling_period_seconds = 1
-# DAQ_max_value = 65472
+# DAQ_max_value is 65472
 
 date_fmt = "%Y-%m-%d"
 time_fmt = "%H:%M:%S"
@@ -39,8 +41,10 @@ import threading
 import time
 import traceback
 from csv import writer
-from types import FrameType
-from typing import List, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import FrameType
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -60,7 +64,7 @@ if 0 < verbose:
     logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
-    log_datetime = datetime.datetime.now().astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M-%S")
+    log_datetime = datetime.datetime.now(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M-%S")
 
     fname_log = f"daq_{log_datetime}.log"
     logging_fh = logging.FileHandler(f"{m_path}/logs/{fname_log}")
@@ -80,7 +84,8 @@ if log_to_file:
 
 def my_print(
     line: str,
-    logger_level: Optional[int] = logging.INFO,
+    *,
+    logger_level: int | None = logging.INFO,
     use_print: bool = display_terminal,
     print_prefix: str = "",
     print_postfix: str = "",
@@ -154,7 +159,7 @@ polling_flow_samples = np.zeros(n_polling)
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature."""
     try:
-        res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607
+        res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
         temp = float(res.replace("temp=", "").replace("'C\n", ""))
     except Exception as error:
         # don't want to kill the DAQ just because of a problem reading the SoC temp
@@ -173,7 +178,8 @@ running_daq_loop = True  # pylint: disable=C0103
 
 
 def signal_handler(
-    signal: int, frame: Optional[FrameType]  # pylint: disable=unused-argument,redefined-outer-name
+    signal: int,  # pylint: disable=unused-argument,redefined-outer-name # noqa: U100
+    frame: FrameType | None,  # pylint: disable=unused-argument,redefined-outer-name # noqa: U100
 ) -> None:
     """Catch ctrl+c and kill, and shut down gracefully.
 
@@ -265,7 +271,8 @@ if display_oled:
         sys.exit(1)
 
     def paint_oled(
-        lines: List[str],
+        lines: list[str],
+        *,
         lpad: float = 4.0,
         vpad: float = 0.0,
         line_height: int = OLED_FONT_SIZE,
@@ -286,9 +293,6 @@ if display_oled:
         except (OSError, DeviceNotFoundError, TypeError):
             # do not log device not connected errors, OLED power is probably just off
             my_print(
-                # f"Expected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
-                # f"Expected error in paint_oled(): {error=}, Continuing",
-                # logger_level=logging.DEBUG,
                 line="",
                 logger_level=None,
                 use_print=False,
@@ -363,7 +367,7 @@ if display_web:  # noqa: C901
             ip_address = request.remote_addr
             mac_address = "Unknown"
             for _ in python_arptable.get_arp_table():
-                if _.get("IP address", None) == ip_address:
+                if _.get("IP address") == ip_address:
                     mac_address = _.get("HW address", mac_address)
                     break
             conn_details_str = (
@@ -391,7 +395,7 @@ if display_web:  # noqa: C901
             new_connection = True
             my_print(
                 f"Client connected {conn_details()}",
-                use_print=(display_terminal and display_web_logging_terminal),
+                use_print=display_terminal and display_web_logging_terminal,
             )
         except Exception as error:
             # don't want to kill the DAQ just because of a web problem
@@ -408,7 +412,7 @@ if display_web:  # noqa: C901
         try:
             my_print(
                 f"Client disconnected {conn_details()}",
-                use_print=(display_terminal and display_web_logging_terminal),
+                use_print=display_terminal and display_web_logging_terminal,
             )
         except Exception as error:
             # don't want to kill the DAQ just because of a web problem
@@ -423,7 +427,7 @@ if display_web:  # noqa: C901
         # No messages in terminal
         import flask.cli
 
-        flask.cli.show_server_banner = lambda *args: None
+        flask.cli.show_server_banner = lambda *args: None  # noqa: U100
 
     # never write werkzeug logs to terminal
     log_werkzeug = logging.getLogger("werkzeug")
@@ -434,9 +438,9 @@ if display_web:  # noqa: C901
         log_werkzeug.addHandler(logging_fh)
 
     N_LAST = 15
-    t_est_str_n_last: List[str] = []
-    mean_pressure_value_normalized_n_last: List[float] = []
-    past_had_flow_n_last: List[int] = []
+    t_est_str_n_last: list[str] = []
+    mean_pressure_value_normalized_n_last: list[float] = []
+    past_had_flow_n_last: list[int] = []
 
     def get_ip_address() -> str:
         """Get ip address of host machine.
@@ -461,7 +465,7 @@ if display_web:  # noqa: C901
 ################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
-t_start = datetime.datetime.now()
+t_start = datetime.datetime.now(ZoneInfo("UTC"))
 t_start_minute = (
     t_start.minute - (t_start.minute % starting_time_minutes_mod) + starting_time_minutes_mod
 ) % 60
@@ -490,7 +494,7 @@ if display_oled:
 
 pause.until(t_start)
 
-t_start = datetime.datetime.now()
+t_start = datetime.datetime.now(ZoneInfo("UTC"))
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 my_print(
@@ -515,7 +519,7 @@ def daq_loop() -> None:
     past_had_flow = -1
     while running_daq_loop:
         # Set seconds to 0 to avoid drift over multiple hours / days
-        t_start = datetime.datetime.now().replace(second=0, microsecond=0)
+        t_start = datetime.datetime.now(ZoneInfo("UTC")).replace(second=0, microsecond=0)
         t_stop = t_start
 
         # average over averaging_period_seconds
@@ -543,8 +547,8 @@ def daq_loop() -> None:
             my_print(
                 f"{line1}\n{line2}",
                 logger_level=logging.DEBUG,
-                use_print=(display_terminal and not display_terminal_overwrite),
-                use_stdout_overwrite=(display_terminal and display_terminal_overwrite),
+                use_print=display_terminal and not display_terminal_overwrite,
+                use_stdout_overwrite=display_terminal and display_terminal_overwrite,
             )
 
             if display_oled:
@@ -563,7 +567,6 @@ def daq_loop() -> None:
                     # send data to socket
                     _data = {
                         # time
-                        # "t_utc_str": t_utc_str,
                         "t_est_str": t_est_str,
                         "i_polling": i_polling,
                         # live values
@@ -591,13 +594,13 @@ def daq_loop() -> None:
                     pass
 
             # wait polling_period_seconds between data points to average
-            while datetime.datetime.now() - t_stop < datetime.timedelta(
+            while datetime.datetime.now(ZoneInfo("UTC")) - t_stop < datetime.timedelta(
                 seconds=polling_period_seconds
             ):
                 pass
 
             i_polling += 1
-            t_stop = datetime.datetime.now()
+            t_stop = datetime.datetime.now(ZoneInfo("UTC"))
 
         # process polling results if DAQ is still running
         if running_daq_loop:
@@ -610,8 +613,10 @@ def daq_loop() -> None:
             past_had_flow = int(np.max(polling_flow_samples))
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
-            fname_date = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
-            with open(f"{m_path}/raw_data/date_{fname_date}.csv", "a", encoding="utf-8") as f_csv:
+            fname_date_utc = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
+            with open(
+                f"{m_path}/raw_data/date_{fname_date_utc}.csv", "a", encoding="utf-8"
+            ) as f_csv:
                 m_writer = writer(f_csv)
                 if f_csv.tell() == 0:
                     # empty file, create header

@@ -40,5 +40,8 @@ detect-secrets:
 vulture:
 	poetry run vulture
 
+pyupgrade:
+	poetry run pyupgrade $(shell git ls-files '*.py')
+
 yamllint:
 	poetry run yamllint .

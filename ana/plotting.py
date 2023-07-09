@@ -1,6 +1,4 @@
 """This module contains common plotting code."""
-########################################################
-# imports
 import matplotlib as mpl  # pylint: disable=import-error
 import numpy as np
 
@@ -29,8 +27,8 @@ import matplotlib.pyplot as plt  # noqa: E402 pylint: disable=import-error
 
 
 ########################################################
-# setup types later if continuing to use this function
-def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def]
+# correctly setup types and kagrs later if continuing to use this function
+def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001, KWP001
     """Plot scatter and linear fit."""
     plot_objs = dict(plot_objs_in)
     fig, ax = plt.subplots()
