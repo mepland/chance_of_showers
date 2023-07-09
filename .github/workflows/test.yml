@@ -53,7 +53,7 @@ jobs:
           jupyter: true
 
       - name: blacken-docs
-        uses: poetry run blacken-docs $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  # yamllint disable-line rule:line-length
         with:
           options: "--line-length=100"
 
