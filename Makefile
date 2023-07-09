@@ -11,7 +11,7 @@ poetry:
 	poetry lock
 
 pre-commit:
-	poetry run pre-commit autoupdate
+	# poetry run pre-commit autoupdate
 	poetry run pre-commit run --all-files
 
 black:
@@ -35,7 +35,7 @@ bandit:
 	poetry run bandit -r .
 
 detect-secrets:
-	poetry run detect-secrets scan --baseline=.secrets.baseline
+	poetry run detect-secrets-hook --exclude-lines 'integrity='
 
 vulture:
 	poetry run vulture
@@ -44,4 +44,4 @@ pyupgrade:
 	poetry run pyupgrade $(shell git ls-files '*.py')
 
 yamllint:
-	poetry run yamllint .
+	poetry run yamllint -c .dev_config/.yamllint.yaml --strict .

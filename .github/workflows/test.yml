@@ -73,7 +73,7 @@ jobs:
         run: poetry run bandit -r .
 
       - name: detect-secrets
-        run: poetry run detect-secrets scan --baseline=.secrets.baseline
+        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
 
       - name: vulture
         run: poetry run vulture
@@ -82,7 +82,7 @@ jobs:
         run: poetry run pyupgrade
 
       - name: yamllint
-        run: poetry run yamllint --strict .
+        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
 
       - name: blocklint
         run: poetry run blocklint

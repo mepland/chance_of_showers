@@ -95,7 +95,7 @@ repos:
     rev: 'v1.4.0'
     hooks:
       - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ['--exclude-lines', 'integrity=']
 
   # vulture
   - repo: https://github.com/jendrikseipp/vulture
@@ -114,7 +114,7 @@ repos:
     rev: 'v1.32.0'
     hooks:
       - id: yamllint
-        args: [--strict]
+        args: ['-c', '.dev_config/.yamllint.yaml', '--strict']
 
   # poetry
   # yamllint disable rule:comments-indentation

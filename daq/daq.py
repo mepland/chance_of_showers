@@ -327,6 +327,7 @@ if display_web:  # noqa: C901
         template_folder="web/templates",
     )
 
+    # pragma: allowlist nextline secret
     flask_app.config["SECRET_KEY"] = "test"  # nosec B105
     flask_app.config["TEMPLATES_AUTO_RELOAD"] = True
 
