@@ -73,9 +73,7 @@ jobs:
         run: poetry run bandit -r .
 
       - name: detect-secrets
-        run: poetry run detect-secrets
-        with:
-          options: "--baseline=.secrets.baseline"
+        run: poetry run detect-secrets --baseline=.secrets.baseline
 
       - name: vulture
         run: poetry run vulture
