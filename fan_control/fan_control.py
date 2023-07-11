@@ -37,7 +37,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     Returns:
         SoC temperature as a float.
     """
-    res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
+    res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
 

@@ -175,7 +175,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
         SoC temperature as a float.
     """
     try:
-        res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
+        res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
         temp = float(res.replace("temp=", "").replace("'C\n", ""))
     except Exception as error:
         # don't want to kill the DAQ just because of a problem reading the SoC temp
@@ -194,8 +194,8 @@ running_daq_loop = True  # pylint: disable=C0103
 
 
 def signal_handler(
-    signal: int,  # pylint: disable=unused-argument,redefined-outer-name # noqa: U100
-    frame: FrameType | None,  # pylint: disable=unused-argument,redefined-outer-name # noqa: U100
+    dummy_signal: int,  # noqa: U100 # pylint: disable=unused-argument
+    dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=unused-argument
 ) -> None:
     """Catch ctrl+c and kill, and shut down gracefully.
 
@@ -203,8 +203,8 @@ def signal_handler(
     Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
 
     Args:
-        signal: signal number.
-        frame: Frame object.
+        dummy_signal: signal number.
+        dummy_frame: Frame object.
     """
     global running_daq_loop
     my_print(
@@ -356,7 +356,7 @@ if display_web:  # noqa: C901
     )
 
     # pragma: allowlist nextline secret
-    flask_app.config["SECRET_KEY"] = "test"  # nosec B105
+    flask_app.config["SECRET_KEY"] = "test"  # nosec: B105
     flask_app.config["TEMPLATES_AUTO_RELOAD"] = True
 
     logger_sio = logging.getLogger("sio")
@@ -700,7 +700,7 @@ if display_web:
         sio.run(
             flask_app,
             port=PORT_NUMBER,
-            host="0.0.0.0",  # nosec B104
+            host="0.0.0.0",  # nosec: B104
             # debug must be false to avoid duplicate threads of the entire script!
             debug=False,
         )
