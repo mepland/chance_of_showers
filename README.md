@@ -8,7 +8,7 @@ If `daq.py` is running with `display_web = True`,
 the local IP address and port of the dashboard will be logged on startup.
 
 ## Dev
-[![test](https://github.com/mepland/chance_of_showers/actions/workflows/test.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/test.yml)
+[![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
