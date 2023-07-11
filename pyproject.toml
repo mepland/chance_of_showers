@@ -135,6 +135,16 @@ ignore = [
 "SCS109",
 "PIE786",
 ]
+extend-select = [
+"B901",
+"B902",
+"B903",
+"B904",
+# "B905", Add when upgraded to py 3.10+
+"B906",
+"B907",
+"B908",
+]
 per-file-ignores = """
     daq/daq.py: E402
 """
