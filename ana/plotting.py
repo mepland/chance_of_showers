@@ -27,9 +27,17 @@ import matplotlib.pyplot as plt  # noqa: E402 pylint: disable=import-error
 
 
 ########################################################
-# correctly setup types and kagrs later if continuing to use this function
-def plot_func(plot_objs_in, col_x, col_y, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001, KWP001
-    """Plot scatter and linear fit."""
+# Correctly setup types, kagrs, and docstring descriptions later if continuing to use this function
+def plot_func(plot_objs_in, col_x, col_y, *, fig_size=(6, 5)) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001
+    """Plot scatter and linear fit.
+
+    # noqa: DAR101
+    Args:
+       plot_objs_in: List of objects to plot.
+       col_x: X axis label.
+       col_y: Y axis label.
+       fig_size: Figure size in inches.
+    """
     plot_objs = dict(plot_objs_in)
     fig, ax = plt.subplots()
     fig.set_size_inches(fig_size)

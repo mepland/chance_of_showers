@@ -56,7 +56,8 @@ repos:
           flake8-string-format,
           flake8-no-implicit-concat,
           flake8-escaping-style,
-          flake8-literal
+          flake8-literal,
+          darglint
         ]
 
   # mypy

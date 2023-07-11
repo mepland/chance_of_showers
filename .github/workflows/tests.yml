@@ -59,7 +59,7 @@ jobs:
       - name: flake8
         uses: py-actions/flake8@v2
         with:
-          plugins: "flake8-annotations flake8-docstrings flake8-bugbear flake8-builtins flake8-comprehensions flake8-eradicate flake8-pytest-style flake8-pyprojecttoml flake8-boolean-trap flake8-dunder-class-obj flake8-get-chaining flake8-github-annotations flake8-inflammatory-jargon flake8-noqa flake8-async flake8-keyword-params flake8-mutable flake8-no-debug-vars flake8-picky-parentheses flake8-future-annotations flake8-loopy flake8-pie flake8-secure-coding-standard flake8-simplify flake8-unused-arguments flake8-return flake8-datetimez flake8-import-conventions flake8-typing-as-t flake8-type-checking flake8-pep585 flake8-printf-formatting flake8-pep3101 flake8-string-format flake8-no-implicit-concat flake8-escaping-style flake8-literal"  # yamllint disable-line rule:line-length
+          plugins: "flake8-annotations flake8-docstrings flake8-bugbear flake8-builtins flake8-comprehensions flake8-eradicate flake8-pytest-style flake8-pyprojecttoml flake8-boolean-trap flake8-dunder-class-obj flake8-get-chaining flake8-github-annotations flake8-inflammatory-jargon flake8-noqa flake8-async flake8-keyword-params flake8-mutable flake8-no-debug-vars flake8-picky-parentheses flake8-future-annotations flake8-loopy flake8-pie flake8-secure-coding-standard flake8-simplify flake8-unused-arguments flake8-return flake8-datetimez flake8-import-conventions flake8-typing-as-t flake8-type-checking flake8-pep585 flake8-printf-formatting flake8-pep3101 flake8-string-format flake8-no-implicit-concat flake8-escaping-style flake8-literal darglint"  # yamllint disable-line rule:line-length
 
       - name: mypy
         run: poetry run mypy .

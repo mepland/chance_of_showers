@@ -91,10 +91,18 @@ def my_print(
     print_postfix: str = "",
     use_stdout_overwrite: bool = False,
 ) -> None:
-    """Custom print function to print to screen, possibly with previous line overwriting, and log files.
+    """Custom print function to print to screen and log files.
 
     We could just add a StreamHandler to logger,
     but as we also want to erase lines on stdout we define our own print function instead.
+
+    Args:
+        line: The line to be printed.
+        logger_level: The level to use for logging, None to disable logging.
+        use_print: Flag for printing to stdout.
+        print_prefix: String to prepend to `line` before printing to stdout.
+        print_postfix: String to append to `line` before printing to stdout.
+        use_stdout_overwrite: Flag for overwritting the previous line on stdout.
     """
     if not log_to_file or logger_level is None:
         pass
@@ -116,8 +124,7 @@ def my_print(
 
     if use_print:
         print(f"{print_prefix}{line}{print_postfix}")
-
-    if use_stdout_overwrite:
+    elif use_stdout_overwrite:
         # https://stackoverflow.com/a/39177802
         sys.stdout.write("\x1b[1A\x1b[2K" + line + "\r")
         sys.stdout.flush()
@@ -130,7 +137,12 @@ def my_print(
 def normalize_pressure_value(pressure_value: int) -> float:
     """Normalize raw ADC pressure_value.
 
-    observed_pressure_min (observed_pressure_max) maps to 0 (1).
+    Args:
+        pressure_value: The raw ADC pressure_value to be normalized.
+
+    Returns:
+        (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
+        i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
     """
     try:
         normalize_pressure_value_float = (pressure_value - observed_pressure_min) / (
@@ -157,7 +169,11 @@ polling_flow_samples = np.zeros(n_polling)
 
 
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
-    """Get SoC's temperature."""
+    """Get SoC's temperature.
+
+    Returns:
+        SoC temperature as a float.
+    """
     try:
         res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
         temp = float(res.replace("temp=", "").replace("'C\n", ""))
@@ -185,6 +201,10 @@ def signal_handler(
 
     https://stackoverflow.com/a/38665760
     Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
+
+    Args:
+        signal: signal number.
+        frame: Frame object.
     """
     global running_daq_loop
     my_print(
@@ -278,7 +298,15 @@ if display_oled:
         line_height: int = OLED_FONT_SIZE,
         bounding_box: bool = False,
     ) -> None:
-        """Function to paint OLED display."""
+        """Function to paint OLED display.
+
+        Args:
+            lines: List of strings to be printed.
+            lpad: Screen left pad.
+            vpad: Screen top vertical pad.
+            line_height: Line height.
+            bounding_box: Flag for including an outline bounding box.
+        """
         try:
             with canvas(i2c_device) as draw:
                 if bounding_box:
@@ -347,7 +375,11 @@ if display_web:  # noqa: C901
 
     @flask_app.route("/")
     def index() -> str:
-        """Serve index.html."""
+        """Serve index.html.
+
+        Returns:
+            Rendered template.
+        """
         try:
             return render_template("index.html")
         except Exception as error:
@@ -362,7 +394,10 @@ if display_web:  # noqa: C901
     def conn_details() -> str:
         """Get connection details.
 
-        ip address and mac address
+        Session ID, IP address and MAC address.
+
+        Returns:
+            Connection details as a string.
         """
         try:
             ip_address = request.remote_addr
@@ -444,9 +479,12 @@ if display_web:  # noqa: C901
     past_had_flow_n_last: list[int] = []
 
     def get_ip_address() -> str:
-        """Get ip address of host machine.
+        """Get IP address of host machine.
 
         https://stackoverflow.com/a/28950776
+
+        Returns:
+            IP address of host as a string.
         """
         m_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         m_socket.settimeout(0)

@@ -69,6 +69,7 @@ flake8-string-format = "^0.3.0"
 flake8-no-implicit-concat = "^0.3.4"
 flake8-escaping-style = "^0.1.2"
 flake8-literal = "^1.3.0"
+darglint = "^1.8.1"
 pyupgrade = "^3.9.0"
 
 [tool.poetry.group.daq]
@@ -125,6 +126,7 @@ exclude = '''
 [tool.flake8]
 max-complexity = 18
 docstring-convention = "google"
+docstring_style = "google" # darglint
 ignore = [
 "E501",
 "W503",

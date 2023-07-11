@@ -20,7 +20,15 @@ if TYPE_CHECKING:
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
 def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
-    """Run ETL script."""
+    """Run ETL script.
+
+    Args:
+        cfg: Hydra configuration.
+
+    Raises:
+        OSError: An error occurred reading a csv.
+        ValueError: A data quality check failed.
+    """
     # setup variables
     package_path = cfg["general"]["package_path"]
     raw_data = cfg["daq"]["raw_data"]

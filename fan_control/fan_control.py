@@ -32,14 +32,22 @@ rpm = 0.0  # pylint: disable=C0103
 
 
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
-    """Get SoC's temperature."""
+    """Get SoC's temperature.
+
+    Returns:
+        SoC temperature as a float.
+    """
     res = os.popen("vcgencmd measure_temp").readline()  # nosec B605, B607 # noqa: SCS110
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
 
 
 def set_fan_speed(speed: float) -> None:
-    """Set fan speed."""
+    """Set fan speed.
+
+    Args:
+        speed: Desired fan speed, 0 to 100.
+    """
     fan.start(speed)
 
 
