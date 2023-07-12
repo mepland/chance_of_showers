@@ -10,6 +10,7 @@ import os
 import traceback
 import zoneinfo
 
+import humanize
 import hydra
 import polars as pl
 from omegaconf import DictConfig  # noqa: TC002
@@ -57,11 +58,13 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     # load raw csv files
     dfpl_list = []
 
+    csv_total_bytes = 0
     for f_csv in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
         try:
             dfpl = pl.scan_csv(f_csv)
             dfpl = dfpl.with_columns(pl.lit(f_csv.split("/")[-1]).alias("fname"))
             dfpl_list.append(dfpl)
+            csv_total_bytes += os.path.getsize(f_csv)
         except Exception as error:
             raise OSError(
                 f"Error loading file {f_csv}!\n{error=}\n{type(error)=}\n{traceback.format_exc()}"
@@ -151,8 +154,14 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         os.path.join(package_path, saved_data, f"etl_data_{parquet_datetime}.parquet")
     )
     dfpl.collect(streaming=True).write_parquet(f_parquet)
+    parquet_total_bytes = os.path.getsize(f_parquet)
 
-    print(f"\nCombined parquet saved to {f_parquet}\n")
+    print(
+        f"\nCombined parquet saved to {f_parquet}"
+        + f"\n\nInput CSVs: {humanize.naturalsize(csv_total_bytes)}"
+        + f", Output parquet: {humanize.naturalsize(parquet_total_bytes)}"
+        + f", a reduction of {(csv_total_bytes - parquet_total_bytes) / csv_total_bytes:.0%}\n"
+    )
 
 
 if __name__ == "__main__":
