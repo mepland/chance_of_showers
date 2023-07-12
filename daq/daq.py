@@ -11,9 +11,9 @@ import sys
 import threading
 import time
 import traceback
+import zoneinfo
 from csv import writer
 from typing import TYPE_CHECKING
-from zoneinfo import ZoneInfo
 
 import hydra
 import numpy as np
@@ -62,6 +62,12 @@ polling_period_seconds = cfg["daq"]["polling_period_seconds"]
 date_fmt = cfg["general"]["date_fmt"]
 time_fmt = cfg["general"]["time_fmt"]
 datetime_fmt = f"{date_fmt} {time_fmt}"
+local_timezone_str = cfg["general"]["local_timezone"]
+if local_timezone_str not in zoneinfo.available_timezones():
+    AVAILABLE_TIMEZONES = "\n".join(list(zoneinfo.available_timezones()))
+    raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{AVAILABLE_TIMEZONES}")
+utc_timezone = zoneinfo.ZoneInfo("UTC")
+local_timezone = zoneinfo.ZoneInfo(local_timezone_str)
 
 package_path = cfg["general"]["package_path"]
 raw_data = cfg["daq"]["raw_data"]
@@ -96,7 +102,7 @@ if 0 < verbosity:
     logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
-    log_datetime = datetime.datetime.now(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M-%S")
+    log_datetime = datetime.datetime.now(utc_timezone).strftime("%Y-%m-%d-%H-%M-%S")
 
     fname_log = f"daq_{log_datetime}.log"
     logging_fh = logging.FileHandler(f"{logs_full_path}/{fname_log}")
@@ -499,7 +505,7 @@ if display_web:  # noqa: C901
     if log_to_file:
         log_werkzeug.addHandler(logging_fh)
 
-    t_est_str_n_last: list[str] = []
+    t_local_str_n_last: list[str] = []
     mean_pressure_value_normalized_n_last: list[float] = []
     past_had_flow_n_last: list[int] = []
 
@@ -529,16 +535,15 @@ if display_web:  # noqa: C901
 ################################################################################
 # Wait until UTC minutes is mod starting_time_minutes_mod
 # Then if the script is interrupted, we can resume on the same cadence
-t_start = datetime.datetime.now(ZoneInfo("UTC"))
+t_start = datetime.datetime.now(utc_timezone)
 t_start_minute = (
     t_start.minute - (t_start.minute % starting_time_minutes_mod) + starting_time_minutes_mod
 ) % 60
 
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
-t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-# TODO change est to local, config local timezone, check it is in ZoneInfo
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+t_utc_str = t_start.astimezone(utc_timezone).strftime(datetime_fmt)
+t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
 
 if log_to_file:
     my_print(f"Logging to {fname_log}", print_prefix="\n")
@@ -547,23 +552,25 @@ if display_web:
         f"Live dashboard hosted at: http://{host_ip_address}:{PORT_NUMBER}",
         print_prefix="\n",
     )
-my_print(f"Starting DAQ at {t_utc_str} UTC, {t_est_str} EST", print_prefix="\n       ")
+my_print(
+    f"Starting DAQ at {t_utc_str} UTC, {t_local_str} {local_timezone_str}", print_prefix="\n       "
+)
 
 if display_oled:
     # write to OLED display
-    t_est_str_short = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(time_fmt)
+    t_local_str_short = t_start.astimezone(local_timezone).strftime(time_fmt)
     paint_oled(
-        ["Will start at:", t_est_str_short, f"SoC: {get_SoC_temp()}"],
+        ["Will start at:", t_local_str_short, f"SoC: {get_SoC_temp()}"],
         bounding_box=True,
     )
 
 pause.until(t_start)
 
-t_start = datetime.datetime.now(ZoneInfo("UTC"))
-t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
-t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+t_start = datetime.datetime.now(utc_timezone)
+t_utc_str = t_start.astimezone(utc_timezone).strftime(datetime_fmt)
+t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
 my_print(
-    f"Started taking data at {t_utc_str} UTC, {t_est_str} EST",
+    f"Started taking data at {t_utc_str} UTC, {t_local_str} {local_timezone_str}",
     print_prefix="\n",
     print_postfix="\n\n",
 )
@@ -574,7 +581,7 @@ def daq_loop() -> None:
     """DAQ loop."""
     global new_connection
     global t_utc_str
-    global t_est_str
+    global t_local_str
     global t_start
     global had_flow
     global polling_pressure_samples  # pylint: disable=global-variable-not-assigned
@@ -584,7 +591,7 @@ def daq_loop() -> None:
     past_had_flow = -1
     while running_daq_loop:
         # Set seconds to 0 to avoid drift over multiple hours / days
-        t_start = datetime.datetime.now(ZoneInfo("UTC")).replace(second=0, microsecond=0)
+        t_start = datetime.datetime.now(utc_timezone).replace(second=0, microsecond=0)
         t_stop = t_start
 
         # average over averaging_period_seconds
@@ -632,7 +639,7 @@ def daq_loop() -> None:
                     # send data to socket
                     _data = {
                         # time
-                        "t_est_str": t_est_str,
+                        "t_local_str": t_local_str,
                         "i_polling": i_polling,
                         # live values
                         "pressure_value": pressure_value,
@@ -642,7 +649,7 @@ def daq_loop() -> None:
                     # N_LAST_POINTS_WEB mean values
                     if i_polling == 0 or new_connection:
                         new_connection = False
-                        _data["t_est_str_n_last"] = t_est_str_n_last
+                        _data["t_local_str_n_last"] = t_local_str_n_last
                         _data[
                             "mean_pressure_value_normalized_n_last"
                         ] = mean_pressure_value_normalized_n_last
@@ -659,26 +666,26 @@ def daq_loop() -> None:
                     pass
 
             # wait polling_period_seconds between data points to average
-            while datetime.datetime.now(ZoneInfo("UTC")) - t_stop < datetime.timedelta(
+            while datetime.datetime.now(utc_timezone) - t_stop < datetime.timedelta(
                 seconds=polling_period_seconds
             ):
                 pass
 
             i_polling += 1
-            t_stop = datetime.datetime.now(ZoneInfo("UTC"))
+            t_stop = datetime.datetime.now(utc_timezone)
 
         # process polling results if DAQ is still running
         if running_daq_loop:
             # take mean and save data point to csv
-            t_utc_str = t_stop.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+            t_utc_str = t_stop.astimezone(utc_timezone).strftime(datetime_fmt)
             if display_web:
-                t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
+                t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
             mean_pressure_value = int(np.nanmean(polling_pressure_samples))
             mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
             past_had_flow = int(np.max(polling_flow_samples))
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
-            fname_date_utc = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
+            fname_date_utc = t_stop.astimezone(utc_timezone).strftime(date_fmt)
             with open(
                 f"{raw_data_full_path}/date_{fname_date_utc}.csv", "a", encoding="utf-8"
             ) as f_csv:
@@ -692,12 +699,12 @@ def daq_loop() -> None:
             if display_web:
                 try:
                     # save N_LAST_POINTS_WEB mean values
-                    t_est_str_n_last.append(t_est_str)
+                    t_local_str_n_last.append(t_local_str)
                     mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
                     past_had_flow_n_last.append(past_had_flow)
 
-                    if N_LAST_POINTS_WEB < len(t_est_str_n_last):
-                        del t_est_str_n_last[0]
+                    if N_LAST_POINTS_WEB < len(t_local_str_n_last):
+                        del t_local_str_n_last[0]
                         del mean_pressure_value_normalized_n_last[0]
                         del past_had_flow_n_last[0]
                 except Exception as error:
@@ -722,7 +729,7 @@ if thread_daq_loop is None:
 ################################################################################
 # serve index.html
 if display_web:
-    # wait until 0 < len(t_est_str_n_last) to avoid web crashes
+    # wait until 0 < len(t_local_str_n_last) to avoid web crashes
     try:
         sio.run(
             flask_app,
