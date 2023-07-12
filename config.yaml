@@ -4,6 +4,7 @@ general:
   package_path: "~/chance_of_showers"
   date_fmt: "%Y-%m-%d"
   time_fmt: "%H:%M:%S"
+  fname_datetime_fmt: "%Y-%m-%d-%H-%M-%S"
   local_timezone: "US/Eastern"
 daq:
   # display options
