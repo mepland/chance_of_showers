@@ -316,7 +316,7 @@ function update_chart(div, x_array, y_array, z_array, ms_array, mc_array, max_gr
 
 // update everything each msg
 function updateAll(data) {
-  let t_str = data.t_est_str;
+  let t_str = data.t_local_str;
   let i_polling = parseInt(data.i_polling);
   let pressure_value = parseInt(data.pressure_value);
   let pressure_value_normalized = (100*parseFloat(data.pressure_value_normalized)).toFixed(2);
@@ -328,14 +328,14 @@ function updateAll(data) {
 
   let updated_mean = false;
   for (const prop in data) {
-    if (prop == "t_est_str_n_last") {
+    if (prop == "t_local_str_n_last") {
        updated_mean = true;
        break;
     }
   }
 
   if (updated_mean) {
-    let t_str_n_last = data.t_est_str_n_last;
+    let t_str_n_last = data.t_local_str_n_last;
     let mean_pressure_value_normalized_n_last = data.mean_pressure_value_normalized_n_last;
     let past_had_flow_n_last = data.past_had_flow_n_last;
     let ms_n_last = [];

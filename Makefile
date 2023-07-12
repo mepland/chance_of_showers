@@ -11,7 +11,7 @@ poetry:
 	poetry lock
 
 pre-commit:
-	# poetry run pre-commit autoupdate
+	@# poetry run pre-commit autoupdate
 	poetry run pre-commit run --all-files
 
 black:

@@ -4,8 +4,24 @@ general:
   package_path: "~/chance_of_showers"
   date_fmt: "%Y-%m-%d"
   time_fmt: "%H:%M:%S"
+  local_timezone: "US/Eastern"
 daq:
+  # display options
+  log_to_file: true
+  display_terminal: true
+  display_terminal_overwrite: true
+  display_oled: true
+  display_web: true
+  display_web_logging_terminal: false
+  verbosity: 0
+  # DAQ parameters
+  starting_time_minutes_mod: 1
+  averaging_period_seconds: 60
+  polling_period_seconds: 1
   raw_data: "daq/raw_data"
+  logs: "daq/logs"
+  # Web parameters
+  n_last_points_web: 15
   # when the issue of drifting seconds was fixed by
   # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
   end_of_drifting_seconds: "2023-05-02 01:22:08"
