@@ -2,35 +2,6 @@
 from __future__ import annotations
 
 ################################################################################
-# display options
-# TEMPORARY pylint: disable=C0103
-log_to_file = True
-display_terminal = True
-display_terminal_overwrite = True
-display_oled = True
-display_web = True
-display_web_logging_terminal = False
-verbose = 0
-
-################################################################################
-# DAQ parameters
-starting_time_minutes_mod = 1
-averaging_period_seconds = starting_time_minutes_mod * 60
-polling_period_seconds = 1
-# DAQ_max_value is 65472
-
-date_fmt = "%Y-%m-%d"
-time_fmt = "%H:%M:%S"
-datetime_fmt = f"{date_fmt} {time_fmt}"
-
-m_path = "~/chance_of_showers/daq"
-
-# pressure variables and functions
-observed_pressure_min = 6400
-observed_pressure_max = 14000
-# TEMPORARY pylint: enable=C0103
-
-################################################################################
 # python imports
 import datetime
 import logging
@@ -42,34 +13,95 @@ import time
 import traceback
 from csv import writer
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from types import FrameType
 from zoneinfo import ZoneInfo
 
+import hydra
 import numpy as np
 import pause
 
+if TYPE_CHECKING:
+    from types import FrameType
+
+    from omegaconf import DictConfig
+
+
+################################################################################
+# run get_cfg()
+@hydra.main(version_base=None, config_path="..", config_name="config")
+def get_cfg(dummy_cfg: DictConfig) -> None:
+    """Get cfg from hydra.
+
+    Args:
+        dummy_cfg: Hydra configuration.
+
+    Returns:
+        cfg: Hydra configuration.
+    """
+    return dummy_cfg
+
+
+if __name__ != "__main__":
+    raise ValueError("Must run as a script!")
+
+cfg = get_cfg()  # pylint: disable=no-value-for-parameter
+
+################################################################################
+# setup variables
+log_to_file = cfg["daq"]["log_to_file"]
+display_terminal = cfg["daq"]["display_terminal"]
+display_terminal_overwrite = cfg["daq"]["display_terminal_overwrite"]
+display_oled = cfg["daq"]["display_oled"]
+display_web = cfg["daq"]["display_web"]
+display_web_logging_terminal = cfg["daq"]["display_web_logging_terminal"]
+verbosity = cfg["daq"]["verbosity"]
+
+starting_time_minutes_mod = cfg["daq"]["starting_time_minutes_mod"]
+averaging_period_seconds = cfg["daq"]["averaging_period_seconds"]
+polling_period_seconds = cfg["daq"]["polling_period_seconds"]
+
+date_fmt = cfg["general"]["date_fmt"]
+time_fmt = cfg["general"]["time_fmt"]
+datetime_fmt = f"{date_fmt} {time_fmt}"
+
+package_path = cfg["general"]["package_path"]
+raw_data = cfg["daq"]["raw_data"]
+logs = cfg["daq"]["logs"]
+
+N_LAST_POINTS_WEB = cfg["daq"]["n_last_points_web"]
+
+observed_pressure_min = cfg["general"]["observed_pressure_min"]
+observed_pressure_max = cfg["general"]["observed_pressure_max"]
+
 ################################################################################
 # paths
-m_path = os.path.expanduser(m_path)
-os.makedirs(f"{m_path}/raw_data", exist_ok=True)
-os.makedirs(f"{m_path}/logs", exist_ok=True)
+raw_data_full_path = os.path.expanduser(os.path.join(package_path, raw_data))
+logs_full_path = os.path.expanduser(os.path.join(package_path, logs))
+os.makedirs(raw_data_full_path, exist_ok=True)
+os.makedirs(logs_full_path, exist_ok=True)
+
+################################################################################
+# globals variables
+# pylint: disable=C0103
+thread_daq_loop = None
+running_daq_loop = True
+had_flow = 0
+new_connection = False
+# pylint: enable=C0103
 
 ################################################################################
 # logging
 logger_daq = logging.getLogger("daq")
 logger_daq.setLevel(logging.INFO)
-if 0 < verbose:
+if 0 < verbosity:
     logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
     log_datetime = datetime.datetime.now(ZoneInfo("UTC")).strftime("%Y-%m-%d-%H-%M-%S")
 
     fname_log = f"daq_{log_datetime}.log"
-    logging_fh = logging.FileHandler(f"{m_path}/logs/{fname_log}")
+    logging_fh = logging.FileHandler(f"{logs_full_path}/{fname_log}")
     logging_fh.setLevel(logging.INFO)
-    if 0 < verbose:
+    if 0 < verbosity:
         logging_fh.setLevel(logging.DEBUG)
 
     logging_formatter = logging.Formatter(
@@ -189,10 +221,6 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     return temp
 
 
-thread_daq_loop = None  # pylint: disable=C0103
-running_daq_loop = True  # pylint: disable=C0103
-
-
 def signal_handler(
     dummy_signal: int,  # noqa: U100 # pylint: disable=unused-argument
     dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=unused-argument
@@ -225,6 +253,7 @@ signal.signal(signal.SIGINT, signal_handler)
 # https://docs.circuitpython.org/projects/mcp3xxx/en/stable/api.html#adafruit_mcp3xxx.analog_in.AnalogIn
 # chan_0.value = Returns the value of an ADC pin as an integer. Due to 10-bit accuracy of the chip, the returned values range [0, 65472].
 # chan_0.voltage = Returns the voltage from the ADC pin as a floating point value. Due to the 10-bit accuracy of the chip, returned values range from 0 to (reference_voltage * 65472 / 65535)
+# DAQ max value is 65472
 
 import adafruit_mcp3xxx.mcp3008 as MCP
 import board
@@ -243,8 +272,6 @@ chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
 # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
 from gpiozero import Button
-
-had_flow = 0  # pylint: disable=C0103
 
 
 def rise() -> None:
@@ -339,7 +366,6 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
-new_connection = False  # pylint: disable=C0103
 if display_web:  # noqa: C901
     import json
     import socket
@@ -361,7 +387,7 @@ if display_web:  # noqa: C901
 
     logger_sio = logging.getLogger("sio")
     logger_sio.setLevel(logging.WARNING)
-    if 1 < verbose:
+    if 1 < verbosity:
         logger_sio.setLevel(logging.DEBUG)
     if log_to_file:
         logger_sio.addHandler(logging_fh)
@@ -459,7 +485,7 @@ if display_web:  # noqa: C901
             )
             pass
 
-    if not (0 < verbose or display_web_logging_terminal):
+    if not (0 < verbosity or display_web_logging_terminal):
         # No messages in terminal
         import flask.cli
 
@@ -468,12 +494,11 @@ if display_web:  # noqa: C901
     # never write werkzeug logs to terminal
     log_werkzeug = logging.getLogger("werkzeug")
     log_werkzeug.setLevel(logging.WARNING)
-    if 0 < verbose:
+    if 0 < verbosity:
         log_werkzeug.setLevel(logging.DEBUG)
     if log_to_file:
         log_werkzeug.addHandler(logging_fh)
 
-    N_LAST = 15
     t_est_str_n_last: list[str] = []
     mean_pressure_value_normalized_n_last: list[float] = []
     past_had_flow_n_last: list[int] = []
@@ -512,6 +537,7 @@ t_start_minute = (
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
 t_utc_str = t_start.astimezone(ZoneInfo("UTC")).strftime(datetime_fmt)
+# TODO change est to local, config local timezone, check it is in ZoneInfo
 t_est_str = t_start.astimezone(ZoneInfo("US/Eastern")).strftime(datetime_fmt)
 
 if log_to_file:
@@ -613,7 +639,7 @@ def daq_loop() -> None:
                         "pressure_value_normalized": pressure_value_normalized,
                         "had_flow": flow_value,
                     }
-                    # N_LAST mean values
+                    # N_LAST_POINTS_WEB mean values
                     if i_polling == 0 or new_connection:
                         new_connection = False
                         _data["t_est_str_n_last"] = t_est_str_n_last
@@ -654,7 +680,7 @@ def daq_loop() -> None:
 
             fname_date_utc = t_stop.astimezone(ZoneInfo("UTC")).strftime(date_fmt)
             with open(
-                f"{m_path}/raw_data/date_{fname_date_utc}.csv", "a", encoding="utf-8"
+                f"{raw_data_full_path}/date_{fname_date_utc}.csv", "a", encoding="utf-8"
             ) as f_csv:
                 m_writer = writer(f_csv)
                 if f_csv.tell() == 0:
@@ -665,12 +691,12 @@ def daq_loop() -> None:
 
             if display_web:
                 try:
-                    # save N_LAST mean values
+                    # save N_LAST_POINTS_WEB mean values
                     t_est_str_n_last.append(t_est_str)
                     mean_pressure_value_normalized_n_last.append(mean_pressure_value_normalized)
                     past_had_flow_n_last.append(past_had_flow)
 
-                    if N_LAST < len(t_est_str_n_last):
+                    if N_LAST_POINTS_WEB < len(t_est_str_n_last):
                         del t_est_str_n_last[0]
                         del mean_pressure_value_normalized_n_last[0]
                         del past_had_flow_n_last[0]
@@ -696,6 +722,7 @@ if thread_daq_loop is None:
 ################################################################################
 # serve index.html
 if display_web:
+    # wait until 0 < len(t_est_str_n_last) to avoid web crashes
     try:
         sio.run(
             flask_app,
