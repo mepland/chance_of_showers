@@ -15,38 +15,19 @@ import zoneinfo
 from csv import writer
 from typing import TYPE_CHECKING
 
-import hydra
 import numpy as np
 import pause
+from hydra import compose, initialize
 
 if TYPE_CHECKING:
     from types import FrameType
 
-    from omegaconf import DictConfig
-
-
-################################################################################
-# run get_cfg()
-@hydra.main(version_base=None, config_path="..", config_name="config")
-def get_cfg(dummy_cfg: DictConfig) -> None:
-    """Get cfg from hydra.
-
-    Args:
-        dummy_cfg: Hydra configuration.
-
-    Returns:
-        cfg: Hydra configuration.
-    """
-    return dummy_cfg
-
-
-if __name__ != "__main__":
-    raise ValueError("Must run as a script!")
-
-cfg = get_cfg()  # pylint: disable=no-value-for-parameter
-
 ################################################################################
 # setup variables
+
+initialize(version_base=None, config_path="..")
+cfg = compose(config_name="config")
+
 log_to_file = cfg["daq"]["log_to_file"]
 display_terminal = cfg["daq"]["display_terminal"]
 display_terminal_overwrite = cfg["daq"]["display_terminal_overwrite"]
@@ -63,9 +44,11 @@ date_fmt = cfg["general"]["date_fmt"]
 time_fmt = cfg["general"]["time_fmt"]
 datetime_fmt = f"{date_fmt} {time_fmt}"
 local_timezone_str = cfg["general"]["local_timezone"]
+
 if local_timezone_str not in zoneinfo.available_timezones():
     AVAILABLE_TIMEZONES = "\n".join(list(zoneinfo.available_timezones()))
     raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{AVAILABLE_TIMEZONES}")
+
 utc_timezone = zoneinfo.ZoneInfo("UTC")
 local_timezone = zoneinfo.ZoneInfo(local_timezone_str)
 
