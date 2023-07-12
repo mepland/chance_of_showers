@@ -43,6 +43,7 @@ polling_period_seconds = cfg["daq"]["polling_period_seconds"]
 date_fmt = cfg["general"]["date_fmt"]
 time_fmt = cfg["general"]["time_fmt"]
 datetime_fmt = f"{date_fmt} {time_fmt}"
+fname_datetime_fmt = cfg["general"]["fname_datetime_fmt"]
 local_timezone_str = cfg["general"]["local_timezone"]
 
 if local_timezone_str not in zoneinfo.available_timezones():
@@ -85,7 +86,7 @@ if 0 < verbosity:
     logger_daq.setLevel(logging.DEBUG)
 
 if log_to_file:
-    log_datetime = datetime.datetime.now(utc_timezone).strftime("%Y-%m-%d-%H-%M-%S")
+    log_datetime = datetime.datetime.now(utc_timezone).strftime(fname_datetime_fmt)
 
     fname_log = f"daq_{log_datetime}.log"
     logging_fh = logging.FileHandler(f"{logs_full_path}/{fname_log}")

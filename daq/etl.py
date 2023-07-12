@@ -8,18 +8,16 @@ import datetime
 import glob
 import os
 import traceback
-from typing import TYPE_CHECKING
-from zoneinfo import ZoneInfo
+import zoneinfo
 
+import humanize
 import hydra
 import polars as pl
-
-if TYPE_CHECKING:
-    from omegaconf import DictConfig
+from omegaconf import DictConfig  # noqa: TC002
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
+def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     """Run ETL script.
 
     Args:
@@ -36,26 +34,37 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
 
     date_fmt = cfg["general"]["date_fmt"]
     time_fmt = cfg["general"]["time_fmt"]
+    fname_datetime_fmt = cfg["general"]["fname_datetime_fmt"]
     datetime_fmt = f"{date_fmt} {time_fmt}"
+
+    local_timezone_str = cfg["general"]["local_timezone"]
+
+    if local_timezone_str not in zoneinfo.available_timezones():
+        available_timezones = "\n".join(list(zoneinfo.available_timezones()))
+        raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}")
+
+    utc_timezone = zoneinfo.ZoneInfo("UTC")
 
     # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
     dt_end_of_drifting_seconds = datetime.datetime.strptime(
         cfg["daq"]["end_of_drifting_seconds"], datetime_fmt
-    ).replace(tzinfo=ZoneInfo("UTC"))
+    ).replace(tzinfo=utc_timezone)
 
     # when web threading was fixed, eliminating duplicate records from multiple threads
     dt_end_of_threading_duplicates = datetime.datetime.strptime(
         cfg["daq"]["end_of_threading_duplicates"], datetime_fmt
-    ).replace(tzinfo=ZoneInfo("UTC"))
+    ).replace(tzinfo=utc_timezone)
 
     # load raw csv files
     dfpl_list = []
 
+    csv_total_bytes = 0
     for f_csv in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
         try:
             dfpl = pl.scan_csv(f_csv)
             dfpl = dfpl.with_columns(pl.lit(f_csv.split("/")[-1]).alias("fname"))
             dfpl_list.append(dfpl)
+            csv_total_bytes += os.path.getsize(f_csv)
         except Exception as error:
             raise OSError(
                 f"Error loading file {f_csv}!\n{error=}\n{type(error)=}\n{traceback.format_exc()}"
@@ -67,12 +76,12 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
         dfpl.with_columns(
             pl.col("datetime_utc").str.to_datetime(datetime_fmt).dt.replace_time_zone("UTC")
         ).with_columns(
-            pl.col("datetime_utc").dt.convert_time_zone("US/Eastern").alias("datetime_est")
+            pl.col("datetime_utc").dt.convert_time_zone(local_timezone_str).alias("datetime_local")
         )
         # Add more date columns
         .with_columns(
-            pl.col("datetime_est").dt.weekday().alias("day_of_week_int"),
-            pl.col("datetime_est").dt.to_string("%A").alias("day_of_week_str"),
+            pl.col("datetime_local").dt.weekday().alias("day_of_week_int"),
+            pl.col("datetime_local").dt.to_string("%A").alias("day_of_week_str"),
         )
     )
 
@@ -134,10 +143,25 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment
 
     os.makedirs(os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True)
 
-    f_parquet = os.path.expanduser(os.path.join(package_path, saved_data, "etl_data.parquet"))
-    dfpl.collect(streaming=True).write_parquet(f_parquet)
+    parquet_datetime = (
+        dfpl.select(pl.col("datetime_utc").max())
+        .collect(streaming=True)
+        .item()
+        .strftime(fname_datetime_fmt)
+    )
 
-    print(f"\nCombined parquet saved to {f_parquet}\n")
+    f_parquet = os.path.expanduser(
+        os.path.join(package_path, saved_data, f"etl_data_{parquet_datetime}.parquet")
+    )
+    dfpl.collect(streaming=True).write_parquet(f_parquet)
+    parquet_total_bytes = os.path.getsize(f_parquet)
+
+    print(
+        f"\nCombined parquet saved to {f_parquet}"
+        + f"\n\nInput CSVs: {humanize.naturalsize(csv_total_bytes)}"
+        + f", Output parquet: {humanize.naturalsize(parquet_total_bytes)}"
+        + f", a reduction of {(csv_total_bytes - parquet_total_bytes) / csv_total_bytes:.0%}\n"
+    )
 
 
 if __name__ == "__main__":
