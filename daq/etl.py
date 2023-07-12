@@ -9,17 +9,14 @@ import glob
 import os
 import traceback
 import zoneinfo
-from typing import TYPE_CHECKING
 
 import hydra
 import polars as pl
-
-if TYPE_CHECKING:
-    from omegaconf import DictConfig
+from omegaconf import DictConfig  # noqa: TC002
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment,too-many-locals
+def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     """Run ETL script.
 
     Args:
@@ -143,7 +140,13 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=used-before-assignment,too-
 
     os.makedirs(os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True)
 
-    parquet_datetime = datetime.datetime.now(utc_timezone).strftime(fname_datetime_fmt)
+    parquet_datetime = (
+        dfpl.select(pl.col("datetime_utc").max())
+        .collect(streaming=True)
+        .item()
+        .strftime(fname_datetime_fmt)
+    )
+
     f_parquet = os.path.expanduser(
         os.path.join(package_path, saved_data, f"etl_data_{parquet_datetime}.parquet")
     )
