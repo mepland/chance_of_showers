@@ -713,8 +713,21 @@ if thread_daq_loop is None:
 ################################################################################
 # serve index.html
 if display_web:
-    # wait until 0 < len(t_local_str_n_last) to avoid web crashes
     try:
+        # wait until 0 < len(t_local_str_n_last) before serving the website to avoid crashes
+        while len(t_local_str_n_last) < 1:
+            # check len(t_local_str_n_last) every ~ 6 seconds
+            time.sleep(0.1 * averaging_period_seconds)
+            my_print(
+                "Waiting to start web server",
+                logger_level=logging.DEBUG,
+                use_print=False,
+            )
+        my_print(
+            "Starting web server with sio.run()",
+            logger_level=logging.DEBUG,
+            use_print=False,
+        )
         sio.run(
             flask_app,
             port=PORT_NUMBER,
