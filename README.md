@@ -8,8 +8,15 @@ If `daq.py` is running with `display_web = True`,
 the local IP address and port of the dashboard will be logged on startup.
 
 ## Setting up cron Jobs
+Note that loading a file with `crontab` will overwrite any existing cron jobs, so check first with `crontab -l`!
 ```bash
+crontab -l
 crontab cron_jobs.txt
+```
+
+You can verify the cron jobs are running as expected with:
+```bash
+grep CRON /var/log/syslog | grep $LOGNAME
 ```
 
 ## Dev
