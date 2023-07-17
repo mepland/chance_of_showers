@@ -7,6 +7,7 @@ import datetime
 import logging
 import os
 import signal
+import socket
 import sys
 import threading
 import time
@@ -21,6 +22,34 @@ from hydra import compose, initialize
 
 if TYPE_CHECKING:
     from types import FrameType
+
+
+################################################################################
+# Lock DAQ script, avoid launching duplicates
+def get_lock(process_name: str) -> None:
+    """Lock script via abstract socket, only works in Linux!
+
+    Adapted from https://stackoverflow.com/a/7758075
+
+    Args:
+        process_name: The process_name to use for the locking socket.
+    """
+    # Without holding a reference to our socket somewhere it gets garbage collected when the function exits
+    # pylint: disable=protected-access
+    get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)  # type: ignore[attr-defined]
+    # See https://github.com/python/mypy/issues/2087 for ongoing mypy discussion on this attr-defined false positive
+    try:
+        # The null byte (\0) means the socket is created in the abstract namespace instead of being created on the file system itself.
+        get_lock._lock_socket.bind(  # type: ignore[attr-defined]
+            "\0" + process_name  # noqa: ESC101
+        )
+    # pylint: enable=protected-access
+    except OSError:
+        print(f"Lock for {process_name} exists, exiting!")
+        sys.exit()
+
+
+get_lock("daq")
 
 ################################################################################
 # setup variables
@@ -358,7 +387,6 @@ if display_oled:
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
 if display_web:  # noqa: C901
     import json
-    import socket
 
     import python_arptable
     from flask import Flask, render_template, request
