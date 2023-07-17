@@ -7,6 +7,11 @@ TODO
 If `daq.py` is running with `display_web = True`,
 the local IP address and port of the dashboard will be logged on startup.
 
+## Setting up cron Jobs
+```bash
+crontab cron_jobs.txt
+```
+
 ## Dev
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
