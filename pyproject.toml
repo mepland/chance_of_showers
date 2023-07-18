@@ -120,6 +120,7 @@ exclude = '''
   | \.env
   | \.cache
   | \.github
+  | \.ipynb_checkpoints
   | __pycache__
 )/
 '''
@@ -155,7 +156,8 @@ exclude = [
     "__pycache__",
     ".env",
     ".venv",
-    ".direnv"
+    ".direnv",
+    ".ipynb_checkpoints"
 ]
 literal-inline-quotes="double"
 
