@@ -16,8 +16,10 @@ import zoneinfo
 from csv import writer
 from typing import TYPE_CHECKING
 
+import humanize
 import numpy as np
 import pause
+import psutil
 from hydra import compose, initialize
 
 if TYPE_CHECKING:
@@ -70,6 +72,9 @@ local_timezone = zoneinfo.ZoneInfo(local_timezone_str)
 package_path = cfg["general"]["package_path"]
 raw_data = cfg["daq"]["raw_data"]
 logs = cfg["daq"]["logs"]
+
+log_memory_usage = cfg["daq"]["log_memory_usage"]
+log_memory_usage_minutes_mod = cfg["daq"]["log_memory_usage_minutes_mod"]
 
 N_LAST_POINTS_WEB = cfg["daq"]["n_last_points_web"]
 
@@ -577,7 +582,7 @@ my_print(
 
 
 ################################################################################
-def daq_loop() -> None:
+def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
     """DAQ loop."""
     global new_connection
     global t_utc_str
@@ -711,6 +716,24 @@ def daq_loop() -> None:
                     # don't want to kill the DAQ just because of a web problem
                     my_print(
                         f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                        logger_level=logging.DEBUG,
+                        use_print=False,
+                    )
+                    pass
+
+            if log_memory_usage:
+                try:
+                    if t_start.minute % log_memory_usage_minutes_mod == 0:
+                        ram_info = psutil.virtual_memory()
+                        my_print(
+                            f"RAM Available: {humanize.naturalsize(ram_info.available)}, Used: {humanize.naturalsize(ram_info.used)}, Percent: {ram_info.percent:.2f}%",
+                            logger_level=logging.INFO,
+                            use_print=True,
+                        )
+                except Exception as error:
+                    # don't want to kill the DAQ just because of a memory logging problem
+                    my_print(
+                        f"Unexpected error logging memory usage:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
                         logger_level=logging.DEBUG,
                         use_print=False,
                     )

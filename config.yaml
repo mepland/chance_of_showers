@@ -21,6 +21,8 @@ daq:
   polling_period_seconds: 1
   raw_data: "daq/raw_data"
   logs: "daq/logs"
+  log_memory_usage: true
+  log_memory_usage_minutes_mod: 30
   # Web parameters
   n_last_points_web: 15
   # when the issue of drifting seconds was fixed by
