@@ -143,7 +143,14 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
 
     os.makedirs(os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True)
 
-    parquet_datetime = (
+    parquet_datetime_min = (
+        dfpl.select(pl.col("datetime_utc").min())
+        .collect(streaming=True)
+        .item()
+        .strftime(fname_datetime_fmt)
+    )
+
+    parquet_datetime_max = (
         dfpl.select(pl.col("datetime_utc").max())
         .collect(streaming=True)
         .item()
@@ -151,7 +158,11 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
 
     f_parquet = os.path.expanduser(
-        os.path.join(package_path, saved_data, f"etl_data_{parquet_datetime}.parquet")
+        os.path.join(
+            package_path,
+            saved_data,
+            f"data_{parquet_datetime_min}_to_{parquet_datetime_max}.parquet",
+        )
     )
     dfpl.collect(streaming=True).write_parquet(f_parquet)
     parquet_total_bytes = os.path.getsize(f_parquet)

@@ -10,8 +10,18 @@ import time
 # pylint: disable=no-member
 from RPi import GPIO
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+    get_lock,
+    get_SoC_temp,
+)
+
+# Lock script, avoid launching duplicates
+get_lock("fan_control")
+
+
 # Configuration
-verbose = True  # print temp, PWM, RPM pylint: disable=C0103
+verbose = True  # print temp, PWM, RPM pylint: disable=invalid-name
 FAN_PIN = 18  # BCM pin used to drive PWM fan
 TACH_PIN = 23  # Fan's tachometer output pin
 WAIT_TIME = 5.0  # [s] Time to wait between each refresh
@@ -28,18 +38,7 @@ FAN_MAX = 100.0
 
 # Setup variables
 current_time = time.time()
-rpm = 0.0  # pylint: disable=C0103
-
-
-def get_SoC_temp() -> float:  # pylint: disable=invalid-name
-    """Get SoC's temperature.
-
-    Returns:
-        SoC temperature as a float.
-    """
-    res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
-
-    return float(res.replace("temp=", "").replace("'C\n", ""))
+rpm = 0.0  # pylint: disable=invalid-name
 
 
 def set_fan_speed(speed: float) -> None:
@@ -51,10 +50,13 @@ def set_fan_speed(speed: float) -> None:
     fan.start(speed)
 
 
-def fell() -> None:
+def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
     """Fell action.
 
-    Caculate pulse frequency and RPM
+    Caculate pulse frequency and RPM.
+
+    Args:
+        pin: Unused, but needed to type annotation the callback of GPIO.add_event_detect().
     """
     global current_time
     global rpm

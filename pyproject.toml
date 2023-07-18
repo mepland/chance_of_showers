@@ -112,17 +112,17 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 100
 target-version = ["py39"]
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | \.direnv
-  | \.env
-  | \.cache
-  | \.github
-  | __pycache__
-)/
-'''
+exclude = [
+    "ana/*.py",
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__"
+]
 
 [tool.flake8]
 max-complexity = 18
@@ -150,12 +150,15 @@ per-file-ignores = """
     daq/daq.py: E402
 """
 exclude = [
+    "ana/*.py",
+    ".cache",
+    ".direnv",
+    ".env",
     ".git",
     ".github",
-    "__pycache__",
-    ".env",
+    ".ipynb_checkpoints",
     ".venv",
-    ".direnv"
+    "__pycache__"
 ]
 literal-inline-quotes="double"
 
@@ -170,6 +173,17 @@ disable_error_code = [
 # warn_unused_ignores = true is useful when upgrading mypy versions,
 # but leaving it as true all the time gives false positives when running mypy in the pre-commit env
 warn_unused_ignores = false
+exclude = [
+    "ana/*.py",
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__"
+]
 
 [tool.isort]
 py_version = "39"
@@ -185,6 +199,17 @@ fail-under = 10
 jobs = 0
 py-version = "3.9"
 suggestion-mode = true
+ignore = [
+    "ana/*.py",
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__"
+]
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
