@@ -24,30 +24,15 @@ if TYPE_CHECKING:
     from types import FrameType
 
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+    get_lock,
+    get_SoC_temp,
+    normalize_pressure_value,
+)
+
 ################################################################################
-# Lock DAQ script, avoid launching duplicates
-def get_lock(process_name: str) -> None:
-    """Lock script via abstract socket, only works in Linux!
-
-    Adapted from https://stackoverflow.com/a/7758075
-
-    Args:
-        process_name: The process_name to use for the locking socket.
-    """
-    # Without holding a reference to our socket somewhere it gets garbage collected when the function exits
-    # pylint: disable=protected-access
-    get_lock._lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)  # type: ignore[attr-defined]
-    # See https://github.com/python/mypy/issues/2087 for ongoing mypy discussion on this attr-defined false positive
-    try:
-        # The null byte (\0) means the socket is created in the abstract namespace instead of being created on the file system itself.
-        get_lock._lock_socket.bind(  # type: ignore[attr-defined]
-            "\0" + process_name  # noqa: ESC101
-        )
-    # pylint: enable=protected-access
-    except OSError:
-        print(f"Lock for {process_name} exists, exiting!")
-        sys.exit()
-
+# Lock script, avoid launching duplicates
 
 get_lock("daq")
 
@@ -100,12 +85,12 @@ os.makedirs(logs_full_path, exist_ok=True)
 
 ################################################################################
 # globals variables
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 thread_daq_loop = None
 running_daq_loop = True
 had_flow = 0
 new_connection = False
-# pylint: enable=C0103
+# pylint: enable=invalid-name
 
 ################################################################################
 # logging
@@ -185,7 +170,7 @@ def my_print(
 # helper variables and functions
 
 
-def normalize_pressure_value(pressure_value: int) -> float:
+def normalize_pressure_value_safe(pressure_value: int) -> float:
     """Normalize raw ADC pressure_value.
 
     Args:
@@ -195,9 +180,10 @@ def normalize_pressure_value(pressure_value: int) -> float:
         (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
         i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
     """
+    normalize_pressure_value_float = -1.0
     try:
-        normalize_pressure_value_float = (pressure_value - observed_pressure_min) / (
-            observed_pressure_max - observed_pressure_min
+        normalize_pressure_value_float = normalize_pressure_value(
+            pressure_value, observed_pressure_min, observed_pressure_max
         )
     except Exception as error:
         # don't want to kill the DAQ just because of a display problem
@@ -207,7 +193,6 @@ def normalize_pressure_value(pressure_value: int) -> float:
             logger_level=logging.DEBUG,
             use_print=False,
         )
-        normalize_pressure_value_float = -1
     return normalize_pressure_value_float
 
 
@@ -219,15 +204,15 @@ polling_pressure_samples.fill(np.nan)
 polling_flow_samples = np.zeros(n_polling)
 
 
-def get_SoC_temp() -> float:  # pylint: disable=invalid-name
+def get_SoC_temp_safe() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature.
 
     Returns:
         SoC temperature as a float.
     """
+    temp = -1.0
     try:
-        res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
-        temp = float(res.replace("temp=", "").replace("'C\n", ""))
+        temp = get_SoC_temp()
     except Exception as error:
         # don't want to kill the DAQ just because of a problem reading the SoC temp
         my_print(
@@ -274,11 +259,14 @@ signal.signal(signal.SIGINT, signal_handler)
 # chan_0.voltage = Returns the voltage from the ADC pin as a floating point value. Due to the 10-bit accuracy of the chip, returned values range from 0 to (reference_voltage * 65472 / 65535)
 # DAQ max value is 65472
 
+# pylint: disable=wrong-import-order
 import adafruit_mcp3xxx.mcp3008 as MCP
 import board
 import busio
 import digitalio
 from adafruit_mcp3xxx.analog_in import AnalogIn
+
+# pylint: enable=wrong-import-order
 
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
 cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5
@@ -290,7 +278,7 @@ chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 # https://gpiozero.readthedocs.io/en/stable/api_input.html?highlight=Button#gpiozero.Button
 # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
 # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
-from gpiozero import Button
+from gpiozero import Button  # pylint: disable=wrong-import-order
 
 
 def rise() -> None:
@@ -572,7 +560,7 @@ if display_oled:
     # write to OLED display
     t_local_str_short = t_start.astimezone(local_timezone).strftime(time_fmt)
     paint_oled(
-        ["Will start at:", t_local_str_short, f"SoC: {get_SoC_temp()}"],
+        ["Will start at:", t_local_str_short, f"SoC: {get_SoC_temp_safe()}"],
         bounding_box=True,
     )
 
@@ -624,7 +612,7 @@ def daq_loop() -> None:
             polling_flow_samples[i_polling] = flow_value
 
             # display
-            pressure_value_normalized = normalize_pressure_value(pressure_value)
+            pressure_value_normalized = normalize_pressure_value_safe(pressure_value)
 
             line1 = f"{t_utc_str} UTC Mean Pressure: {mean_pressure_value:5d}, {mean_pressure_value_normalized:4.0%}, Flow: {past_had_flow}"
             line2 = f"i = {i_polling:3d}              Current Pressure: {pressure_value:5.0f}, {pressure_value_normalized:4.0%}, Flow: {flow_value}"
@@ -642,7 +630,7 @@ def daq_loop() -> None:
                         f"Pressure: {pressure_value_normalized:4.0%}",
                         f"Pressure: {pressure_value:5.0f}",
                         f"Flow: {flow_value}",
-                        f"SoC: {get_SoC_temp()}",
+                        f"SoC: {get_SoC_temp_safe()}",
                     ]
                 )
 
@@ -693,7 +681,7 @@ def daq_loop() -> None:
             if display_web:
                 t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
             mean_pressure_value = int(np.nanmean(polling_pressure_samples))
-            mean_pressure_value_normalized = normalize_pressure_value(mean_pressure_value)
+            mean_pressure_value_normalized = normalize_pressure_value_safe(mean_pressure_value)
             past_had_flow = int(np.max(polling_flow_samples))
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
