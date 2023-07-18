@@ -16,11 +16,12 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
     get_SoC_temp,
 )
 
+# Lock script, avoid launching duplicates
 get_lock("fan_control")
 
 
 # Configuration
-verbose = True  # print temp, PWM, RPM pylint: disable=C0103
+verbose = True  # print temp, PWM, RPM pylint: disable=invalid-name
 FAN_PIN = 18  # BCM pin used to drive PWM fan
 TACH_PIN = 23  # Fan's tachometer output pin
 WAIT_TIME = 5.0  # [s] Time to wait between each refresh
@@ -37,7 +38,7 @@ FAN_MAX = 100.0
 
 # Setup variables
 current_time = time.time()
-rpm = 0.0  # pylint: disable=C0103
+rpm = 0.0  # pylint: disable=invalid-name
 
 
 def set_fan_speed(speed: float) -> None:

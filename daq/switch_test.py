@@ -8,7 +8,7 @@ GPIO_PIN_FLOW = 19
 WAIT_TIME = 5  # [s] Time to wait between each refresh
 
 # Setup variables
-had_switch_on = False  # pylint: disable=C0103
+had_switch_on = False  # pylint: disable=invalid-name
 
 
 def rise() -> None:
