@@ -115,8 +115,11 @@ if log_to_file:
 
     logging_formatter = logging.Formatter(
         "%(asctime)s [%(name)-8.8s] [%(threadName)-10.10s] [%(levelname)-8.8s] %(message)s",
-        datetime_fmt,
+        f"{datetime_fmt} UTC",
     )
+    # https://docs.python.org/3/library/logging.html#logging.Formatter.formatTime
+    # https://docs.python.org/3/library/time.html#time.gmtime
+    logging_formatter.converter = time.gmtime  # GMT = UTC
 
     logging_fh.setFormatter(logging_formatter)
 
@@ -445,8 +448,8 @@ if display_web:  # noqa: C901
                     break
             conn_details_str = (
                 f"sid: {request.sid}"  # type: ignore[attr-defined]
-                + ", IP address: {ip_address}"
-                + ", MAC address: {mac_address}"
+                + f", IP address: {ip_address}"
+                + f", MAC address: {mac_address}"
             )
 
         except Exception as error:
@@ -728,7 +731,7 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                         my_print(
                             f"RAM Available: {humanize.naturalsize(ram_info.available)}, Used: {humanize.naturalsize(ram_info.used)}, Percent: {ram_info.percent:.2f}%",
                             logger_level=logging.INFO,
-                            use_print=True,
+                            use_print=False,
                         )
                 except Exception as error:
                     # don't want to kill the DAQ just because of a memory logging problem
