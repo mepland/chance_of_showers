@@ -61,5 +61,7 @@ blocklint:
 # mypy ~ type:
 # bandit ~ nosec
 # detect-secrets ~ pragma
+# yamllint ~ yamllint
 find_noqa_comments:
 	@grep -rIn 'noqa\|pylint\|type:\|nosec\|pragma' $(shell git ls-files '*.py')
+	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml')
