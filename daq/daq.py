@@ -115,8 +115,11 @@ if log_to_file:
 
     logging_formatter = logging.Formatter(
         "%(asctime)s [%(name)-8.8s] [%(threadName)-10.10s] [%(levelname)-8.8s] %(message)s",
-        datetime_fmt,
+        f"{datetime_fmt} UTC",
     )
+    # https://docs.python.org/3/library/logging.html#logging.Formatter.formatTime
+    # https://docs.python.org/3/library/time.html#time.gmtime
+    logging_formatter.converter = time.gmtime  # GMT = UTC
 
     logging_fh.setFormatter(logging_formatter)
 
