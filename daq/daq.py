@@ -445,8 +445,8 @@ if display_web:  # noqa: C901
                     break
             conn_details_str = (
                 f"sid: {request.sid}"  # type: ignore[attr-defined]
-                + ", IP address: {ip_address}"
-                + ", MAC address: {mac_address}"
+                + f", IP address: {ip_address}"
+                + f", MAC address: {mac_address}"
             )
 
         except Exception as error:
