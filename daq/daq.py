@@ -731,7 +731,7 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                         my_print(
                             f"RAM Available: {humanize.naturalsize(ram_info.available)}, Used: {humanize.naturalsize(ram_info.used)}, Percent: {ram_info.percent:.2f}%",
                             logger_level=logging.INFO,
-                            use_print=True,
+                            use_print=False,
                         )
                 except Exception as error:
                     # don't want to kill the DAQ just because of a memory logging problem
