@@ -30,6 +30,33 @@ grep CRON /var/log/syslog | grep $LOGNAME
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
 
+### Installing Python 3.11 on Raspberry Pi
+If `python 3.11` is not available in your release of Raspbian,
+you can compile it from source following the instructions [here](https://aruljohn.com/blog/python-raspberrypi),
+but will also need to [install the sqlite extensions](https://stackoverflow.com/a/24449632):
+```bash
+cd /usr/src/
+sudo wget https://www.python.org/ftp/python/3.11.4/Python-3.11.4.tgz
+sudo tar -xzvf Python-3.11.4.tgz
+cd Python-3.11.4/
+sudo apt update && sudo apt full-upgrade -y
+sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev -y
+./configure --enable-optimizations --enable-loadable-sqlite-extensions
+sudo make altinstall
+
+# Should be Python 3.11.4 with your compile info
+/usr/local/bin/python3.11 -VV
+
+# Link binary
+sudo rm /usr/bin/python
+sudo rm /usr/bin/python3
+sudo ln -s /usr/local/bin/python3.11 /usr/bin/python
+sudo ln -s /usr/local/bin/python3.11 /usr/bin/python3
+
+# Should match /usr/local/bin/python3.11 -VV
+python -VV
+```
+
 ### Installing Dependencies with Poetry
 Install `poetry` following the [instructions here](https://python-poetry.org/docs/#installation).
 ```bash

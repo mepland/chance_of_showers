@@ -7,14 +7,14 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 numpy = "^1.24.3"
 hydra-core = "^1.3.2"
 humanize = "^4.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
-black = {extras = ["jupyter"], version = "^23.3.0"}
+black = {extras = ["jupyter"], version = "^23.7.0"}
 blacken-docs = "^1.14.0"
 flake8 = "^6.0.0"
 mypy = "^1.4.1"
@@ -82,6 +82,7 @@ gpiozero = "^1.6.2"
 rpi-gpio = "^0.7.1"
 "luma.oled" = "^3.12.0"
 pause = "^0.3"
+psutil = "^5.9.5"
 polars = "^0.18.4"
 
 [tool.poetry.group.web]
@@ -111,18 +112,20 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-target-version = ["py39"]
-exclude = [
-    "ana/*.py",
-    ".cache",
-    ".direnv",
-    ".env",
-    ".git",
-    ".github",
-    ".ipynb_checkpoints",
-    ".venv",
-    "__pycache__"
-]
+target-version = ["py311"]
+extend-exclude = '''
+/(
+  ^/ana/*.py
+  | \.cache
+  | \.direnv
+  | \.env
+  | \.git
+  | \.github
+  | \.ipynb_checkpoints
+  | \.venv
+  | __pycache__
+)/
+'''
 
 [tool.flake8]
 max-complexity = 18
@@ -141,7 +144,7 @@ extend-select = [
 "B902",
 "B903",
 "B904",
-# "B905", Add when upgraded to py 3.10+
+"B905",
 "B906",
 "B907",
 "B908",
@@ -163,7 +166,7 @@ exclude = [
 literal-inline-quotes="double"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
@@ -186,7 +189,7 @@ exclude = [
 ]
 
 [tool.isort]
-py_version = "39"
+py_version = "311"
 profile = "black"
 multi_line_output = 3
 combine_star = "true"
@@ -197,7 +200,7 @@ atomic = "true"
 [tool.pylint.main]
 fail-under = 10
 jobs = 0
-py-version = "3.9"
+py-version = "3.11"
 suggestion-mode = true
 ignore = [
     "ana/*.py",

@@ -1,10 +1,10 @@
 setupDAQ:
 	poetry install --with daq,web,dev
-	pre-commit install
+	poetry run pre-commit install
 
 setupANA:
 	poetry install --with ana,dev
-	pre-commit install
+	poetry run pre-commit install
 
 poetry:
 	poetry check
@@ -16,7 +16,7 @@ pre-commit:
 
 black:
 	poetry run black .
-	poetry run blacken-docs --line-length=100 --target-version=py39 $(shell git ls-files '*.py') $(shell git ls-files '*.md') $(shell git ls-files '*.rst')
+	poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py') $(shell git ls-files '*.md') $(shell git ls-files '*.rst')
 
 flake8:
 	poetry run flake8
