@@ -7,6 +7,13 @@ TODO
 If `daq.py` is running with `display_web = True`,
 the local IP address and port of the dashboard will be logged on startup.
 
+## Launching the DAQ Script
+The provided `daq/start_daq` bash script will start the `daq.py` script in a new tmux window.
+You will need to update the `pkg_path` variable in `daq/start_daq` per your installation.
+```bash
+source daq/start_daq
+```
+
 ## Setting up cron Jobs
 Note that loading a file with `crontab` will overwrite any existing cron jobs, so check first with `crontab -l`!
 ```bash
@@ -19,7 +26,21 @@ You can verify the cron jobs are running as expected with:
 grep CRON /var/log/syslog | grep $LOGNAME
 ```
 
+### DAQ Heartbeat Monitoring
+You can use the provided `daq/heartbeat` bash script to send heartbeat API calls
+for the DAQ script to [healthchecks.io](https://healthchecks.io) for monitoring and alerting.
+Configure your alert online at healthchecks.io,
+then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
+You will need to update the `pkg_path` variable in `daq/heartbeat` per your installation.
+The provided `cron_jobs.txt` will setup a cron job to send the heartbeat on the 15 and 45 minute of each hour.
+```bash
+sudo apt install jq
+echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > secrets.json
+source daq/heartbeat
+```
+
 ## Dev
+[![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org)

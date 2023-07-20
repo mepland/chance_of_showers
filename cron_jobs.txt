@@ -47,5 +47,6 @@
 @weekly sudo shutdown --reboot now
 
 # daq
-@reboot bash /home/mepland/chance_of_showers/daq/start_daq.sh
-*/30 * * * * bash /home/mepland/chance_of_showers/daq/start_daq.sh
+@reboot bash /home/mepland/chance_of_showers/daq/start_daq
+*/30 * * * * bash /home/mepland/chance_of_showers/daq/start_daq
+15,45 * * * * bash /home/mepland/chance_of_showers/daq/heartbeat
