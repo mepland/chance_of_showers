@@ -98,12 +98,12 @@ poetry install --with ana
 ```
 
 ### Setting up pre-commit
-You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies.
+You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies. This will run the checks in [.pre-commit-config.yaml](`.pre-commit-config.yaml`) when you make a new commit.
 ```bash
 pre-commit install
 ```
 
 ### Using the Makefile
-A `Makefile` is provided convenience,
+A [Makefile](`Makefile`) is provided convenience,
 with commands to `make setupDAQ` or `make setupANA`,
 as well run individual CI tests.
