@@ -18,7 +18,7 @@ TODO Project description
 
 ### Launching the DAQ Script
 The provided [`start_daq`](daq/start_daq) bash script will start the [`daq.py`](daq/daq.py) script in a new `tmux` window.
-You will need to update the `pkg_path` variable in `start_daq` per your installation.
+You will need to update the `pkg_path` variable in `start_daq` per your installation location.
 ```bash
 source daq/start_daq
 ```
@@ -48,9 +48,9 @@ grep CRON /var/log/syslog | grep $LOGNAME
 ### Heartbeat Monitoring
 You can use the provided [`heartbeat`](daq/heartbeat) bash script to send heartbeat API calls
 for the DAQ script to [healthchecks.io](https://healthchecks.io) for monitoring and alerting.
-Configure your alert online at healthchecks.io,
-then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
-You will need to update the `pkg_path` variable in `heartbeat` per your installation.
+[Configure your alert online at healthchecks.io](https://healthchecks.io/docs/configuring_checks/),
+and then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
+You will need to update the `pkg_path` variable in `heartbeat` per your installation location.
 The provided `cron_jobs.txt` will setup a cron job to send the heartbeat on the 15 and 45 minute of each hour.
 ```bash
 sudo apt install jq
