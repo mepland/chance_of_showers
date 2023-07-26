@@ -51,7 +51,7 @@ source daq/heartbeat
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
 
-### Installing Python 3.11 on Raspberry Pi
+### Installing Python 3.11 on Raspbian
 If `python 3.11` is not available in your release of Raspbian,
 you can compile it from source following the instructions [here](https://aruljohn.com/blog/python-raspberrypi),
 but will also need to [install the sqlite extensions](https://stackoverflow.com/a/24449632):
@@ -98,12 +98,12 @@ poetry install --with ana
 ```
 
 ### Setting up pre-commit
-You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies. This will run the checks in [.pre-commit-config.yaml](`.pre-commit-config.yaml`) when you make a new commit.
+You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies. This will run the checks in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) when you make a new commit.
 ```bash
 pre-commit install
 ```
 
 ### Using the Makefile
-A [Makefile](`Makefile`) is provided convenience,
+A [`Makefile`](Makefile) is provided convenience,
 with commands to `make setupDAQ` or `make setupANA`,
 as well run individual CI tests.
