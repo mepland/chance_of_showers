@@ -1,45 +1,8 @@
 # chance\_of\_showers
 Matthew Epland, PhD
 
-TODO
+TODO Project description
 
-## Opening the Web Dashboard
-If `daq.py` is running with `display_web = True`,
-the local IP address and port of the dashboard will be logged on startup.
-
-## Launching the DAQ Script
-The provided `daq/start_daq` bash script will start the `daq.py` script in a new tmux window.
-You will need to update the `pkg_path` variable in `daq/start_daq` per your installation.
-```bash
-source daq/start_daq
-```
-
-## Setting up cron Jobs
-Note that loading a file with `crontab` will overwrite any existing cron jobs, so check first with `crontab -l`!
-```bash
-crontab -l
-crontab cron_jobs.txt
-```
-
-You can verify the cron jobs are running as expected with:
-```bash
-grep CRON /var/log/syslog | grep $LOGNAME
-```
-
-### DAQ Heartbeat Monitoring
-You can use the provided `daq/heartbeat` bash script to send heartbeat API calls
-for the DAQ script to [healthchecks.io](https://healthchecks.io) for monitoring and alerting.
-Configure your alert online at healthchecks.io,
-then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
-You will need to update the `pkg_path` variable in `daq/heartbeat` per your installation.
-The provided `cron_jobs.txt` will setup a cron job to send the heartbeat on the 15 and 45 minute of each hour.
-```bash
-sudo apt install jq
-echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > secrets.json
-source daq/heartbeat
-```
-
-## Dev
 [![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
@@ -50,6 +13,56 @@ source daq/heartbeat
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
+
+## Data Acquisition (DAQ)
+
+### Launching the DAQ Script
+The provided [`start_daq`](daq/start_daq) bash script will start the [`daq.py`](daq/daq.py) script in a new `tmux` window.
+You will need to update the `pkg_path` variable in `start_daq` per your installation.
+```bash
+source daq/start_daq
+```
+
+### Opening the Web Dashboard
+If `daq: {display_web: true}` is set in [`config.yaml`](config.yaml),
+the local IP address and port of the dashboard will be logged on DAQ startup.
+Open this link in your browser to see the live dashboard.
+
+### Setting up cron Jobs
+Jobs to restart the DAQ on boot and every 30 minutes,
+as well as send heartbeat API calls - see below,
+are provided in the [`cron_jobs.txt`](daq/cron_jobs.txt) file.
+Note that loading this file with `crontab` will overwrite any current cron jobs,
+so check your existing settings first with `crontab -l`!
+```bash
+crontab -l
+
+crontab daq/cron_jobs.txt
+```
+
+You can verify the cron jobs are running as expected with:
+```bash
+grep CRON /var/log/syslog | grep $LOGNAME
+```
+
+### Heartbeat Monitoring
+You can use the provided [`heartbeat`](daq/heartbeat) bash script to send heartbeat API calls
+for the DAQ script to [healthchecks.io](https://healthchecks.io) for monitoring and alerting.
+Configure your alert online at healthchecks.io,
+then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
+You will need to update the `pkg_path` variable in `heartbeat` per your installation.
+The provided `cron_jobs.txt` will setup a cron job to send the heartbeat on the 15 and 45 minute of each hour.
+```bash
+sudo apt install jq
+echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > secrets.json
+source daq/heartbeat
+```
+
+## Data Analysis
+
+TODO
+
+## Dev
 
 ### Installing Python 3.11 on Raspbian
 If `python 3.11` is not available in your release of Raspbian,
@@ -97,13 +110,14 @@ or
 poetry install --with ana
 ```
 
+### Using the Makefile
+A [`Makefile`](Makefile) is provided for convenience,
+with commands to `make setupDAQ` or `make setupANA`,
+as well run individual CI tests.
+
 ### Setting up pre-commit
-You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts) after installing the `dev` dependencies. This will run the checks in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) when you make a new commit.
+It is recommended to use [`pre-commit`](https://pre-commit.com) tool to automatically check your commits locally as they are created.
+You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts), see below, after installing the `dev` dependencies. This will run the checks in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) when you create a new commit.
 ```bash
 pre-commit install
 ```
-
-### Using the Makefile
-A [`Makefile`](Makefile) is provided convenience,
-with commands to `make setupDAQ` or `make setupANA`,
-as well run individual CI tests.
