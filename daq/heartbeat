@@ -2,36 +2,30 @@
 
 pkg_path="/home/mepland/chance_of_showers"
 
+# Load latest data point time
+
 # https://stackoverflow.com/a/4561987
 last_modified_csv_file=$(find $pkg_path/daq/raw_data/date_*.csv -type f -printf '%T@ %f\n' | sort -n | tail -1 | cut -f2- -d" ")
-# echo "last_modified_csv_file = $last_modified_csv_file"
 
 # https://stackoverflow.com/a/39847858
 last_record_datetime_utc=$(tail -1 $pkg_path/daq/raw_data/$last_modified_csv_file | awk -F',' '{print $1}' | tr -s ' ' '||' | tr -d '"' | tr -s '||' ' ')
-# echo "last_record_datetime_utc = $last_record_datetime_utc"
+
+# Compare to current time
 
 # https://stackoverflow.com/a/62064169
 # https://stackoverflow.com/questions/10990949/convert-date-time-string-to-epoch-in-bash#comment92569832_10990961
 last_record_datetime_epoch_seconds=$(date --date="$last_record_datetime_utc -0000" +"%s")
-# echo "last_record_datetime_epoch_seconds = $last_record_datetime_epoch_seconds"
-
 current_epoch_seconds=$(date -u +"%s")
-# echo "current_epoch_seconds = $current_epoch_seconds"
-
 delta_seconds="$(($current_epoch_seconds-$last_record_datetime_epoch_seconds))"
-# echo "delta_seconds = $delta_seconds"
+
+# Send status to healthchecks.io
 
 chance_of_showers_heartbeat_uuid=$(jq -r '.chance_of_showers_heartbeat_uuid' $pkg_path/secrets.json)
-# echo "chance_of_showers_heartbeat_uuid = $chance_of_showers_heartbeat_uuid"
+payload="$last_modified_csv_file, $last_record_datetime_utc UTC, delta seconds = $delta_seconds"
 
-payload="$last_modified_csv_file $last_record_datetime_utc UTC"
-# echo "payload = $payload"
-
-grace_period=600
+grace_period=120
 if [ "$delta_seconds" -lt "$grace_period" ]; then
-	# echo "All good, send normal heartbeat"
 	curl -fsS -m 10 --retry 5 -o /dev/null --data-raw "$payload" https://hc-ping.com/$chance_of_showers_heartbeat_uuid
 else
-	# echo "Not updated, send error heartbeat!"
 	curl -fsS -m 10 --retry 5 -o /dev/null --data-raw "$payload" https://hc-ping.com/$chance_of_showers_heartbeat_uuid/fail
 fi
