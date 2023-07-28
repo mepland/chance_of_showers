@@ -28,13 +28,21 @@ def fan_control(cfg: DictConfig) -> None:
     """
     # Configuration
     # pylint: disable=invalid-name
-    VERBOSE: Final = cfg["fan_control"]["verbose"]  # print temp, PWM, RPM
-    FAN_PIN: Final = cfg["fan_control"]["fan_pin"]  # BCM pin used to drive PWM fan
-    TACH_PIN: Final = cfg["fan_control"]["tach_pin"]  # Fan's tachometer output pin
-    WAIT_TIME: Final = cfg["fan_control"]["wait_time"]  # [s] Time to wait between each refresh
-    PULSE: Final = cfg["fan_control"]["pulse"]  # Noctua fans puts out two pluses per revolution
-    PWM_FREQ: Final = cfg["fan_control"]["pwm_freq"]  # [kHz] 25kHz for Noctua PWM control
+    VERBOSE: Final = cfg["fan_control"]["verbose"]  # print temperature, PWM, and RPM
 
+    FAN_PIN: Final = cfg["fan_control"]["fan_pin"]  # BCM pin used to drive PWM fan
+    TACH_PIN: Final = cfg["fan_control"]["tach_pin"]  # Pin used to read the fan's tachometer signal
+
+    REFRESH_PERIOD_SECONDS: Final = cfg["fan_control"][
+        "refresh_period_seconds"
+    ]  # Time to wait between each refresh
+
+    PULSES_PER_REVOLUTION: Final = cfg["fan_control"][
+        "pulses_per_revolution"
+    ]  # Noctua fans puts out two pluses per revolution
+    PWM_FREQ_KHZ: Final = cfg["fan_control"]["pwm_freq_khz"]  # 25kHz for Noctua PWM control
+
+    # Fan curve parameters
     MIN_TEMP: Final = cfg["fan_control"]["min_temp"]
     MAX_TEMP: Final = cfg["fan_control"]["max_temp"]
     FAN_LOW: Final = cfg["fan_control"]["fan_low"]
@@ -61,7 +69,7 @@ def fan_control(cfg: DictConfig) -> None:
             speed: Desired fan speed, 0 to 100.
         """
         fan.start(speed)
-        # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ)
+        # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
 
     def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
         """Fell action.
@@ -78,7 +86,7 @@ def fan_control(cfg: DictConfig) -> None:
         # Reject spuriously short pulses
         if 0.005 < delta_t:
             freq = 1 / delta_t
-            rpm = (freq / PULSE) * 60
+            rpm = (freq / PULSES_PER_REVOLUTION) * 60
             current_time = time.time()
 
     def handle_fan_speed() -> None:
@@ -120,16 +128,16 @@ def fan_control(cfg: DictConfig) -> None:
         GPIO.setup(TACH_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Pull up to 3.3V
         GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 
-        fan = GPIO.PWM(FAN_PIN, PWM_FREQ)
+        fan = GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
         set_fan_speed(FAN_OFF)
 
         # Add event to detect
         GPIO.add_event_detect(TACH_PIN, GPIO.FALLING, fell)
 
-        # Handle fan speed every WAIT_TIME sec
+        # Handle fan speed every REFRESH_PERIOD_SECONDS sec
         while True:
             handle_fan_speed()
-            time.sleep(WAIT_TIME)
+            time.sleep(REFRESH_PERIOD_SECONDS)
 
     except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt
         set_fan_speed(FAN_HIGH)

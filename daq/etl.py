@@ -32,7 +32,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     # pylint: disable=invalid-name
     PACKAGE_PATH: Final = cfg["general"]["package_path"]
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
-    SAVED_DATA_RELATIVE_PATH: Final = cfg["daq"]["saved_data_relative_path"]
+    SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
 
     DATE_FMT: Final = cfg["general"]["date_fmt"]
     TIME_FMT: Final = cfg["general"]["time_fmt"]
