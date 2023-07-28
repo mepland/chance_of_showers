@@ -19,8 +19,8 @@ daq:
   starting_time_minutes_mod: 1
   averaging_period_seconds: 60
   polling_period_seconds: 1
-  raw_data: "daq/raw_data"
-  logs: "daq/logs"
+  raw_data_relative_path: "daq/raw_data"
+  logs_relative_path: "daq/logs"
   log_memory_usage: true
   log_memory_usage_minutes_mod: 30
   # Web parameters
@@ -42,7 +42,7 @@ fan_control:
   fan_low: 30
   fan_high: 100
 etl:
-  saved_data: "daq/saved_data"
+  saved_data_relative_path: "daq/saved_data"
 # no hydra logging
 # https://stackoverflow.com/a/70777327
 defaults:

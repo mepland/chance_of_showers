@@ -14,7 +14,7 @@ import time
 import traceback
 import zoneinfo
 from csv import writer
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import humanize
 import numpy as np
@@ -25,71 +25,8 @@ from hydra import compose, initialize
 if TYPE_CHECKING:
     from types import FrameType
 
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
-    get_lock,
-    get_SoC_temp,
-    normalize_pressure_value,
-)
-
 ################################################################################
-# Lock script, avoid launching duplicates
-
-get_lock("daq")
-
-################################################################################
-# setup variables
-
-initialize(version_base=None, config_path="..")
-cfg = compose(config_name="config")
-
-log_to_file = cfg["daq"]["log_to_file"]
-display_terminal = cfg["daq"]["display_terminal"]
-display_terminal_overwrite = cfg["daq"]["display_terminal_overwrite"]
-display_oled = cfg["daq"]["display_oled"]
-display_web = cfg["daq"]["display_web"]
-display_web_logging_terminal = cfg["daq"]["display_web_logging_terminal"]
-verbosity = cfg["daq"]["verbosity"]
-
-starting_time_minutes_mod = cfg["daq"]["starting_time_minutes_mod"]
-averaging_period_seconds = cfg["daq"]["averaging_period_seconds"]
-polling_period_seconds = cfg["daq"]["polling_period_seconds"]
-
-date_fmt = cfg["general"]["date_fmt"]
-time_fmt = cfg["general"]["time_fmt"]
-datetime_fmt = f"{date_fmt} {time_fmt}"
-fname_datetime_fmt = cfg["general"]["fname_datetime_fmt"]
-local_timezone_str = cfg["general"]["local_timezone"]
-
-if local_timezone_str not in zoneinfo.available_timezones():
-    AVAILABLE_TIMEZONES = "\n".join(list(zoneinfo.available_timezones()))
-    raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{AVAILABLE_TIMEZONES}")
-
-utc_timezone = zoneinfo.ZoneInfo("UTC")
-local_timezone = zoneinfo.ZoneInfo(local_timezone_str)
-
-package_path = cfg["general"]["package_path"]
-raw_data = cfg["daq"]["raw_data"]
-logs = cfg["daq"]["logs"]
-
-log_memory_usage = cfg["daq"]["log_memory_usage"]
-log_memory_usage_minutes_mod = cfg["daq"]["log_memory_usage_minutes_mod"]
-
-N_LAST_POINTS_WEB = cfg["daq"]["n_last_points_web"]
-
-observed_pressure_min = cfg["general"]["observed_pressure_min"]
-observed_pressure_max = cfg["general"]["observed_pressure_max"]
-
-################################################################################
-# paths
-raw_data_full_path = os.path.expanduser(os.path.join(package_path, raw_data))
-logs_full_path = os.path.expanduser(os.path.join(package_path, logs))
-os.makedirs(raw_data_full_path, exist_ok=True)
-os.makedirs(logs_full_path, exist_ok=True)
-
-################################################################################
-# globals variables
+# Global variables
 # pylint: disable=invalid-name
 thread_daq_loop = None
 running_daq_loop = True
@@ -98,24 +35,86 @@ new_connection = False
 # pylint: enable=invalid-name
 
 ################################################################################
-# logging
+# Setup variables
+
+initialize(version_base=None, config_path="..")
+cfg = compose(config_name="config")
+
+LOG_TO_FILE: Final = cfg["daq"]["log_to_file"]
+DISPLAY_TERMINAL: Final = cfg["daq"]["display_terminal"]
+DISPLAY_TERMINAL_OVERWRITE: Final = cfg["daq"]["display_terminal_overwrite"]
+DISPLAY_OLED: Final = cfg["daq"]["display_oled"]
+DISPLAY_WEB: Final = cfg["daq"]["display_web"]
+DISPLAY_WEB_LOGGING_TERMINAL: Final = cfg["daq"]["display_web_logging_terminal"]
+VERBOSITY: Final = cfg["daq"]["verbosity"]
+
+STARTING_TIME_MINUTES_MOD: Final = cfg["daq"]["starting_time_minutes_mod"]
+AVERAGING_PERIOD_SECONDS: Final = cfg["daq"]["averaging_period_seconds"]
+POLLING_PERIOD_SECONDS: Final = cfg["daq"]["polling_period_seconds"]
+
+DATE_FMT: Final = cfg["general"]["date_fmt"]
+TIME_FMT: Final = cfg["general"]["time_fmt"]
+DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
+FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
+LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
+
+if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
+    AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
+    raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+
+UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
+LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
+
+PACKAGE_PATH: Final = cfg["general"]["package_path"]
+RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
+LOGS_RELATIVE_PATH: Final = cfg["daq"]["logs_relative_path"]
+
+LOG_MEMORY_USAGE: Final = cfg["daq"]["log_memory_usage"]
+LOG_MEMORY_USAGE_MINUTES_MOD: Final = cfg["daq"]["log_memory_usage_minutes_mod"]
+
+N_LAST_POINTS_WEB: Final = cfg["daq"]["n_last_points_web"]
+
+OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
+OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
+
+################################################################################
+# Lock script, avoid launching duplicates
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+    get_lock,
+    get_SoC_temp,
+    normalize_pressure_value,
+)
+
+get_lock("daq")
+
+################################################################################
+# Paths
+RAW_DATA_FULL_PATH: Final = os.path.expanduser(os.path.join(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH))
+LOGS_FULL_PATH: Final = os.path.expanduser(os.path.join(PACKAGE_PATH, LOGS_RELATIVE_PATH))
+os.makedirs(RAW_DATA_FULL_PATH, exist_ok=True)
+os.makedirs(LOGS_FULL_PATH, exist_ok=True)
+
+################################################################################
+# Logging
 logger_daq = logging.getLogger("daq")
 logger_daq.setLevel(logging.INFO)
-if 0 < verbosity:
+if 0 < VERBOSITY:
     logger_daq.setLevel(logging.DEBUG)
 
-if log_to_file:
-    log_datetime = datetime.datetime.now(utc_timezone).strftime(fname_datetime_fmt)
+if LOG_TO_FILE:
+    LOG_DATETIME: Final = datetime.datetime.now(UTC_TIMEZONE).strftime(FNAME_DATETIME_FMT)
 
-    fname_log = f"daq_{log_datetime}.log"
-    logging_fh = logging.FileHandler(f"{logs_full_path}/{fname_log}")
+    FNAME_LOG: Final = f"daq_{LOG_DATETIME}.log"
+    logging_fh = logging.FileHandler(f"{LOGS_FULL_PATH}/{FNAME_LOG}")
     logging_fh.setLevel(logging.INFO)
-    if 0 < verbosity:
+    if 0 < VERBOSITY:
         logging_fh.setLevel(logging.DEBUG)
 
     logging_formatter = logging.Formatter(
         "%(asctime)s [%(name)-8.8s] [%(threadName)-10.10s] [%(levelname)-8.8s] %(message)s",
-        f"{datetime_fmt} UTC",
+        f"{DATETIME_FMT} UTC",
     )
     # https://docs.python.org/3/library/logging.html#logging.Formatter.formatTime
     # https://docs.python.org/3/library/time.html#time.gmtime
@@ -130,7 +129,7 @@ def my_print(
     line: str,
     *,
     logger_level: int | None = logging.INFO,
-    use_print: bool = display_terminal,
+    use_print: bool = DISPLAY_TERMINAL,
     print_prefix: str = "",
     print_postfix: str = "",
     use_stdout_overwrite: bool = False,
@@ -148,7 +147,7 @@ def my_print(
         print_postfix: String to append to `line` before printing to stdout.
         use_stdout_overwrite: Flag for overwritting the previous line on stdout.
     """
-    if not log_to_file or logger_level is None:
+    if not LOG_TO_FILE or logger_level is None:
         pass
     elif logger_level == logging.CRITICAL:
         logger_daq.critical(line)
@@ -175,7 +174,7 @@ def my_print(
 
 
 ################################################################################
-# helper variables and functions
+# Helper variables and functions
 
 
 def normalize_pressure_value_safe(pressure_value: int) -> float:
@@ -191,7 +190,7 @@ def normalize_pressure_value_safe(pressure_value: int) -> float:
     normalize_pressure_value_float = -1.0
     try:
         normalize_pressure_value_float = normalize_pressure_value(
-            pressure_value, observed_pressure_min, observed_pressure_max
+            pressure_value, OBSERVED_PRESSURE_MIN, OBSERVED_PRESSURE_MAX
         )
     except Exception as error:
         # don't want to kill the DAQ just because of a display problem
@@ -205,11 +204,11 @@ def normalize_pressure_value_safe(pressure_value: int) -> float:
 
 
 # DAQ variables
-n_polling = int(np.ceil(averaging_period_seconds / polling_period_seconds))
+N_POLLING: Final = int(np.ceil(AVERAGING_PERIOD_SECONDS / POLLING_PERIOD_SECONDS))
 # test if defining here first saves memory?
-polling_pressure_samples = np.empty(n_polling)
+polling_pressure_samples = np.empty(N_POLLING)
 polling_pressure_samples.fill(np.nan)
-polling_flow_samples = np.zeros(n_polling)
+polling_flow_samples = np.zeros(N_POLLING)
 
 
 def get_SoC_temp_safe() -> float:  # pylint: disable=invalid-name
@@ -248,11 +247,11 @@ def signal_handler(
     """
     global running_daq_loop
     my_print(
-        f"DAQ loop will exit gracefully in {2 * polling_period_seconds} seconds",
+        f"DAQ loop will exit gracefully in {2 * POLLING_PERIOD_SECONDS} seconds",
         print_prefix="\n",
     )
     running_daq_loop = False
-    time.sleep(2 * polling_period_seconds)
+    time.sleep(2 * POLLING_PERIOD_SECONDS)
     my_print("DAQ exiting gracefully", print_prefix="\n")
     sys.exit(0)
 
@@ -309,7 +308,7 @@ flow_switch.when_released = fall
 ################################################################################
 # Setup connection to i2c display
 # https://luma-oled.readthedocs.io/en/latest
-if display_oled:
+if DISPLAY_OLED:
     from luma.core.error import DeviceNotFoundError
     from luma.core.interface.serial import i2c
     from luma.core.render import canvas
@@ -381,7 +380,7 @@ if display_oled:
 ################################################################################
 # Setup web page
 # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
-if display_web:  # noqa: C901
+if DISPLAY_WEB:  # noqa: C901
     import json
 
     import python_arptable
@@ -401,9 +400,9 @@ if display_web:  # noqa: C901
 
     logger_sio = logging.getLogger("sio")
     logger_sio.setLevel(logging.WARNING)
-    if 1 < verbosity:
+    if 1 < VERBOSITY:
         logger_sio.setLevel(logging.DEBUG)
-    if log_to_file:
+    if LOG_TO_FILE:
         logger_sio.addHandler(logging_fh)
 
     sio = SocketIO(
@@ -471,7 +470,7 @@ if display_web:  # noqa: C901
             new_connection = True
             my_print(
                 f"Client connected {conn_details()}",
-                use_print=display_terminal and display_web_logging_terminal,
+                use_print=DISPLAY_TERMINAL and DISPLAY_WEB_LOGGING_TERMINAL,
             )
         except Exception as error:
             # don't want to kill the DAQ just because of a web problem
@@ -488,7 +487,7 @@ if display_web:  # noqa: C901
         try:
             my_print(
                 f"Client disconnected {conn_details()}",
-                use_print=display_terminal and display_web_logging_terminal,
+                use_print=DISPLAY_TERMINAL and DISPLAY_WEB_LOGGING_TERMINAL,
             )
         except Exception as error:
             # don't want to kill the DAQ just because of a web problem
@@ -499,7 +498,7 @@ if display_web:  # noqa: C901
             )
             pass
 
-    if not (0 < verbosity or display_web_logging_terminal):
+    if not (0 < VERBOSITY or DISPLAY_WEB_LOGGING_TERMINAL):
         # No messages in terminal
         import flask.cli
 
@@ -508,9 +507,9 @@ if display_web:  # noqa: C901
     # never write werkzeug logs to terminal
     log_werkzeug = logging.getLogger("werkzeug")
     log_werkzeug.setLevel(logging.WARNING)
-    if 0 < verbosity:
+    if 0 < VERBOSITY:
         log_werkzeug.setLevel(logging.DEBUG)
-    if log_to_file:
+    if LOG_TO_FILE:
         log_werkzeug.addHandler(logging_fh)
 
     t_local_str_n_last: list[str] = []
@@ -541,32 +540,32 @@ if display_web:  # noqa: C901
     host_ip_address = get_ip_address()
 
 ################################################################################
-# Wait until UTC minutes is mod starting_time_minutes_mod
+# Wait until UTC minutes is mod STARTING_TIME_MINUTES_MOD
 # Then if the script is interrupted, we can resume on the same cadence
-t_start = datetime.datetime.now(utc_timezone)
+t_start = datetime.datetime.now(UTC_TIMEZONE)
 t_start_minute = (
-    t_start.minute - (t_start.minute % starting_time_minutes_mod) + starting_time_minutes_mod
+    t_start.minute - (t_start.minute % STARTING_TIME_MINUTES_MOD) + STARTING_TIME_MINUTES_MOD
 ) % 60
 
 t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
 
-t_utc_str = t_start.astimezone(utc_timezone).strftime(datetime_fmt)
-t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
+t_utc_str = t_start.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
+t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
 
-if log_to_file:
-    my_print(f"Logging to {fname_log}", print_prefix="\n")
-if display_web:
+if LOG_TO_FILE:
+    my_print(f"Logging to {FNAME_LOG}", print_prefix="\n")
+if DISPLAY_WEB:
     my_print(
         f"Live dashboard hosted at: http://{host_ip_address}:{PORT_NUMBER}",
         print_prefix="\n",
     )
 my_print(
-    f"Starting DAQ at {t_utc_str} UTC, {t_local_str} {local_timezone_str}", print_prefix="\n       "
+    f"Starting DAQ at {t_utc_str} UTC, {t_local_str} {LOCAL_TIMEZONE_STR}", print_prefix="\n       "
 )
 
-if display_oled:
+if DISPLAY_OLED:
     # write to OLED display
-    t_local_str_short = t_start.astimezone(local_timezone).strftime(time_fmt)
+    t_local_str_short = t_start.astimezone(LOCAL_TIMEZONE).strftime(TIME_FMT)
     paint_oled(
         ["Will start at:", t_local_str_short, f"SoC: {get_SoC_temp_safe()}"],
         bounding_box=True,
@@ -574,11 +573,11 @@ if display_oled:
 
 pause.until(t_start)
 
-t_start = datetime.datetime.now(utc_timezone)
-t_utc_str = t_start.astimezone(utc_timezone).strftime(datetime_fmt)
-t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
+t_start = datetime.datetime.now(UTC_TIMEZONE)
+t_utc_str = t_start.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
+t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
 my_print(
-    f"Started taking data at {t_utc_str} UTC, {t_local_str} {local_timezone_str}",
+    f"Started taking data at {t_utc_str} UTC, {t_local_str} {LOCAL_TIMEZONE_STR}",
     print_prefix="\n",
     print_postfix="\n\n",
 )
@@ -599,17 +598,17 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
     past_had_flow = -1
     while running_daq_loop:
         # Set seconds to 0 to avoid drift over multiple hours / days
-        t_start = datetime.datetime.now(utc_timezone).replace(second=0, microsecond=0)
+        t_start = datetime.datetime.now(UTC_TIMEZONE).replace(second=0, microsecond=0)
         t_stop = t_start
 
-        # average over averaging_period_seconds
+        # average over AVERAGING_PERIOD_SECONDS
         i_polling = 0
         # reset variables
         had_flow = 0  # avoid sticking high if we lose pressure while flowing
         polling_pressure_samples.fill(np.nan)
-        polling_flow_samples = np.zeros(n_polling)
+        polling_flow_samples = np.zeros(N_POLLING)
         while running_daq_loop and t_stop - t_start < datetime.timedelta(
-            seconds=averaging_period_seconds
+            seconds=AVERAGING_PERIOD_SECONDS
         ):
             # sample pressure and flow
             pressure_value = int(chan_0.value)
@@ -627,11 +626,11 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
             my_print(
                 f"{line1}\n{line2}",
                 logger_level=logging.DEBUG,
-                use_print=display_terminal and not display_terminal_overwrite,
-                use_stdout_overwrite=display_terminal and display_terminal_overwrite,
+                use_print=DISPLAY_TERMINAL and not DISPLAY_TERMINAL_OVERWRITE,
+                use_stdout_overwrite=DISPLAY_TERMINAL and DISPLAY_TERMINAL_OVERWRITE,
             )
 
-            if display_oled:
+            if DISPLAY_OLED:
                 # write to OLED display
                 paint_oled(
                     [
@@ -642,7 +641,7 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                     ]
                 )
 
-            if display_web:
+            if DISPLAY_WEB:
                 try:
                     # send data to socket
                     _data = {
@@ -673,29 +672,29 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                     )
                     pass
 
-            # wait polling_period_seconds between data points to average
-            while datetime.datetime.now(utc_timezone) - t_stop < datetime.timedelta(
-                seconds=polling_period_seconds
+            # wait POLLING_PERIOD_SECONDS between data points to average
+            while datetime.datetime.now(UTC_TIMEZONE) - t_stop < datetime.timedelta(
+                seconds=POLLING_PERIOD_SECONDS
             ):
                 pass
 
             i_polling += 1
-            t_stop = datetime.datetime.now(utc_timezone)
+            t_stop = datetime.datetime.now(UTC_TIMEZONE)
 
         # process polling results if DAQ is still running
         if running_daq_loop:
             # take mean and save data point to csv
-            t_utc_str = t_stop.astimezone(utc_timezone).strftime(datetime_fmt)
-            if display_web:
-                t_local_str = t_start.astimezone(local_timezone).strftime(datetime_fmt)
+            t_utc_str = t_stop.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
+            if DISPLAY_WEB:
+                t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
             mean_pressure_value = int(np.nanmean(polling_pressure_samples))
             mean_pressure_value_normalized = normalize_pressure_value_safe(mean_pressure_value)
             past_had_flow = int(np.max(polling_flow_samples))
             new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
-            fname_date_utc = t_stop.astimezone(utc_timezone).strftime(date_fmt)
+            fname_date_utc = t_stop.astimezone(UTC_TIMEZONE).strftime(DATE_FMT)
             with open(
-                f"{raw_data_full_path}/date_{fname_date_utc}.csv", "a", encoding="utf-8"
+                f"{RAW_DATA_FULL_PATH}/date_{fname_date_utc}.csv", "a", encoding="utf-8"
             ) as f_csv:
                 m_writer = writer(f_csv)
                 if f_csv.tell() == 0:
@@ -704,7 +703,7 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                 m_writer.writerow(new_row)
                 f_csv.close()
 
-            if display_web:
+            if DISPLAY_WEB:
                 try:
                     # save N_LAST_POINTS_WEB mean values
                     t_local_str_n_last.append(t_local_str)
@@ -724,9 +723,9 @@ def daq_loop() -> None:  # noqa: C901 # pylint: disable=too-many-statements
                     )
                     pass
 
-            if log_memory_usage:
+            if LOG_MEMORY_USAGE:
                 try:
-                    if t_start.minute % log_memory_usage_minutes_mod == 0:
+                    if t_start.minute % LOG_MEMORY_USAGE_MINUTES_MOD == 0:
                         ram_info = psutil.virtual_memory()
                         my_print(
                             f"RAM Available: {humanize.naturalsize(ram_info.available)}, Used: {humanize.naturalsize(ram_info.used)}, Percent: {ram_info.percent:.2f}%",
@@ -754,12 +753,12 @@ if thread_daq_loop is None:
 
 ################################################################################
 # serve index.html
-if display_web:
+if DISPLAY_WEB:
     try:
         # wait until 0 < len(t_local_str_n_last) before serving the website to avoid crashes
         while len(t_local_str_n_last) < 1:
             # check len(t_local_str_n_last) every ~ 6 seconds
-            time.sleep(0.1 * averaging_period_seconds)
+            time.sleep(0.1 * AVERAGING_PERIOD_SECONDS)
             my_print(
                 "Waiting to start web server",
                 logger_level=logging.DEBUG,
