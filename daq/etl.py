@@ -9,6 +9,7 @@ import glob
 import os
 import traceback
 import zoneinfo
+from typing import Final
 
 import humanize
 import hydra
@@ -28,38 +29,42 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ValueError: A data quality check failed.
     """
     # setup variables
-    package_path = cfg["general"]["package_path"]
-    raw_data = cfg["daq"]["raw_data"]
-    saved_data = cfg["etl"]["saved_data"]
+    # pylint: disable=invalid-name
+    PACKAGE_PATH: Final = cfg["general"]["package_path"]
+    RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
+    SAVED_DATA_RELATIVE_PATH: Final = cfg["daq"]["saved_data_relative_path"]
 
-    date_fmt = cfg["general"]["date_fmt"]
-    time_fmt = cfg["general"]["time_fmt"]
-    fname_datetime_fmt = cfg["general"]["fname_datetime_fmt"]
-    datetime_fmt = f"{date_fmt} {time_fmt}"
+    DATE_FMT: Final = cfg["general"]["date_fmt"]
+    TIME_FMT: Final = cfg["general"]["time_fmt"]
+    FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
+    DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
-    local_timezone_str = cfg["general"]["local_timezone"]
+    LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 
-    if local_timezone_str not in zoneinfo.available_timezones():
-        available_timezones = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}")
+    if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
+        AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
+        raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
 
-    utc_timezone = zoneinfo.ZoneInfo("UTC")
+    UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
 
     # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
-    dt_end_of_drifting_seconds = datetime.datetime.strptime(
-        cfg["daq"]["end_of_drifting_seconds"], datetime_fmt
-    ).replace(tzinfo=utc_timezone)
+    DT_END_OF_DRIFTING_SECONDS: Final = datetime.datetime.strptime(
+        cfg["daq"]["end_of_drifting_seconds"], DATETIME_FMT
+    ).replace(tzinfo=UTC_TIMEZONE)
 
     # when web threading was fixed, eliminating duplicate records from multiple threads
-    dt_end_of_threading_duplicates = datetime.datetime.strptime(
-        cfg["daq"]["end_of_threading_duplicates"], datetime_fmt
-    ).replace(tzinfo=utc_timezone)
+    DT_END_OF_THREADING_DUPLICATES: Final = datetime.datetime.strptime(
+        cfg["daq"]["end_of_threading_duplicates"], DATETIME_FMT
+    ).replace(tzinfo=UTC_TIMEZONE)
+    # pylint: enable=invalid-name
 
     # load raw csv files
     dfpl_list = []
 
     csv_total_bytes = 0
-    for f_csv in glob.glob(os.path.expanduser(os.path.join(package_path, raw_data, "*.csv"))):
+    for f_csv in glob.glob(
+        os.path.expanduser(os.path.join(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH, "*.csv"))
+    ):
         try:
             dfpl = pl.scan_csv(f_csv)
             dfpl = dfpl.with_columns(pl.lit(f_csv.split("/")[-1]).alias("fname"))
@@ -74,9 +79,9 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     dfpl = (
         # convert date columns
         dfpl.with_columns(
-            pl.col("datetime_utc").str.to_datetime(datetime_fmt).dt.replace_time_zone("UTC")
+            pl.col("datetime_utc").str.to_datetime(DATETIME_FMT).dt.replace_time_zone("UTC")
         ).with_columns(
-            pl.col("datetime_utc").dt.convert_time_zone(local_timezone_str).alias("datetime_local")
+            pl.col("datetime_utc").dt.convert_time_zone(LOCAL_TIMEZONE_STR).alias("datetime_local")
         )
         # Add more date columns
         .with_columns(
@@ -86,54 +91,54 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
 
     # remove any datetimes that have more than 1 row, caused by historical bug in DAQ threading
-    dfpl_duplicate_datetime = (
+    DFPL_DUPLICATE_DATETIME: Final = (  # pylint: disable=invalid-name
         dfpl.groupby(by=["datetime_utc"]).agg(pl.count()).filter(1 < pl.col("count"))
     )
     dfpl = dfpl.join(
-        dfpl_duplicate_datetime.select("datetime_utc"),
+        DFPL_DUPLICATE_DATETIME.select("datetime_utc"),
         on="datetime_utc",
         how="anti",
     )
 
     # make sure none of the duplicates are post threading fix
-    dfpl_duplicate_datetime_post_threading_fix = dfpl_duplicate_datetime.filter(
-        dt_end_of_threading_duplicates < pl.col("datetime_utc")
+    DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX: Final = (  # pylint: disable=invalid-name
+        DFPL_DUPLICATE_DATETIME.filter(DT_END_OF_THREADING_DUPLICATES < pl.col("datetime_utc"))
     )
 
-    n_duplicate_datetime_post_threading_fix = (
-        dfpl_duplicate_datetime_post_threading_fix.select(pl.count()).collect(streaming=True).item()
+    N_DUPLICATE_DATETIME_POST_THREADING_FIX: Final = (  # pylint: disable=invalid-name
+        DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX.select(pl.count()).collect(streaming=True).item()
     )
-    if 0 < n_duplicate_datetime_post_threading_fix:
-        duplicate_datetime_post_fix_min = (
-            dfpl_duplicate_datetime_post_threading_fix.select(pl.col("datetime_utc").min())
+    if 0 < N_DUPLICATE_DATETIME_POST_THREADING_FIX:
+        DUPLICATE_DATETIME_POST_FIX_MIN: Final = (  # pylint: disable=invalid-name
+            DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX.select(pl.col("datetime_utc").min())
             .collect(streaming=True)
             .item()
-            .strftime(datetime_fmt)
+            .strftime(DATETIME_FMT)
         )
-        duplicate_datetime_post_fix_max = (
-            dfpl_duplicate_datetime_post_threading_fix.select(pl.col("datetime_utc").max())
+        DUPLICATE_DATETIME_POST_FIX_MAX: Final = (  # pylint: disable=invalid-name
+            DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX.select(pl.col("datetime_utc").max())
             .collect(streaming=True)
             .item()
-            .strftime(datetime_fmt)
+            .strftime(DATETIME_FMT)
         )
         raise ValueError(
-            f"Found {n_duplicate_datetime_post_threading_fix} datetimes with multiple entries"
-            + f" after {dt_end_of_threading_duplicates.strftime(datetime_fmt)} UTC!"
-            + f"\nDuplicates are between {duplicate_datetime_post_fix_min} and {duplicate_datetime_post_fix_max}."
+            f"Found {N_DUPLICATE_DATETIME_POST_THREADING_FIX} datetimes with multiple entries"
+            + f" after {DT_END_OF_THREADING_DUPLICATES.strftime(DATETIME_FMT)} UTC!"
+            + f"\nDuplicates are between {DUPLICATE_DATETIME_POST_FIX_MIN} and {DUPLICATE_DATETIME_POST_FIX_MAX}."
         )
 
-    # check for drifting seconds after fix implemented at dt_end_of_drifting_seconds
-    dfpl_drift_seconds_records = dfpl.filter(
-        (dt_end_of_drifting_seconds < pl.col("datetime_utc"))
+    # check for drifting seconds after fix implemented at DT_END_OF_DRIFTING_SECONDS
+    DFPL_DRIFT_SECONDS_RECORDS: Final = dfpl.filter(  # pylint: disable=invalid-name
+        (DT_END_OF_DRIFTING_SECONDS < pl.col("datetime_utc"))
         & (pl.col("datetime_utc").dt.second() != 0)
     )
-    n_rows_drift_seconds = (
-        dfpl_drift_seconds_records.select(pl.count()).collect(streaming=True).item()
+    N_ROWS_DRIFT_SECONDS: Final = (  # pylint: disable=invalid-name
+        DFPL_DRIFT_SECONDS_RECORDS.select(pl.count()).collect(streaming=True).item()
     )
-    if 0 < n_rows_drift_seconds:
-        print(dfpl_drift_seconds_records.collect(streaming=True))
+    if 0 < N_ROWS_DRIFT_SECONDS:
+        print(DFPL_DRIFT_SECONDS_RECORDS.collect(streaming=True))
         raise ValueError(
-            f"Found {n_rows_drift_seconds = } after {dt_end_of_drifting_seconds.strftime(datetime_fmt)} UTC!"
+            f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
         )
 
     print(
@@ -141,27 +146,29 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         dfpl.select("datetime_utc", "mean_pressure_value").collect(streaming=True).describe(),
     )
 
-    os.makedirs(os.path.expanduser(os.path.join(package_path, saved_data)), exist_ok=True)
+    os.makedirs(
+        os.path.expanduser(os.path.join(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH)), exist_ok=True
+    )
 
-    parquet_datetime_min = (
+    PARQUET_DATETIME_MIN: Final = (  # pylint: disable=invalid-name
         dfpl.select(pl.col("datetime_utc").min())
         .collect(streaming=True)
         .item()
-        .strftime(fname_datetime_fmt)
+        .strftime(FNAME_DATETIME_FMT)
     )
 
-    parquet_datetime_max = (
+    PARQUET_DATETIME_MAX: Final = (  # pylint: disable=invalid-name
         dfpl.select(pl.col("datetime_utc").max())
         .collect(streaming=True)
         .item()
-        .strftime(fname_datetime_fmt)
+        .strftime(FNAME_DATETIME_FMT)
     )
 
     f_parquet = os.path.expanduser(
         os.path.join(
-            package_path,
-            saved_data,
-            f"data_{parquet_datetime_min}_to_{parquet_datetime_max}.parquet",
+            PACKAGE_PATH,
+            SAVED_DATA_RELATIVE_PATH,
+            f"data_{PARQUET_DATETIME_MIN}_to_{PARQUET_DATETIME_MAX}.parquet",
         )
     )
     dfpl.collect(streaming=True).write_parquet(f_parquet)
