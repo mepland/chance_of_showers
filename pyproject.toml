@@ -116,8 +116,7 @@ line-length = 100
 target-version = ["py311"]
 extend-exclude = '''
 /(
-  ^/ana/*.py
-  | \.cache
+  ^\.cache
   | \.direnv
   | \.env
   | \.git
@@ -154,7 +153,6 @@ per-file-ignores = """
     daq/daq.py: E402
 """
 exclude = [
-    "ana/*.py",
     ".cache",
     ".direnv",
     ".env",
@@ -178,7 +176,6 @@ disable_error_code = [
 # but leaving it as true all the time gives false positives when running mypy in the pre-commit env
 warn_unused_ignores = false
 exclude = [
-    "ana/*.py",
     ".cache",
     ".direnv",
     ".env",
@@ -197,6 +194,7 @@ combine_star = "true"
 group_by_package = "true"
 skip_gitignore = "true"
 atomic = "true"
+treat_comments_as_code = ["# %%"]
 
 [tool.pylint.main]
 fail-under = 10
@@ -204,7 +202,6 @@ jobs = 0
 py-version = "3.11"
 suggestion-mode = true
 ignore = [
-    "ana/*.py",
     ".cache",
     ".direnv",
     ".env",
