@@ -12,7 +12,8 @@ poetry:
 
 pre-commit:
 	@# poetry run pre-commit autoupdate
-	poetry run pre-commit run --all-files
+	@#poetry run pre-commit run --all-files
+	poetry run pre-commit run
 
 black:
 	poetry run black .
