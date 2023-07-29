@@ -1,3 +1,5 @@
+# %%
+"""Analysis notebook."""
 # %% [markdown]
 # # Setup
 
@@ -8,19 +10,19 @@
 # %%
 # %matplotlib inline
 
-import datetime
-import glob
+# import datetime
+# import glob
+# import natsort
+# import pprint
+# import zoneinfo
+# import numpy as np
 import os
-
-# from natsort import natsorted
-# from pprint import pprint
 import sys
-import zoneinfo
 from typing import Final
 
-# import numpy as np
 import pandas as pd
 from hydra import compose, initialize
+from IPython.display import display
 
 # import statsmodels.api as sm
 # from statsmodels.tsa.arima.model import ARIMA
@@ -29,9 +31,8 @@ from hydra import compose, initialize
 
 # import plotly.graph_objects as go
 
-
 sys.path.append(os.path.dirname(os.path.realpath("")))
-from utils.plotting import plot_func  # noqa: E402 # pylint: disable=import-error
+# from utils.plotting import plot_func
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
     normalize_pressure_value,
 )
@@ -91,13 +92,18 @@ F_PARQUET: Final = os.path.expanduser(
 dfp_data = pd.read_parquet(F_PARQUET)
 
 # %%
-dfp_data
+dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].apply(
+    normalize_pressure_value, args=(OBSERVED_PRESSURE_MIN, OBSERVED_PRESSURE_MAX)
+)
 
 # %%
-dfp_data.dtypes
+display(dfp_data)
 
 # %%
-dfp_data[["mean_pressure_value"]].describe()
+print(dfp_data.dtypes)
+
+# %%
+dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 
 # %% [markdown]
 # ***
@@ -110,7 +116,6 @@ dfp_data[["mean_pressure_value"]].describe()
 # dfp_data.index = pd.DatetimeIndex(dfp_data["datetime_est"]).tz_localize(None).to_period("T")
 
 # %% [raw]
-# # TODO
 # # convert to DatetimeIndex, with T (minute) fequency
 # # create null rows between min and max datetime if they do not exist
 # # dfp.index = pd.DatetimeIndex(dfp['datetime_est']).tz_localize(None)
