@@ -150,6 +150,7 @@ extend-select = [
 "B908",
 ]
 per-file-ignores = """
+    ana/*.py: E800
     daq/daq.py: E402
 """
 exclude = [
