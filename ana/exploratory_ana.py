@@ -21,6 +21,7 @@ import sys
 from typing import Final
 
 import pandas as pd
+import plotly.graph_objects as go
 from hydra import compose, initialize
 from IPython.display import display
 
@@ -29,7 +30,6 @@ from IPython.display import display
 # from statsmodels.tsa.ar_model import ar_select_order
 # from statsmodels.graphics.api import qqplot
 
-# import plotly.graph_objects as go
 
 sys.path.append(os.path.dirname(os.path.realpath("")))
 # from utils.plotting import plot_func
@@ -37,6 +37,7 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
     normalize_pressure_value,
 )
 
+# %%
 initialize(version_base=None, config_path="..")
 cfg = compose(config_name="config")
 
@@ -51,7 +52,7 @@ TIME_FMT: Final = cfg["general"]["time_fmt"]
 FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
 DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
-# LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
+LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 
 # if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
 #     AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
@@ -96,6 +97,8 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     normalize_pressure_value, args=(OBSERVED_PRESSURE_MIN, OBSERVED_PRESSURE_MAX)
 )
 
+dfp_data = dfp_data.sort_values(["datetime_utc"], ascending=[True]).reset_index(drop=True)
+
 # %%
 display(dfp_data)
 
@@ -109,74 +112,177 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # ***
 # # Explore the Data
 
-# %% [markdown]
-# ### Minute Time Series
+# %%
+C0 = "#012169"
+C1 = "#993399"
+C_GREY = "#7f7f7f"
+# C_YELLOW = "#FFD960"
+# C_ORANGE = "#E89923"
 
-# %% [raw]
-# dfp_data.index = pd.DatetimeIndex(dfp_data["datetime_est"]).tz_localize(None).to_period("T")
+MS_FLOW_0 = "bowtie"
+MS_FLOW_1 = "bowtie-open"
+# MS_FLOW_0 = "circle"
+# MS_FLOW_1 = "circle-open"
+MC_FLOW_0 = C0
+MC_FLOW_1 = C1
+MARKER_SIZE_LARGE = 12
+MARKER_SIZE_SMALL = 6
 
-# %% [raw]
-# # convert to DatetimeIndex, with T (minute) fequency
-# # create null rows between min and max datetime if they do not exist
-# # dfp.index = pd.DatetimeIndex(dfp['datetime_est']).tz_localize(None)
-# # dfp = dfp.asfreq('T')
+# %%
+dfp_data["ms"] = dfp_data["had_flow"].apply(lambda x: MS_FLOW_0 if x != 1 else MS_FLOW_1)
+dfp_data["mc"] = dfp_data["had_flow"].apply(lambda x: MC_FLOW_0 if x != 1 else MC_FLOW_1)
 
-# %% [raw]
-# dfp_data
+# %%
+mean_trace = {
+    "x": dfp_data["datetime_local"],
+    "y": dfp_data["mean_pressure_value"],
+    "customdata": dfp_data["had_flow"],
+    "type": "scatter",
+    "mode": "lines+markers",
+    "marker": {
+        "color": dfp_data["mc"],
+        "size": MARKER_SIZE_SMALL,
+        "line": {
+            "width": 1.5,
+            "color": dfp_data["mc"],
+        },
+        "symbol": dfp_data["ms"],
+    },
+    "line": {"width": 1.0},
+    "showlegend": False,
+    "hovertemplate": "1 Min Sample: %{x:%Y-%m-%d %H:%M:%S}<br>"
+    + "Mean Pressure: %{y:d}<br>"
+    + "Had Flow: %{customdata:df}"
+    + "<extra></extra>",
+}
 
-# %% [raw]
-# dfp_data.loc[dfp_data["had_flow"].isnull()]
+# %%
+# flow null traces for legend entries
+legend_entry_trace_flow_0 = {
+    "x": [None],
+    "y": [None],
+    "name": "No Flow",
+    "type": "scatter",
+    "mode": "markers",
+    "marker": {
+        "size": MARKER_SIZE_LARGE,
+        "line": {
+            "width": 1.5,
+            "color": MC_FLOW_0,
+        },
+        "symbol": MS_FLOW_0,
+        "color": MC_FLOW_0,
+    },
+}
+legend_entry_trace_flow_1 = {
+    "x": [None],
+    "y": [None],
+    "name": "Had Flow",
+    "type": "scatter",
+    "mode": "markers",
+    "marker": {
+        "size": MARKER_SIZE_LARGE,
+        "line": {
+            "width": 1.5,
+            "color": MC_FLOW_1,
+        },
+        "symbol": MS_FLOW_1,
+        "color": MC_FLOW_1,
+    },
+}
 
-# %% [raw]
-# plot_objs_ts = {}
-# plot_objs_ts["minutes"] = {
-#     "type": "scatter",
-#     "x": dfp_data["datetime_est"],
-#     "y": dfp_data["mean_pressure_value"],
-#     "c": f"C0",
-#     "ms": ".",
-#     "ls": "",
-#     "label": None,
-# }
 
-# %% [raw]
-# plot_func(plot_objs_ts, "Minute", "Mean Pressure Value", fig_size=(12, 8))
+# %%
+mean_layout = {
+    "xaxis": {
+        "title": LOCAL_TIMEZONE_STR,
+        "zeroline": False,
+        "rangeselector": {
+            "buttons": [
+                {"count": 15, "label": "15m", "step": "minute", "stepmode": "todate"},
+                {"count": 1, "label": "1h", "step": "hour", "stepmode": "todate"},
+                {"count": 12, "label": "12h", "step": "hour", "stepmode": "todate"},
+                {"count": 1, "label": "1d", "step": "day", "stepmode": "backward"},
+                {"count": 7, "label": "1w", "step": "day", "stepmode": "backward"},
+                {"count": 1, "label": "1m", "step": "month", "stepmode": "backward"},
+                {"count": 6, "label": "6m", "step": "month", "stepmode": "backward"},
+                {"count": 1, "label": "YTD", "step": "year", "stepmode": "todate"},
+                {"count": 1, "label": "1y", "step": "year", "stepmode": "backward"},
+                {"step": "all"},
+            ],
+        },
+        "rangeslider": {
+            "visible": True,
+            "bordercolor": "lightgrey",
+            "borderwidth": 1,
+            "thickness": 0.05,
+        },
+        "type": "date",
+        "gridcolor": "lightgrey",
+        "range": [dfp_data["datetime_local"].min(), dfp_data["datetime_local"].max()],
+    },
+    "yaxis": {
+        "title": "Mean Pressure",
+        "zeroline": False,
+        "hoverformat": "d",
+        "gridcolor": "lightgrey",
+    },
+    "colorway": [C0],
+    "showlegend": True,
+    "legend": {
+        "orientation": "h",
+        "xanchor": "right",
+        "yanchor": "bottom",
+        "x": 1.0,
+        "y": 1.0,
+    },
+    "shapes": [
+        {
+            "type": "line",
+            "xref": "paper",
+            "x0": 0,
+            "x1": 1,
+            "yref": "y",
+            "y0": OBSERVED_PRESSURE_MAX,
+            "y1": OBSERVED_PRESSURE_MAX,
+            "line": {
+                "color": C_GREY,
+                "width": 1.5,
+                "dash": "dash",
+            },
+        },
+        {
+            "type": "line",
+            "xref": "paper",
+            "x0": 0,
+            "x1": 1,
+            "yref": "y",
+            "y0": OBSERVED_PRESSURE_MIN,
+            "y1": OBSERVED_PRESSURE_MIN,
+            "line": {
+                "color": C_GREY,
+                "width": 1.5,
+                "dash": "dash",
+            },
+        },
+    ],
+    "margin": {
+        "t": 30,
+        "b": 45,
+        "l": 10,
+        "r": 10,
+    },
+    "height": 500,
+    "autosize": True,
+    "font": {"color": C_GREY, "size": 14},
+    "plot_bgcolor": "white",
+}
 
-# %% [raw]
-# fig = go.Figure()
-#
-# fig.add_trace(go.Scatter(x=dfp_data["datetime_est"], y=dfp_data["mean_pressure_value"]))
-#
-# # Add range slider
-# fig.update_layout(
-#     xaxis=dict(
-#         rangeselector=dict(
-#             buttons=list(
-#                 [
-#                     dict(count=1, label="1h", step="hour", stepmode="todate"),
-#                     dict(count=12, label="12h", step="hour", stepmode="todate"),
-#                     dict(count=1, label="1d", step="day", stepmode="backward"),
-#                     dict(count=7, label="1w", step="day", stepmode="backward"),
-#                     dict(count=1, label="1m", step="month", stepmode="backward"),
-#                     dict(count=6, label="6m", step="month", stepmode="backward"),
-#                     dict(count=1, label="YTD", step="year", stepmode="todate"),
-#                     dict(count=1, label="1y", step="year", stepmode="backward"),
-#                     dict(step="all"),
-#                 ]
-#             )
-#         ),
-#         rangeslider=dict(visible=True),
-#         type="date",
-#     )
-# )
-#
-#
-# fig.update_layout(
-#     xaxis_title="Date",
-#     yaxis_title="Pressure DAQ Value",
-# )
-#
-# fig.update_xaxes(minor=dict(ticks="inside", showgrid=True))
-#
-#
-# fig.show()
+# %%
+fig = go.Figure()
+fig.add_trace(go.Scattergl(mean_trace))
+fig.add_traces([go.Scatter(legend_entry_trace_flow_0), go.Scatter(legend_entry_trace_flow_1)])
+fig.update_layout(mean_layout)
+fig.show()
+
+# %%
