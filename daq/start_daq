@@ -14,7 +14,7 @@ else
 	echo "Found tmux daq session running, doing nothing."
 fi
 
-# now start window
+# now start windows
 if ! tmux has-session -t daq:daq > /dev/null 2>&1; then
 	echo "No tmux daq:daq session:window running, starting window..."
 	tmux new-window -d -n daq
@@ -25,6 +25,16 @@ else
 	echo "Found tmux daq:daq session:window running, doing nothing."
 fi
 
+if ! tmux has-session -t daq:fan > /dev/null 2>&1; then
+	echo "No tmux daq:fan session:window running, starting window..."
+	tmux new-window -d -n fan
+	# move fan window to index 1, swapping current 1 to end of list if needed
+	tmux swap-window -d -s fan -t 1
+	sleep 1
+else
+	echo "Found tmux daq:fan session:window running, doing nothing."
+fi
+
 # start daq.py, if it is not running
 if ! pgrep -fc "python -u daq.py" > /dev/null 2>&1; then
 	echo "No python -u daq.py running, starting..."
@@ -32,4 +42,13 @@ if ! pgrep -fc "python -u daq.py" > /dev/null 2>&1; then
 	tmux send-keys -t daq:daq "cd $pkg_path/daq && poetry run python -u daq.py" Enter
 else
 	echo "Found python -u daq.py running, doing nothing"
+fi
+
+# start fan_control.py, if it is not running
+if ! pgrep -fc "python -u fan_control.py" > /dev/null 2>&1; then
+	echo "No python -u fan_control.py running, starting..."
+	# start fan_control.py in daq:fan
+	tmux send-keys -t daq:fan "cd $pkg_path/fan_control && poetry run python -u fan_control.py" Enter
+else
+	echo "Found python -u fan_control.py running, doing nothing"
 fi

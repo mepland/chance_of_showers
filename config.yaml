@@ -1,13 +1,16 @@
 general:
+  # Set 0% and 100% normalized pressure values
   observed_pressure_min: 6400
   observed_pressure_max: 14000
+  # Repo location
   package_path: "~/chance_of_showers"
+  # Datetime settings
   date_fmt: "%Y-%m-%d"
   time_fmt: "%H:%M:%S"
   fname_datetime_fmt: "%Y-%m-%d-%H-%M-%S"
   local_timezone: "US/Eastern"
 daq:
-  # display options
+  # Display options
   log_to_file: true
   display_terminal: true
   display_terminal_overwrite: true
@@ -19,21 +22,38 @@ daq:
   starting_time_minutes_mod: 1
   averaging_period_seconds: 60
   polling_period_seconds: 1
-  raw_data: "daq/raw_data"
-  logs: "daq/logs"
+  raw_data_relative_path: "daq/raw_data"
+  # Log parameters
+  logs_relative_path: "daq/logs"
   log_memory_usage: true
   log_memory_usage_minutes_mod: 30
   # Web parameters
   n_last_points_web: 15
-  # when the issue of drifting seconds was fixed by
+  # Historical development datetimes
+  # When the issue of drifting seconds was fixed by
   # t_start = t_start.replace(minute=t_start_minute, second=0, microsecond=0)
   end_of_drifting_seconds: "2023-05-02 01:22:08"
-  # when web threading was fixed, eliminating duplicate records from multiple threads
+  # When web threading was fixed, eliminating duplicate records from multiple threads
   end_of_threading_duplicates: "2023-05-31 04:36:00"
+fan_control:
+  # Print temperature, PWM, and RPM
+  verbose: true
+  # GPIO pins
+  fan_pin: 18
+  tach_pin: 23
+  # Time to wait between each refresh
+  refresh_period_seconds: 5
+  # Fan parameters
+  pulses_per_revolution: 2
+  pwm_freq_khz: 25
+  # Fan curve parameters
+  min_temp: 35
+  max_temp: 40
+  fan_low: 50
+  fan_high: 100
 etl:
-  saved_data: "daq/saved_data"
-# no hydra logging
-# https://stackoverflow.com/a/70777327
+  saved_data_relative_path: "daq/saved_data"
+# No hydra logging https://stackoverflow.com/a/70777327
 defaults:
   - _self_
   - override hydra/hydra_logging: disabled
