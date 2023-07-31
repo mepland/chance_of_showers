@@ -331,6 +331,24 @@ plot_hists(
         "log": True,
         "show_bin_size": True,
     },
+    reference_lines=[
+        {
+            "label": f"Normalized 0% = {OBSERVED_PRESSURE_MIN:d}",
+            "orientation": "v",
+            "value": OBSERVED_PRESSURE_MIN,
+            "c": "C0",
+            "lw": 2,
+            "ls": "--",
+        },
+        {
+            "label": f"Normalized 100% = {OBSERVED_PRESSURE_MAX:d}",
+            "orientation": "v",
+            "value": OBSERVED_PRESSURE_MAX,
+            "c": "C1",
+            "lw": 2,
+            "ls": ":",
+        },
+    ],
 )
 
 # %%
