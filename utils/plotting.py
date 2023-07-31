@@ -291,17 +291,19 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
     binning: dict | None = None,
     x_axis_params: dict | None = None,
     y_axis_params: dict | None = None,
+    reference_lines: list[dict] | None = None,
 ) -> None:
     """Plot histograms.
 
     Example parameter values:
-      Standard hist_dict = {'values': , 'weights': None, 'label': None, 'histtype': 'step', 'stacked': False, 'density': False, 'c': None, 'lw': 2}
-      Precomputed hist_dict = {'hist_data': {'bin_edges': [], 'hist': []}, ...} AND binning = {'use_hist_data': True}
-      Bar graph hist_dict = {'plot_via_bar': False, 'fill': True, 'ec': None, 'ls': None, 'label_values': False}
-      ann_texts_in = {"label": "Hello", "x": 0.0, "y": 0.0, "ha": "center", "size": 18}
+      Standard hist_dicts = [{"values": , "weights": None, "label": None, "histtype": "step", "stacked": False, "density": False, "c": None, "lw": 2}]
+      Precomputed hist_dicts = [{"hist_data": {"bin_edges": [], "hist": []}, ...}] AND binning = {"use_hist_data": True}
+      Bar graph hist_dicts = [{"plot_via_bar": False, "fill": True, "ec": None, "ls": None, "label_values": False}]
+      ann_texts_in = [{"label": "Hello", "x": 0.0, "y": 0.0, "ha": "center", "size": 18}]
       binning = {"nbins": 10}, or {"bin_edges": [0,1,2]}, or {"bin_size": 100}, as well as {"bin_size_str_fmt": ".2f"}
-      x_axis_params = {'axis_label': None, 'min': None, 'max': None, 'units': '', 'log': False}
-      y_axis_params = {'axis_label': None, 'min': None, 'max': None, 'max_mult': None, 'log': False, 'show_bin_size': True}
+      x_axis_params = {"axis_label": None, "min": None, "max": None, "units": "", "log": False}
+      y_axis_params = {"axis_label": None, "min": None, "max": None, "max_mult": None, "log": False, "show_bin_size": True}
+      reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
         hist_dicts: List of histogram dictionaries.
@@ -316,6 +318,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
         binning: Binning parameters.
         x_axis_params: X axis parameters.
         y_axis_params: Y axis parameters.
+        reference_lines: List of reference line dicts.
 
     Raises:
         ValueError: Bad configuration.
@@ -486,6 +489,27 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
                         ha="center",
                         va="bottom",
                     )
+
+    # plot reference lines
+    if reference_lines is not None:
+        for reference_line in reference_lines:
+            if reference_line.get("orientation") not in ["v", "h"]:
+                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+            _label = reference_line.get("label")
+            _kwargs = {
+                "label": _label,
+                "color": reference_line.get("c", "black"),
+                "linewidth": reference_line.get("lw", 2),
+                "linestyle": reference_line.get("ls", "-"),
+            }
+
+            if reference_line["orientation"] == "v":
+                line_2d = ax.axvline(x=reference_line["value"], **_kwargs)
+            elif reference_line["orientation"] == "h":
+                line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
+
+            if _label is not None and _label != "":
+                leg_objects.append(line_2d)
 
     y_label = y_axis_params.get("axis_label", "$N$")
     if y_axis_params.get("show_bin_size", True):
