@@ -32,7 +32,7 @@ from IPython.display import display
 
 
 sys.path.append(os.path.dirname(os.path.realpath("")))
-# from utils.plotting import plot_func
+from utils.plotting import plot_hists  # noqa: E402 # pylint: disable=import-error
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
     normalize_pressure_value,
 )
@@ -111,6 +111,10 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %% [markdown]
 # ***
 # # Explore the Data
+
+# %%
+dt_start = dfp_data["datetime_local"].min()
+dt_stop = dfp_data["datetime_local"].max()
 
 # %%
 C0 = "#012169"
@@ -219,7 +223,7 @@ mean_layout = {
         },
         "type": "date",
         "gridcolor": "lightgrey",
-        "range": [dfp_data["datetime_local"].min(), dfp_data["datetime_local"].max()],
+        "range": [dt_start, dt_stop],
     },
     "yaxis": {
         "title": "Mean Pressure",
@@ -284,5 +288,49 @@ fig.add_trace(go.Scattergl(mean_trace))
 fig.add_traces([go.Scatter(legend_entry_trace_flow_0), go.Scatter(legend_entry_trace_flow_1)])
 fig.update_layout(mean_layout)
 fig.show()
+
+# %%
+hist_dicts = [
+    {
+        "values": dfp_data.loc[dfp_data["had_flow"] != 1, "mean_pressure_value"].values,
+        "label": "No Flow",
+        "density": True,
+        "c": MC_FLOW_0,
+        "lw": 2,
+    },
+    {
+        "values": dfp_data.loc[dfp_data["had_flow"] == 1, "mean_pressure_value"].values,
+        "label": "Had Flow",
+        "density": True,
+        "c": MC_FLOW_1,
+        "lw": 2,
+    },
+]
+
+plot_hists(
+    hist_dicts,
+    m_path=".",
+    fname="mean_pressure_value_density",
+    tag="",
+    dt_start=dt_start,
+    dt_stop=dt_stop,
+    plot_inline=True,
+    binning={"bin_size": 100},
+    x_axis_params={
+        "axis_label": "Mean Pressure",
+        "min": None,
+        "max": None,
+        "units": "",
+        "log": False,
+    },
+    y_axis_params={
+        "axis_label": "Density",
+        "min": None,
+        "max": None,
+        "max_mult": None,
+        "log": True,
+        "show_bin_size": True,
+    },
+)
 
 # %%
