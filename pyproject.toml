@@ -246,3 +246,13 @@ good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "ax"]
 
 [tool.vulture]
 paths = ["."]
+exclude = [
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__"
+]
