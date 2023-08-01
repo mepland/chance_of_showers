@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Final
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
 
 mpl.rcParams["axes.labelsize"] = 16
 mpl.rcParams["xtick.top"] = True
@@ -42,6 +44,19 @@ STD_ANN_X: Final = 0.80
 STD_ANN_Y: Final = 0.95
 
 TOP_LINE_STD_ANN: Final = ""
+
+# Define Chance of Showers style elements
+C0: Final = "#012169"
+C1: Final = "#993399"
+MPL_C0: Final = "#1f77b4"
+MPL_C1: Final = "#ff7f0e"
+C_GREY: Final = "#7f7f7f"
+MS_FLOW_0: Final = "bowtie"
+MS_FLOW_1: Final = "bowtie-open"
+MC_FLOW_0: Final = C0
+MC_FLOW_1: Final = C1
+MARKER_SIZE_LARGE: Final = 12
+MARKER_SIZE_SMALL: Final = 6
 
 
 ########################################################
@@ -493,8 +508,6 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
     # plot reference lines
     if reference_lines is not None:
         for reference_line in reference_lines:
-            if reference_line.get("orientation") not in ["v", "h"]:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
             _label = reference_line.get("label")
             _kwargs = {
                 "label": _label,
@@ -507,6 +520,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
                 line_2d = ax.axvline(x=reference_line["value"], **_kwargs)
             elif reference_line["orientation"] == "h":
                 line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
+            else:
+                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
 
             if _label is not None and _label != "":
                 leg_objects.append(line_2d)
@@ -544,3 +559,274 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
         }
     )
     ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+
+
+########################################################
+def plot_chance_of_showers_timeseries(  # pylint: disable=too-many-locals
+    dfp_in: pd.DataFrame,
+    x_axis_params: dict,
+    y_axis_params: dict,
+    *,
+    z_axis_params: dict | None = None,
+    m_path: str = ".",
+    fname: str = "ts",
+    tag: str = "",
+    dt_start: datetime.date | None = None,
+    dt_stop: datetime.date | None = None,
+    plot_inline: bool = True,
+    ann_text_std_add: str | None = None,
+    ann_texts_in: list[dict] | None = None,
+    reference_lines: list[dict] | None = None,
+    standard_flow_legend: bool = True,
+) -> None:
+    """Plot time series for the Chance of Showers project.
+
+    Example parameter values:
+    x_axis_params={"col": "datetime", "axis_label": "Datetime", "hover_label": "Date: %{x:" + DATETIME_FMT + "}", "type": "date", "min": dt_start, "max": dt_stop, "rangeselector_buttons": True, "rangeslider": True, "fig_width": None}
+    y_axis_params={"col": "pressure", "axis_label": "Pressure", "hover_label": "Pressure: %{y:d}", "hoverformat": "d", "fig_height": 500}
+    z_axis_params={"col": "flow", "hover_label": "Flow: %{customdata:df}", "C0_condition": 1},
+    reference_lines=[ {"orientation": "h", "value": 0, "c": "black"}]
+
+    Args:
+        dfp_in: Pandas dataframe containing the needed data.
+        x_axis_params: X axis parameters.
+        y_axis_params: Y axis parameters.
+        z_axis_params: Z axis parameters.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        dt_start: Data start date.
+        dt_stop: Data end date.
+        plot_inline: Display plot inline in a notebook, or save to file.
+        ann_text_std_add: Text to add to the standard annotation.
+        ann_texts_in: List of annotation dictionaries.
+        reference_lines: List of reference line dicts.
+        standard_flow_legend: Use standard "No Flow"/"Had Flow" legend entries, instead of trace legend entries.
+
+    Raises:
+        ValueError: Bad configuration.
+    """
+    if z_axis_params is None:
+        z_axis_params = {}
+
+    x_col = x_axis_params["col"]
+    y_col = y_axis_params["col"]
+    z_col = z_axis_params.get("col")
+
+    if z_col is None:
+        dfp = dfp_in[[x_col, y_col]].copy()
+        dfp["ms"] = "circle"
+        dfp["mc"] = C0
+    else:
+        dfp = dfp_in[[x_col, y_col, z_col]].copy()
+        dfp["ms"] = dfp[z_col].apply(
+            lambda x: MS_FLOW_0 if x != z_axis_params.get("C0_condition", 1) else MS_FLOW_1
+        )
+        dfp["mc"] = dfp[z_col].apply(
+            lambda x: MC_FLOW_0 if x != z_axis_params.get("C0_condition", 1) else MC_FLOW_1
+        )
+
+    y_trace = {
+        "x": dfp[x_col],
+        "y": dfp[y_col],
+        "type": "scatter",
+        "mode": "lines+markers",
+        "marker": {
+            "color": dfp["mc"],
+            "size": MARKER_SIZE_SMALL,
+            "line": {
+                "width": 1.5,
+                "color": dfp["mc"],
+            },
+            "symbol": dfp["ms"],
+        },
+        "line": {"width": 1.0},
+        "showlegend": not standard_flow_legend,
+    }
+
+    hovertemplate = (
+        f"{x_axis_params.get('hover_label', '')}<br>{y_axis_params.get('hover_label', '')}"
+    )
+
+    if z_col is not None:
+        y_trace["customdata"] = dfp[z_col]
+        if z_axis_params.get("hover_label") is not None:
+            hovertemplate += f"<br>{z_axis_params['hover_label']}<extra></extra>"
+
+    y_trace["hovertemplate"] = hovertemplate
+
+    trace_layout = {
+        "xaxis": {
+            "title": x_axis_params.get("axis_label", ""),
+            "zeroline": False,
+            "type": x_axis_params.get("type", "date"),
+            "gridcolor": "lightgrey",
+            "range": [x_axis_params.get("min"), x_axis_params.get("max")],
+        },
+        "yaxis": {
+            "title": y_axis_params.get("axis_label", ""),
+            "zeroline": False,
+            "hoverformat": y_axis_params.get("hoverformat", "d"),
+            "gridcolor": "lightgrey",
+        },
+        "colorway": [C0],
+        "plot_bgcolor": "white",
+        "font": {
+            "color": C_GREY,
+            "size": 14,
+        },
+        "showlegend": True,
+        "legend": {
+            "orientation": "h",
+            "xanchor": "right",
+            "yanchor": "bottom",
+            "x": 1.0,
+            "y": 1.0,
+        },
+        "margin": {
+            "t": 30,
+            "b": 45,
+            "l": 10,
+            "r": 10,
+        },
+        "width": x_axis_params.get("fig_width"),
+        "height": y_axis_params.get("fig_height", 500),
+        "autosize": True,
+    }
+
+    rangeselector_buttons = x_axis_params.get("rangeselector_buttons", True)
+
+    if (isinstance(rangeselector_buttons, bool) and rangeselector_buttons) or (
+        isinstance(rangeselector_buttons, list) and 0 < len(rangeselector_buttons)
+    ):
+        trace_layout["xaxis"]["rangeselector"] = {"buttons": []}
+        known_buttons = {
+            "15m": {"count": 15, "label": "15m", "step": "minute", "stepmode": "todate"},
+            "1h": {"count": 1, "label": "1h", "step": "hour", "stepmode": "todate"},
+            "12h": {"count": 12, "label": "12h", "step": "hour", "stepmode": "todate"},
+            "1d": {"count": 1, "label": "1d", "step": "day", "stepmode": "backward"},
+            "1w": {"count": 7, "label": "1w", "step": "day", "stepmode": "backward"},
+            "1m": {"count": 1, "label": "1m", "step": "month", "stepmode": "backward"},
+            "6m": {"count": 6, "label": "6m", "step": "month", "stepmode": "backward"},
+            "YTD": {"count": 1, "label": "YTD", "step": "year", "stepmode": "todate"},
+            "1y": {"count": 1, "label": "1y", "step": "year", "stepmode": "backward"},
+            "all": {"step": "all"},
+        }
+        if isinstance(rangeselector_buttons, bool) and rangeselector_buttons:
+            rangeselector_buttons = list(known_buttons.keys())
+
+        if TYPE_CHECKING:
+            assert isinstance(rangeselector_buttons, list)  # noqa: SCS108 # nosec assert_used
+
+        for rangeselector_button in rangeselector_buttons:
+            if rangeselector_button in known_buttons:
+                trace_layout["xaxis"]["rangeselector"]["buttons"].append(
+                    known_buttons[rangeselector_button]
+                )
+            else:
+                raise ValueError(f"Unknown {rangeselector_button=}!")
+
+    if x_axis_params.get("rangeslider", True):
+        trace_layout["xaxis"]["rangeslider"] = {
+            "visible": True,
+            "bordercolor": "lightgrey",
+            "borderwidth": 1,
+            "thickness": 0.05,
+        }
+
+    if reference_lines is not None:
+        trace_layout["shapes"] = []
+        for reference_line in reference_lines:
+            if reference_line["orientation"] == "v":
+                shape_coords = {
+                    "xref": "x",
+                    "x0": reference_line["value"],
+                    "x1": reference_line["value"],
+                    "yref": "paper",
+                    "y0": 0,
+                    "y1": 1,
+                }
+            elif reference_line["orientation"] == "h":
+                shape_coords = {
+                    "xref": "paper",
+                    "x0": 0,
+                    "x1": 1,
+                    "yref": "y",
+                    "y0": reference_line["value"],
+                    "y1": reference_line["value"],
+                }
+            else:
+                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+
+            final_shape = {
+                "type": "line",
+                **shape_coords,
+                "line": {
+                    "color": reference_line.get("c", C_GREY),
+                    "width": reference_line.get("lw", 1.5),
+                    "dash": reference_line.get("ls", "dash"),
+                },
+            }
+
+            trace_layout["shapes"].append(final_shape)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scattergl(y_trace))
+    fig.update_layout(trace_layout)
+
+    # traces for legend entries
+    if standard_flow_legend and z_col is not None:
+        legend_entry_trace_flow_0 = {
+            "x": [None],
+            "y": [None],
+            "name": "No Flow",
+            "type": "scatter",
+            "mode": "markers",
+            "marker": {
+                "size": MARKER_SIZE_LARGE,
+                "line": {
+                    "width": 1.5,
+                    "color": MC_FLOW_0,
+                },
+                "symbol": MS_FLOW_0,
+                "color": MC_FLOW_0,
+            },
+        }
+        legend_entry_trace_flow_1 = {
+            "x": [None],
+            "y": [None],
+            "name": "Had Flow",
+            "type": "scatter",
+            "mode": "markers",
+            "marker": {
+                "size": MARKER_SIZE_LARGE,
+                "line": {
+                    "width": 1.5,
+                    "color": MC_FLOW_1,
+                },
+                "symbol": MS_FLOW_1,
+                "color": MC_FLOW_1,
+            },
+        }
+        fig.add_traces(
+            [go.Scatter(legend_entry_trace_flow_0), go.Scatter(legend_entry_trace_flow_1)]
+        )
+
+    if (
+        dt_start is not None
+        or dt_stop is not None
+        or ann_text_std_add is not None
+        or ann_texts_in is not None
+    ):
+        raise ValueError(
+            "Have not written annotation function yet!",
+            dt_start,
+            dt_stop,
+            ann_text_std_add,
+            ann_texts_in,
+        )
+
+    if plot_inline:
+        fig.show()
+    else:
+        raise ValueError("Have not written save function yet!", m_path, fname, tag)
