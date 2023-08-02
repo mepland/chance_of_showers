@@ -82,7 +82,7 @@ LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-07-28-23-50-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-02-02-44-00.parquet"
 
 F_PARQUET: Final = os.path.expanduser(
     os.path.join(
@@ -98,7 +98,20 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     normalize_pressure_value, args=(OBSERVED_PRESSURE_MIN, OBSERVED_PRESSURE_MAX)
 )
 
-dfp_data = dfp_data.sort_values(["datetime_utc"], ascending=[True]).reset_index(drop=True)
+dfp_data = dfp_data[
+    [
+        "datetime_local",
+        "mean_pressure_value",
+        "mean_pressure_value_normalized",
+        "had_flow",
+        "time_of_day",
+        "day_of_week_int",
+        "day_of_week_str",
+        # "datetime_utc",
+        # "had_flow_original",
+        # "fname",
+    ]
+]
 
 # %%
 print(dfp_data.dtypes)
