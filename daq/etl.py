@@ -92,6 +92,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         .with_columns(
             pl.col("datetime_local").dt.weekday().alias("day_of_week_int"),
             pl.col("datetime_local").dt.to_string("%A").alias("day_of_week_str"),
+            pl.col("datetime_local").dt.to_string(TIME_FMT).alias("time_of_day"),
         )
     )
 
