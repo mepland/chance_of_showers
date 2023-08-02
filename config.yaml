@@ -35,6 +35,8 @@ daq:
   end_of_drifting_seconds: "2023-05-02 01:22:08"
   # When web threading was fixed, eliminating duplicate records from multiple threads
   end_of_threading_duplicates: "2023-05-31 04:36:00"
+  # When sticking flow variable was fixed
+  end_of_sticking_flow: "2023-05-15 04:00:00"
 fan_control:
   # Print temperature, PWM, and RPM
   verbose: true
