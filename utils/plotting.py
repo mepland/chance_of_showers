@@ -724,7 +724,7 @@ def plot_chance_of_showers_timeseries(  # pylint: disable=too-many-locals
                     known_buttons[rangeselector_button]
                 )
             else:
-                raise ValueError(f"Unknown {rangeselector_button=}!")
+                raise ValueError(f"Unknown {rangeselector_button = }!")
 
     if x_axis_params.get("rangeslider", True):
         trace_layout["xaxis"]["rangeslider"] = {

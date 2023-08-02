@@ -125,7 +125,7 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
-print(f"{dt_start_local=}, {dt_stop_local=}")
+print(f"{dt_start_local = }, {dt_stop_local = }")
 
 # %% [markdown]
 # ***

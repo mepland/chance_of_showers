@@ -77,7 +77,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             csv_total_bytes += os.path.getsize(f_csv)
         except Exception as error:
             raise OSError(
-                f"Error loading file {f_csv}!\n{error=}\n{type(error)=}\n{traceback.format_exc()}"
+                f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
             ) from error
 
     dfpl = pl.concat(dfpl_list)
