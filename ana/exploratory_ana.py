@@ -143,8 +143,8 @@ plot_chance_of_showers_timeseries(
     },
     y_axis_params={
         "col": "mean_pressure_value",
-        "axis_label": "Mean Pressure",
-        "hover_label": "Mean Pressure: %{y:d}",
+        "axis_label": "Mean Pressure [Raw ADC]",
+        "hover_label": "Mean Pressure [Raw ADC]: %{y:d}",
     },
     z_axis_params={
         "col": "had_flow",
@@ -182,9 +182,11 @@ plot_hists(
     plot_inline=True,
     binning={
         "bin_size": 100,
+        "bin_size_str_fmt": ".0f",
     },
     x_axis_params={
-        "axis_label": "Mean Pressure",
+        "axis_label": "Mean Pressure [Raw ADC]",
+        "units": "Raw ADC",
     },
     y_axis_params={
         "axis_label": "Density",
