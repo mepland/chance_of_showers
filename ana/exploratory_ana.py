@@ -82,7 +82,7 @@ LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-02-02-44-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-06-04-17-00.parquet"
 
 F_PARQUET: Final = os.path.expanduser(
     os.path.join(
@@ -94,8 +94,24 @@ F_PARQUET: Final = os.path.expanduser(
 
 dfp_data = pd.read_parquet(F_PARQUET)
 
+# normalize pressure, clip values to between 0 and 1
 dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].apply(
-    normalize_pressure_value, args=(OBSERVED_PRESSURE_MIN, OBSERVED_PRESSURE_MAX)
+    normalize_pressure_value,
+    observed_pressure_min=OBSERVED_PRESSURE_MIN,
+    observed_pressure_max=OBSERVED_PRESSURE_MAX,
+    clip=True,
+)
+
+# create local datetime columns
+dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE_STR)
+dfp_data["datetime_local_same_day"] = dfp_data.apply(
+    lambda row: row["datetime_local"].replace(year=2023, month=1, day=1), axis=1
+)
+dfp_data["datetime_local_same_week"] = dfp_data.apply(
+    lambda row: row["datetime_local"].replace(
+        year=2023, month=1, day=row["datetime_local"].isoweekday()
+    ),
+    axis=1,
 )
 
 dfp_data = dfp_data[
@@ -104,9 +120,8 @@ dfp_data = dfp_data[
         "mean_pressure_value",
         "mean_pressure_value_normalized",
         "had_flow",
-        "time_of_day",
-        "day_of_week_int",
-        "day_of_week_str",
+        "datetime_local_same_day",
+        "datetime_local_same_week",
         # "datetime_utc",
         # "had_flow_original",
         # "fname",
@@ -208,4 +223,25 @@ plot_hists(
             "ls": ":",
         },
     ],
+)
+
+# %%
+plot_chance_of_showers_timeseries(
+    dfp_data,
+    x_axis_params={
+        "col": "datetime_local",
+        "axis_label": LOCAL_TIMEZONE_STR,
+        "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
+        "min": dt_start_local,
+        "max": dt_stop_local,
+    },
+    y_axis_params={
+        "col": "mean_pressure_value_normalized",
+        "axis_label": "Mean Pressure %",
+        "hover_label": "Mean Pressure: %{y:.2%}",
+    },
+    z_axis_params={
+        "col": "had_flow",
+        "hover_label": "Had Flow: %{customdata:df}",
+    },
 )
