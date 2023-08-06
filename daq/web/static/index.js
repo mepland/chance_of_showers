@@ -232,7 +232,7 @@ let mean_trace = {
   showlegend: false,
   hovertemplate:
     "1 Min Sample: %{x:%Y-%m-%d %H:%M:%S}<br>" +
-    "Mean Pressure: %{y:.2%}<br>" +
+    "Mean Pressure: %{y:.2f}%<br>" +
     "Had Flow: %{customdata:d}" +
     "<extra></extra>"
 };
@@ -248,7 +248,7 @@ live_trace["mode"] = "markers";
 live_trace["marker"]["size"] = marker_size_small;
 live_trace["hovertemplate"] =
     "i: %{x:d}<br>" +
-    "Pressure: %{y:.2%}<br>" +
+    "Pressure: %{y:.2f}%<br>" +
     "Flow: %{customdata:d}" +
     "<extra></extra>";
 
