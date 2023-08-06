@@ -88,11 +88,13 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ).with_columns(
             pl.col("datetime_utc").dt.convert_time_zone(LOCAL_TIMEZONE_STR).alias("datetime_local")
         )
-        # Add more date columns
+        # Add day_of_week column
         .with_columns(
-            pl.col("datetime_local").dt.weekday().alias("day_of_week_int"),
-            pl.col("datetime_local").dt.to_string("%A").alias("day_of_week_str"),
-            pl.col("datetime_local").dt.to_string(TIME_FMT).alias("time_of_day"),
+            # 1 is Monday, 7 is Sunday
+            # https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.Expr.dt.weekday.html
+            pl.col("datetime_local")
+            .dt.weekday()
+            .alias("day_of_week"),
         )
     )
 
