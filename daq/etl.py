@@ -81,21 +81,9 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             ) from error
 
     dfpl = pl.concat(dfpl_list)
-    dfpl = (
-        # convert date columns
-        dfpl.with_columns(
-            pl.col("datetime_utc").str.to_datetime(DATETIME_FMT).dt.replace_time_zone("UTC")
-        ).with_columns(
-            pl.col("datetime_utc").dt.convert_time_zone(LOCAL_TIMEZONE_STR).alias("datetime_local")
-        )
-        # Add day_of_week column
-        .with_columns(
-            # 1 is Monday, 7 is Sunday
-            # https://pola-rs.github.io/polars/py-polars/html/reference/expressions/api/polars.Expr.dt.weekday.html
-            pl.col("datetime_local")
-            .dt.weekday()
-            .alias("day_of_week"),
-        )
+    # set UTC timezone
+    dfpl = dfpl.with_columns(
+        pl.col("datetime_utc").str.to_datetime(DATETIME_FMT).dt.replace_time_zone("UTC")
     )
 
     # remove any datetimes that have more than 1 row, caused by historical bug in DAQ threading
