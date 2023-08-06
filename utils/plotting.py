@@ -583,7 +583,7 @@ def plot_chance_of_showers_timeseries(  # pylint: disable=too-many-locals
 
     Example parameter values:
     x_axis_params={"col": "datetime", "axis_label": "Datetime", "hover_label": "Date: %{x:" + DATETIME_FMT + "}", "type": "date", "min": dt_start, "max": dt_stop, "rangeselector_buttons": True, "rangeslider": True, "fig_width": None}
-    y_axis_params={"col": "pressure", "axis_label": "Pressure", "hover_label": "Pressure: %{y:d}", "hoverformat": "d", "fig_height": 500}
+    y_axis_params={"col": "pressure", "axis_label": "Pressure", "hover_label": "Pressure: %{y:d}", "mode": "lines+markers", "hoverformat": "d", "fig_height": 500}
     z_axis_params={"col": "flow", "hover_label": "Flow: %{customdata:df}", "C0_condition": 1},
     reference_lines=[ {"orientation": "h", "value": 0, "c": "black"}]
 
@@ -630,7 +630,7 @@ def plot_chance_of_showers_timeseries(  # pylint: disable=too-many-locals
         "x": dfp[x_col],
         "y": dfp[y_col],
         "type": "scatter",
-        "mode": "lines+markers",
+        "mode": y_axis_params.get("mode", "lines+markers"),
         "marker": {
             "color": dfp["mc"],
             "size": MARKER_SIZE_SMALL,
