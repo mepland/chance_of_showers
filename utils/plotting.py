@@ -43,6 +43,8 @@ PNG_DPI: Final = 200
 STD_ANN_X: Final = 0.80
 STD_ANN_Y: Final = 0.95
 
+STD_CMAP: Final = mpl.cm.get_cmap("plasma")
+
 TOP_LINE_STD_ANN: Final = ""
 
 # Define Chance of Showers style elements
@@ -74,6 +76,26 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
     if value > 1000:
         return f"{value:.{e_precision}e}"
     return f"{value:.0f}"
+
+
+########################################################
+def make_epoch_bins(
+    dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
+) -> np.ndarray:
+    """Make Unix epoch bins between endpoints, like linspace.
+
+    Args:
+        dt_start: Start datetime.
+        dt_stop: Stop datetime.
+        bin_size_seconds: Bin size in seconds.
+
+    Returns:
+        Numpy array of bin edges in epoch seconds between dt_start and dt_stop.
+    """
+    bin_min = dt_start.timestamp()  # type: ignore[attr-defined]
+    bin_max = dt_stop.timestamp()  # type: ignore[attr-defined]
+    nbins = int(round((bin_max - bin_min) / bin_size_seconds))
+    return np.linspace(bin_min, bin_max, nbins + 1)
 
 
 ########################################################
@@ -185,29 +207,30 @@ def set_ax_limits(
         allow_max_mult: Allow multiplying the y maximum to auto scale the y axis.
     """
     x_min_auto, x_max_auto = _ax.get_xlim()
-    x_min = x_axis_params.get("min")
-    x_max = x_axis_params.get("max")
-    if x_min is None:
+    if (x_min := x_axis_params.get("min")) is None:
         x_min = x_min_auto
-    if x_max is None:
+    if (x_max := x_axis_params.get("max")) is None:
         x_max = x_max_auto
 
     y_min_auto, y_max_auto = _ax.get_ylim()
-    y_min = y_axis_params.get("min")
-    y_max = y_axis_params.get("max")
     y_max_mult = None
     if allow_max_mult:
         y_max_mult = y_axis_params.get("max_mult")
-    if y_min is None:
+    if (y_min := y_axis_params.get("min")) is None:
         y_min = y_min_auto
 
     if y_max_mult is not None:
         y_max = y_min + y_max_mult * (y_max_auto - y_min)
-    elif y_max is None:
+    elif (y_max := y_axis_params.get("max")) is None:
         y_max = y_max_auto
 
     _ax.set_xlim(x_min, x_max)
     _ax.set_ylim(y_min, y_max)
+
+    if (x_ticks := x_axis_params.get("ticks")) is not None:
+        _ax.set_xticks(x_ticks)
+    if (y_ticks := y_axis_params.get("ticks")) is not None:
+        _ax.set_yticks(y_ticks)
 
 
 ########################################################
@@ -225,18 +248,55 @@ def clean_ax(
     if turn_off_axes:
         _ax.axis("off")
     else:
-        _ax.set_xlabel(x_axis_params.get("axis_label", ""))
-        _ax.set_ylabel(y_axis_params.get("axis_label", ""))
+        x_label = x_axis_params.get("axis_label", "")
+        if x_label != "" and x_axis_params.get("units") is not None:
+            x_label = f"{x_label} [{x_axis_params['units']}]"
+        _ax.set_xlabel(x_label)
+        y_label = y_axis_params.get("axis_label", "")
+        if y_label != "" and y_axis_params.get("units") is not None:
+            y_label = f"{y_label} [{y_axis_params['units']}]"
+        _ax.set_ylabel(y_label)
         _ax.xaxis.label.set_size(20)
         _ax.yaxis.label.set_size(20)
         _ax.xaxis.set_tick_params(labelsize=15)
         _ax.yaxis.set_tick_params(labelsize=15)
+
+        if x_axis_params.get("ticks") is not None:
+            _ax.set_xticks(x_axis_params["ticks"])
 
         if x_axis_params.get("log", False):
             _ax.set_xscale("log")
 
         if y_axis_params.get("log", False):
             _ax.set_yscale("log")
+
+
+########################################################
+def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict | None) -> None:
+    """Draw the legend from objects.
+
+    Example parameter values:
+      legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
+
+    Args:
+        fig: figure object.
+        leg_objects: List of legend objects.
+        legend_params: Legend parameters.
+    """
+    if len(leg_objects) > 0:
+        if not isinstance(legend_params, dict):
+            legend_params = {}
+        leg = fig.legend(
+            leg_objects,
+            [ob.get_label() for ob in leg_objects],
+            fontsize=legend_params.get("fontsize", 18),
+            bbox_to_anchor=legend_params.get("bbox_to_anchor", (0.7, 0.65, 0.2, 0.2)),
+            loc=legend_params.get("loc", "upper center"),
+            ncol=legend_params.get("ncol", 1),
+            borderaxespad=legend_params.get("borderaxespad", 0.0),
+        )
+        leg.get_frame().set_edgecolor("none")
+        leg.get_frame().set_facecolor("none")
 
 
 ########################################################
@@ -292,6 +352,72 @@ def ann_and_save(
 
 
 ########################################################
+def _process_hist_binning(
+    binning: dict | None,
+    hist_values: list[float] | np.ndarray | pd.Series,
+    *,
+    current_bin_min: float | None = None,
+    current_bin_max: float | None = None,
+) -> tuple[list[float], int, str]:
+    """Process binning dict for histograms.
+
+    Args:
+        binning: Binning parameters.
+        hist_values: Values for filling histogram
+        current_bin_min: Minimum bin value.
+        current_bin_max: Maximum bin value.
+
+    Raises:
+        ValueError: Bad configuration.
+
+    Returns:
+        cleaned binning parameter variables.
+    """
+    if binning is None:
+        binning = {"nbins": 10}
+
+    bin_edges = binning.get("bin_edges", [])
+    nbins = binning.get("nbins")
+    bin_size = binning.get("bin_size")
+    bin_size_str_fmt = binning.get("bin_size_str_fmt", ".2f")
+
+    if current_bin_min is not None:
+        bin_min = min(current_bin_min, min(hist_values))  # pylint: disable=nested-min-max
+    else:
+        bin_min = min(hist_values)
+
+    if current_bin_max is not None:
+        bin_max = max(current_bin_max, max(hist_values))  # pylint: disable=nested-min-max
+    else:
+        bin_max = max(hist_values)
+
+    if isinstance(bin_edges, (list, np.ndarray)) and len(bin_edges) >= 2:
+        # possibly variable size bins from bin_edges
+        nbins = len(bin_edges) - 1
+        bin_edges = np.array(bin_edges)
+        if bin_size is not None:
+            bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
+        else:
+            bin_size_str = "Variable"
+    elif bin_size is not None and bin_size > 0.0:
+        # fixed bin_size
+        nbins = int(round((bin_max - bin_min) / bin_size))
+        bin_edges = np.linspace(bin_min, bin_max, nbins + 1)
+        bin_size = (bin_max - bin_min) / nbins
+        bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
+    elif nbins is not None and nbins > 0:
+        # fixed number of bins
+        bin_edges = np.linspace(bin_min, bin_max, nbins + 1)
+        bin_size = (bin_max - bin_min) / nbins
+        bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
+    else:
+        print(binning)
+        raise ValueError("Can not work with this binning dict!")
+
+    return bin_edges, nbins, bin_size_str
+
+
+########################################################
 def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function-args, too-many-statements
     hist_dicts: list[dict],
     *,
@@ -306,6 +432,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
     binning: dict | None = None,
     x_axis_params: dict | None = None,
     y_axis_params: dict | None = None,
+    legend_params: dict | None = None,
     reference_lines: list[dict] | None = None,
 ) -> None:
     """Plot histograms.
@@ -318,6 +445,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
       binning = {"nbins": 10}, or {"bin_edges": [0,1,2]}, or {"bin_size": 100}, as well as {"bin_size_str_fmt": ".2f"}
       x_axis_params = {"axis_label": None, "min": None, "max": None, "units": "", "log": False}
       y_axis_params = {"axis_label": None, "min": None, "max": None, "max_mult": None, "log": False, "show_bin_size": True}
+      legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
@@ -333,6 +461,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
         binning: Binning parameters.
         x_axis_params: X axis parameters.
         y_axis_params: Y axis parameters.
+        legend_params: Legend parameters.
         reference_lines: List of reference line dicts.
 
     Raises:
@@ -341,24 +470,19 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
     ann_texts, x_axis_params, y_axis_params = _setup_vars(
         ann_texts_in, x_axis_params, y_axis_params
     )
-    x_axis_params["axis_label"] = x_axis_params.get("axis_label", "Bins")
 
     if binning is None:
         binning = {"nbins": 10}
-
-    bin_edges = binning.get("bin_edges", [])
-    nbins = binning.get("nbins")
-    bin_size = binning.get("bin_size")
-    bin_size_str_fmt = binning.get("bin_size_str_fmt", ".2f")
+    x_bin_edges = binning.get("bin_edges", [])
 
     for i_hist_dict, hist_dict in enumerate(hist_dicts):
         if len(hist_dict.get("values", [])) > 0:
-            _values = hist_dict["values"]
+            x_values = hist_dict["values"]
         elif len(hist_dict.get("hist_data", {}).get("bin_edges", [])) > 0:
-            _values = hist_dict["hist_data"]["bin_edges"]
+            x_values = hist_dict["hist_data"]["bin_edges"]
 
-            if bin_edges == [] and binning.get("use_hist_data", False):
-                bin_edges = list(_values)
+            if x_bin_edges == [] and binning.get("use_hist_data", False):
+                x_bin_edges = list(x_values)
 
         else:
             raise ValueError(
@@ -366,37 +490,16 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
             )
 
         if i_hist_dict == 0:
-            _bin_min = min(_values)
-            _bin_max = max(_values)
+            x_bin_min = min(x_values)
+            x_bin_max = max(x_values)
         else:
-            _bin_min = min(_bin_min, min(_values))  # pylint: disable=nested-min-max
-            _bin_max = max(_bin_max, max(_values))  # pylint: disable=nested-min-max
+            x_bin_min = min(x_bin_min, min(x_values))  # pylint: disable=nested-min-max
+            x_bin_max = max(x_bin_max, max(x_values))  # pylint: disable=nested-min-max
 
-    _bin_min = binning.get("min", _bin_min)
-    _bin_max = binning.get("max", _bin_max)
-
-    if isinstance(bin_edges, (list, np.ndarray)) and len(bin_edges) >= 2:
-        # possibly variable size bins from bin_edges
-        nbins = len(bin_edges) - 1
-        bin_edges = np.array(bin_edges)
-        if bin_size is not None:
-            bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
-        else:
-            bin_size_str = "Variable"
-    elif bin_size is not None and bin_size > 0.0:
-        # fixed bin_size
-        nbins = int(round((_bin_max - _bin_min) / bin_size))
-        bin_edges = np.linspace(_bin_min, _bin_max, nbins + 1)
-        bin_size = (_bin_max - _bin_min) / nbins
-        bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
-    elif nbins is not None and nbins > 0:
-        # fixed number of bins
-        bin_edges = np.linspace(_bin_min, _bin_max, nbins + 1)
-        bin_size = (_bin_max - _bin_min) / nbins
-        bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
-    else:
-        print(binning)
-        raise ValueError("Can not work with this binning dict!")
+    binning["bin_edges"] = x_bin_edges
+    x_bin_edges, x_nbins, x_bin_size_str = _process_hist_binning(
+        binning, x_values, current_bin_min=x_bin_min, current_bin_max=x_bin_max
+    )
 
     leg_objects = []
 
@@ -406,12 +509,12 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
     for hist_dict in hist_dicts:
         if len(hist_dict.get("values", [])) > 0:
             _hist = hist_dict["values"]
-            _bins = bin_edges
+            _bins = x_bin_edges
             _weights = hist_dict.get("weights")
         elif len(hist_dict.get("hist_data", {}).get("bin_edges", [])) > 0:
             # results are already binned, so fake the input by giving 1 count to the middle of each bin, then multiplying by the appropriate weight
             _bin_edges = hist_dict["hist_data"]["bin_edges"]
-            if list(bin_edges) != list(_bin_edges):
+            if list(x_bin_edges) != list(_bin_edges):
                 print(
                     "Warning this hist_data dict does not have the same bin edges as the first, not expected! Will try to continue but bins are not going to line up and may be beyond the axis range"
                 )
@@ -419,9 +522,9 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
 
             _hist = []
             for ibin in range(len(_bin_edges) - 1):
-                bin_min = _bin_edges[ibin]
-                bin_max = _bin_edges[ibin + 1]
-                _hist.append(bin_min + 0.5 * (bin_max - bin_min))
+                _bin_min = _bin_edges[ibin]
+                _bin_max = _bin_edges[ibin + 1]
+                _hist.append(_bin_min + 0.5 * (_bin_max - _bin_min))
 
             _bins = _bin_edges
             _weights = hist_dict["hist_data"]["hist"]
@@ -457,7 +560,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
             x_axis_ticks = np.arange(_nbins)
             for i in range(_nbins):
                 upper_inequality = "$<$"
-                if i == nbins - 1:
+                if i == x_nbins - 1:
                     upper_inequality = r"$\leq$"
                 x_axis_labels.append(
                     r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # pylint: disable=consider-using-f-string
@@ -527,30 +630,18 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
                 leg_objects.append(line_2d)
 
     y_label = y_axis_params.get("axis_label", "$N$")
+    x_units = x_axis_params.get("units")
     if y_axis_params.get("show_bin_size", True):
-        y_label = f"{y_label} / {bin_size_str}"
-
-    x_units = x_axis_params.get("units", "")
-    if x_units is not None and x_units != "":
-        y_label = f"{y_label} [{x_units}]"
+        if x_units is not None:
+            y_label = f"{y_label} / {x_bin_size_str} [{x_units}]"
+        else:
+            y_label = f"{y_label} / {x_bin_size_str}"
 
     y_axis_params["axis_label"] = y_label
 
     clean_ax(ax, x_axis_params, y_axis_params)
     set_ax_limits(ax, x_axis_params, y_axis_params, allow_max_mult=True)
-
-    if len(leg_objects) > 0:
-        leg = fig.legend(
-            leg_objects,
-            [ob.get_label() for ob in leg_objects],
-            fontsize=18,
-            bbox_to_anchor=(0.7, 0.65, 0.2, 0.2),
-            loc="upper center",
-            ncol=1,
-            borderaxespad=0.0,
-        )
-        leg.get_frame().set_edgecolor("none")
-        leg.get_frame().set_facecolor("none")
+    draw_legend(fig, leg_objects, legend_params)
 
     ann_texts.append(
         {
@@ -559,6 +650,165 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function
         }
     )
     ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+
+
+########################################################
+def plot_2d_hist(  # noqa: C901  pylint: disable=too-many-locals
+    x_values: list[float] | np.ndarray | pd.Series,
+    y_values: list[float] | np.ndarray | pd.Series,
+    *,
+    m_path: str,
+    fname: str = "hist_2d",
+    tag: str = "",
+    dt_start: datetime.date | None = None,
+    dt_stop: datetime.date | None = None,
+    plot_inline: bool = False,
+    ann_text_std_add: str | None = None,
+    ann_texts_in: list[dict] | None = None,
+    binning: dict | None = None,
+    x_axis_params: dict | None = None,
+    y_axis_params: dict | None = None,
+    z_axis_params: dict | None = None,
+    legend_params: dict | None = None,
+    reference_lines: list[dict] | None = None,
+) -> None:
+    """Plot 2D histograms.
+
+    Example parameter values:
+      ann_texts_in = [{"label": "Hello", "x": 0.0, "y": 0.0, "ha": "center", "size": 18}]
+      binning = {"x": 1d_binning_dict, "y": 1d_binning_dict}, where 1d_binning_dict is a plot_hist binning dictionary
+      x_axis_params = {"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}
+      y_axis_params = {"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}
+      z_axis_params = {"axis_label": None, "min": None, "max": None, "norm": None, "show_bin_size": True, "density": False}
+      legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
+      reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
+
+    Args:
+        x_values: X values for filling histogram.
+        y_values: Y values for filling histogram.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        dt_start: Data start date.
+        dt_stop: Data end date.
+        plot_inline: Display plot inline in a notebook, or save to file.
+        ann_text_std_add: Text to add to the standard annotation.
+        ann_texts_in: List of annotation dictionaries.
+        binning: Binning parameters, for x and y axes.
+        x_axis_params: X axis parameters.
+        y_axis_params: Y axis parameters.
+        z_axis_params: Z axis parameters.
+        legend_params: Legend parameters.
+        reference_lines: List of reference line dicts.
+
+    Raises:
+        ValueError: Bad configuration.
+    """
+    ann_texts, x_axis_params, y_axis_params = _setup_vars(
+        ann_texts_in, x_axis_params, y_axis_params
+    )
+    if not isinstance(z_axis_params, dict):
+        z_axis_params = {}
+
+    z_norm = z_axis_params.get("norm")
+    if z_norm == "log":
+        z_norm = mpl.colors.LogNorm()
+    elif z_norm is not None:
+        raise ValueError("Unknown Norm!")
+
+    from_datetime_to_epoch = np.vectorize(datetime.datetime.timestamp)
+    from_epoch_to_datetime = np.vectorize(datetime.datetime.fromtimestamp)
+
+    if x_axis_params.get("is_datetime", False):
+        x_values = from_datetime_to_epoch(np.array(x_values))
+    if y_axis_params.get("is_datetime", False):
+        y_values = from_datetime_to_epoch(np.array(y_values))
+
+    if binning is None:
+        binning = {"x": {"nbins": 10}, "y": {"nbins": 10}}
+    x_bin_edges, _, x_bin_size_str = _process_hist_binning(binning["x"], x_values)
+    y_bin_edges, _, y_bin_size_str = _process_hist_binning(binning["y"], y_values)
+
+    leg_objects = []
+
+    fig, ax = plt.subplots(num=fname)
+    fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)
+
+    _plotted_hist, _plotted_x_edges, _plotted_y_edges, _plotted_image = ax.hist2d(
+        x_values,
+        y_values,
+        bins=[x_bin_edges, y_bin_edges],
+        density=z_axis_params.get("density", False),
+        cmin=z_axis_params.get("min"),
+        cmax=z_axis_params.get("max"),
+        norm=z_norm,
+    )
+
+    z_label = z_axis_params.get("axis_label", "$N$")
+    x_units = x_axis_params.get("units")
+    y_units = y_axis_params.get("units")
+    if z_axis_params.get("show_bin_size", True):
+        x_unit_part = ""
+        if x_units is not None:
+            x_unit_part = f" [{x_units}]"
+        y_unit_part = ""
+        if y_units is not None:
+            y_unit_part = f" [{y_units}]"
+        z_label = f"{z_label} / {x_bin_size_str}{x_unit_part} x {y_bin_size_str}{y_unit_part}"
+
+    fig.colorbar(_plotted_image, ax=ax, label=z_label, cmap=STD_CMAP)
+
+    clean_ax(ax, x_axis_params, y_axis_params)
+    set_ax_limits(ax, x_axis_params, y_axis_params)
+
+    # plot reference lines
+    if reference_lines is not None:
+        for reference_line in reference_lines:
+            _label = reference_line.get("label")
+            _kwargs = {
+                "label": _label,
+                "color": reference_line.get("c", "black"),
+                "linewidth": reference_line.get("lw", 2),
+                "linestyle": reference_line.get("ls", "-"),
+            }
+
+            if reference_line["orientation"] == "v":
+                line_2d = ax.axvline(x=reference_line["value"], **_kwargs)
+            elif reference_line["orientation"] == "h":
+                line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
+            else:
+                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+
+            if _label is not None and _label != "":
+                leg_objects.append(line_2d)
+
+    if x_axis_params.get("is_datetime", False):
+        epoch_xticks = ax.get_xticks()
+        datetime_xticks = from_epoch_to_datetime(epoch_xticks)
+        if x_axis_params.get("tick_format", False):
+            datetime_xticks = [_.strftime(x_axis_params["tick_format"]) for _ in datetime_xticks]
+        ax.set_xticks(epoch_xticks, datetime_xticks)
+        fig.autofmt_xdate()
+
+    if y_axis_params.get("is_datetime", False):
+        epoch_yticks = ax.get_yticks()
+        datetime_yticks = from_epoch_to_datetime(epoch_yticks)
+        if y_axis_params.get("tick_format", False):
+            datetime_yticks = [_.strftime(y_axis_params["tick_format"]) for _ in datetime_yticks]
+        ax.set_yticks(epoch_yticks, datetime_yticks)
+        fig.autofmt_ydate()
+
+    draw_legend(fig, leg_objects, legend_params)
+
+    ann_texts.append(
+        {
+            "label": ann_text_std(dt_start, dt_stop, ann_text_std_add=ann_text_std_add),
+            "ha": "center",
+        }
+    )
+    ann_and_save(
+        fig, ann_texts, plot_inline, m_path, fname, tag, ann_text_origin_x=STD_ANN_X - 0.12
+    )
 
 
 ########################################################

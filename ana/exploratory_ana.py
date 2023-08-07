@@ -10,14 +10,15 @@
 # %%
 # %matplotlib inline
 
-# import datetime
+import datetime
+import os
+import sys
+
 # import glob
 # import natsort
 # import pprint
-# import zoneinfo
 # import numpy as np
-import os
-import sys
+import zoneinfo
 from typing import Final
 
 import pandas as pd
@@ -36,6 +37,8 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     MC_FLOW_1,
     MPL_C0,
     MPL_C1,
+    make_epoch_bins,
+    plot_2d_hist,
     plot_chance_of_showers_timeseries,
     plot_hists,
 )
@@ -60,11 +63,12 @@ DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
 LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 
-# if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
-#     AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-#     raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
+    AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
+    raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
 
 # UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
+LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
 # %%
 # # https://stackoverflow.com/a/59866006
@@ -84,6 +88,7 @@ LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 # %%
 FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-06-04-17-00.parquet"
 
+# %%
 F_PARQUET: Final = os.path.expanduser(
     os.path.join(
         PACKAGE_PATH,
@@ -103,13 +108,20 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
 )
 
 # create local datetime columns
-dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE_STR)
+dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE)
+
+# columns all in the same day or week
+dt_common = datetime.datetime(year=2023, month=1, day=1, tzinfo=LOCAL_TIMEZONE)
 dfp_data["datetime_local_same_day"] = dfp_data.apply(
-    lambda row: row["datetime_local"].replace(year=2023, month=1, day=1), axis=1
+    lambda row: row["datetime_local"].replace(
+        year=dt_common.year, month=dt_common.month, day=dt_common.day
+    ),
+    axis=1,
 )
+
 dfp_data["datetime_local_same_week"] = dfp_data.apply(
     lambda row: row["datetime_local"].replace(
-        year=2023, month=1, day=row["datetime_local"].isoweekday()
+        year=dt_common.year, month=dt_common.month, day=row["datetime_local"].isoweekday()
     ),
     axis=1,
 )
@@ -146,6 +158,9 @@ print(f"{dt_start_local = }, {dt_stop_local = }")
 # ***
 # # Explore the Data
 
+# %% [markdown]
+# ## Time Series of All Raw ADC Pressure Values
+
 # %%
 plot_chance_of_showers_timeseries(
     dfp_data,
@@ -170,6 +185,10 @@ plot_chance_of_showers_timeseries(
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
     ],
 )
+
+# %% [markdown]
+# ## Histogram of All Raw ADC Pressure Values
+# Helps to set min and max pressure for normalization.
 
 # %%
 hist_dicts = [
@@ -200,13 +219,14 @@ plot_hists(
         "bin_size_str_fmt": ".0f",
     },
     x_axis_params={
-        "axis_label": "Mean Pressure [Raw ADC]",
+        "axis_label": "Mean Pressure",
         "units": "Raw ADC",
     },
     y_axis_params={
         "axis_label": "Density",
         "log": True,
     },
+    legend_params={"bbox_to_anchor": (0.72, 0.72, 0.2, 0.2)},
     reference_lines=[
         {
             "label": f"Normalized 0% = {OBSERVED_PRESSURE_MIN:d}",
@@ -224,6 +244,9 @@ plot_hists(
         },
     ],
 )
+
+# %% [markdown]
+# ## Time Series of All Normalized Pressure Values
 
 # %%
 plot_chance_of_showers_timeseries(
@@ -243,5 +266,93 @@ plot_chance_of_showers_timeseries(
     z_axis_params={
         "col": "had_flow",
         "hover_label": "Had Flow: %{customdata:df}",
+    },
+)
+
+# %% [markdown]
+# ## 2D Histogram of All Normalized Pressure Values - Same Day
+
+# %%
+plot_2d_hist(
+    dfp_data["datetime_local_same_day"],
+    100 * dfp_data["mean_pressure_value_normalized"],
+    m_path=".",
+    fname="mean_pressure_value_normalized_vs_time_of_day",
+    tag="",
+    dt_start=dt_start_local,
+    dt_stop=dt_stop_local,
+    plot_inline=True,
+    binning={
+        "x": {
+            "bin_edges": make_epoch_bins(
+                dt_common, dt_common + datetime.timedelta(days=1), 15 * 60
+            ),
+            "bin_size": "15 [Minutes]",
+            "bin_size_str_fmt": "",
+        },
+        "y": {
+            "bin_size": 5,
+            "bin_size_str_fmt": ".0f",
+        },
+    },
+    x_axis_params={
+        "is_datetime": True,
+        "axis_label": f"Time of Day [{LOCAL_TIMEZONE_STR}]",
+        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=1), 2 * 60 * 60),
+        "tick_format": TIME_FMT,
+    },
+    y_axis_params={
+        "min": -2,
+        "axis_label": "Mean Pressure",
+        "units": "%",
+    },
+    z_axis_params={
+        "axis_label": "Density",
+        "norm": "log",
+        "density": True,
+    },
+)
+
+# %% [markdown]
+# ## 2D Histogram of All Normalized Pressure Values - Same Week
+
+# %%
+plot_2d_hist(
+    dfp_data["datetime_local_same_week"],
+    100 * dfp_data["mean_pressure_value_normalized"],
+    m_path=".",
+    fname="mean_pressure_value_normalized_vs_time_of_week",
+    tag="",
+    dt_start=dt_start_local,
+    dt_stop=dt_stop_local,
+    plot_inline=True,
+    binning={
+        "x": {
+            "bin_edges": make_epoch_bins(
+                dt_common, dt_common + datetime.timedelta(days=7), 60 * 60
+            ),
+            "bin_size": "1 [Hours]",
+            "bin_size_str_fmt": "",
+        },
+        "y": {
+            "bin_size": 5,
+            "bin_size_str_fmt": ".0f",
+        },
+    },
+    x_axis_params={
+        "is_datetime": True,
+        "axis_label": f"Time of Week [{LOCAL_TIMEZONE_STR}]",
+        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=7), 12 * 60 * 60),
+        "tick_format": f"%A {TIME_FMT}",
+    },
+    y_axis_params={
+        "min": -2,
+        "axis_label": "Mean Pressure",
+        "units": "%",
+    },
+    z_axis_params={
+        "axis_label": "Density",
+        "norm": "log",
+        "density": True,
     },
 )
