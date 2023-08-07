@@ -219,6 +219,7 @@ disable = [
     "global-statement",
     "useless-return",
     "too-many-branches",
+    "too-many-lines",
     "wrong-import-position",
     "ungrouped-imports",
     "unnecessary-pass",
