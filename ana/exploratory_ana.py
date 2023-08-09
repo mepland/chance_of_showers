@@ -377,14 +377,36 @@ dfp_prophet = dfp_prophet.loc[TRAINABLE_START_DATETIME_LOCAL <= dfp_prophet["dat
 dfp_prophet = dfp_prophet.rename(
     columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
 )
+dfp_prophet["ds"] = dfp_prophet["ds"].dt.tz_localize(None)
 
 # %%
-print(dfp_prophet.dtypes)
+model_prophet = prophet.Prophet(growth="flat")
+model_prophet.add_country_holidays(country_name="US")
 
 # %%
-display(dfp_prophet)
+model_prophet.fit(dfp_prophet)
 
 # %%
-dfp_prophet.describe()
+dfp_predict = model_prophet.predict(model_prophet.make_future_dataframe(periods=7, freq="D"))
 
 # %%
+display(dfp_predict.tail(2))
+
+# %%
+_fig_predict = model_prophet.plot(dfp_predict)
+
+# %% [raw]
+# # The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_timeseries(),
+# # instead using go.Figure(data=data, layout=layout). See:
+# # https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
+#
+# prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+# %%
+_fig_components = model_prophet.plot_components(dfp_predict)
+
+# %% [raw]
+# # The plotly version is not working. See:
+# # https://github.com/facebook/prophet/pull/2461
+#
+# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
