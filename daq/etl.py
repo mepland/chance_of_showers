@@ -56,6 +56,11 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     DT_END_OF_THREADING_DUPLICATES: Final = datetime.datetime.strptime(
         cfg["daq"]["end_of_threading_duplicates"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
+
+    # When sticking flow variable was fixed
+    DT_END_OF_STICKING_FLOW: Final = datetime.datetime.strptime(
+        cfg["daq"]["end_of_sticking_flow"], DATETIME_FMT
+    ).replace(tzinfo=UTC_TIMEZONE)
     # pylint: enable=invalid-name
 
     # load raw csv files
@@ -72,22 +77,13 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             csv_total_bytes += os.path.getsize(f_csv)
         except Exception as error:
             raise OSError(
-                f"Error loading file {f_csv}!\n{error=}\n{type(error)=}\n{traceback.format_exc()}"
+                f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
             ) from error
 
     dfpl = pl.concat(dfpl_list)
-    dfpl = (
-        # convert date columns
-        dfpl.with_columns(
-            pl.col("datetime_utc").str.to_datetime(DATETIME_FMT).dt.replace_time_zone("UTC")
-        ).with_columns(
-            pl.col("datetime_utc").dt.convert_time_zone(LOCAL_TIMEZONE_STR).alias("datetime_local")
-        )
-        # Add more date columns
-        .with_columns(
-            pl.col("datetime_local").dt.weekday().alias("day_of_week_int"),
-            pl.col("datetime_local").dt.to_string("%A").alias("day_of_week_str"),
-        )
+    # set UTC timezone
+    dfpl = dfpl.with_columns(
+        pl.col("datetime_utc").str.to_datetime(DATETIME_FMT).dt.replace_time_zone("UTC")
     )
 
     # remove any datetimes that have more than 1 row, caused by historical bug in DAQ threading
@@ -140,6 +136,26 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         raise ValueError(
             f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
         )
+
+    # set had_flow to -1 for dates before DT_END_OF_STICKING_FLOW
+    dfpl = dfpl.with_columns(pl.col("had_flow").alias("had_flow_original")).with_columns(
+        pl.when(pl.col("datetime_utc") <= DT_END_OF_STICKING_FLOW)
+        .then(pl.lit(-1))
+        .otherwise(pl.col("had_flow_original"))
+        .alias("had_flow")
+    )
+    # check for invalid had_flow values
+    DFPL_INVALID_HAD_FLOW_RECORDS: Final = dfpl.filter(  # pylint: disable=invalid-name
+        ~pl.col("had_flow").is_in([-1, 0, 1])
+    )
+    N_INVALID_HAD_FLOW_ROWS: Final = (  # pylint: disable=invalid-name
+        DFPL_INVALID_HAD_FLOW_RECORDS.select(pl.count()).collect(streaming=True).item()
+    )
+    if 0 < N_INVALID_HAD_FLOW_ROWS:
+        print(DFPL_INVALID_HAD_FLOW_RECORDS.collect(streaming=True))
+        raise ValueError(f"Found {N_INVALID_HAD_FLOW_ROWS = }!")
+
+    dfpl = dfpl.sort(pl.col("datetime_utc"), descending=False)
 
     print(
         "\nETL Summary:",

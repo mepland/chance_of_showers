@@ -82,16 +82,13 @@ repos:
 
   # pylint
   # https://pylint.readthedocs.io/en/latest/user_guide/installation/pre-commit-integration.html#pre-commit-integration
-  # yamllint disable rule:comments-indentation
   - repo: local
     hooks:
       - id: pylint
         name: pylint
-        entry: bash -c "poetry run pylint -sn $(git ls-files '*.py')"
+        entry: poetry run pylint -sn
         language: system
         types: [python]
-        pass_filenames: false
-  # yamllint enable rule:comments-indentation
 
   # bandit
   - repo: https://github.com/PyCQA/bandit

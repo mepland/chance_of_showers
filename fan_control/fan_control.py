@@ -47,7 +47,6 @@ def fan_control(cfg: DictConfig) -> None:
     MAX_TEMP: Final = cfg["fan_control"]["max_temp"]
     FAN_LOW: Final = cfg["fan_control"]["fan_low"]
     FAN_HIGH: Final = cfg["fan_control"]["fan_high"]
-    FAN_OFF: Final = 0.0
     FAN_MAX: Final = 100.0
     # pylint: enable=invalid-name
 
@@ -96,9 +95,9 @@ def fan_control(cfg: DictConfig) -> None:
         temp = get_SoC_temp()
         fan_commanded_speed = FAN_MAX
 
-        # Turn off the fan if temperature is below MIN_TEMP
+        # Set fan speed to FAN_LOW if the temperature is below MIN_TEMP
         if temp < MIN_TEMP:
-            fan_commanded_speed = FAN_OFF
+            fan_commanded_speed = FAN_LOW
 
         # Set fan speed to FAN_MAX if the temperature is above MAX_TEMP
         elif temp > MAX_TEMP:
@@ -129,7 +128,7 @@ def fan_control(cfg: DictConfig) -> None:
         GPIO.setup(FAN_PIN, GPIO.OUT, initial=GPIO.LOW)
 
         fan = GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
-        set_fan_speed(FAN_OFF)
+        set_fan_speed(FAN_MAX)
 
         # Add event to detect
         GPIO.add_event_detect(TACH_PIN, GPIO.FALLING, fell)
@@ -140,7 +139,7 @@ def fan_control(cfg: DictConfig) -> None:
             time.sleep(REFRESH_PERIOD_SECONDS)
 
     except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt
-        set_fan_speed(FAN_HIGH)
+        set_fan_speed(FAN_MAX)
         GPIO.cleanup()  # resets all GPIO ports used by this function
 
 

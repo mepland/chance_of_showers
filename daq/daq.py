@@ -191,7 +191,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             logger_daq.debug(line)
         else:
             logger_daq.critical(
-                f"Unknown {logger_level=}, {type(logger_level)=} in my_print, logging as {logging.CRITICAL=}"
+                f"Unknown {logger_level = }, {type(logger_level) = } in my_print, logging as {logging.CRITICAL = }"
             )
             logger_daq.critical(line)
 
@@ -224,7 +224,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             # don't want to kill the DAQ just because of a display problem
             # Note normalize_pressure_value() is only used to populate the displays, not save the raw data
             my_print(
-                f"Unexpected error in normalize_pressure_value():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                f"Unexpected error in normalize_pressure_value():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
@@ -242,7 +242,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         except Exception as error:
             # don't want to kill the DAQ just because of a problem reading the SoC temp
             my_print(
-                f"Unexpected error in get_SoC_temp():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                f"Unexpected error in get_SoC_temp():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
@@ -342,7 +342,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             OLED_FONT = ImageFont.load_default()  # type: ignore[assignment] # pylint: disable=invalid-name
         except Exception as error_oled_font:
             my_print(
-                f"Unexpected error in ImageFont:\n{error_oled_font=}\n{type(error_oled_font)=}\n{traceback.format_exc()}\nExiting!",
+                f"Unexpected error in ImageFont:\n{error_oled_font = }\n{type(error_oled_font) = }\n{traceback.format_exc()}\nExiting!",
                 logger_level=logging.ERROR,
             )
             sys.exit(1)
@@ -386,7 +386,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             except Exception as error:
                 # don't want to kill the DAQ just because of an OLED problem
                 my_print(
-                    f"Unexpected error in paint_oled():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                    f"Unexpected error in paint_oled():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
@@ -439,7 +439,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             except Exception as error:
                 # don't want to kill the DAQ just because of a web problem
                 my_print(
-                    f"Unexpected error in index():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                    f"Unexpected error in index():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
@@ -469,7 +469,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             except Exception as error:
                 # don't want to kill the DAQ just because of a web problem
                 my_print(
-                    f"Unexpected error in conn_details():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                    f"Unexpected error in conn_details():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
@@ -490,7 +490,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             except Exception as error:
                 # don't want to kill the DAQ just because of a web problem
                 my_print(
-                    f"Unexpected error in connect():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                    f"Unexpected error in connect():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
@@ -507,7 +507,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             except Exception as error:
                 # don't want to kill the DAQ just because of a web problem
                 my_print(
-                    f"Unexpected error in disconnect():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                    f"Unexpected error in disconnect():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
@@ -681,7 +681,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     except Exception as error:
                         # don't want to kill the DAQ just because of a web problem
                         my_print(
-                            f"Unexpected error in sio.emit():\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                            f"Unexpected error in sio.emit():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
@@ -732,7 +732,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     except Exception as error:
                         # don't want to kill the DAQ just because of a web problem
                         my_print(
-                            f"Unexpected error updating _n_last lists:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                            f"Unexpected error updating _n_last lists:\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
@@ -750,13 +750,13 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     except Exception as error:
                         # don't want to kill the DAQ just because of a memory logging problem
                         my_print(
-                            f"Unexpected error logging memory usage:\n{error=}\n{type(error)=}\n{traceback.format_exc()}\nContinuing",
+                            f"Unexpected error logging memory usage:\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nContinuing",
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
                         pass
 
-        my_print(f"Exiting daq_loop() via {running_daq_loop=}")
+        my_print(f"Exiting daq_loop() via {running_daq_loop = }")
 
     ################################################################################
     # start daq_loop()
@@ -793,7 +793,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         except Exception as error_sio_run:
             # don't want to kill the DAQ just because of a web problem
             my_print(
-                f"Unexpected error in sio.run():\n{error_sio_run=}\n{type(error_sio_run)=}\n{traceback.format_exc()}\nContinuing",
+                f"Unexpected error in sio.run():\n{error_sio_run = }\n{type(error_sio_run) = }\n{traceback.format_exc()}\nContinuing",
                 logger_level=logging.DEBUG,
                 use_print=False,
             )

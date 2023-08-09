@@ -1,7 +1,7 @@
 general:
   # Set 0% and 100% normalized pressure values
-  observed_pressure_min: 6400
-  observed_pressure_max: 14000
+  observed_pressure_min: 6300
+  observed_pressure_max: 13600
   # Repo location
   package_path: "~/chance_of_showers"
   # Datetime settings
@@ -35,6 +35,8 @@ daq:
   end_of_drifting_seconds: "2023-05-02 01:22:08"
   # When web threading was fixed, eliminating duplicate records from multiple threads
   end_of_threading_duplicates: "2023-05-31 04:36:00"
+  # When sticking flow variable was fixed
+  end_of_sticking_flow: "2023-05-15 04:00:00"
 fan_control:
   # Print temperature, PWM, and RPM
   verbose: true
@@ -49,7 +51,7 @@ fan_control:
   # Fan curve parameters
   min_temp: 35
   max_temp: 40
-  fan_low: 50
+  fan_low: 30
   fan_high: 100
 etl:
   saved_data_relative_path: "daq/saved_data"

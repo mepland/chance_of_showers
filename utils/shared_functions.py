@@ -45,7 +45,11 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
 
 ################################################################################
 def normalize_pressure_value(
-    pressure_value: int, observed_pressure_min: float, observed_pressure_max: float
+    pressure_value: int,
+    observed_pressure_min: float,
+    observed_pressure_max: float,
+    *,
+    clip: bool = False,
 ) -> float:
     """Normalize raw ADC pressure_value.
 
@@ -53,11 +57,20 @@ def normalize_pressure_value(
         pressure_value: The raw ADC pressure_value to be normalized.
         observed_pressure_min: The minimum observed ADC pressure value.
         observed_pressure_max: The maximum observed ADC pressure value.
+        clip: Clip output between 0.0 and 1.0.
 
     Returns:
         (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
         i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
     """
-    return (pressure_value - observed_pressure_min) / (
+    normalized_pressure_value = (pressure_value - observed_pressure_min) / (
         observed_pressure_max - observed_pressure_min
     )
+
+    # could use np.clip(normalized_pressure_value, a_min=0., a_max=1.), but let's avoid the dependency
+    if clip:
+        if normalized_pressure_value < 0.0:  # noqa: R505 pylint: disable=no-else-return
+            return 0.0
+        elif 1.0 < normalized_pressure_value:
+            return 1.0
+    return normalized_pressure_value

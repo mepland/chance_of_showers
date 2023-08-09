@@ -233,7 +233,7 @@ let mean_trace = {
   hovertemplate:
     "1 Min Sample: %{x:%Y-%m-%d %H:%M:%S}<br>" +
     "Mean Pressure: %{y:.2f}%<br>" +
-    "Had Flow: %{customdata:.0f}" +
+    "Had Flow: %{customdata:d}" +
     "<extra></extra>"
 };
 
@@ -247,9 +247,9 @@ live_layout["showlegend"] = false;
 live_trace["mode"] = "markers";
 live_trace["marker"]["size"] = marker_size_small;
 live_trace["hovertemplate"] =
-    "i: %{x:.0f}<br>" +
+    "i: %{x:d}<br>" +
     "Pressure: %{y:.2f}%<br>" +
-    "Flow: %{customdata:.0f}" +
+    "Flow: %{customdata:d}" +
     "<extra></extra>";
 
 Plotly.newPlot(
@@ -285,7 +285,7 @@ function update_chart(div, x_array, y_array, z_array, ms_array, mc_array, max_gr
     y_array.push(y_value);
     z_array.push(z_value);
 
-    if (z_value == 0) {
+    if (z_value != 1) {
       ms_array.push(ms_flow_0);
       mc_array.push(mc_flow_0);
     }
@@ -345,7 +345,7 @@ function updateAll(data) {
       mean_pressure_value_normalized_n_last[i] = (100*parseFloat(mean_pressure_value_normalized_n_last[i])).toFixed(2);
       past_had_flow_n_last[i] = parseInt(past_had_flow_n_last[i]);
 
-      if (past_had_flow_n_last[i] == 0) {
+      if (past_had_flow_n_last[i] != 1) {
         ms_n_last[i] = ms_flow_0;
         mc_n_last[i] = mc_flow_0;
       }
