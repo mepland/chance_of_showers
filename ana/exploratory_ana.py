@@ -33,6 +33,7 @@ from IPython.display import display
 
 sys.path.append(os.path.dirname(os.path.realpath("")))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
+    C_GREEN,
     MC_FLOW_0,
     MC_FLOW_1,
     MPL_C0,
@@ -49,6 +50,8 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
 # %%
 initialize(version_base=None, config_path="..")
 cfg = compose(config_name="config")
+
+TRAINABLE_START_DATETIME_LOCAL: Final = cfg["ana"]["trainable_start_datetime_local"]
 
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
@@ -183,6 +186,7 @@ plot_chance_of_showers_timeseries(
     reference_lines=[
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
+        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
     ],
 )
 
@@ -267,6 +271,9 @@ plot_chance_of_showers_timeseries(
         "col": "had_flow",
         "hover_label": "Had Flow: %{customdata:df}",
     },
+    reference_lines=[
+        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+    ],
 )
 
 # %% [markdown]
@@ -356,3 +363,28 @@ plot_2d_hist(
         "density": True,
     },
 )
+
+# %% [markdown]
+# ***
+# # Prophet Modeling
+
+# %%
+import prophet  # noqa: E402 # pylint: disable=wrong-import-order
+
+# %%
+dfp_prophet = dfp_data[["datetime_local", "mean_pressure_value_normalized"]]
+dfp_prophet = dfp_prophet.loc[TRAINABLE_START_DATETIME_LOCAL <= dfp_prophet["datetime_local"]]
+dfp_prophet = dfp_prophet.rename(
+    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
+)
+
+# %%
+print(dfp_prophet.dtypes)
+
+# %%
+display(dfp_prophet)
+
+# %%
+dfp_prophet.describe()
+
+# %%
