@@ -53,6 +53,7 @@ C1: Final = "#993399"
 MPL_C0: Final = "#1f77b4"
 MPL_C1: Final = "#ff7f0e"
 C_GREY: Final = "#7f7f7f"
+C_GREEN: Final = "#A1B70D"
 MS_FLOW_0: Final = "bowtie"
 MS_FLOW_1: Final = "bowtie-open"
 MC_FLOW_0: Final = C0
