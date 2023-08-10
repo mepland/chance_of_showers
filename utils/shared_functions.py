@@ -2,9 +2,13 @@
 
 ################################################################################
 # python imports
+import datetime
 import os
 import socket
 import sys
+from typing import TYPE_CHECKING
+
+import pandas as pd
 
 
 ################################################################################
@@ -74,3 +78,69 @@ def normalize_pressure_value(
         elif 1.0 < normalized_pressure_value:
             return 1.0
     return normalized_pressure_value
+
+
+################################################################################
+def rebin_chance_of_showers_time_series(
+    dfp_in: pd.DataFrame,
+    time_col: str,
+    y_col: str,
+    *,
+    time_bin_size: datetime.timedelta | None = None,
+    other_cols_to_agg_dict: dict | None = None,
+    y_bin_edges: list[float] | None = None,
+) -> pd.DataFrame:
+    """Rebin the chance of showers time_series in time and y prior to modeling.
+
+    Args:
+        dfp_in: The input dataframe to rebin.
+        time_col: The time column.
+        y_col: The y column.
+        time_bin_size: The size of time bins, must be less than 1 hour with the current implementation. This is not an issue in the chance of showers context.
+        other_cols_to_agg_dict: Other columns to aggregate during time rebinning, and their aggregation function(s).
+        y_bin_edges: The left bin edges for y.
+
+    Returns:
+        The rebinned dataframe.
+
+    Raises:
+        ValueError: Bad configuration.
+    """
+    rebin_time = time_bin_size is not None and time_col is not None
+    rebin_y = y_bin_edges is not None and y_col is not None
+
+    if rebin_time:
+        if TYPE_CHECKING:
+            assert isinstance(time_bin_size, datetime.timedelta)  # noqa: SCS108 # nosec assert_used
+
+        time_bin_size_minutes = time_bin_size.seconds // 60
+        if not 0 < time_bin_size_minutes < 60:
+            raise ValueError(f"Invalid {time_bin_size = }, {time_bin_size_minutes = }")
+
+    cols = [time_col, y_col]
+    if rebin_time:
+        if other_cols_to_agg_dict is None:
+            other_cols_to_agg_dict = {}
+        cols += other_cols_to_agg_dict.keys()
+
+        cols_to_agg_dict = {y_col: "mean", **other_cols_to_agg_dict}
+
+    dfp = dfp_in[cols].copy()
+
+    if rebin_time:
+        dfp[time_col] = dfp.apply(
+            lambda row: row[time_col].replace(
+                minute=time_bin_size_minutes * (row[time_col].minute // time_bin_size_minutes),
+                second=0,
+            ),
+            axis=1,
+        )
+        dfp = dfp.groupby(time_col).agg(cols_to_agg_dict).reset_index()
+
+    if rebin_y:
+        if TYPE_CHECKING:
+            assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec assert_used
+
+        dfp[y_col] = pd.cut(dfp[y_col], bins=y_bin_edges, right=True, labels=y_bin_edges[1:])
+
+    return dfp

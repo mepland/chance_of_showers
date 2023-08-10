@@ -813,7 +813,7 @@ def plot_2d_hist(  # noqa: C901  pylint: disable=too-many-locals
 
 
 ########################################################
-def plot_chance_of_showers_timeseries(  # pylint: disable=too-many-locals
+def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
     dfp_in: pd.DataFrame,
     x_axis_params: dict,
     y_axis_params: dict,
