@@ -33,22 +33,26 @@ from IPython.display import display
 
 sys.path.append(os.path.dirname(os.path.realpath("")))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
+    C_GREEN,
     MC_FLOW_0,
     MC_FLOW_1,
     MPL_C0,
     MPL_C1,
     make_epoch_bins,
     plot_2d_hist,
-    plot_chance_of_showers_timeseries,
+    plot_chance_of_showers_time_series,
     plot_hists,
 )
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
     normalize_pressure_value,
+    rebin_chance_of_showers_time_series,
 )
 
 # %%
 initialize(version_base=None, config_path="..")
 cfg = compose(config_name="config")
+
+TRAINABLE_START_DATETIME_LOCAL: Final = cfg["ana"]["trainable_start_datetime_local"]
 
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
@@ -162,7 +166,7 @@ print(f"{dt_start_local = }, {dt_stop_local = }")
 # ## Time Series of All Raw ADC Pressure Values
 
 # %%
-plot_chance_of_showers_timeseries(
+plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
@@ -183,6 +187,7 @@ plot_chance_of_showers_timeseries(
     reference_lines=[
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
+        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
     ],
 )
 
@@ -249,7 +254,7 @@ plot_hists(
 # ## Time Series of All Normalized Pressure Values
 
 # %%
-plot_chance_of_showers_timeseries(
+plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
@@ -267,6 +272,9 @@ plot_chance_of_showers_timeseries(
         "col": "had_flow",
         "hover_label": "Had Flow: %{customdata:df}",
     },
+    reference_lines=[
+        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+    ],
 )
 
 # %% [markdown]
@@ -356,3 +364,80 @@ plot_2d_hist(
         "density": True,
     },
 )
+
+# %% [markdown]
+# ***
+# # Prophet Modeling
+
+# %%
+import prophet  # noqa: E402 # pylint: disable=wrong-import-order
+
+# %%
+dfp_prophet = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
+dfp_prophet = dfp_prophet.loc[TRAINABLE_START_DATETIME_LOCAL <= dfp_prophet["datetime_local"]]
+dfp_prophet = dfp_prophet.rename(
+    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
+)
+dfp_prophet["ds"] = dfp_prophet["ds"].dt.tz_localize(None)
+
+time_bin_size = datetime.timedelta(minutes=10)
+
+# y_bin_edges = None  # pylint: disable=invalid-name
+y_bin_edges = [-float("inf"), 0.6, 0.8, 0.9, 1.0]
+
+dfp_prophet = rebin_chance_of_showers_time_series(
+    dfp_prophet,
+    "ds",
+    "y",
+    time_bin_size=time_bin_size,
+    other_cols_to_agg_dict={"had_flow": "max"},
+    y_bin_edges=y_bin_edges,
+)
+
+# %%
+display(dfp_prophet.head(10))
+
+# %%
+model_prophet = prophet.Prophet(growth="flat")
+_ = model_prophet.add_country_holidays(country_name="US")
+_ = model_prophet.add_regressor("had_flow", mode="multiplicative")
+
+# %%
+_ = model_prophet.fit(dfp_prophet)
+
+# %%
+dfp_prophet_future = model_prophet.make_future_dataframe(
+    periods=(7 * 24 * 60 * 60) // time_bin_size.seconds, freq=time_bin_size
+)
+dfp_prophet_future = pd.merge(
+    dfp_prophet_future, dfp_prophet[["ds", "had_flow"]], on="ds", how="left"
+)
+dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
+
+dfp_predict = model_prophet.predict(dfp_prophet_future)
+
+# %%
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+#     display(dfp_predict.dtypes)
+
+# %%
+display(dfp_predict.tail(2))
+
+# %%
+_fig_predict = model_prophet.plot(dfp_predict)
+
+# %%
+# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# instead using go.Figure(data=data, layout=layout). See:
+# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
+
+# prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+# %%
+_fig_components = model_prophet.plot_components(dfp_predict)
+
+# %%
+# The plotly version is not working. See:
+# https://github.com/facebook/prophet/pull/2461
+
+# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
