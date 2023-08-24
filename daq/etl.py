@@ -39,6 +39,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
     DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
+    # pylint: disable=duplicate-code
     LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
@@ -46,6 +47,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
+    # pylint: enable=duplicate-code
 
     # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
     DT_END_OF_DRIFTING_SECONDS: Final = datetime.datetime.strptime(
