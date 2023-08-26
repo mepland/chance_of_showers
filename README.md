@@ -63,10 +63,11 @@ source daq/heartbeat
 TODO
 
 ### Installing CUDA and PyTorch
-1. Find the supported CUDA version (11.8) for the current release of PyTorch (2.0.1) [here](https://pytorch.org/get-started/locally/).
+1. Find the supported CUDA version (`11.8.0`) for the current release of PyTorch (`2.0.1`) [here](https://pytorch.org/get-started/locally/).
 2. Install CUDA following the steps for the proper version and target platform [here](https://developer.nvidia.com/cuda-toolkit-archive).
-3. Update the poetry `pytorch-gpu-src` source to point to the correct PyTorch version in `pyproject.toml`. This is in place of `pip --index-url` as provided by the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
-4. Install the poetry packages with the `ana` group. This will include `pytorch`.
+3. Update the poetry `pytorch-gpu-src` source to point to the correct PyTorch version in `pyproject.toml`.
+	- This is in place of `pip install --index-url=...` as provided by the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+4. Install the poetry `ana` group, `make setupANA`. This will install `pytorch`, along with the other needed packages.
 5. Check that PyTorch and CUDA are correctly configured with the following `python` commands:
 ```python
 import torch
@@ -75,7 +76,7 @@ if torch.cuda.is_available():
     print("CUDA is available")
     print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
 else:
-    print("CUDA is NOT available!")
+    print("CUDA IS NOT AVAILABLE!")
 ```
 
 ## Dev
