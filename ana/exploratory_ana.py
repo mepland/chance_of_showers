@@ -406,8 +406,10 @@ _ = model_prophet.add_regressor("had_flow", mode="multiplicative")
 _ = model_prophet.fit(dfp_prophet)
 
 # %%
+n_prediction_steps = (7 * 24 * 60 * 60) // time_bin_size.seconds
+
 dfp_prophet_future = model_prophet.make_future_dataframe(
-    periods=(7 * 24 * 60 * 60) // time_bin_size.seconds, freq=time_bin_size
+    periods=n_prediction_steps, freq=time_bin_size
 )
 dfp_prophet_future = pd.merge(
     dfp_prophet_future, dfp_prophet[["ds", "had_flow"]], on="ds", how="left"
@@ -441,3 +443,36 @@ _fig_components = model_prophet.plot_components(dfp_predict)
 # https://github.com/facebook/prophet/pull/2461
 
 # prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+
+# %% [markdown]
+# ***
+# # Darts Modeling
+
+# %%
+import torch  # noqa: E402 # pylint: disable=wrong-import-order
+
+if torch.cuda.is_available():
+    print("CUDA is available")
+    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+else:
+    print("CUDA IS NOT AVAILABLE!")
+
+import darts  # noqa: E402 # pylint: disable=wrong-import-order
+
+# %%
+from darts.models import NBEATSModel  # noqa: E402 # pylint: disable=wrong-import-order
+
+# %%
+dart_series = darts.TimeSeries.from_dataframe(dfp_prophet, "ds", "y", freq=time_bin_size)
+
+# %%
+model_nbeats = NBEATSModel(input_chunk_length=10, output_chunk_length=5, random_state=42)
+
+# %%
+model_nbeats.fit(dart_series)
+
+# %%
+prediction = model_nbeats.predict(n_prediction_steps, num_samples=1)
+
+# %%
+prediction.values()
