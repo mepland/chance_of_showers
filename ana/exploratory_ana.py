@@ -9,12 +9,12 @@
 
 # %%
 # %matplotlib inline
+# pylint: disable=wrong-import-order
 
 import datetime
 import os
 import sys
 
-# import glob
 # import natsort
 # import pprint
 # import numpy as np
@@ -22,18 +22,15 @@ import zoneinfo
 from typing import Final
 
 import pandas as pd
+from darts import TimeSeries
+from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from hydra import compose, initialize
 from IPython.display import display
-
-# import statsmodels.api as sm
-# from statsmodels.tsa.arima.model import ARIMA
-# from statsmodels.tsa.ar_model import ar_select_order
-# from statsmodels.graphics.api import qqplot
-
 
 sys.path.append(os.path.dirname(os.path.realpath("")))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     C_GREEN,
+    C_RED,
     MC_FLOW_0,
     MC_FLOW_1,
     MPL_C0,
@@ -53,6 +50,7 @@ initialize(version_base=None, config_path="..")
 cfg = compose(config_name="config")
 
 TRAINABLE_START_DATETIME_LOCAL: Final = cfg["ana"]["trainable_start_datetime_local"]
+TRAINABLE_END_DATETIME_LOCAL: Final = cfg["ana"]["trainable_end_datetime_local"]
 
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
@@ -74,6 +72,8 @@ if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
 # UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
 LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
+RANDOM_SEED: Final = cfg["general"]["random_seed"]
+
 # %%
 # # https://stackoverflow.com/a/59866006
 # from IPython.display import display, HTML
@@ -90,7 +90,7 @@ LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-06-04-17-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-27-20-12-00.parquet"
 
 # %%
 F_PARQUET: Final = os.path.expanduser(
@@ -160,6 +160,148 @@ print(f"{dt_start_local = }, {dt_stop_local = }")
 
 # %% [markdown]
 # ***
+# # Training Data Prep
+
+# %%
+time_bin_size = datetime.timedelta(minutes=1)
+# time_bin_size = datetime.timedelta(minutes=10)
+
+y_bin_edges = None  # pylint: disable=invalid-name
+# y_bin_edges = [-float("inf"), 0.6, 0.8, 0.9, 1.0]
+
+n_prediction_steps = (7 * 24 * 60 * 60) // time_bin_size.seconds
+
+# %%
+dfp_trainable = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
+dfp_trainable = dfp_trainable.loc[
+    (TRAINABLE_START_DATETIME_LOCAL <= dfp_trainable["datetime_local"])
+    & (dfp_trainable["datetime_local"] < TRAINABLE_END_DATETIME_LOCAL)
+]
+dfp_trainable = dfp_trainable.rename(
+    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
+)
+dfp_trainable["ds"] = dfp_trainable["ds"].dt.tz_localize(None)
+
+dfp_trainable = rebin_chance_of_showers_time_series(
+    dfp_trainable,
+    "ds",
+    "y",
+    time_bin_size=time_bin_size,
+    other_cols_to_agg_dict={"had_flow": "max"},
+    y_bin_edges=y_bin_edges,
+)
+
+dart_series_trainable = TimeSeries.from_dataframe(dfp_trainable, "ds", "y", freq=time_bin_size)
+
+frac_missing = missing_values_ratio(dart_series_trainable)
+if 0 < frac_missing:
+    print(f"Missing {frac_missing:.2%} of values, filling via interpolation")
+    dart_series_trainable = fill_missing_values(dart_series_trainable)
+
+dart_series_train, dart_series_val = dart_series_trainable.split_before(
+    0.75
+)  # TODO configure as date via conf.yaml
+dfp_train = dart_series_train.pd_dataframe()
+dfp_val = dart_series_val.pd_dataframe()
+
+# %%
+print(dfp_val.index.min())  # TODO
+
+# %% [raw]
+# display(dfp_train.head(5))
+# display(dfp_train.tail(1))
+# display(dfp_val.head(1))
+# display(dfp_val.tail(5))
+
+# %% [markdown]
+# ***
+# # Darts Modeling
+
+# %%
+import torch  # noqa: E402
+
+if torch.cuda.is_available():
+    print("CUDA is available")
+    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+else:
+    raise UserWarning("CUDA IS NOT AVAILABLE!")
+
+from darts.models import NBEATSModel  # noqa: E402
+
+# %% [markdown]
+# ## N-BEATS
+
+# %%
+model_nbeats = NBEATSModel(input_chunk_length=10, output_chunk_length=5, random_state=RANDOM_SEED)
+
+# %%
+model_nbeats.fit(dart_series_train, val_series=dart_series_val)
+
+# %%
+prediction = model_nbeats.predict(n_prediction_steps, num_samples=1)
+
+# %%
+prediction.values()
+
+
+# %%
+print(min(prediction.values()), max(prediction.values()))
+
+
+# %% [markdown]
+# ***
+# # Prophet Modeling
+
+# %%
+import prophet  # noqa: E402
+
+# %%
+model_prophet = prophet.Prophet(growth="flat")
+_ = model_prophet.add_country_holidays(country_name="US")
+_ = model_prophet.add_regressor("had_flow", mode="multiplicative")
+
+# %%
+_ = model_prophet.fit(dfp_train)
+
+# %%
+dfp_prophet_future = model_prophet.make_future_dataframe(
+    periods=n_prediction_steps, freq=time_bin_size
+)
+dfp_prophet_future = pd.merge(
+    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
+)
+dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
+
+dfp_predict = model_prophet.predict(dfp_prophet_future)
+
+# %%
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+#     display(dfp_predict.dtypes)
+
+# %%
+display(dfp_predict.tail(2))
+
+# %%
+_fig_predict = model_prophet.plot(dfp_predict)
+
+# %%
+# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# instead using go.Figure(data=data, layout=layout). See:
+# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
+
+# prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+# %%
+_fig_components = model_prophet.plot_components(dfp_predict)
+
+# %%
+# The plotly version is not working. See:
+# https://github.com/facebook/prophet/pull/2461
+
+# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+
+# %% [markdown]
+# ***
 # # Explore the Data
 
 # %% [markdown]
@@ -188,6 +330,7 @@ plot_chance_of_showers_time_series(
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
         {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
     ],
 )
 
@@ -231,7 +374,10 @@ plot_hists(
         "axis_label": "Density",
         "log": True,
     },
-    legend_params={"bbox_to_anchor": (0.72, 0.72, 0.2, 0.2)},
+    legend_params={
+        "bbox_to_anchor": (0.72, 0.72, 0.2, 0.2),
+        "box_color": "white",
+    },
     reference_lines=[
         {
             "label": f"Normalized 0% = {OBSERVED_PRESSURE_MIN:d}",
@@ -274,6 +420,7 @@ plot_chance_of_showers_time_series(
     },
     reference_lines=[
         {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
     ],
 )
 
@@ -364,115 +511,3 @@ plot_2d_hist(
         "density": True,
     },
 )
-
-# %% [markdown]
-# ***
-# # Prophet Modeling
-
-# %%
-import prophet  # noqa: E402 # pylint: disable=wrong-import-order
-
-# %%
-dfp_prophet = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
-dfp_prophet = dfp_prophet.loc[TRAINABLE_START_DATETIME_LOCAL <= dfp_prophet["datetime_local"]]
-dfp_prophet = dfp_prophet.rename(
-    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
-)
-dfp_prophet["ds"] = dfp_prophet["ds"].dt.tz_localize(None)
-
-time_bin_size = datetime.timedelta(minutes=10)
-
-# y_bin_edges = None  # pylint: disable=invalid-name
-y_bin_edges = [-float("inf"), 0.6, 0.8, 0.9, 1.0]
-
-dfp_prophet = rebin_chance_of_showers_time_series(
-    dfp_prophet,
-    "ds",
-    "y",
-    time_bin_size=time_bin_size,
-    other_cols_to_agg_dict={"had_flow": "max"},
-    y_bin_edges=y_bin_edges,
-)
-
-# %%
-display(dfp_prophet.head(10))
-
-# %%
-model_prophet = prophet.Prophet(growth="flat")
-_ = model_prophet.add_country_holidays(country_name="US")
-_ = model_prophet.add_regressor("had_flow", mode="multiplicative")
-
-# %%
-_ = model_prophet.fit(dfp_prophet)
-
-# %%
-n_prediction_steps = (7 * 24 * 60 * 60) // time_bin_size.seconds
-
-dfp_prophet_future = model_prophet.make_future_dataframe(
-    periods=n_prediction_steps, freq=time_bin_size
-)
-dfp_prophet_future = pd.merge(
-    dfp_prophet_future, dfp_prophet[["ds", "had_flow"]], on="ds", how="left"
-)
-dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
-
-dfp_predict = model_prophet.predict(dfp_prophet_future)
-
-# %%
-# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-#     display(dfp_predict.dtypes)
-
-# %%
-display(dfp_predict.tail(2))
-
-# %%
-_fig_predict = model_prophet.plot(dfp_predict)
-
-# %%
-# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
-# instead using go.Figure(data=data, layout=layout). See:
-# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
-
-# prophet.plot.plot_plotly(model_prophet, dfp_predict)
-
-# %%
-_fig_components = model_prophet.plot_components(dfp_predict)
-
-# %%
-# The plotly version is not working. See:
-# https://github.com/facebook/prophet/pull/2461
-
-# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
-
-# %% [markdown]
-# ***
-# # Darts Modeling
-
-# %%
-import torch  # noqa: E402 # pylint: disable=wrong-import-order
-
-if torch.cuda.is_available():
-    print("CUDA is available")
-    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
-else:
-    print("CUDA IS NOT AVAILABLE!")
-
-import darts  # noqa: E402 # pylint: disable=wrong-import-order
-
-# %%
-from darts.models import NBEATSModel  # noqa: E402 # pylint: disable=wrong-import-order
-
-# %%
-dart_series = darts.TimeSeries.from_dataframe(dfp_prophet, "ds", "y", freq=time_bin_size)
-
-# %%
-model_nbeats = NBEATSModel(input_chunk_length=10, output_chunk_length=5, random_state=42)
-
-# %%
-model_nbeats.fit(dart_series)
-
-# %%
-prediction = model_nbeats.predict(n_prediction_steps, num_samples=1)
-
-# %%
-prediction.values()

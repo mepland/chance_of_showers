@@ -58,6 +58,7 @@ etl:
   saved_data_relative_path: "daq/saved_data"
 ana:
   trainable_start_datetime_local: "2023-06-26 13:30"
+  trainable_end_datetime_local: "2023-09-01 00:00"
 # No hydra logging https://stackoverflow.com/a/70777327
 defaults:
   - _self_
