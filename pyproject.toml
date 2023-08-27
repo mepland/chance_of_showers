@@ -111,6 +111,9 @@ ipywidgets = "^8.1.0"
 torch = {version = "^2.0.1+cu118", source = "pytorch-gpu-src"}
 torchvision = {version = "^0.15.2+cu118", source = "pytorch-gpu-src"}
 torchaudio = {version = "^2.0.2+cu118", source = "pytorch-gpu-src"}
+catboost = "^1.2"
+lightgbm = "^4.0.0"
+darts = "^0.25.0"
 
 
 [[tool.poetry.source]]
