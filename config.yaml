@@ -9,6 +9,7 @@ general:
   time_fmt: "%H:%M:%S"
   fname_datetime_fmt: "%Y-%m-%d-%H-%M-%S"
   local_timezone: "US/Eastern"
+  random_seed: 42
 daq:
   # Display options
   log_to_file: true
