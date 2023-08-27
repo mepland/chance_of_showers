@@ -54,6 +54,7 @@ MPL_C0: Final = "#1f77b4"
 MPL_C1: Final = "#ff7f0e"
 C_GREY: Final = "#7f7f7f"
 C_GREEN: Final = "#A1B70D"
+C_RED: Final = "#C84E00"
 MS_FLOW_0: Final = "bowtie"
 MS_FLOW_1: Final = "bowtie-open"
 MC_FLOW_0: Final = C0
@@ -295,9 +296,11 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
             loc=legend_params.get("loc", "upper center"),
             ncol=legend_params.get("ncol", 1),
             borderaxespad=legend_params.get("borderaxespad", 0.0),
+            frameon=True,
+            framealpha=1,
         )
-        leg.get_frame().set_edgecolor("none")
-        leg.get_frame().set_facecolor("none")
+        leg.get_frame().set_edgecolor(legend_params.get("box_color", "none"))
+        leg.get_frame().set_facecolor(legend_params.get("box_color", "none"))
 
 
 ########################################################
