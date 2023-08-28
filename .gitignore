@@ -13,5 +13,7 @@ secrets.json
 daq/raw_data/
 daq/saved_data/
 
+ana/models/
+
 *.ipynb
 ana/*.html
