@@ -30,6 +30,7 @@ from IPython.display import display
 sys.path.append(os.path.dirname(os.path.realpath("")))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     C_GREEN,
+    C_GREY,
     C_RED,
     MC_FLOW_0,
     MC_FLOW_1,
@@ -51,6 +52,7 @@ cfg = compose(config_name="config")
 
 TRAINABLE_START_DATETIME_LOCAL: Final = cfg["ana"]["trainable_start_datetime_local"]
 TRAINABLE_END_DATETIME_LOCAL: Final = cfg["ana"]["trainable_end_datetime_local"]
+TRAINABLE_VAL_FRACTION: Final = cfg["ana"]["trainable_val_fraction"]
 
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
@@ -72,7 +74,36 @@ if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
 # UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
 LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
+DT_TRAINABLE_START_DATETIME_LOCAL: Final = datetime.datetime.strptime(
+    TRAINABLE_START_DATETIME_LOCAL, DATETIME_FMT
+).replace(tzinfo=LOCAL_TIMEZONE)
+DT_TRAINABLE_END_DATETIME_LOCAL: Final = datetime.datetime.strptime(
+    TRAINABLE_END_DATETIME_LOCAL, DATETIME_FMT
+).replace(tzinfo=LOCAL_TIMEZONE)
+
+# Use first 1-TRAINABLE_VAL_FRACTION of trainable days for train, last TRAINABLE_VAL_FRACTION for val, while rounding to the day using pandas.Timedelta
+# https://pandas.pydata.org/docs/reference/api/pandas.Timedelta.html
+DT_VAL_START_DATETIME_LOCAL: Final = (
+    DT_TRAINABLE_START_DATETIME_LOCAL
+    + pd.Series(
+        (1 - TRAINABLE_VAL_FRACTION)
+        * (DT_TRAINABLE_END_DATETIME_LOCAL - DT_TRAINABLE_START_DATETIME_LOCAL)
+    )
+    .dt.round("1d")
+    .iloc[0]
+)
+
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
+
+# %%
+MODELS_PATH: Final = os.path.expanduser(
+    os.path.join(
+        PACKAGE_PATH,
+        "ana",
+        "models",
+    )
+)
+os.makedirs(MODELS_PATH, exist_ok=True)
 
 # %%
 # # https://stackoverflow.com/a/59866006
@@ -147,8 +178,8 @@ dfp_data = dfp_data[
 # %%
 print(dfp_data.dtypes)
 
-# %%
-display(dfp_data)
+# %% [raw]
+# display(dfp_data)
 
 # %%
 dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
@@ -156,20 +187,28 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
-print(f"{dt_start_local = }, {dt_stop_local = }")
+print(f"{dt_start_local = },\n{dt_stop_local = }")
 
 # %% [markdown]
 # ***
 # # Training Data Prep
 
 # %%
-time_bin_size = datetime.timedelta(minutes=1)
-# time_bin_size = datetime.timedelta(minutes=10)
+time_bin_size = datetime.timedelta(minutes=5)
 
 y_bin_edges = None  # pylint: disable=invalid-name
 # y_bin_edges = [-float("inf"), 0.6, 0.8, 0.9, 1.0]
 
-n_prediction_steps = (7 * 24 * 60 * 60) // time_bin_size.seconds
+prediction_time_size = datetime.timedelta(hours=1.5)
+n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
+
+# %% [raw]
+# print(
+#     f"{time_bin_size = }\n",
+#     f"{prediction_time_size = }, {n_prediction_steps = }\n",
+#     f"{y_bin_edges = }",
+#     sep="",
+# )
 
 # %%
 dfp_trainable = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
@@ -191,6 +230,12 @@ dfp_trainable = rebin_chance_of_showers_time_series(
     y_bin_edges=y_bin_edges,
 )
 
+dfp_train = dfp_trainable.loc[
+    dfp_trainable["ds"] < DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None)
+]
+dfp_val = dfp_trainable.loc[DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None) <= dfp_trainable["ds"]]
+
+# %%
 dart_series_trainable = TimeSeries.from_dataframe(dfp_trainable, "ds", "y", freq=time_bin_size)
 
 frac_missing = missing_values_ratio(dart_series_trainable)
@@ -199,13 +244,8 @@ if 0 < frac_missing:
     dart_series_trainable = fill_missing_values(dart_series_trainable)
 
 dart_series_train, dart_series_val = dart_series_trainable.split_before(
-    0.75
-)  # TODO configure as date via conf.yaml
-dfp_train = dart_series_train.pd_dataframe()
-dfp_val = dart_series_val.pd_dataframe()
-
-# %%
-print(dfp_val.index.min())  # TODO
+    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
+)
 
 # %% [raw]
 # display(dfp_train.head(5))
@@ -228,14 +268,64 @@ else:
 
 from darts.models import NBEATSModel  # noqa: E402
 
+# %%
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping  # noqa: E402
+
+# stop training when validation loss does not decrease more than min_delta=0.05  over a period of patience=5 epochs
+pl_trainer_kwargs = {
+    "callbacks": [
+        EarlyStopping(
+            monitor="val_loss",
+            patience=5,
+            min_delta=0.05,
+            mode="min",
+        )
+    ]
+}
+
+# %%
+input_time_size = datetime.timedelta(minutes=50)
+input_chunk_length = input_time_size.seconds // time_bin_size.seconds
+
+output_time_size = datetime.timedelta(minutes=30)
+output_chunk_length = output_time_size.seconds // time_bin_size.seconds
+
+
+# %% [raw]
+# print(
+#     f"{time_bin_size = }\n",
+#     f"{input_time_size = }, {input_chunk_length = }\n",
+#     f"{output_time_size = }, {output_chunk_length = }",
+#     sep="",
+# )
+
 # %% [markdown]
 # ## N-BEATS
 
 # %%
-model_nbeats = NBEATSModel(input_chunk_length=10, output_chunk_length=5, random_state=RANDOM_SEED)
+model_nbeats = NBEATSModel(
+    input_chunk_length=input_chunk_length,
+    output_chunk_length=output_chunk_length,
+    dropout=0.05,
+    n_epochs=50,
+    random_state=RANDOM_SEED,
+    pl_trainer_kwargs=pl_trainer_kwargs,
+)
+
+# TODO
+# loss_fn or likelihood
+# torch_metrics
+# lr_scheduler_cls
 
 # %%
-model_nbeats.fit(dart_series_train, val_series=dart_series_val)
+_ = model_nbeats.fit(dart_series_train, val_series=dart_series_val)
+
+# TODO add covariates for had_flow, day of week, hour, minute, holiday
+# past_covariates
+# val_past_covariates
+
+# %%
+# TODO loss vs epoch plot
 
 # %%
 prediction = model_nbeats.predict(n_prediction_steps, num_samples=1)
@@ -247,6 +337,15 @@ prediction.values()
 # %%
 print(min(prediction.values()), max(prediction.values()))
 
+
+# %%
+fname_nbeats = os.path.join(MODELS_PATH, "model_nbeats.pt")
+
+# %%
+model_nbeats.save(fname_nbeats)
+
+# %%
+# model_nbeats = NBEATSModel.load(fname_nbeats)
 
 # %% [markdown]
 # ***
@@ -330,6 +429,7 @@ plot_chance_of_showers_time_series(
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
         {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
         {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
     ],
 )
@@ -420,6 +520,7 @@ plot_chance_of_showers_time_series(
     },
     reference_lines=[
         {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
+        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
         {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
     ],
 )
