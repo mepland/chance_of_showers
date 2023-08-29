@@ -22,6 +22,8 @@ import zoneinfo
 from typing import Final
 
 import pandas as pd
+
+# import torchmetrics
 from darts import TimeSeries
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from hydra import compose, initialize
@@ -42,6 +44,7 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     plot_hists,
 )
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+    create_datetime_component_cols,
     normalize_pressure_value,
     rebin_chance_of_showers_time_series,
 )
@@ -145,6 +148,10 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
 # create local datetime columns
 dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE)
 
+dfp_data = create_datetime_component_cols(
+    dfp_data, datetime_col="datetime_local", date_fmt=DATE_FMT, time_fmt=TIME_FMT
+)
+
 # columns all in the same day or week
 dt_common = datetime.datetime(year=2023, month=1, day=1, tzinfo=LOCAL_TIMEZONE)
 dfp_data["datetime_local_same_day"] = dfp_data.apply(
@@ -169,6 +176,11 @@ dfp_data = dfp_data[
         "had_flow",
         "datetime_local_same_day",
         "datetime_local_same_week",
+        "day_of_week_int",
+        "day_of_week_frac",
+        "time_of_day",
+        "time_of_day_frac",
+        "is_holiday",
         # "datetime_utc",
         # "had_flow_original",
         # "fname",
@@ -178,8 +190,9 @@ dfp_data = dfp_data[
 # %%
 print(dfp_data.dtypes)
 
-# %% [raw]
-# display(dfp_data)
+# %%
+with pd.option_context("display.max_rows", 5, "display.max_columns", None):
+    display(dfp_data)
 
 # %%
 dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
@@ -187,7 +200,7 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
-print(f"{dt_start_local = },\n{dt_stop_local = }")
+print(f"{dt_start_local = },\n{dt_stop_local  = }")
 
 # %% [markdown]
 # ***
@@ -230,28 +243,49 @@ dfp_trainable = rebin_chance_of_showers_time_series(
     y_bin_edges=y_bin_edges,
 )
 
+dfp_trainable = create_datetime_component_cols(
+    dfp_trainable, datetime_col="ds", date_fmt=DATE_FMT, time_fmt=TIME_FMT
+)
+
 dfp_train = dfp_trainable.loc[
     dfp_trainable["ds"] < DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None)
 ]
 dfp_val = dfp_trainable.loc[DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None) <= dfp_trainable["ds"]]
 
 # %%
-dart_series_trainable = TimeSeries.from_dataframe(dfp_trainable, "ds", "y", freq=time_bin_size)
-
-frac_missing = missing_values_ratio(dart_series_trainable)
-if 0 < frac_missing:
-    print(f"Missing {frac_missing:.2%} of values, filling via interpolation")
-    dart_series_trainable = fill_missing_values(dart_series_trainable)
-
-dart_series_train, dart_series_val = dart_series_trainable.split_before(
-    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
-)
+with pd.option_context("display.max_rows", 5, "display.max_columns", None):
+    display(dfp_trainable)
 
 # %% [raw]
 # display(dfp_train.head(5))
 # display(dfp_train.tail(1))
 # display(dfp_val.head(1))
 # display(dfp_val.tail(5))
+
+# %%
+dart_series_y_trainable = TimeSeries.from_dataframe(dfp_trainable, "ds", "y", freq=time_bin_size)
+dart_series_covariates_trainable = TimeSeries.from_dataframe(
+    dfp_trainable,
+    "ds",
+    ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
+    freq=time_bin_size,
+)
+
+frac_missing = missing_values_ratio(dart_series_y_trainable)
+if 0 < frac_missing:
+    print(f"Missing {frac_missing:.2%} of values, filling via interpolation")
+    dart_series_y_trainable = fill_missing_values(dart_series_y_trainable)
+    dart_series_covariates_trainable = fill_missing_values(dart_series_covariates_trainable)
+
+dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
+    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
+)
+(
+    dart_series_covariates_train,
+    dart_series_covariates_val,
+) = dart_series_covariates_trainable.split_before(
+    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
+)
 
 # %% [markdown]
 # ***
@@ -269,9 +303,12 @@ else:
 from darts.models import NBEATSModel  # noqa: E402
 
 # %%
+# torch_metrics_MAPE = torchmetrics.MeanAbsolutePercentageError()
+
+# %%
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping  # noqa: E402
 
-# stop training when validation loss does not decrease more than min_delta=0.05  over a period of patience=5 epochs
+# stop training when validation loss does not decrease more than min_delta=0.05 over a period of patience=5 epochs
 pl_trainer_kwargs = {
     "callbacks": [
         EarlyStopping(
@@ -318,17 +355,23 @@ model_nbeats = NBEATSModel(
 # lr_scheduler_cls
 
 # %%
-_ = model_nbeats.fit(dart_series_train, val_series=dart_series_val)
-
-# TODO add covariates for had_flow, day of week, hour, minute, holiday
-# past_covariates
-# val_past_covariates
+_ = model_nbeats.fit(
+    dart_series_y_train,
+    val_series=dart_series_y_val,
+    past_covariates=dart_series_covariates_train,
+    val_past_covariates=dart_series_covariates_val,
+)
 
 # %%
 # TODO loss vs epoch plot
+# https://unit8co.github.io/darts/userguide/torch_forecasting_models.html#example-of-custom-callback-to-store-losses
 
 # %%
-prediction = model_nbeats.predict(n_prediction_steps, num_samples=1)
+prediction = model_nbeats.predict(
+    n_prediction_steps,
+    num_samples=1,
+    past_covariates=dart_series_covariates_train.append(dart_series_covariates_val),
+)
 
 # %%
 prediction.values()
@@ -337,6 +380,13 @@ prediction.values()
 # %%
 print(min(prediction.values()), max(prediction.values()))
 
+
+# %%
+# TODO Backtesting: simulate historical forecasting
+# https://unit8co.github.io/darts/quickstart/00-quickstart.html#Backtesting:-simulate-historical-forecasting
+
+# %%
+# TODO try something else like TiDEModel that can take future covariates? Only had_flow is really a past_covariate
 
 # %%
 fname_nbeats = os.path.join(MODELS_PATH, "model_nbeats.pt")

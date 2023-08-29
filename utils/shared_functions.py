@@ -8,6 +8,7 @@ import socket
 import sys
 from typing import TYPE_CHECKING
 
+import holidays
 import pandas as pd
 
 
@@ -142,5 +143,64 @@ def rebin_chance_of_showers_time_series(
             assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec assert_used
 
         dfp[y_col] = pd.cut(dfp[y_col], bins=y_bin_edges, right=True, labels=y_bin_edges[1:])
+
+    return dfp
+
+
+################################################################################
+def create_datetime_component_cols(
+    dfp: pd.DataFrame,
+    datetime_col: str,
+    date_fmt: str,
+    time_fmt: str,
+    *,
+    country_code: str = "US",
+    prov: str | None = None,
+    state: str | None = "NY",
+    language: str | None = "en_US",
+) -> pd.DataFrame:
+    """Add columns for day of week, time of day, holidays, etc based on datetime_col.
+
+    Args:
+        dfp: Input dataframe.
+        datetime_col: Datetime column.
+        date_fmt: String format of dates.
+        time_fmt: String format of times.
+        country_code: The country ISO code for holidays.
+        prov: The province for holidays.
+        state: The state for holidays.
+        language: The language for holidays.
+
+    Returns:
+        Dataframe with additional columns.
+    """
+    dfp = dfp.copy()
+
+    dfp["day_of_week_int"] = dfp[datetime_col].dt.dayofweek
+    dfp["day_of_week_frac"] = dfp["day_of_week_int"] / 6.0
+    # day_of_week_str -> .dt.day_name()
+
+    dfp["time_of_day"] = dfp[datetime_col].dt.strftime(time_fmt)
+    dfp["time_of_day_frac"] = dfp.apply(
+        lambda row: pd.to_timedelta(row["time_of_day"]).total_seconds()
+        / datetime.timedelta(days=1).total_seconds(),
+        axis=1,
+    )
+
+    scope = range(
+        dfp[datetime_col].min().year, (dfp[datetime_col].max() + pd.Timedelta(days=1)).year
+    )
+    country_holidays = holidays.country_holidays(
+        country_code,
+        language=language,
+        prov=prov,
+        state=state,
+        years=scope,
+    )
+
+    dfp["is_holiday"] = dfp.apply(
+        lambda row: row[datetime_col].strftime(date_fmt) in country_holidays,
+        axis=1,
+    ).astype(int)
 
     return dfp
