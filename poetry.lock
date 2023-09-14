@@ -1499,6 +1499,20 @@ typing-extensions = ">=3.7.4.2"
 dev = ["flake8 (>=3.8.0,<6.0.0)", "flake8-annotations", "flake8-bandit", "flake8-bugbear", "flake8-commas", "flake8-comprehensions", "flake8-continuation", "flake8-datetimez", "flake8-docstrings", "flake8-import-order", "flake8-literal", "flake8-modern-annotations", "flake8-noqa", "flake8-polyfill", "flake8-pyproject", "flake8-requirements", "flake8-typechecking-import", "flake8-use-fstring", "mypy", "pep8-naming"]
 
 [[package]]
+name = "flake8-logging"
+version = "1.2.0"
+description = "A Flake8 plugin that checks for issues using the standard library logging module."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_logging-1.2.0-py3-none-any.whl", hash = "sha256:6e2c7740779730a3368d1deb8743853f49a794019ee7bb06043769e7b17438b6"},
+    {file = "flake8_logging-1.2.0.tar.gz", hash = "sha256:01b485b6bc7f25e9cc03617e84db1649597a21b1f791538fb25526cdef6d116b"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0,<3.2.0 || >3.2.0"
+
+[[package]]
 name = "flake8-loopy"
 version = "1.1.0"
 description = "flake8 plugin to check code quality in loops"
@@ -5279,4 +5293,4 @@ test = ["mypy", "pre-commit", "pytest", "pytest-asyncio", "websockets (>=10.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "10993a0d7228dbcb0ae8a1229e463872aeb4230cea111cb58e153ed81b699f0f"
+content-hash = "578bef98fc52d862fd5b1162f47dadd430e74cdf3b2c72222e731b771bf36700"

@@ -71,6 +71,7 @@ flake8-string-format = "^0.3.0"
 flake8-no-implicit-concat = "^0.3.4"
 flake8-escaping-style = "^0.1.2"
 flake8-literal = "^1.3.0"
+flake8-logging = "^1.2.0"
 darglint = "^1.8.1"
 pyupgrade = "^3.9.0"
 
