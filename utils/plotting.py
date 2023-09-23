@@ -797,7 +797,6 @@ def plot_2d_hist(  # noqa: C901  pylint: disable=too-many-locals
         if y_axis_params.get("tick_format", False):
             datetime_yticks = [_.strftime(y_axis_params["tick_format"]) for _ in datetime_yticks]
         ax.set_yticks(epoch_yticks, datetime_yticks)
-        fig.autofmt_ydate()
 
     draw_legend(fig, leg_objects, legend_params)
 
