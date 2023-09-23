@@ -257,8 +257,8 @@ def clean_ax(
         if y_label != "" and y_axis_params.get("units") is not None:
             y_label = f"{y_label} [{y_axis_params['units']}]"
         _ax.set_ylabel(y_label)
-        _ax.xaxis.label.set_size(20)
-        _ax.yaxis.label.set_size(20)
+        _ax.xaxis.label.set_fontsize(20)
+        _ax.yaxis.label.set_fontsize(20)
         _ax.xaxis.set_tick_params(labelsize=15)
         _ax.yaxis.set_tick_params(labelsize=15)
 
@@ -302,7 +302,7 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
 
 ########################################################
 def ann_and_save(
-    _fig: mpl.figure,
+    _fig: mpl.figure.Figure,
     ann_texts: list[dict],
     plot_inline: bool,  # noqa: FBT001
     m_path: str,
@@ -797,7 +797,6 @@ def plot_2d_hist(  # noqa: C901  pylint: disable=too-many-locals
         if y_axis_params.get("tick_format", False):
             datetime_yticks = [_.strftime(y_axis_params["tick_format"]) for _ in datetime_yticks]
         ax.set_yticks(epoch_yticks, datetime_yticks)
-        fig.autofmt_ydate()
 
     draw_legend(fig, leg_objects, legend_params)
 
