@@ -65,6 +65,7 @@ repos:
           flake8-no-implicit-concat,
           flake8-escaping-style,
           flake8-literal,
+          flake8-logging,
           darglint
         ]
 
