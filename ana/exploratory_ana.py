@@ -25,9 +25,6 @@ import zoneinfo
 from typing import Final
 
 import pandas as pd
-import torchmetrics
-from darts import TimeSeries
-from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from hydra import compose, initialize
 from IPython.display import display
 
@@ -48,7 +45,10 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
     create_datetime_component_cols,
     normalize_pressure_value,
-    rebin_chance_of_showers_time_series,
+)
+from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
+    NBEATSModelWrapper,
+    TSModelWrapper,
 )
 
 # %%
@@ -194,89 +194,40 @@ dt_stop_local = dfp_data["datetime_local"].max()
 print(f"{dt_start_local = },\n{dt_stop_local  = }")
 
 # %% [markdown]
-# ***
-# # Training Data Prep
+# ## Evergreen Training Data Prep
 
 # %%
-time_bin_size = datetime.timedelta(minutes=5)
-
-y_bin_edges = None  # pylint: disable=invalid-name
-# y_bin_edges = [-float("inf"), 0.6, 0.8, 0.9, 1.0]
-
-prediction_time_size = datetime.timedelta(hours=1.5)
-n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
-
-# %% [raw]
-# print(
-#     f"{time_bin_size = }\n",
-#     f"{prediction_time_size = }, {n_prediction_steps = }\n",
-#     f"{y_bin_edges = }",
-#     sep="",
-# )
-
-# %%
-dfp_trainable = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
-dfp_trainable = dfp_trainable.loc[
-    (TRAINABLE_START_DATETIME_LOCAL <= dfp_trainable["datetime_local"])
-    & (dfp_trainable["datetime_local"] < TRAINABLE_END_DATETIME_LOCAL)
+dfp_trainable_evergreen = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
+dfp_trainable_evergreen = dfp_trainable_evergreen.loc[
+    (TRAINABLE_START_DATETIME_LOCAL <= dfp_trainable_evergreen["datetime_local"])
+    & (dfp_trainable_evergreen["datetime_local"] < TRAINABLE_END_DATETIME_LOCAL)
 ]
-dfp_trainable = dfp_trainable.rename(
+dfp_trainable_evergreen = dfp_trainable_evergreen.rename(
     columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
 )
-dfp_trainable["ds"] = dfp_trainable["ds"].dt.tz_localize(None)
+dfp_trainable_evergreen["ds"] = dfp_trainable_evergreen["ds"].dt.tz_localize(None)
 
-dfp_trainable = rebin_chance_of_showers_time_series(
-    dfp_trainable,
-    "ds",
-    "y",
-    time_bin_size=time_bin_size,
-    other_cols_to_agg_dict={"had_flow": "max"},
-    y_bin_edges=y_bin_edges,
-)
 
-dfp_trainable = create_datetime_component_cols(
-    dfp_trainable, datetime_col="ds", date_fmt=DATE_FMT, time_fmt=TIME_FMT
-)
+# %% [raw]
+# with pd.option_context("display.max_rows", 5, "display.max_columns", None):
+#     display(dfp_trainable_evergreen)
 
-dfp_train = dfp_trainable.loc[
-    dfp_trainable["ds"] < DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None)
-]
-dfp_val = dfp_trainable.loc[DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None) <= dfp_trainable["ds"]]
+# %% [markdown]
+# ## Non-Darts Data Prep
 
 # %%
-with pd.option_context("display.max_rows", 5, "display.max_columns", None):
-    display(dfp_trainable)
+dfp_train = dfp_trainable_evergreen.loc[
+    dfp_trainable_evergreen["ds"] < DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None)
+]
+dfp_val = dfp_trainable_evergreen.loc[
+    DT_VAL_START_DATETIME_LOCAL.replace(tzinfo=None) <= dfp_trainable_evergreen["ds"]
+]
 
 # %% [raw]
 # display(dfp_train.head(5))
 # display(dfp_train.tail(1))
 # display(dfp_val.head(1))
 # display(dfp_val.tail(5))
-
-# %%
-dart_series_y_trainable = TimeSeries.from_dataframe(dfp_trainable, "ds", "y", freq=time_bin_size)
-dart_series_covariates_trainable = TimeSeries.from_dataframe(
-    dfp_trainable,
-    "ds",
-    ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
-    freq=time_bin_size,
-)
-
-frac_missing = missing_values_ratio(dart_series_y_trainable)
-if 0 < frac_missing:
-    print(f"Missing {frac_missing:.2%} of values, filling via interpolation")
-    dart_series_y_trainable = fill_missing_values(dart_series_y_trainable)
-    dart_series_covariates_trainable = fill_missing_values(dart_series_covariates_trainable)
-
-dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
-    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
-)
-(
-    dart_series_covariates_train,
-    dart_series_covariates_val,
-) = dart_series_covariates_trainable.split_before(
-    pd.Timestamp(DT_VAL_START_DATETIME_LOCAL).tz_localize(None)
-)
 
 # %% [markdown]
 # ***
@@ -291,132 +242,140 @@ if torch.cuda.is_available():
 else:
     raise UserWarning("CUDA IS NOT AVAILABLE!")
 
-from darts.models import NBEATSModel  # noqa: E402
-
 # %%
-# torch_metrics_MAPE = torchmetrics.MeanAbsolutePercentageError()
-# torch_metrics_MSE = torchmetrics.MeanSquaredError()
-# from torchmetrics import MetricCollection
-
-metric_collection = torchmetrics.MetricCollection(
-    [
-        torchmetrics.MeanSquaredError(),
-        torchmetrics.MeanAbsolutePercentageError(),
-    ]
+PARENT_WRAPPER: Final = TSModelWrapper(
+    dfp_trainable_evergreen=dfp_trainable_evergreen,
+    dt_val_start_datetime_local=DT_VAL_START_DATETIME_LOCAL,
+    work_dir=MODELS_PATH,
+    random_state=RANDOM_SEED,
+    date_fmt=DATE_FMT,
+    time_fmt=TIME_FMT,
+    fname_datetime_fmt=FNAME_DATETIME_FMT,
+    local_timezone=LOCAL_TIMEZONE,
 )
-
-# %%
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping  # noqa: E402
-
-# EarlyStopping stops training when validation loss does not decrease more than min_delta = 0.05
-# over a period of patience = 10 epochs
-pl_trainer_kwargs = {
-    #    "callbacks": [
-    #        EarlyStopping(
-    #            monitor="val_MeanSquaredError",
-    #            patience=10,
-    #            min_delta=0.05,
-    #            mode="min",
-    #        )
-    #    ],
-}
-
-lr_scheduler_kwargs = {
-    "factor": 0.1,
-    "patience": 5,
-    "threshold": 0.0001,
-    "threshold_mode": "rel",
-    "cooldown": 0,
-    "min_lr": 0,
-    "eps": 1e-08,
-    "verbose": True,
-}
-
-
-# %%
-input_time_size = datetime.timedelta(minutes=50)
-input_chunk_length = input_time_size.seconds // time_bin_size.seconds
-
-output_time_size = datetime.timedelta(minutes=30)
-output_chunk_length = output_time_size.seconds // time_bin_size.seconds
-
-
-# %% [raw]
-# print(
-#     f"{time_bin_size = }\n",
-#     f"{input_time_size = }, {input_chunk_length = }\n",
-#     f"{output_time_size = }, {output_chunk_length = }",
-#     sep="",
-# )
+print(PARENT_WRAPPER)
 
 # %% [markdown]
 # ## N-BEATS
 
 # %%
-model_name = "nbeats_TODO"
-
-# %%
-model_nbeats = NBEATSModel(
-    input_chunk_length=input_chunk_length,
-    output_chunk_length=output_chunk_length,
-    dropout=0.05,
-    n_epochs=100,
-    work_dir=MODELS_PATH,
-    model_name=model_name,
-    random_state=RANDOM_SEED,
-    pl_trainer_kwargs=pl_trainer_kwargs,
-    loss_fn=torchmetrics.MeanSquaredError(),
-    torch_metrics=metric_collection,
-    log_tensorboard=True,
-    lr_scheduler_cls=torch.optim.lr_scheduler.ReduceLROnPlateau,
-    lr_scheduler_kwargs=lr_scheduler_kwargs,
+model_wrapper = NBEATSModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER, variable_hyperparams={"input_chunk_length_in_minutes": 10}
 )
+print(model_wrapper)
+
 
 # %%
+model_wrapper.assemble_hyperparams()
+print(model_wrapper)
+
+# %% [markdown]
+# ### OLD
+
+# %% [raw]
+# model_nbeats = NBEATSModel(
+#     input_chunk_length=input_chunk_length,
+#     output_chunk_length=output_chunk_length,
+#     dropout=0.05,
+#     n_epochs=100,
+#     work_dir=MODELS_PATH,
+#     model_name=model_name,
+#     random_state=RANDOM_SEED,
+#     pl_trainer_kwargs=pl_trainer_kwargs,
+#     loss_fn=torchmetrics.MeanSquaredError(),
+#     torch_metrics=metric_collection,
+#     log_tensorboard=True,
+#     lr_scheduler_cls=torch.optim.lr_scheduler.ReduceLROnPlateau,
+#     lr_scheduler_kwargs=lr_scheduler_kwargs,
+# )
+
+# %% [raw]
 # %tensorboard --logdir $MODELS_PATH/$model_name/logs
 
-# %%
-_ = model_nbeats.fit(
-    dart_series_y_train,
-    val_series=dart_series_y_val,
-    past_covariates=dart_series_covariates_train,
-    val_past_covariates=dart_series_covariates_val,
-)
+# %% [raw]
+# _ = model_nbeats.fit(
+#     dart_series_y_train,
+#     val_series=dart_series_y_val,
+#     past_covariates=dart_series_covariates_train,
+#     val_past_covariates=dart_series_covariates_val,
+# )
 
-# %%
-prediction = model_nbeats.predict(
-    n_prediction_steps,
-    num_samples=1,
-    past_covariates=dart_series_covariates_train.append(dart_series_covariates_val),
-)
+# %% [raw]
+# prediction = model_nbeats.predict(
+#     n_prediction_steps,
+#     num_samples=1,
+#     past_covariates=dart_series_covariates_train.append(dart_series_covariates_val),
+# )
 
-# %%
-prediction.values()
+# %% [raw]
+# prediction.values()
 
 
-# %%
-print(min(prediction.values()), max(prediction.values()))
+# %% [raw]
+# print(min(prediction.values()), max(prediction.values()))
 
 
 # %%
 # TODO Backtesting: simulate historical forecasting
 # https://unit8co.github.io/darts/quickstart/00-quickstart.html#Backtesting:-simulate-historical-forecasting
 
-# %%
-# TODO try something else like TiDEModel that can take future covariates? Only had_flow is really a past_covariate
-
-# %%
+# %% [raw]
 # fname_model = os.path.join(MODELS_PATH, model_name, "model.pt")
 
-# %%
+# %% [raw]
 # model_nbeats.save(fname_model)
 
-# %%
+# %% [raw]
 # model_nbeats = NBEATSModel.load(fname_model)
+
+# %% [markdown]
+# ## AutoARIMA
+
+# %% [raw]
+# hyperpar_fixed_AutoARIMA = {
+#     "start_p": 2,
+#     "d": None,
+#     "start_q": 2,
+#     "max_p": 10,
+#     "max_d": 2,
+#     "max_q": 10,
+#     "start_P": 1,
+#     "D": None,
+#     "start_Q": 1,
+#     "max_P": 2,
+#     "max_D": 1,
+#     "max_Q": 2,
+#     "max_order": None,
+#     "m": 1,
+#     "seasonal": True,
+#     "stationary": False,
+#     "information_criterion": "aic",
+#     "alpha": 0.05,
+#     "test": "kpss",
+#     "seasonal_test": "ocsb",
+#     "stepwise": True,
+#     "n_jobs": -1,
+#     "trend": None,
+#     "method": "lbfgs",
+#     "maxiter": 100,
+#     "error_action": "trace",
+#     "trace": False,
+#     "out_of_sample_size": 0,
+#     "scoring": "mse",
+#     "with_intercept": "auto",
+# }
 
 # %% [markdown]
 # ***
 # # Prophet Modeling
+
+# %%
+# Hyperparams - Rework these!
+time_bin_size = datetime.timedelta(minutes=5)
+
+prediction_time_size = datetime.timedelta(hours=1.5)
+n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
+
 
 # %%
 import prophet  # noqa: E402
