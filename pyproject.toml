@@ -116,6 +116,7 @@ torchaudio = {version = "^2.0.2+cu118", source = "pytorch-gpu-src"}
 catboost = "^1.2"
 lightgbm = "^4.0.0"
 darts = "^0.25.0"
+tensorboard = "^2.14.0"
 
 
 [[tool.poetry.source]]
