@@ -8,6 +8,9 @@
 # %autoreload 2
 
 # %%
+# %load_ext tensorboard
+
+# %%
 # %matplotlib inline
 # pylint: disable=wrong-import-order
 
@@ -22,8 +25,7 @@ import zoneinfo
 from typing import Final
 
 import pandas as pd
-
-# import torchmetrics
+import torchmetrics
 from darts import TimeSeries
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from hydra import compose, initialize
@@ -107,17 +109,6 @@ MODELS_PATH: Final = os.path.expanduser(
     )
 )
 os.makedirs(MODELS_PATH, exist_ok=True)
-
-# %%
-# # https://stackoverflow.com/a/59866006
-# from IPython.display import display, HTML
-
-# def force_show_all(dfp):
-#     with pd.option_context('display.max_rows', None, 'display.max_columns', None, 'display.width', None):
-#         display(HTML(dfp.to_html()))
-
-# %%
-# force_show_all(dfp_data)
 
 # %% [markdown]
 # ***
@@ -304,21 +295,43 @@ from darts.models import NBEATSModel  # noqa: E402
 
 # %%
 # torch_metrics_MAPE = torchmetrics.MeanAbsolutePercentageError()
+# torch_metrics_MSE = torchmetrics.MeanSquaredError()
+# from torchmetrics import MetricCollection
+
+metric_collection = torchmetrics.MetricCollection(
+    [
+        torchmetrics.MeanSquaredError(),
+        torchmetrics.MeanAbsolutePercentageError(),
+    ]
+)
 
 # %%
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping  # noqa: E402
 
-# stop training when validation loss does not decrease more than min_delta=0.05 over a period of patience=5 epochs
+# EarlyStopping stops training when validation loss does not decrease more than min_delta = 0.05
+# over a period of patience = 10 epochs
 pl_trainer_kwargs = {
-    "callbacks": [
-        EarlyStopping(
-            monitor="val_loss",
-            patience=5,
-            min_delta=0.05,
-            mode="min",
-        )
-    ]
+    #    "callbacks": [
+    #        EarlyStopping(
+    #            monitor="val_MeanSquaredError",
+    #            patience=10,
+    #            min_delta=0.05,
+    #            mode="min",
+    #        )
+    #    ],
 }
+
+lr_scheduler_kwargs = {
+    "factor": 0.1,
+    "patience": 5,
+    "threshold": 0.0001,
+    "threshold_mode": "rel",
+    "cooldown": 0,
+    "min_lr": 0,
+    "eps": 1e-08,
+    "verbose": True,
+}
+
 
 # %%
 input_time_size = datetime.timedelta(minutes=50)
@@ -340,19 +353,27 @@ output_chunk_length = output_time_size.seconds // time_bin_size.seconds
 # ## N-BEATS
 
 # %%
+model_name = "nbeats_TODO"
+
+# %%
 model_nbeats = NBEATSModel(
     input_chunk_length=input_chunk_length,
     output_chunk_length=output_chunk_length,
     dropout=0.05,
-    n_epochs=50,
+    n_epochs=100,
+    work_dir=MODELS_PATH,
+    model_name=model_name,
     random_state=RANDOM_SEED,
     pl_trainer_kwargs=pl_trainer_kwargs,
+    loss_fn=torchmetrics.MeanSquaredError(),
+    torch_metrics=metric_collection,
+    log_tensorboard=True,
+    lr_scheduler_cls=torch.optim.lr_scheduler.ReduceLROnPlateau,
+    lr_scheduler_kwargs=lr_scheduler_kwargs,
 )
 
-# TODO
-# loss_fn or likelihood
-# torch_metrics
-# lr_scheduler_cls
+# %%
+# %tensorboard --logdir $MODELS_PATH/$model_name/logs
 
 # %%
 _ = model_nbeats.fit(
@@ -361,10 +382,6 @@ _ = model_nbeats.fit(
     past_covariates=dart_series_covariates_train,
     val_past_covariates=dart_series_covariates_val,
 )
-
-# %%
-# TODO loss vs epoch plot
-# https://unit8co.github.io/darts/userguide/torch_forecasting_models.html#example-of-custom-callback-to-store-losses
 
 # %%
 prediction = model_nbeats.predict(
@@ -389,13 +406,13 @@ print(min(prediction.values()), max(prediction.values()))
 # TODO try something else like TiDEModel that can take future covariates? Only had_flow is really a past_covariate
 
 # %%
-fname_nbeats = os.path.join(MODELS_PATH, "model_nbeats.pt")
+# fname_model = os.path.join(MODELS_PATH, model_name, "model.pt")
 
 # %%
-model_nbeats.save(fname_nbeats)
+# model_nbeats.save(fname_model)
 
 # %%
-# model_nbeats = NBEATSModel.load(fname_nbeats)
+# model_nbeats = NBEATSModel.load(fname_model)
 
 # %% [markdown]
 # ***
