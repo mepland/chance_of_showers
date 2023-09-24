@@ -117,6 +117,7 @@ catboost = "^1.2"
 lightgbm = "^4.0.0"
 darts = "^0.25.0"
 tensorboard = "^2.14.0"
+bayesian-optimization = "^1.4.3"
 
 
 [[tool.poetry.source]]
