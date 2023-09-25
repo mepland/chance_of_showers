@@ -1,4 +1,7 @@
+# pylint: disable=invalid-name
 """Wrapper classes for time series models."""
+
+# pylint: enable=invalid-name
 
 import datetime
 import zoneinfo
@@ -11,11 +14,6 @@ from darts import TimeSeries
 from darts.models.forecasting.torch_forecasting_model import PastCovariatesTorchModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-
-from utils.shared_functions import (
-    create_datetime_component_cols,
-    rebin_chance_of_showers_time_series,
-)
 
 # isort: off
 from darts.models import (
@@ -37,6 +35,11 @@ from darts.models import (
 )
 
 # isort: on
+
+from utils.shared_functions import (
+    create_datetime_component_cols,
+    rebin_chance_of_showers_time_series,
+)
 
 ################################################################################
 # Setup global parameters
@@ -225,7 +228,7 @@ INTEGER_HYPERPARAMS: Final = [
 
 ################################################################################
 # parent class
-class TSModelWrapper:
+class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
     """Parent class for all time series wrappers."""
 
     def __init__(
@@ -505,7 +508,7 @@ class NBEATSModelWrapper(TSModelWrapper):
     """NBEATSModel wrapper."""
 
     _model_class = NBEATSModel
-    _required_hyperparams = NN_REQUIRED_HYPERPARAMS
+    _required_hyperparams = DATA_REQUIRED_HYPERPARAMS + NN_REQUIRED_HYPERPARAMS
     _allowed_variable_hyperparams = {**DATA_HYPERPARAMETERS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
     #    input_chunk_length=input_chunk_length,
@@ -530,7 +533,7 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
-        if "TSModelWrapper" in kwargs and type(kwargs["TSModelWrapper"]) is TSModelWrapper:
+        if "TSModelWrapper" in kwargs and isinstance(kwargs["TSModelWrapper"], TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = (self._model_class,)
             self.model_name = kwargs.get("model_name")
