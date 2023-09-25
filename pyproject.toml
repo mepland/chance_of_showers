@@ -182,6 +182,7 @@ exclude = [
     "__pycache__"
 ]
 literal-inline-quotes="double"
+literal-multiline-quotes="double"
 
 [tool.mypy]
 python_version = "3.11"
