@@ -256,13 +256,13 @@ max-statements = 75
 [tool.pylint.basic]
 attr-naming-style = "snake_case"
 class-const-naming-style = "UPPER_CASE"
-class-naming-style = "snake_case"
+class-naming-style = "PascalCase"
 const-naming-style = "UPPER_CASE"
 function-naming-style = "snake_case"
 method-naming-style = "snake_case"
 module-naming-style = "snake_case"
 variable-naming-style = "snake_case"
-good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "ax"]
+good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "ax", "v"]
 
 [tool.vulture]
 paths = ["."]
