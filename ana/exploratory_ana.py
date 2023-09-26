@@ -115,7 +115,7 @@ os.makedirs(MODELS_PATH, exist_ok=True)
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-08-27-20-12-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-09-25-16-01-00.parquet"
 
 # %%
 F_PARQUET: Final = os.path.expanduser(
