@@ -11,7 +11,7 @@ import pandas as pd
 import torch
 import torchmetrics
 from darts import TimeSeries
-from darts.models.forecasting.torch_forecasting_model import PastCovariatesTorchModel
+from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
@@ -241,10 +241,11 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         local_timezone: zoneinfo.ZoneInfo,
         # optional, will later load in child classes
         *,
-        model_class: PastCovariatesTorchModel | None = None,
+        model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
         model_name: str | None = None,
-        required_hyperparams: list[str] | None = None,
+        required_hyperparams_data: list[str] | None = None,
+        required_hyperparams_model: list[str] | None = None,
         allowed_variable_hyperparams: dict | None = None,
         variable_hyperparams: dict | None = None,
         fixed_hyperparams: dict | None = None,
@@ -263,7 +264,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
             model_name: Model name.
-            required_hyperparams: List of required hyperparameters for this model.
+            required_hyperparams_data: List of required data hyperparameters for this model.
+            required_hyperparams_model: List of required hyperparameters for this model's constructor.
             allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
             variable_hyperparams: Dictionary of variable hyperparameters for this model.
             fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
@@ -271,7 +273,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.model_class = model_class
         self.is_nn = is_nn
         self.model_name = model_name
-        self.required_hyperparams = required_hyperparams
+        self.required_hyperparams_data = required_hyperparams_data
+        self.required_hyperparams_model = required_hyperparams_model
         self.allowed_variable_hyperparams = allowed_variable_hyperparams
         self.variable_hyperparams = variable_hyperparams
         self.fixed_hyperparams = fixed_hyperparams
@@ -286,6 +289,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.local_timezone = local_timezone
 
         self.chosen_hyperparams: dict = {}
+        self.model = None
 
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
@@ -297,7 +301,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.model_class = }
 {self.is_nn = }
 {self.model_name = }
-{self.required_hyperparams = }
+{self.required_hyperparams_data = }
+{self.required_hyperparams_model = }
 {self.allowed_variable_hyperparams = }
 {self.variable_hyperparams = }
 {self.fixed_hyperparams = }
@@ -312,6 +317,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.local_timezone = }
 
 {self.chosen_hyperparams = }
+{self.model = }
 """
 
     def _name_model(self: "TSModelWrapper") -> None:
@@ -322,27 +328,34 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         """
         if self.model_name is not None and self.model_name != "":
             model_name_base = self.model_name
-        elif isinstance(self.model_class, PastCovariatesTorchModel):
+        elif issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
+            if TYPE_CHECKING:
+                assert isinstance(  # noqa: SCS108 # nosec assert_used
+                    self.model_class, ForecastingModel
+                )
             model_name_base = self.model_class.__name__
         else:
             raise ValueError("Unknown model name, should not happen!")
 
+        # TODO rerunning training will keep appending datetime, rethink this...
         self.model_name = f"{model_name_base}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
-    def assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
+    def _assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
         """Assemble the hyperparameters for this model instance.
 
         Raises:
             ValueError: Bad configuration.
         """
-        if (
-            not isinstance(self.required_hyperparams, list)
-            or not (0 < len(self.required_hyperparams))
-            or not (
-                isinstance(self.allowed_variable_hyperparams, dict)
-                and isinstance(self.variable_hyperparams, dict)
-                and isinstance(self.fixed_hyperparams, dict)
-            )
+        required_hyperparams_all = []
+        if isinstance(self.required_hyperparams_data, list):
+            required_hyperparams_all += self.required_hyperparams_data
+        if isinstance(self.required_hyperparams_model, list):
+            required_hyperparams_all += self.required_hyperparams_model
+
+        if not required_hyperparams_all or not (
+            isinstance(self.allowed_variable_hyperparams, dict)
+            and isinstance(self.variable_hyperparams, dict)
+            and isinstance(self.fixed_hyperparams, dict)
         ):
             raise ValueError("Need to give model the hyperparams first, should not happen!")
 
@@ -359,9 +372,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
                 ValueError: Bad configuration.
             """
             if TYPE_CHECKING:
-                assert isinstance(  # noqa: SCS108 # nosec assert_used
-                    self.required_hyperparams, list
-                )
                 assert isinstance(  # noqa: SCS108 # nosec assert_used
                     self.allowed_variable_hyperparams, dict
                 )
@@ -383,7 +393,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             return hyperparam_value
 
         # prep time_bin_size parameter
-        if "time_bin_size_minutes" in self.required_hyperparams:
+        if "time_bin_size_minutes" in required_hyperparams_all:
             time_bin_size_minutes = get_hyperparam_value("time_bin_size_minutes")
             if TYPE_CHECKING:
                 assert isinstance(time_bin_size_minutes, float)  # noqa: SCS108 # nosec assert_used
@@ -393,8 +403,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
                 minutes=time_bin_size_minutes
             )
 
-        # set required_hyperparams
-        for hyperparam in self.required_hyperparams:
+        # set required hyperparams
+        for hyperparam in required_hyperparams_all:
             if hyperparam == "model_name":
                 hyperparam_value: Any = self.model_name
             elif hyperparam == "random_state":
@@ -407,8 +417,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
-            elif hyperparam == "y_bin_edges":
-                pass
+            elif hyperparam == "y_bin_edges":  # noqa: R507
+                continue
             elif hyperparam == "input_chunk_length":
                 self.chosen_hyperparams["input_chunk_length_in_minutes"] = get_hyperparam_value(
                     "input_chunk_length_in_minutes"
@@ -431,7 +441,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
                 )
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
-                self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_min_delta")
+                self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"], self.chosen_hyperparams["es_patience"]
                 )
@@ -446,12 +456,29 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
             self.chosen_hyperparams[hyperparam] = hyperparam_value
 
+        # check chosen hyperparams are in the allowed ranges / sets and
         # make sure int hyperparameters are int, as Bayesian optimization will always give floats
         for k, v in self.chosen_hyperparams.items():
             if k in INTEGER_HYPERPARAMS:
                 self.chosen_hyperparams[k] = int(v)
-
-        # TODO check chosen hyperparams are in the allowed ranges / sets
+            if k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
+                pass
+            elif k in self.allowed_variable_hyperparams:
+                allowed_min = self.allowed_variable_hyperparams[k].get("min")
+                allowed_max = self.allowed_variable_hyperparams[k].get("max")
+                allowed_values = self.allowed_variable_hyperparams[k].get("allowed")
+                if allowed_min is not None and allowed_max is not None:
+                    if v < allowed_min or allowed_max < v:
+                        raise ValueError(
+                            f"Hyperparameter {k} with value {v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
+                        )
+                elif allowed_values is not None and isinstance(allowed_values, list):
+                    if not set(v).issubset(set(allowed_values)):
+                        raise ValueError(
+                            f"Hyperparameter {k} with value {v} is not allowed, expected to be a subset of {allowed_values}!"
+                        )
+                else:
+                    raise ValueError(f"Hyperparameter {k} with value {v} can not be checked!")
 
     def train_model(self: "TSModelWrapper") -> float:
         """Train the model and return loss.
@@ -459,8 +486,11 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         Returns:
             Loss.
         """
+        # setup hyperparams
         self._name_model()
+        self._assemble_hyperparams()
 
+        # data prep
         time_bin_size = self.chosen_hyperparams["time_bin_size"]
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
 
@@ -505,6 +535,31 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             pd.Timestamp(self.dt_val_start_datetime_local)
         )
 
+        # construct object
+        if TYPE_CHECKING:
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.model_class, ForecastingModel
+            )
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.required_hyperparams_model, list
+            )
+
+        chosen_hyperparams_model = {
+            k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
+        }
+        self.model = self.model_class(**chosen_hyperparams_model)
+
+        # train
+        if TYPE_CHECKING:
+            assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
+        _ = self.model.fit(
+            dart_series_y_train,
+            val_series=dart_series_y_val,
+            # TODO make past vs future covariates configurable
+            past_covariates=dart_series_covariates_train,
+            val_past_covariates=dart_series_covariates_val,
+        )
+
         return 0.0
 
 
@@ -516,11 +571,11 @@ class NBEATSModelWrapper(TSModelWrapper):
     # config wrapper for NBEATSModel
     _model_class = NBEATSModel
     _is_nn = True
-    _required_hyperparams = (
-        DATA_REQUIRED_HYPERPARAMS
-        + ["covariates_past", "covariates_future"]
-        + NN_REQUIRED_HYPERPARAMS
-    )
+    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS + [
+        "covariates_past",
+        "covariates_future",
+    ]
+    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS
     _allowed_variable_hyperparams = {**DATA_HYPERPARAMETERS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
 
@@ -533,12 +588,18 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
-        if "TSModelWrapper" in kwargs and isinstance(kwargs["TSModelWrapper"], TSModelWrapper):
+        if (
+            # Need the .keys() or there is an intermittent bug
+            # pylint: disable-next=consider-iterating-dictionary
+            "TSModelWrapper" in kwargs.keys()  # noqa: SIM118
+            and isinstance(kwargs["TSModelWrapper"], TSModelWrapper)
+        ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
-            self.model_class = (self._model_class,)
+            self.model_class = self._model_class
             self.is_nn = self._is_nn
             self.model_name = kwargs.get("model_name")
-            self.required_hyperparams = self._required_hyperparams
+            self.required_hyperparams_data = self._required_hyperparams_data
+            self.required_hyperparams_model = self._required_hyperparams_model
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs["variable_hyperparams"]
             self.fixed_hyperparams = self._fixed_hyperparams
@@ -547,7 +608,8 @@ class NBEATSModelWrapper(TSModelWrapper):
                 model_class=self._model_class,
                 is_nn=self._is_nn,
                 model_name=kwargs.get("model_name"),
-                required_hyperparams=self._required_hyperparams,
+                required_hyperparams_data=self._required_hyperparams_data,
+                required_hyperparams_model=self._required_hyperparams_model,
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs["variable_hyperparams"],
                 fixed_hyperparams=self._fixed_hyperparams,

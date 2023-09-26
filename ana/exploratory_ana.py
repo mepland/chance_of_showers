@@ -266,7 +266,9 @@ print(model_wrapper)
 
 
 # %%
-model_wrapper.assemble_hyperparams()
+model_wrapper.train_model()
+
+# %%
 print(model_wrapper)
 
 # %% [markdown]
