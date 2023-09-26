@@ -58,8 +58,8 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
 # copy docs from https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/early_stopping.html#EarlyStopping
-def gen_pl_trainer_kwargs(es_min_delta: float, es_patience: int) -> dict:
-    """Generate pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
+def get_pl_trainer_kwargs(es_min_delta: float, es_patience: int) -> dict:
+    """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
     Args:
         es_min_delta: Minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute
@@ -91,8 +91,8 @@ def gen_pl_trainer_kwargs(es_min_delta: float, es_patience: int) -> dict:
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def gen_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
-    """Generate lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
+    """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
         lr_factor: Factor by which the learning rate will be
@@ -127,9 +127,8 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
     "time_bin_size_minutes",
     "rebin_y",
     "y_bin_edges",
-    "covariates_past",
-    "covariates_future",
 ]
+
 DATA_HYPERPARAMETERS: Final = {
     "time_bin_size_minutes": {
         "min": 1.0,
@@ -142,15 +141,13 @@ DATA_HYPERPARAMETERS: Final = {
         "default": 0,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
-    "covariates": {
-        "allowed": {
-            "past": ["had_flow"],
-            "future": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
-        },
-        "default": {
-            "past": ["had_flow"],
-            "future": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
-        },
+    "covariates_past": {
+        "allowed": ["had_flow"],
+        "default": ["had_flow"],
+    },
+    "covariates_future": {
+        "allowed": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
+        "default": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
     },
 }
 
@@ -261,7 +258,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             random_state: Random seed.
             date_fmt: String format of dates.
             time_fmt: String format of times.
-            fname_datetime_fmt: String format of datetimes for file names.
+            fname_datetime_fmt: String format of date times for file names.
             local_timezone: Local timezone.
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
@@ -332,7 +329,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
         self.model_name = f"{model_name_base}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
-    def assemble_hyperparams(self: "TSModelWrapper") -> None:
+    def assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
         """Assemble the hyperparameters for this model instance.
 
         Raises:
@@ -349,7 +346,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         ):
             raise ValueError("Need to give model the hyperparams first, should not happen!")
 
-        def get_hyperparam_value(hyperparam: str) -> Any:
+        def get_hyperparam_value(hyperparam: str) -> str | float | int | None:
             """Get hyperparam value from variable and fixed hyperparams dicts.
 
             Args:
@@ -385,13 +382,26 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
             return hyperparam_value
 
+        # prep time_bin_size parameter
         if "time_bin_size_minutes" in self.required_hyperparams:
-            self.chosen_hyperparams["time_bin_size_minutes"] = get_hyperparam_value(
-                "time_bin_size_minutes"
+            time_bin_size_minutes = get_hyperparam_value("time_bin_size_minutes")
+            if TYPE_CHECKING:
+                assert isinstance(time_bin_size_minutes, float)  # noqa: SCS108 # nosec assert_used
+
+            self.chosen_hyperparams["time_bin_size_minutes"] = time_bin_size_minutes
+            self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
+                minutes=time_bin_size_minutes
             )
 
+        # set required_hyperparams
         for hyperparam in self.required_hyperparams:
-            if hyperparam == "rebin_y":
+            if hyperparam == "model_name":
+                hyperparam_value: Any = self.model_name
+            elif hyperparam == "random_state":
+                hyperparam_value = self.random_state
+            elif hyperparam == "work_dir":
+                hyperparam_value = self.work_dir
+            elif hyperparam == "rebin_y":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if hyperparam_value:
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
@@ -399,42 +409,36 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
                     self.chosen_hyperparams["y_bin_edges"] = None
             elif hyperparam == "y_bin_edges":
                 pass
-            elif hyperparam == "covariates_past":
-                pass  # TODO
-            elif hyperparam == "covariates_future":
-                pass  # TODO
             elif hyperparam == "input_chunk_length":
                 self.chosen_hyperparams["input_chunk_length_in_minutes"] = get_hyperparam_value(
                     "input_chunk_length_in_minutes"
                 )
-                time_bin_size = datetime.timedelta(
-                    minutes=get_hyperparam_value("time_bin_size_minutes")
-                )
                 input_chunk_length = datetime.timedelta(
                     minutes=self.chosen_hyperparams["input_chunk_length_in_minutes"]
                 )
-                hyperparam_value = input_chunk_length.seconds // time_bin_size.seconds
+                hyperparam_value = (
+                    input_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
+                )
             elif hyperparam == "output_chunk_length":
                 self.chosen_hyperparams["output_chunk_length_in_minutes"] = get_hyperparam_value(
                     "output_chunk_length_in_minutes"
                 )
-                time_bin_size = datetime.timedelta(
-                    minutes=get_hyperparam_value("time_bin_size_minutes")
-                )
                 output_chunk_length = datetime.timedelta(
                     minutes=self.chosen_hyperparams["output_chunk_length_in_minutes"]
                 )
-                hyperparam_value = output_chunk_length.seconds // time_bin_size.seconds
+                hyperparam_value = (
+                    output_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
+                )
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_min_delta")
-                hyperparam_value = gen_pl_trainer_kwargs(
+                hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"], self.chosen_hyperparams["es_patience"]
                 )
             elif hyperparam == "lr_scheduler_kwargs":
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
                 self.chosen_hyperparams["lr_patience"] = get_hyperparam_value("lr_patience")
-                hyperparam_value = gen_lr_scheduler_kwargs(
+                hyperparam_value = get_lr_scheduler_kwargs(
                     self.chosen_hyperparams["lr_factor"], self.chosen_hyperparams["lr_patience"]
                 )
             else:
@@ -447,6 +451,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             if k in INTEGER_HYPERPARAMS:
                 self.chosen_hyperparams[k] = int(v)
 
+        # TODO check chosen hyperparams are in the allowed ranges / sets
+
     def train_model(self: "TSModelWrapper") -> float:
         """Train the model and return loss.
 
@@ -455,7 +461,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         """
         self._name_model()
 
-        time_bin_size = datetime.timedelta(minutes=self.chosen_hyperparams["time_bin_size_minutes"])
+        time_bin_size = self.chosen_hyperparams["time_bin_size"]
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
 
         dfp_trainable = rebin_chance_of_showers_time_series(
@@ -507,25 +513,19 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 class NBEATSModelWrapper(TSModelWrapper):
     """NBEATSModel wrapper."""
 
+    # config wrapper for NBEATSModel
     _model_class = NBEATSModel
-    _required_hyperparams = DATA_REQUIRED_HYPERPARAMS + NN_REQUIRED_HYPERPARAMS
+    _is_nn = True
+    _required_hyperparams = (
+        DATA_REQUIRED_HYPERPARAMS
+        + ["covariates_past", "covariates_future"]
+        + NN_REQUIRED_HYPERPARAMS
+    )
     _allowed_variable_hyperparams = {**DATA_HYPERPARAMETERS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
-    #    input_chunk_length=input_chunk_length,
-    #    output_chunk_length=output_chunk_length,
-    #    dropout=0.05,
-    #    n_epochs=100,
-    #    work_dir=MODELS_PATH,
-    #    model_name=model_name,
-    #    random_state=RANDOM_SEED,
-    #    pl_trainer_kwargs=pl_trainer_kwargs,
-    #    loss_fn=torchmetrics.MeanSquaredError(),
-    #    torch_metrics=metric_collection,
-    #    log_tensorboard=True,
-    #    lr_scheduler_cls=torch.optim.lr_scheduler.ReduceLROnPlateau,
-    #    lr_scheduler_kwargs=lr_scheduler_kwargs,
 
-    def __init__(self: "NBEATSModelWrapper", **kwargs: Any) -> None:
+    def __init__(self: "NBEATSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # boilerplate - the same for all models
         """Int method.
 
         Args:
@@ -536,6 +536,7 @@ class NBEATSModelWrapper(TSModelWrapper):
         if "TSModelWrapper" in kwargs and isinstance(kwargs["TSModelWrapper"], TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = (self._model_class,)
+            self.is_nn = self._is_nn
             self.model_name = kwargs.get("model_name")
             self.required_hyperparams = self._required_hyperparams
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
@@ -544,7 +545,7 @@ class NBEATSModelWrapper(TSModelWrapper):
         else:
             super().__init__(
                 model_class=self._model_class,
-                is_nn=True,
+                is_nn=self._is_nn,
                 model_name=kwargs.get("model_name"),
                 required_hyperparams=self._required_hyperparams,
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
@@ -562,12 +563,6 @@ class NBEATSModelWrapper(TSModelWrapper):
 
 
 # Goal:
-# multiple model classes, inherating from TSModelWrapper
-#
-# each has defined fixed hyperparams as "private" variable
-# each has defined allowed variable hyperparameters as "private" variable
-#
-# train method takes variables hyperparams and data
-# checks variable hyperparams against allowed list
+# train method takes variables hyperparams and data, trains the model
 # saves model and logs to disk
-# returns objective to hyper opt caller
+# returns objective float to hyper opt caller function
