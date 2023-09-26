@@ -253,6 +253,7 @@ max-args = 10
 max-locals = 25
 max-statements = 75
 max-attributes = 10
+min-public-methods = 1
 
 [tool.pylint.basic]
 attr-naming-style = "snake_case"
