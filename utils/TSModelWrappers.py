@@ -127,6 +127,9 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
     "time_bin_size_minutes",
     "rebin_y",
     "y_bin_edges",
+    # not required by all models, but we'll check
+    # supports_future_covariates and supports_past_covariates for each model later and configure appropriately
+    "covariates",
 ]
 
 DATA_HYPERPARAMETERS: Final = {
@@ -141,13 +144,11 @@ DATA_HYPERPARAMETERS: Final = {
         "default": 0,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
-    "covariates_past": {
-        "allowed": ["had_flow"],
-        "default": ["had_flow"],
-    },
-    "covariates_future": {
-        "allowed": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
-        "default": ["day_of_week_frac", "time_of_day_frac", "is_holiday"],
+    # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
+    # unless we are actually making live predictions in production, then we can just take the current value from the DAQ
+    "covariates": {
+        "allowed": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
+        "default": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
     },
 }
 
@@ -170,6 +171,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
+    # All NN
     "input_chunk_length_in_minutes": {
         "min": 1.0,
         "max": 60.0,
@@ -205,6 +207,32 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 20,
         "default": 5,
     },
+    # NBEATSModel
+    "num_stacks": {
+        "min": 1,
+        "max": 50,
+        "default": 30,
+    },
+    "num_blocks": {
+        "min": 1,
+        "max": 10,
+        "default": 1,
+    },
+    "num_layers": {
+        "min": 1,
+        "max": 10,
+        "default": 1,
+    },
+    "layer_widths": {
+        "min": 16,
+        "max": 512,
+        "default": 256,
+    },
+    "expansion_coefficient_dim": {
+        "min": 1,
+        "max": 10,
+        "default": 5,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -217,9 +245,15 @@ NN_FIXED_HYPERPARAMS: Final = {
 
 INTEGER_HYPERPARAMS: Final = [
     "rebin_y",
+    "n_epochs",
     "es_patience",
     "lr_patience",
-    "n_epochs",
+    # NBEATSModel
+    "num_stacks",
+    "num_blocks",
+    "num_layers",
+    "layer_widths",
+    "expansion_coefficient_dim",
 ]
 
 
@@ -243,7 +277,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         *,
         model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
-        model_name: str | None = None,
+        model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
         allowed_variable_hyperparams: dict | None = None,
@@ -263,7 +297,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             local_timezone: Local timezone.
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
-            model_name: Model name.
+            model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
             required_hyperparams_model: List of required hyperparameters for this model's constructor.
             allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
@@ -272,7 +306,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         """
         self.model_class = model_class
         self.is_nn = is_nn
-        self.model_name = model_name
+        self.model_name_tag = model_name_tag
         self.required_hyperparams_data = required_hyperparams_data
         self.required_hyperparams_model = required_hyperparams_model
         self.allowed_variable_hyperparams = allowed_variable_hyperparams
@@ -288,6 +322,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.fname_datetime_fmt = fname_datetime_fmt
         self.local_timezone = local_timezone
 
+        self.model_name = None
         self.chosen_hyperparams: dict = {}
         self.model = None
 
@@ -300,7 +335,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         return f"""
 {self.model_class = }
 {self.is_nn = }
-{self.model_name = }
+{self.model_name_tag = }
 {self.required_hyperparams_data = }
 {self.required_hyperparams_model = }
 {self.allowed_variable_hyperparams = }
@@ -316,6 +351,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.fname_datetime_fmt = }
 {self.local_timezone = }
 
+{self.model_name = }
 {self.chosen_hyperparams = }
 {self.model = }
 """
@@ -326,19 +362,20 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         Raises:
             ValueError: Bad configuration.
         """
-        if self.model_name is not None and self.model_name != "":
-            model_name_base = self.model_name
-        elif issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
-            if TYPE_CHECKING:
-                assert isinstance(  # noqa: SCS108 # nosec assert_used
-                    self.model_class, ForecastingModel
-                )
-            model_name_base = self.model_class.__name__
+        if self.model_name_tag is not None and self.model_name_tag != "":
+            _model_name_tag = f"_{self.model_name_tag}"
         else:
+            _model_name_tag = ""
+
+        if not issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
             raise ValueError("Unknown model name, should not happen!")
 
-        # TODO rerunning training will keep appending datetime, rethink this...
-        self.model_name = f"{model_name_base}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
+        if TYPE_CHECKING:
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.model_class, ForecastingModel
+            )
+
+        self.model_name = f"{self.model_class.__name__}{_model_name_tag}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
     def _assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
         """Assemble the hyperparameters for this model instance.
@@ -456,8 +493,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
             self.chosen_hyperparams[hyperparam] = hyperparam_value
 
-        # check chosen hyperparams are in the allowed ranges / sets and
         # make sure int hyperparameters are int, as Bayesian optimization will always give floats
+        # and check chosen hyperparams are in the allowed ranges / sets
         for k, v in self.chosen_hyperparams.items():
             if k in INTEGER_HYPERPARAMS:
                 self.chosen_hyperparams[k] = int(v)
@@ -490,6 +527,22 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self._name_model()
         self._assemble_hyperparams()
 
+        # construct model object
+        if TYPE_CHECKING:
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.model_class, ForecastingModel
+            )
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.required_hyperparams_model, list
+            )
+
+        chosen_hyperparams_model = {
+            k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
+        }
+        self.model = self.model_class(**chosen_hyperparams_model)
+        if TYPE_CHECKING:
+            assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
+
         # data prep
         time_bin_size = self.chosen_hyperparams["time_bin_size"]
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
@@ -510,54 +563,55 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         dart_series_y_trainable = TimeSeries.from_dataframe(
             dfp_trainable, "ds", "y", freq=time_bin_size
         )
-        dart_series_covariates_trainable = TimeSeries.from_dataframe(
-            dfp_trainable,
-            "ds",
-            self.chosen_hyperparams["covariates_past"]
-            + self.chosen_hyperparams["covariates_future"],
-            freq=time_bin_size,
-        )
 
+        # setup covariates
+        covariates_type = None
+        if not self.model.supports_future_covariates and self.model.supports_past_covariates:
+            covariates_type = "past"
+        elif self.model.supports_future_covariates:
+            covariates_type = "future"
+
+        if covariates_type is not None:
+            dart_series_covariates_trainable = TimeSeries.from_dataframe(
+                dfp_trainable,
+                "ds",
+                self.chosen_hyperparams["covariates"],
+                freq=time_bin_size,
+            )
+
+        # fill missing values
         frac_missing = missing_values_ratio(dart_series_y_trainable)
         if 0 < frac_missing:
             # Missing {frac_missing:.2%} of values, filling via interpolation
             dart_series_y_trainable = fill_missing_values(dart_series_y_trainable)
-            dart_series_covariates_trainable = fill_missing_values(dart_series_covariates_trainable)
+            if covariates_type is not None:
+                dart_series_covariates_trainable = fill_missing_values(
+                    dart_series_covariates_trainable
+                )
 
+        # split train and validation sets
         dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
             pd.Timestamp(self.dt_val_start_datetime_local)
         )
 
-        (
-            dart_series_covariates_train,
-            dart_series_covariates_val,
-        ) = dart_series_covariates_trainable.split_before(
-            pd.Timestamp(self.dt_val_start_datetime_local)
-        )
-
-        # construct object
-        if TYPE_CHECKING:
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.model_class, ForecastingModel
+        model_covariates_kwargs = {}
+        if covariates_type is not None:
+            (
+                dart_series_covariates_train,
+                dart_series_covariates_val,
+            ) = dart_series_covariates_trainable.split_before(
+                pd.Timestamp(self.dt_val_start_datetime_local)
             )
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.required_hyperparams_model, list
-            )
-
-        chosen_hyperparams_model = {
-            k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
-        }
-        self.model = self.model_class(**chosen_hyperparams_model)
+            model_covariates_kwargs[f"{covariates_type}_covariates"] = dart_series_covariates_train
+            model_covariates_kwargs[
+                f"val_{covariates_type}_covariates"
+            ] = dart_series_covariates_val
 
         # train
-        if TYPE_CHECKING:
-            assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
         _ = self.model.fit(
             dart_series_y_train,
             val_series=dart_series_y_val,
-            # TODO make past vs future covariates configurable
-            past_covariates=dart_series_covariates_train,
-            val_past_covariates=dart_series_covariates_val,
+            **model_covariates_kwargs,
         )
 
         return 0.0
@@ -571,11 +625,14 @@ class NBEATSModelWrapper(TSModelWrapper):
     # config wrapper for NBEATSModel
     _model_class = NBEATSModel
     _is_nn = True
-    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS + [
-        "covariates_past",
-        "covariates_future",
+    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
+    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+        "num_stacks",
+        "num_blocks",
+        "num_layers",
+        "layer_widths",
+        "expansion_coefficient_dim",
     ]
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS
     _allowed_variable_hyperparams = {**DATA_HYPERPARAMETERS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
 
@@ -597,7 +654,7 @@ class NBEATSModelWrapper(TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
             self.is_nn = self._is_nn
-            self.model_name = kwargs.get("model_name")
+            self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
@@ -607,7 +664,7 @@ class NBEATSModelWrapper(TSModelWrapper):
             super().__init__(
                 model_class=self._model_class,
                 is_nn=self._is_nn,
-                model_name=kwargs.get("model_name"),
+                model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
