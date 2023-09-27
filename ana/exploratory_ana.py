@@ -294,14 +294,8 @@ print(tensorboard_logs)
 # %% [raw]
 # prediction.values()
 
-
 # %% [raw]
 # print(min(prediction.values()), max(prediction.values()))
-
-
-# %%
-# TODO Backtesting: simulate historical forecasting
-# https://unit8co.github.io/darts/quickstart/00-quickstart.html#Backtesting:-simulate-historical-forecasting
 
 # %% [raw]
 # fname_model = os.path.join(MODELS_PATH, model_name, "model.pt")
