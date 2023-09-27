@@ -22,7 +22,7 @@ import sys
 # import pprint
 # import numpy as np
 import zoneinfo
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pandas as pd
 from hydra import compose, initialize
@@ -271,36 +271,18 @@ model_wrapper.train_model()
 # %%
 print(model_wrapper)
 
+# %%
+if TYPE_CHECKING:
+    assert isinstance(model_wrapper.work_dir, str)  # noqa: SCS108 # nosec assert_used
+    assert isinstance(model_wrapper.model_name, str)  # noqa: SCS108 # nosec assert_used
+tensorboard_logs = os.path.join(model_wrapper.work_dir, model_wrapper.model_name, "logs")
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
 # %% [markdown]
 # ### OLD
-
-# %% [raw]
-# model_nbeats = NBEATSModel(
-#     input_chunk_length=input_chunk_length,
-#     output_chunk_length=output_chunk_length,
-#     dropout=0.05,
-#     n_epochs=100,
-#     work_dir=MODELS_PATH,
-#     model_name=model_name,
-#     random_state=RANDOM_SEED,
-#     pl_trainer_kwargs=pl_trainer_kwargs,
-#     loss_fn=torchmetrics.MeanSquaredError(),
-#     torch_metrics=metric_collection,
-#     log_tensorboard=True,
-#     lr_scheduler_cls=torch.optim.lr_scheduler.ReduceLROnPlateau,
-#     lr_scheduler_kwargs=lr_scheduler_kwargs,
-# )
-
-# %% [raw]
-# %tensorboard --logdir $MODELS_PATH/$model_name/logs
-
-# %% [raw]
-# _ = model_nbeats.fit(
-#     dart_series_y_train,
-#     val_series=dart_series_y_val,
-#     past_covariates=dart_series_covariates_train,
-#     val_past_covariates=dart_series_covariates_val,
-# )
 
 # %% [raw]
 # prediction = model_nbeats.predict(

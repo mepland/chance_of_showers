@@ -322,7 +322,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.fname_datetime_fmt = fname_datetime_fmt
         self.local_timezone = local_timezone
 
-        self.model_name = None
+        self.model_name: str | None = None
         self.chosen_hyperparams: dict = {}
         self.model = None
 
