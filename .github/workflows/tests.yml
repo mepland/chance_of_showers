@@ -46,6 +46,9 @@ jobs:
       - name: poetry
         run: poetry check && poetry lock --no-update
 
+      - name: isort
+        run: poetry run isort .
+
       - name: black
         run: poetry run black --check --diff .
 
@@ -57,9 +60,6 @@ jobs:
 
       - name: mypy
         run: poetry run mypy .
-
-      - name: isort
-        run: poetry run isort .
 
       - name: pylint
         run: poetry run pylint $(git ls-files '*.py')
