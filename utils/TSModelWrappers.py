@@ -4,6 +4,7 @@
 # pylint: enable=invalid-name
 
 import datetime
+import pprint
 import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
@@ -336,11 +337,11 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.model_class = }
 {self.is_nn = }
 {self.model_name_tag = }
-{self.required_hyperparams_data = }
-{self.required_hyperparams_model = }
-{self.allowed_variable_hyperparams = }
-{self.variable_hyperparams = }
-{self.fixed_hyperparams = }
+self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
+self.required_hyperparams_model = {pprint.pformat(self.required_hyperparams_model)}
+self.allowed_variable_hyperparams = {pprint.pformat(self.allowed_variable_hyperparams)}
+self.variable_hyperparams = {pprint.pformat(self.variable_hyperparams)}
+self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
 
 {self.dfp_trainable_evergreen.index.size = }
 {self.dt_val_start_datetime_local = }
@@ -352,7 +353,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.local_timezone = }
 
 {self.model_name = }
-{self.chosen_hyperparams = }
+self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 {self.model = }
 """
 
@@ -376,6 +377,37 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             )
 
         self.model_name = f"{self.model_class.__name__}{_model_name_tag}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
+
+    def get_configurable_hyperparams(self: "TSModelWrapper", *, for_opt_only: bool = True) -> dict:
+        """Get the configurable hyperparameters for this model.
+
+        Args:
+            for_opt_only: Flag to only return optimizable hyperparameters, i.e. exclude .
+
+        Returns:
+            Dictionary of hyperparameters showing allowed values.
+        """
+        # construct model object
+        if TYPE_CHECKING:
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.allowed_variable_hyperparams, dict
+            )
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.required_hyperparams_model, list
+            )
+            assert isinstance(  # noqa: SCS108 # nosec assert_used
+                self.required_hyperparams_data, list
+            )
+
+        hyperparams_to_return = [
+            _
+            for _ in self.required_hyperparams_model + self.required_hyperparams_data
+            if not for_opt_only or _ not in ["covariates", "y_bin_edges"]
+        ]
+
+        return {
+            k: v for k, v in self.allowed_variable_hyperparams.items() if k in hyperparams_to_return
+        }
 
     def _assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
         """Assemble the hyperparameters for this model instance.
@@ -645,11 +677,15 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
+        # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
+        # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
+        # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
-            # Need the .keys() or there is an intermittent bug
-            # pylint: disable-next=consider-iterating-dictionary
-            "TSModelWrapper" in kwargs.keys()  # noqa: SIM118
-            and isinstance(kwargs["TSModelWrapper"], TSModelWrapper)
+            "TSModelWrapper" in kwargs
+            and type(kwargs["TSModelWrapper"].__class__)  # pylint: disable=unidiomatic-typecheck
+            == type(TSModelWrapper)  # <class 'type'>
+            and str(kwargs["TSModelWrapper"].__class__)
+            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
@@ -658,7 +694,7 @@ class NBEATSModelWrapper(TSModelWrapper):
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
-            self.variable_hyperparams = kwargs["variable_hyperparams"]
+            self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
             super().__init__(
@@ -668,7 +704,7 @@ class NBEATSModelWrapper(TSModelWrapper):
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
-                variable_hyperparams=kwargs["variable_hyperparams"],
+                variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
                 dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],

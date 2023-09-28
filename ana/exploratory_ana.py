@@ -16,6 +16,7 @@
 
 import datetime
 import os
+import pprint
 import sys
 
 # import natsort
@@ -264,6 +265,13 @@ model_wrapper = NBEATSModelWrapper(
 )
 print(model_wrapper)
 
+
+# %%
+configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
 
 # %%
 model_wrapper.train_model()
