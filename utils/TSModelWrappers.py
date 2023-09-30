@@ -703,17 +703,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             **prediction_covariates_kwargs,
         )
 
-        # TODO
-        return dart_series_y_val, y_pred_val
+        y_val_tensor = torch.tensor(dart_series_y_val["y"].values())
+        y_pred_val_tensor = torch.tensor(y_pred_val["y"].values())
 
-
-#        y_val_tmp = dart_series_y_val["y"].pd_series()
-#        print(f"{type(y_val_tmp) = }")
-#        print(y_val_tmp)
-#        y_pred_val_tmp = y_pred_val["y"].pd_series()
-#        print(f"{type(y_pred_val_tmp) = }")
-#        print(y_pred_val_tmp)
-#        return -float(LOSS_FN(y_val_tmp, y_pred_val_tmp))
+        # return negative as we want to maximize
+        return -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
 
 
 ################################################################################
