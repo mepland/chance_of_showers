@@ -1,7 +1,7 @@
 # flake8: noqa
 # pylint: skip-file
 # mypy: disable-error-code="name-defined"
-dfp_val  # unused variable (ana/exploratory_ana.py:236)
+dfp_val  # unused variable (ana/exploratory_ana.py:223)
 _.converter  # unused attribute (daq/daq.py:152)
 dummy_signal  # unused variable (daq/daq.py:254)
 dummy_frame  # unused variable (daq/daq.py:255)
@@ -14,3 +14,4 @@ pin  # unused variable (daq/pulse_test.py:15)
 _.when_held  # unused attribute (daq/switch_test.py:29)
 _.when_released  # unused attribute (daq/switch_test.py:30)
 pin  # unused variable (fan_control/fan_control.py:73)
+_.get_model  # unused method (utils/TSModelWrappers.py:390)

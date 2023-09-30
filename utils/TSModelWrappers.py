@@ -5,9 +5,11 @@
 
 import datetime
 import pprint
+import traceback
 import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
+import bayes_opt
 import pandas as pd
 import torch
 import torchmetrics
@@ -131,6 +133,8 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
     # not required by all models, but we'll check
     # supports_future_covariates and supports_past_covariates for each model later and configure appropriately
     "covariates",
+    # not really data, but needed by all models for Bayesian optimization
+    "random_state",
 ]
 
 DATA_HYPERPARAMETERS: Final = {
@@ -162,7 +166,6 @@ NN_REQUIRED_HYPERPARAMS: Final = [
     "n_epochs",
     "work_dir",
     "model_name",
-    "random_state",
     "pl_trainer_kwargs",
     "loss_fn",
     "torch_metrics",
@@ -305,6 +308,14 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             variable_hyperparams: Dictionary of variable hyperparameters for this model.
             fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
         """
+        if required_hyperparams_data is None:
+            required_hyperparams_data = []
+        if required_hyperparams_model is None:
+            required_hyperparams_model = []
+        for hyperparam in ["input_chunk_length", "output_chunk_length"]:
+            if hyperparam in required_hyperparams_model:
+                required_hyperparams_data.append(f"{hyperparam}_in_minutes")
+
         self.model_class = model_class
         self.is_nn = is_nn
         self.model_name_tag = model_name_tag
@@ -357,6 +368,33 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 {self.model = }
 """
 
+    def get_random_state(self: "TSModelWrapper", default_random_state: int = 42) -> int:
+        """Get the random_state of this model wrapper.
+
+        Args:
+            default_random_state: Default random state to return if random_state is not set.
+
+        Returns:
+            Random state of this model wrapper.
+        """
+        random_state = self.random_state
+
+        if random_state is None:
+            random_state = default_random_state
+
+        if TYPE_CHECKING:
+            assert isinstance(random_state, int)  # noqa: SCS108 # nosec assert_used
+
+        return random_state
+
+    def get_model(self: "TSModelWrapper") -> ForecastingModel:
+        """Get the model object from this model wrapper.
+
+        Returns:
+            Model object from this model wrapper
+        """
+        return self.model
+
     def _name_model(self: "TSModelWrapper") -> None:
         """Name this model.
 
@@ -382,7 +420,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the configurable hyperparameters for this model.
 
         Args:
-            for_opt_only: Flag to only return optimizable hyperparameters, i.e. exclude .
+            for_opt_only: Flag to only return optimizable hyperparameters, i.e. exclude covariates and y_bin_edges.
 
         Returns:
             Dictionary of hyperparameters showing allowed values.
@@ -488,26 +526,28 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["y_bin_edges"] = None
             elif hyperparam == "y_bin_edges":  # noqa: R507
                 continue
-            elif hyperparam == "input_chunk_length":
+            elif hyperparam in ["input_chunk_length_in_minutes", "input_chunk_length"]:
                 self.chosen_hyperparams["input_chunk_length_in_minutes"] = get_hyperparam_value(
                     "input_chunk_length_in_minutes"
                 )
                 input_chunk_length = datetime.timedelta(
                     minutes=self.chosen_hyperparams["input_chunk_length_in_minutes"]
                 )
-                hyperparam_value = (
+                self.chosen_hyperparams["input_chunk_length"] = (
                     input_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
                 )
-            elif hyperparam == "output_chunk_length":
+                continue
+            elif hyperparam in ["output_chunk_length_in_minutes", "output_chunk_length"]:
                 self.chosen_hyperparams["output_chunk_length_in_minutes"] = get_hyperparam_value(
                     "output_chunk_length_in_minutes"
                 )
                 output_chunk_length = datetime.timedelta(
                     minutes=self.chosen_hyperparams["output_chunk_length_in_minutes"]
                 )
-                hyperparam_value = (
+                self.chosen_hyperparams["output_chunk_length"] = (
                     output_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
                 )
+                continue
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
@@ -549,13 +589,18 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 else:
                     raise ValueError(f"Hyperparameter {k} with value {v} can not be checked!")
 
-    def train_model(self: "TSModelWrapper") -> float:
+    def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
         """Train the model and return loss.
+
+        Args:
+            **kwargs: Hyperparameters to change, used in Bayesian optimization.
 
         Returns:
             Loss.
         """
         # setup hyperparams
+        if kwargs:
+            self.variable_hyperparams = kwargs
         self._name_model()
         self._assemble_hyperparams()
 
@@ -571,6 +616,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         chosen_hyperparams_model = {
             k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
         }
+
         self.model = self.model_class(**chosen_hyperparams_model)
         if TYPE_CHECKING:
             assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
@@ -627,6 +673,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         )
 
         model_covariates_kwargs = {}
+        prediction_covariates_kwargs = {}
         if covariates_type is not None:
             (
                 dart_series_covariates_train,
@@ -638,6 +685,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             model_covariates_kwargs[
                 f"val_{covariates_type}_covariates"
             ] = dart_series_covariates_val
+            prediction_covariates_kwargs[
+                f"{covariates_type}_covariates"
+            ] = dart_series_covariates_train.append(dart_series_covariates_val)
 
         # train
         _ = self.model.fit(
@@ -646,7 +696,24 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             **model_covariates_kwargs,
         )
 
-        return 0.0
+        # measure loss on validation
+        y_pred_val = self.model.predict(
+            dart_series_y_val.n_timesteps,
+            num_samples=1,
+            **prediction_covariates_kwargs,
+        )
+
+        # TODO
+        return dart_series_y_val, y_pred_val
+
+
+#        y_val_tmp = dart_series_y_val["y"].pd_series()
+#        print(f"{type(y_val_tmp) = }")
+#        print(y_val_tmp)
+#        y_pred_val_tmp = y_pred_val["y"].pd_series()
+#        print(f"{type(y_pred_val_tmp) = }")
+#        print(y_pred_val_tmp)
+#        return -float(LOSS_FN(y_val_tmp, y_pred_val_tmp))
 
 
 ################################################################################
@@ -669,7 +736,7 @@ class NBEATSModelWrapper(TSModelWrapper):
     _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
 
     def __init__(self: "NBEATSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        # boilerplate - the same for all models
+        # boilerplate - the same for all models below here
         """Int method.
 
         Args:
@@ -677,6 +744,10 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
+        for hyperparam in ["input_chunk_length", "output_chunk_length"]:
+            if hyperparam in self._required_hyperparams_model:
+                self._required_hyperparams_data.append(f"{hyperparam}_in_minutes")
+
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
@@ -715,6 +786,65 @@ class NBEATSModelWrapper(TSModelWrapper):
                 fname_datetime_fmt=kwargs["fname_datetime_fmt"],
                 local_timezone=kwargs["local_timezone"],
             )
+
+
+################################################################################
+# Setup Bayesian optimization
+def run_bayesian_opt(
+    model_wrapper: TSModelWrapper,
+    hyperparams_to_opt: list[str],
+    *,
+    n_iter: int = 100,
+    init_points: int = 10,
+    verbose: int = 2,
+) -> tuple[dict, bayes_opt.BayesianOptimization]:
+    """Run Bayesian optimization for this model wrapper.
+
+    Args:
+        model_wrapper: TSModelWrapper object to optimize.
+        hyperparams_to_opt: List of hyperparameters to optimize.
+        n_iter: How many steps of Bayesian optimization to perform.
+        init_points: How many steps of random exploration to perform.
+        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+
+    Returns:
+        optimal_values: Optimal hyperparameter values.
+        optimizer: bayes_opt.BayesianOptimization object for further details.
+
+    Raises:
+        ValueError: Bad configuration.
+    """
+    configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
+
+    hyperparam_bounds = {}
+    for hyperparam in hyperparams_to_opt:
+        hyperparam_min = configurable_hyperparams.get(hyperparam, {}).get("min")
+        hyperparam_max = configurable_hyperparams.get(hyperparam, {}).get("max")
+        if hyperparam_min is None or hyperparam_max is None:
+            raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
+        hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
+
+    optimizer = bayes_opt.BayesianOptimization(
+        f=model_wrapper.train_model,
+        pbounds=hyperparam_bounds,
+        random_state=model_wrapper.get_random_state(),
+        verbose=verbose,
+    )
+
+    try:
+        optimizer.maximize(init_points=init_points, n_iter=n_iter)
+    except bayes_opt.util.NotUniqueError as error:
+        print(
+            str(error).replace(
+                '. You can set "allow_duplicate_points=True" to avoid this error', ""
+            )
+            + ", stopping optimization here."
+        )
+    except Exception as error:
+        print(
+            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
+        )
+    return optimizer.max, optimizer
 
 
 # Goal:

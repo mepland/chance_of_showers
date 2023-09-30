@@ -20,7 +20,6 @@ import pprint
 import sys
 
 # import natsort
-# import pprint
 # import numpy as np
 import zoneinfo
 from typing import TYPE_CHECKING, Final
@@ -50,6 +49,7 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
 from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
     NBEATSModelWrapper,
     TSModelWrapper,
+    run_bayesian_opt,
 )
 
 # %%
@@ -254,7 +254,7 @@ PARENT_WRAPPER: Final = TSModelWrapper(
     fname_datetime_fmt=FNAME_DATETIME_FMT,
     local_timezone=LOCAL_TIMEZONE,
 )
-print(PARENT_WRAPPER)
+# print(PARENT_WRAPPER)
 
 # %% [markdown]
 # ## N-BEATS
@@ -263,7 +263,7 @@ print(PARENT_WRAPPER)
 model_wrapper = NBEATSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER, variable_hyperparams={"input_chunk_length_in_minutes": 10}
 )
-print(model_wrapper)
+# print(model_wrapper)
 
 
 # %%
@@ -271,13 +271,30 @@ configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %% [markdown]
+# ### Bayesian Optimization
+
+# %%
+hyperparams_to_opt = ["input_chunk_length_in_minutes"]
+optimal_values, optimizer = run_bayesian_opt(
+    model_wrapper, hyperparams_to_opt, n_iter=2, init_points=5
+)
+
+
+# %%
+pprint.pprint(optimal_values)
+
+# %% [markdown]
 # ### Training
 
 # %%
-model_wrapper.train_model()
+# val_loss = model_wrapper.train_model()
+dart_series_y_val, y_pred_val = model_wrapper.train_model()
 
 # %%
-print(model_wrapper)
+print(val_loss)
+
+# %%
+pprint.pprint(model_wrapper)
 
 # %%
 if TYPE_CHECKING:
