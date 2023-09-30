@@ -274,7 +274,9 @@ pprint.pprint(configurable_hyperparams)
 # ### Bayesian Optimization
 
 # %%
-hyperparams_to_opt = ["input_chunk_length_in_minutes"]
+# hyperparams_to_opt = ["input_chunk_length_in_minutes"]
+hyperparams_to_opt = list(configurable_hyperparams.keys())
+
 optimal_values, optimizer = run_bayesian_opt(
     model_wrapper, hyperparams_to_opt, n_iter=2, init_points=5
 )
@@ -287,14 +289,13 @@ pprint.pprint(optimal_values)
 # ### Training
 
 # %%
-# val_loss = model_wrapper.train_model()
-dart_series_y_val, y_pred_val = model_wrapper.train_model()
+val_loss = -model_wrapper.train_model()
 
 # %%
 print(val_loss)
 
-# %%
-pprint.pprint(model_wrapper)
+# %% [raw]
+# pprint.pprint(model_wrapper)
 
 # %%
 if TYPE_CHECKING:
@@ -308,19 +309,6 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ### OLD
-
-# %% [raw]
-# prediction = model_nbeats.predict(
-#     n_prediction_steps,
-#     num_samples=1,
-#     past_covariates=dart_series_covariates_train.append(dart_series_covariates_val),
-# )
-
-# %% [raw]
-# prediction.values()
-
-# %% [raw]
-# print(min(prediction.values()), max(prediction.values()))
 
 # %% [raw]
 # fname_model = os.path.join(MODELS_PATH, model_name, "model.pt")
