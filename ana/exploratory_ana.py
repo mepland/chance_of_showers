@@ -261,7 +261,8 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 
 # %%
 model_wrapper = NBEATSModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER, variable_hyperparams={"input_chunk_length_in_minutes": 10}
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
 )
 # print(model_wrapper)
 
@@ -274,11 +275,29 @@ pprint.pprint(configurable_hyperparams)
 # ### Bayesian Optimization
 
 # %%
-# hyperparams_to_opt = ["input_chunk_length_in_minutes"]
-hyperparams_to_opt = list(configurable_hyperparams.keys())
+# hyperparams_to_opt = ["time_bin_size_in_minutes"] # TODO bugged
 
+# %%
+hyperparams_NOT_to_opt = [
+    "time_bin_size_in_minutes",
+    "input_chunk_length_in_minutes",
+    "output_chunk_length_in_minutes",
+]
+hyperparams_to_opt = [
+    _ for _ in list(configurable_hyperparams.keys()) if _ not in hyperparams_NOT_to_opt
+]
+
+# %%
+pprint.pprint(hyperparams_to_opt)
+
+# %%
 optimal_values, optimizer = run_bayesian_opt(
-    model_wrapper, hyperparams_to_opt, n_iter=2, init_points=5
+    model_wrapper,
+    hyperparams_to_opt,
+    n_iter=10,
+    init_points=5,
+    verbose=2,
+    enable_progress_bar=False,
 )
 
 
@@ -289,13 +308,12 @@ pprint.pprint(optimal_values)
 # ### Training
 
 # %%
+model_wrapper.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper.train_model()
+print(f"{val_loss = }")
 
 # %%
-print(val_loss)
-
-# %% [raw]
-# pprint.pprint(model_wrapper)
+print(model_wrapper)
 
 # %%
 if TYPE_CHECKING:
