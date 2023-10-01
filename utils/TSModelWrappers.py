@@ -4,6 +4,7 @@
 # pylint: enable=invalid-name
 
 import datetime
+import logging
 import pprint
 import traceback
 import zoneinfo
@@ -61,7 +62,9 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
 # copy docs from https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/early_stopping.html#EarlyStopping
-def get_pl_trainer_kwargs(es_min_delta: float, es_patience: int) -> dict:
+def get_pl_trainer_kwargs(
+    es_min_delta: float, es_patience: int, *, enable_progress_bar: bool
+) -> dict:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
     Args:
@@ -76,11 +79,13 @@ def get_pl_trainer_kwargs(es_min_delta: float, es_patience: int) -> dict:
                 no improvement, and not the number of training epochs. Therefore, with parameters
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
+        enable_progress_bar: Enable torch progress bar during training.
 
     Returns:
         pl_trainer_kwargs.
     """
     return {
+        "enable_progress_bar": enable_progress_bar,
         "callbacks": [
             EarlyStopping(
                 min_delta=es_min_delta,
@@ -127,7 +132,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
 
 # data hyperparameters
 DATA_REQUIRED_HYPERPARAMS: Final = [
-    "time_bin_size_minutes",
+    "time_bin_size_in_minutes",
     "rebin_y",
     "y_bin_edges",
     # not required by all models, but we'll check
@@ -138,7 +143,7 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 DATA_HYPERPARAMETERS: Final = {
-    "time_bin_size_minutes": {
+    "time_bin_size_in_minutes": {
         "min": 1.0,
         "max": 20.0,
         "default": 10.0,
@@ -245,10 +250,16 @@ NN_FIXED_HYPERPARAMS: Final = {
     "torch_metrics": METRIC_COLLECTION,
     "log_tensorboard": True,
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
+    "enable_progress_bar": True,
 }
 
 INTEGER_HYPERPARAMS: Final = [
     "rebin_y",
+    "time_bin_size_in_minutes",
+    "input_chunk_length_in_minutes",
+    "output_chunk_length_in_minutes",
+    "input_chunk_length",
+    "output_chunk_length",
     "n_epochs",
     "es_patience",
     "lr_patience",
@@ -395,6 +406,30 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
+    def set_enable_progress_bar(self: "TSModelWrapper", *, enable_progress_bar: bool) -> None:
+        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+
+        Args:
+            enable_progress_bar: Enable torch progress bar during training.
+        """
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
+
+        self.fixed_hyperparams = _fixed_hyperparams
+
+        # Turn off torch warning messages about training devices and CUDA
+        # Adapted from
+        # https://github.com/Lightning-AI/lightning/issues/13378#issuecomment-1170258489
+        # and
+        # https://github.com/Lightning-AI/lightning/issues/3431#issuecomment-1527945684
+        logger_level = logging.WARNING
+        if not enable_progress_bar:
+            logger_level = logging.ERROR
+        logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
+        logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
+
     def _name_model(self: "TSModelWrapper") -> None:
         """Name this model.
 
@@ -447,7 +482,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             k: v for k, v in self.allowed_variable_hyperparams.items() if k in hyperparams_to_return
         }
 
-    def _assemble_hyperparams(self: "TSModelWrapper") -> None:  # noqa: C901
+    def _assemble_hyperparams(  # noqa: C901 # pylint: disable=too-many-statements
+        self: "TSModelWrapper",
+    ) -> None:
         """Assemble the hyperparameters for this model instance.
 
         Raises:
@@ -487,12 +524,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
                 assert isinstance(self.fixed_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
 
-            hyperparam_value = self.variable_hyperparams.get(
-                hyperparam,
-                self.allowed_variable_hyperparams.get(hyperparam, {}).get(
-                    "default", self.fixed_hyperparams.get(hyperparam)
-                ),
-            )
+            hyperparam_value = None
+            if hyperparam in self.variable_hyperparams:
+                hyperparam_value = self.variable_hyperparams[hyperparam]
+            elif hyperparam in self.allowed_variable_hyperparams:
+                hyperparam_value = self.allowed_variable_hyperparams[hyperparam]
+                if isinstance(hyperparam_value, dict) and "default" in hyperparam_value:
+                    hyperparam_value = hyperparam_value["default"]
+            elif hyperparam in self.fixed_hyperparams:  # noqa: SIM908
+                hyperparam_value = self.fixed_hyperparams[hyperparam]
 
             if hyperparam_value is None:
                 raise ValueError(f"Could not find value for required hyperparameter {hyperparam}!")
@@ -500,14 +540,16 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             return hyperparam_value
 
         # prep time_bin_size parameter
-        if "time_bin_size_minutes" in required_hyperparams_all:
-            time_bin_size_minutes = get_hyperparam_value("time_bin_size_minutes")
+        if "time_bin_size_in_minutes" in required_hyperparams_all:
+            time_bin_size_in_minutes = get_hyperparam_value("time_bin_size_in_minutes")
             if TYPE_CHECKING:
-                assert isinstance(time_bin_size_minutes, float)  # noqa: SCS108 # nosec assert_used
+                assert isinstance(  # noqa: SCS108 # nosec assert_used
+                    time_bin_size_in_minutes, float
+                )
 
-            self.chosen_hyperparams["time_bin_size_minutes"] = time_bin_size_minutes
+            self.chosen_hyperparams["time_bin_size_in_minutes"] = time_bin_size_in_minutes
             self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
-                minutes=time_bin_size_minutes
+                minutes=time_bin_size_in_minutes
             )
 
         # set required hyperparams
@@ -551,8 +593,13 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
+                self.chosen_hyperparams["enable_progress_bar"] = get_hyperparam_value(
+                    "enable_progress_bar"
+                )
                 hyperparam_value = get_pl_trainer_kwargs(
-                    self.chosen_hyperparams["es_min_delta"], self.chosen_hyperparams["es_patience"]
+                    self.chosen_hyperparams["es_min_delta"],
+                    self.chosen_hyperparams["es_patience"],
+                    enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
                 )
             elif hyperparam == "lr_scheduler_kwargs":
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
@@ -693,6 +740,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         _ = self.model.fit(
             dart_series_y_train,
             val_series=dart_series_y_val,
+            verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
             **model_covariates_kwargs,
         )
 
@@ -700,11 +748,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_pred_val = self.model.predict(
             dart_series_y_val.n_timesteps,
             num_samples=1,
+            verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
             **prediction_covariates_kwargs,
         )
 
-        y_val_tensor = torch.tensor(dart_series_y_val["y"].values())
-        y_pred_val_tensor = torch.tensor(y_pred_val["y"].values())
+        y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
+        y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
         # return negative as we want to maximize
         return -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
@@ -791,6 +840,7 @@ def run_bayesian_opt(
     n_iter: int = 100,
     init_points: int = 10,
     verbose: int = 2,
+    enable_progress_bar: bool = False,
 ) -> tuple[dict, bayes_opt.BayesianOptimization]:
     """Run Bayesian optimization for this model wrapper.
 
@@ -800,6 +850,7 @@ def run_bayesian_opt(
         n_iter: How many steps of Bayesian optimization to perform.
         init_points: How many steps of random exploration to perform.
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        enable_progress_bar: Enable torch progress bar during training.
 
     Returns:
         optimal_values: Optimal hyperparameter values.
@@ -817,6 +868,8 @@ def run_bayesian_opt(
         if hyperparam_min is None or hyperparam_max is None:
             raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
         hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
+
+    model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
 
     optimizer = bayes_opt.BayesianOptimization(
         f=model_wrapper.train_model,
