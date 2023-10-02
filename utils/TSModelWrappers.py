@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 import bayes_opt
 import pandas as pd
+import sympy
 import torch
 import torchmetrics
 from darts import TimeSeries
@@ -144,9 +145,9 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
 
 DATA_HYPERPARAMETERS: Final = {
     "time_bin_size_in_minutes": {
-        "min": 1.0,
-        "max": 20.0,
-        "default": 10.0,
+        "min": 1,
+        "max": 20,
+        "default": 10,
     },
     "rebin_y": {
         "min": 0,
@@ -255,7 +256,6 @@ NN_FIXED_HYPERPARAMS: Final = {
 
 INTEGER_HYPERPARAMS: Final = [
     "rebin_y",
-    "time_bin_size_in_minutes",
     "input_chunk_length_in_minutes",
     "output_chunk_length_in_minutes",
     "input_chunk_length",
@@ -547,6 +547,25 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     time_bin_size_in_minutes, float
                 )
 
+            # Ensure that time_bin_size_in_minutes is a divisor of 60 minutes
+            def get_closest_divisor(input_divisor: float, *, n: int = 60) -> int:
+                """Get the integer divisor of n that is the closest to input_divisor.
+
+                Args:
+                    input_divisor: Input divisor to search around.
+                    n: Number to divide.
+
+                Returns:
+                    Integer divisor.
+                """
+                if n % input_divisor == 0:  # noqa: S001
+                    return int(input_divisor)
+                divisors = sympy.divisors(n)
+                delta = [abs(input_divisor - _) for _ in divisors]
+                return divisors[delta.index(min(delta))]
+
+            time_bin_size_in_minutes = get_closest_divisor(time_bin_size_in_minutes)
+
             self.chosen_hyperparams["time_bin_size_in_minutes"] = time_bin_size_in_minutes
             self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
                 minutes=time_bin_size_in_minutes
@@ -566,7 +585,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
-            elif hyperparam == "y_bin_edges":  # noqa: R507
+            elif hyperparam in [  # noqa: R507
+                "y_bin_edges",
+                "time_bin_size",
+                "time_bin_size_in_minutes",
+            ]:
                 continue
             elif hyperparam in ["input_chunk_length_in_minutes", "input_chunk_length"]:
                 self.chosen_hyperparams["input_chunk_length_in_minutes"] = get_hyperparam_value(
@@ -635,6 +658,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         )
                 else:
                     raise ValueError(f"Hyperparameter {k} with value {v} can not be checked!")
+            if k == "time_bin_size_in_minutes" and 60 % v != 0:
+                raise ValueError(
+                    f"Hyperparameter {k} with value {v} is not allowed, {60 % v = } should be 0!"
+                )
 
     def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
         """Train the model and return loss.
@@ -670,6 +697,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         # data prep
         time_bin_size = self.chosen_hyperparams["time_bin_size"]
+        freq_str = f'{self.chosen_hyperparams["time_bin_size_in_minutes"]}min'
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
 
         dfp_trainable = rebin_chance_of_showers_time_series(
@@ -686,7 +714,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         )
 
         dart_series_y_trainable = TimeSeries.from_dataframe(
-            dfp_trainable, "ds", "y", freq=time_bin_size
+            dfp_trainable,
+            "ds",
+            "y",
+            freq=freq_str,
+            fill_missing_dates=True,
         )
 
         # setup covariates
@@ -701,7 +733,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 dfp_trainable,
                 "ds",
                 self.chosen_hyperparams["covariates"],
-                freq=time_bin_size,
+                freq=freq_str,
+                fill_missing_dates=True,
             )
 
         # fill missing values
