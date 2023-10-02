@@ -88,6 +88,7 @@ def rebin_chance_of_showers_time_series(
     y_col: str,
     *,
     time_bin_size: datetime.timedelta | None = None,
+    retain_DateTimeIndex: bool = True,
     other_cols_to_agg_dict: dict | None = None,
     y_bin_edges: list[float] | None = None,
 ) -> pd.DataFrame:
@@ -97,7 +98,9 @@ def rebin_chance_of_showers_time_series(
         dfp_in: The input dataframe to rebin.
         time_col: The time column.
         y_col: The y column.
-        time_bin_size: The size of time bins, must be less than 1 hour with the current implementation. This is not an issue in the chance of showers context.
+        time_bin_size: The size of time bins.
+            Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere.
+        retain_DateTimeIndex: Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex.
         other_cols_to_agg_dict: Other columns to aggregate during time rebinning, and their aggregation function(s).
         y_bin_edges: The left bin edges for y.
 
@@ -116,7 +119,13 @@ def rebin_chance_of_showers_time_series(
 
         time_bin_size_minutes = time_bin_size.seconds // 60
         if not 0 < time_bin_size_minutes < 60:
-            raise ValueError(f"Invalid {time_bin_size = }, {time_bin_size_minutes = }")
+            raise ValueError(
+                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
+            )
+        if 60 % time_bin_size_minutes != 0:
+            raise ValueError(
+                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
+            )
 
     cols = [time_col, y_col]
     if rebin_time:
@@ -136,7 +145,11 @@ def rebin_chance_of_showers_time_series(
             ),
             axis=1,
         )
-        dfp = dfp.groupby(time_col).agg(cols_to_agg_dict).reset_index()
+        dfp = dfp.groupby(time_col).agg(cols_to_agg_dict)
+        if retain_DateTimeIndex:
+            dfp[time_col] = dfp.index
+        else:
+            dfp = dfp.reset_index()
 
     if rebin_y:
         if TYPE_CHECKING:
