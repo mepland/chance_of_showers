@@ -182,10 +182,10 @@ NN_REQUIRED_HYPERPARAMS: Final = [
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     # All NN
-    "input_chunk_length_in_minutes": {
-        "min": 1.0,
-        "max": 60.0,
-        "default": 20.0,
+    "input_chunk_length": {
+        "min": 1,
+        "max": 60,
+        "default": 2,
     },
     "output_chunk_length_in_minutes": {
         "min": 5.0,
@@ -256,8 +256,6 @@ NN_FIXED_HYPERPARAMS: Final = {
 
 INTEGER_HYPERPARAMS: Final = [
     "rebin_y",
-    "input_chunk_length_in_minutes",
-    "output_chunk_length_in_minutes",
     "input_chunk_length",
     "output_chunk_length",
     "n_epochs",
@@ -323,7 +321,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             required_hyperparams_data = []
         if required_hyperparams_model is None:
             required_hyperparams_model = []
-        for hyperparam in ["input_chunk_length", "output_chunk_length"]:
+        for hyperparam in ["output_chunk_length"]:
             if hyperparam in required_hyperparams_model:
                 required_hyperparams_data.append(f"{hyperparam}_in_minutes")
 
@@ -591,17 +589,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "time_bin_size_in_minutes",
             ]:
                 continue
-            elif hyperparam in ["input_chunk_length_in_minutes", "input_chunk_length"]:
-                self.chosen_hyperparams["input_chunk_length_in_minutes"] = get_hyperparam_value(
-                    "input_chunk_length_in_minutes"
-                )
-                input_chunk_length = datetime.timedelta(
-                    minutes=self.chosen_hyperparams["input_chunk_length_in_minutes"]
-                )
-                self.chosen_hyperparams["input_chunk_length"] = (
-                    input_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
-                )
-                continue
             elif hyperparam in ["output_chunk_length_in_minutes", "output_chunk_length"]:
                 self.chosen_hyperparams["output_chunk_length_in_minutes"] = get_hyperparam_value(
                     "output_chunk_length_in_minutes"
@@ -820,7 +807,7 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
-        for hyperparam in ["input_chunk_length", "output_chunk_length"]:
+        for hyperparam in ["output_chunk_length"]:
             if hyperparam in self._required_hyperparams_model:
                 self._required_hyperparams_data.append(f"{hyperparam}_in_minutes")
 
