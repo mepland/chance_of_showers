@@ -12,6 +12,7 @@ hydra-core = "^1.3.2"
 numpy = "^1.24.3"
 polars = "^0.18.4"
 humanize = "^4.7.0"
+psutil = "^5.9.5"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
@@ -84,7 +85,6 @@ gpiozero = "^1.6.2"
 rpi-gpio = "^0.7.1"
 "luma.oled" = "^3.12.0"
 pause = "^0.3"
-psutil = "^5.9.5"
 
 [tool.poetry.group.web]
 optional = true
