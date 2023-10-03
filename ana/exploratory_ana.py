@@ -274,15 +274,11 @@ pprint.pprint(configurable_hyperparams)
 # %% [markdown]
 # ### Bayesian Optimization
 
-# %%
-# hyperparams_to_opt = ["time_bin_size_in_minutes"] # TODO bugged
+# %% [raw]
+# raise UserWarning("Stopping Here")
 
 # %%
-hyperparams_NOT_to_opt = [
-    "time_bin_size_in_minutes",
-    "input_chunk_length_in_minutes",
-    "output_chunk_length_in_minutes",
-]
+hyperparams_NOT_to_opt: list[str] = []
 hyperparams_to_opt = [
     _ for _ in list(configurable_hyperparams.keys()) if _ not in hyperparams_NOT_to_opt
 ]
@@ -304,6 +300,16 @@ optimal_values, optimizer = run_bayesian_opt(
 # %%
 pprint.pprint(optimal_values)
 
+# %% [raw]
+# {'params': {'dropout': 0.020924079097806275,
+#             'expansion_coefficient_dim': 3.629301836816963,
+#             'layer_widths': 197.71547427367108,
+#             'num_blocks': 5.104629857953324,
+#             'num_layers': 8.066583652537123,
+#             'num_stacks': 10.784015325759627,
+#             'rebin_y': 0.5142344384136116},
+#  'target': -0.012030065059661865}
+
 # %% [markdown]
 # ### Training
 
@@ -316,10 +322,12 @@ print(f"{val_loss = }")
 print(model_wrapper)
 
 # %%
+work_dir = model_wrapper.work_dir
+model_name = model_wrapper.model_name
 if TYPE_CHECKING:
-    assert isinstance(model_wrapper.work_dir, str)  # noqa: SCS108 # nosec assert_used
-    assert isinstance(model_wrapper.model_name, str)  # noqa: SCS108 # nosec assert_used
-tensorboard_logs = os.path.join(model_wrapper.work_dir, model_wrapper.model_name, "logs")
+    assert isinstance(work_dir, str)  # noqa: SCS108 # nosec assert_used
+    assert isinstance(model_name, str)  # noqa: SCS108 # nosec assert_used
+tensorboard_logs = os.path.join(work_dir, model_name, "logs")
 print(tensorboard_logs)
 
 # %%
