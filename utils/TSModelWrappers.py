@@ -6,6 +6,7 @@
 import datetime
 import logging
 import math
+import os
 import pprint
 import traceback
 import zoneinfo
@@ -16,6 +17,9 @@ import pandas as pd
 import sympy
 import torch
 import torchmetrics
+from bayes_opt.event import DEFAULT_EVENTS, Events
+from bayes_opt.logger import JSONLogger, ScreenLogger
+from bayes_opt.util import load_logs
 from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
@@ -344,6 +348,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.model_name: str | None = None
         self.chosen_hyperparams: dict = {}
         self.model = None
+        self.is_trained = False
 
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
@@ -373,6 +378,7 @@ self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
 {self.model_name = }
 self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 {self.model = }
+{self.is_trained = }
 """
 
     def get_random_state(self: "TSModelWrapper", default_random_state: int = 42) -> int:
@@ -402,6 +408,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
+    def get_utilized_hyperparameters(self: "TSModelWrapper") -> dict:
+        """Get the hyperparameters actually used in train_model() for this model wrapper.
+
+        Raises:
+            ValueError: Model is not trained.
+
+        Returns:
+            The hyperparameters actually used in train_model().
+        """
+        if not self.is_trained or not self.chosen_hyperparams:
+            raise ValueError("Model must be trained first!")
+
+        return self.chosen_hyperparams
+
     def set_enable_progress_bar(self: "TSModelWrapper", *, enable_progress_bar: bool) -> None:
         """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
 
@@ -426,17 +446,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
         logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
 
-    def _name_model(self: "TSModelWrapper") -> None:
-        """Name this model.
+    def get_generic_model_name(self: "TSModelWrapper") -> str:
+        """Get the generic name for this model, without a time stamp.
 
         Raises:
             ValueError: Bad configuration.
-        """
-        if self.model_name_tag is not None and self.model_name_tag != "":
-            _model_name_tag = f"_{self.model_name_tag}"
-        else:
-            _model_name_tag = ""
 
+        Returns:
+            The generic name for this model, without a time stamp.
+        """
         if not issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
             raise ValueError("Unknown model name, should not happen!")
 
@@ -445,7 +463,16 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.model_class, ForecastingModel
             )
 
-        self.model_name = f"{self.model_class.__name__}{_model_name_tag}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
+        if self.model_name_tag is not None and self.model_name_tag != "":
+            _model_name_tag = f"_{self.model_name_tag}"
+        else:
+            _model_name_tag = ""
+
+        return f"{self.model_class.__name__}{_model_name_tag}"
+
+    def _name_model(self: "TSModelWrapper") -> None:
+        """Name this model, with training time stamp."""
+        self.model_name = f"{self.get_generic_model_name()}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
     def get_configurable_hyperparams(self: "TSModelWrapper", *, for_opt_only: bool = True) -> dict:
         """Get the configurable hyperparameters for this model.
@@ -779,6 +806,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
         y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
+        self.is_trained = True
+
         # return negative as we want to maximize
         return -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
 
@@ -853,24 +882,39 @@ class NBEATSModelWrapper(TSModelWrapper):
 
 ################################################################################
 # Setup Bayesian optimization
-def run_bayesian_opt(
+def run_bayesian_opt(  # pylint: disable=too-many-locals
     model_wrapper: TSModelWrapper,
     hyperparams_to_opt: list[str],
     *,
     n_iter: int = 100,
-    init_points: int = 10,
+    utility_kind: str = "ucb",
+    utility_kappa: float = 2.576,
     verbose: int = 2,
     enable_progress_bar: bool = False,
+    enable_json_logging: bool = True,
+    enable_reloading: bool = True,
+    enable_model_saves: bool = False,
+    bayesian_opt_work_dir_name: str = "bayesian_optimization",
 ) -> tuple[dict, bayes_opt.BayesianOptimization]:
     """Run Bayesian optimization for this model wrapper.
 
     Args:
         model_wrapper: TSModelWrapper object to optimize.
         hyperparams_to_opt: List of hyperparameters to optimize.
-        n_iter: How many steps of Bayesian optimization to perform.
-        init_points: How many steps of random exploration to perform.
+        n_iter: How many iterations of Bayesian optimization to perform.
+        utility_kind: {'ucb', 'ei', 'poi'}
+            * 'ucb' stands for the Upper Confidence Bounds method
+            * 'ei' is the Expected Improvement method
+            * 'poi' is the Probability Of Improvement criterion.
+        utility_kappa: Parameter to indicate how closed are the next parameters sampled.
+            Higher value = favors spaces that are least explored.
+            Lower value = favors spaces where the regression function is the highest.
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
         enable_progress_bar: Enable torch progress bar during training.
+        enable_json_logging: Enable JSON logging of iterations.
+        enable_reloading: Enable reloading of prior iterations from JSON log.
+        enable_model_saves: Save the trained model at each iteration.
+        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the model_wrapper.work_dir.
 
     Returns:
         optimal_values: Optimal hyperparameter values.
@@ -879,6 +923,9 @@ def run_bayesian_opt(
     Raises:
         ValueError: Bad configuration.
     """
+    model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+
+    # Setup hyperparameter bounds
     configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
 
     hyperparam_bounds = {}
@@ -889,17 +936,70 @@ def run_bayesian_opt(
             raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
         hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
 
-    model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+    # Setup Bayesian optimization objects
+    # https://github.com/bayesian-optimization/BayesianOptimization/blob/11a0c6aba1fcc6b5d2716052da5222a84259c5b9/bayes_opt/util.py#L113
+    utility = bayes_opt.UtilityFunction(kind=utility_kind, kappa=utility_kappa)
 
     optimizer = bayes_opt.BayesianOptimization(
-        f=model_wrapper.train_model,
+        f=None,
         pbounds=hyperparam_bounds,
         random_state=model_wrapper.get_random_state(),
         verbose=verbose,
     )
 
+    # Setup Logging
+    generic_model_name: Final = model_wrapper.get_generic_model_name()
+    bayesian_opt_work_dir: Final = os.path.expanduser(
+        os.path.join(model_wrapper.work_dir, bayesian_opt_work_dir_name, generic_model_name)
+    )
+
+    fname_json_log: Final = os.path.join(
+        bayesian_opt_work_dir, f"bayesian_opt_{generic_model_name}.json"
+    )
+    if enable_json_logging:
+        os.makedirs(bayesian_opt_work_dir, exist_ok=True)
+        json_logger = JSONLogger(path=fname_json_log, reset=False)
+        optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
+
+    if 0 < verbose:
+        screen_logger = ScreenLogger(verbose=verbose)
+        for event in DEFAULT_EVENTS:
+            optimizer.subscribe(event, screen_logger)
+
+    # Setup model saves
+    bayesian_opt_work_dir_models: Final = os.path.join(bayesian_opt_work_dir, "models")
+    if enable_model_saves:
+        os.makedirs(bayesian_opt_work_dir_models, exist_ok=True)
+
+    # Reload prior iterations
+    i_iter_start = 0
+    if enable_reloading and os.path.isfile(fname_json_log):
+        print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
+        optimizer.dispatch(Events.OPTIMIZATION_START)
+        load_logs(optimizer, logs=fname_json_log)
+        i_iter_start = len(optimizer.space)
+        print(f"\nLoaded {i_iter_start} existing iterations.\n")
+
+    # run Bayesian optimization iterations
     try:
-        optimizer.maximize(init_points=init_points, n_iter=n_iter)
+        if i_iter_start == 0:
+            optimizer.dispatch(Events.OPTIMIZATION_START)
+        for i_iter in range(i_iter_start, n_iter):
+            next_point_to_probe = optimizer.suggest(utility)
+
+            target = model_wrapper.train_model(**next_point_to_probe)
+
+            if enable_model_saves:
+                fname_model = os.path.join(
+                    bayesian_opt_work_dir_models, f"iteration_{i_iter}_{generic_model_name}.pt"
+                )
+                model_wrapper.get_model().save(fname_model)
+
+            utilized_hyperparameters = model_wrapper.get_utilized_hyperparameters()
+            probed_point = {k: utilized_hyperparameters[k] for k in hyperparams_to_opt}
+
+            optimizer.register(params=probed_point, target=target)
+
     except bayes_opt.util.NotUniqueError as error:
         print(
             str(error).replace(
@@ -911,10 +1011,6 @@ def run_bayesian_opt(
         print(
             f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
         )
+    optimizer.dispatch(Events.OPTIMIZATION_END)
+
     return optimizer.max, optimizer
-
-
-# Goal:
-# train method takes variables hyperparams and data, trains the model
-# saves model and logs to disk
-# returns objective float to hyper opt caller function
