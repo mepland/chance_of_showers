@@ -5,6 +5,7 @@
 
 import datetime
 import logging
+import math
 import pprint
 import traceback
 import zoneinfo
@@ -134,6 +135,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
 # data hyperparameters
 DATA_REQUIRED_HYPERPARAMS: Final = [
     "time_bin_size_in_minutes",
+    "prediction_length_in_minutes",
     "rebin_y",
     "y_bin_edges",
     # not required by all models, but we'll check
@@ -143,7 +145,7 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
     "random_state",
 ]
 
-DATA_HYPERPARAMETERS: Final = {
+DATA_VARIABLE_HYPERPARAMS: Final = {
     "time_bin_size_in_minutes": {
         "min": 1,
         "max": 20,
@@ -161,6 +163,10 @@ DATA_HYPERPARAMETERS: Final = {
         "allowed": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
         "default": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
     },
+}
+
+DATA_FIXED_HYPERPARAMS: Final = {
+    "prediction_length_in_minutes": 15,  # user specification for model
 }
 
 # NN hyperparameters
@@ -186,11 +192,6 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 60,
         "default": 2,
-    },
-    "output_chunk_length_in_minutes": {
-        "min": 5.0,
-        "max": 30.0,
-        "default": 30.0,
     },
     "dropout": {
         "min": 0.0,
@@ -321,9 +322,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             required_hyperparams_data = []
         if required_hyperparams_model is None:
             required_hyperparams_model = []
-        for hyperparam in ["output_chunk_length"]:
-            if hyperparam in required_hyperparams_model:
-                required_hyperparams_data.append(f"{hyperparam}_in_minutes")
 
         self.model_class = model_class
         self.is_nn = is_nn
@@ -587,18 +585,24 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "y_bin_edges",
                 "time_bin_size",
                 "time_bin_size_in_minutes",
+                "prediction_length_in_minutes",
             ]:
                 continue
-            elif hyperparam in ["output_chunk_length_in_minutes", "output_chunk_length"]:
-                self.chosen_hyperparams["output_chunk_length_in_minutes"] = get_hyperparam_value(
-                    "output_chunk_length_in_minutes"
+            elif hyperparam == "output_chunk_length":
+                prediction_length_in_minutes = get_hyperparam_value("prediction_length_in_minutes")
+                if TYPE_CHECKING:
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        prediction_length_in_minutes, float
+                    )
+                prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
+                self.chosen_hyperparams["output_chunk_length"] = math.ceil(
+                    prediction_length.seconds / self.chosen_hyperparams["time_bin_size"].seconds
                 )
-                output_chunk_length = datetime.timedelta(
-                    minutes=self.chosen_hyperparams["output_chunk_length_in_minutes"]
+                self.chosen_hyperparams["prediction_length_in_minutes"] = (
+                    self.chosen_hyperparams["output_chunk_length"]
+                    * self.chosen_hyperparams["time_bin_size_in_minutes"]
                 )
-                self.chosen_hyperparams["output_chunk_length"] = (
-                    output_chunk_length.seconds // self.chosen_hyperparams["time_bin_size"].seconds
-                )
+
                 continue
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
@@ -795,8 +799,8 @@ class NBEATSModelWrapper(TSModelWrapper):
         "layer_widths",
         "expansion_coefficient_dim",
     ]
-    _allowed_variable_hyperparams = {**DATA_HYPERPARAMETERS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**NN_FIXED_HYPERPARAMS}
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
     def __init__(self: "NBEATSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -807,10 +811,6 @@ class NBEATSModelWrapper(TSModelWrapper):
                 Can be a parent TSModelWrapper instance plus the undefined parameters,
                 or all the necessary parameters.
         """
-        for hyperparam in ["output_chunk_length"]:
-            if hyperparam in self._required_hyperparams_model:
-                self._required_hyperparams_data.append(f"{hyperparam}_in_minutes")
-
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
