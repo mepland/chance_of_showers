@@ -22,7 +22,7 @@ import sys
 # import natsort
 # import numpy as np
 import zoneinfo
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 import pandas as pd
 from hydra import compose, initialize
@@ -274,9 +274,6 @@ pprint.pprint(configurable_hyperparams)
 # %% [markdown]
 # ### Bayesian Optimization
 
-# %% [raw]
-# raise UserWarning("Stopping Here")
-
 # %%
 hyperparams_NOT_to_opt: list[str] = []
 hyperparams_to_opt = [
@@ -290,25 +287,15 @@ pprint.pprint(hyperparams_to_opt)
 optimal_values, optimizer = run_bayesian_opt(
     model_wrapper,
     hyperparams_to_opt,
-    n_iter=10,
-    init_points=5,
-    verbose=2,
-    enable_progress_bar=False,
+    n_iter=20,
 )
 
 
 # %%
 pprint.pprint(optimal_values)
 
-# %% [raw]
-# {'params': {'dropout': 0.020924079097806275,
-#             'expansion_coefficient_dim': 3.629301836816963,
-#             'layer_widths': 197.71547427367108,
-#             'num_blocks': 5.104629857953324,
-#             'num_layers': 8.066583652537123,
-#             'num_stacks': 10.784015325759627,
-#             'rebin_y': 0.5142344384136116},
-#  'target': -0.012030065059661865}
+# %%
+raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ### Training
@@ -322,28 +309,11 @@ print(f"{val_loss = }")
 print(model_wrapper)
 
 # %%
-work_dir = model_wrapper.work_dir
-model_name = model_wrapper.model_name
-if TYPE_CHECKING:
-    assert isinstance(work_dir, str)  # noqa: SCS108 # nosec assert_used
-    assert isinstance(model_name, str)  # noqa: SCS108 # nosec assert_used
-tensorboard_logs = os.path.join(work_dir, model_name, "logs")
+tensorboard_logs = os.path.join(model_wrapper.work_dir, model_wrapper.model_name, "logs")  # type: ignore[arg-type]
 print(tensorboard_logs)
 
 # %%
 # %tensorboard --logdir $tensorboard_logs
-
-# %% [markdown]
-# ### OLD
-
-# %% [raw]
-# fname_model = os.path.join(MODELS_PATH, model_name, "model.pt")
-
-# %% [raw]
-# model_nbeats.save(fname_model)
-
-# %% [raw]
-# model_nbeats = NBEATSModel.load(fname_model)
 
 # %% [markdown]
 # ## AutoARIMA
