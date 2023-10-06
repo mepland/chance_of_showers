@@ -11,10 +11,10 @@ poetry:
 	poetry lock
 
 pre-commit:
-	poetry run pre-commit run
-
-pre-commit-all:
 	poetry run pre-commit run --all-files
+
+pre-commit-this-commit:
+	poetry run pre-commit run
 
 pre-commit-update:
 	poetry run pre-commit autoupdate
@@ -58,7 +58,7 @@ pyupgrade:
 yamllint:
 	poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
 
-blocklint:
+bklint: # Renamed to bklint so "make bl" autocompletes to "make black"
 	poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
 # flake8 ~ noqa
