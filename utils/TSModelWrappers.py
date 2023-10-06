@@ -4,6 +4,7 @@
 # pylint: enable=invalid-name
 
 import datetime
+import gc
 import logging
 import math
 import os
@@ -13,7 +14,10 @@ import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
 import bayes_opt
+import humanize
+import numpy as np
 import pandas as pd
+import psutil
 import sympy
 import torch
 import torchmetrics
@@ -64,6 +68,34 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
         torchmetrics.MeanAbsolutePercentageError(),
     ]
 )
+
+
+def print_memory_usage(*, header: str | None = None) -> None:
+    """Print system memory usage statistics.
+
+    Args:
+        header: Header to print before the rest of the memory usage.
+    """
+    ram_info = psutil.virtual_memory()
+    process = psutil.Process()
+    if header is not None and header != "":
+        header = f"{header}\n"
+    else:
+        header = ""
+    print(
+        header
+        + f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
+        + f"Used on System: {humanize.naturalsize(ram_info.used)}, "
+        + f"Percent: {ram_info.percent:.2f}%, "
+        + f"Used by Process {humanize.naturalsize(process.memory_info().rss)}"
+    )
+    if torch.cuda.is_available():
+        gpu_memory_stats = torch.cuda.memory_stats()
+        print(
+            f"GPU RAM Current Used: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
+            + f"Peak Used: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}, "
+            + f"Ever Allocated: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.allocated'])}"
+        )
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
@@ -285,7 +317,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         # required
         dfp_trainable_evergreen: pd.DataFrame,
         dt_val_start_datetime_local: datetime.datetime,
-        work_dir: str,
+        work_dir_base: str,
         random_state: int,
         date_fmt: str,
         time_fmt: str,
@@ -295,6 +327,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         *,
         model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
+        work_dir: str | None = None,
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
@@ -307,7 +340,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         Args:
             dfp_trainable_evergreen: Time series data.
             dt_val_start_datetime_local: Date to cut the validation from the training set.
-            work_dir: Working directory to save model files.
+            work_dir_base: Top level directory for saving model files.
             random_state: Random seed.
             date_fmt: String format of dates.
             time_fmt: String format of times.
@@ -315,6 +348,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             local_timezone: Local timezone.
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
+            work_dir: Full path to directory to save this model's files.
             model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
             required_hyperparams_model: List of required hyperparameters for this model's constructor.
@@ -327,23 +361,24 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         if required_hyperparams_model is None:
             required_hyperparams_model = []
 
+        self.dfp_trainable_evergreen = dfp_trainable_evergreen
+        self.dt_val_start_datetime_local = dt_val_start_datetime_local.replace(tzinfo=None)
+        self.work_dir_base = work_dir_base
+        self.random_state = random_state
+        self.date_fmt = date_fmt
+        self.time_fmt = time_fmt
+        self.fname_datetime_fmt = fname_datetime_fmt
+        self.local_timezone = local_timezone
+
         self.model_class = model_class
         self.is_nn = is_nn
+        self.work_dir = work_dir
         self.model_name_tag = model_name_tag
         self.required_hyperparams_data = required_hyperparams_data
         self.required_hyperparams_model = required_hyperparams_model
         self.allowed_variable_hyperparams = allowed_variable_hyperparams
         self.variable_hyperparams = variable_hyperparams
         self.fixed_hyperparams = fixed_hyperparams
-
-        self.dfp_trainable_evergreen = dfp_trainable_evergreen
-        self.dt_val_start_datetime_local = dt_val_start_datetime_local.replace(tzinfo=None)
-        self.work_dir = work_dir
-        self.random_state = random_state
-        self.date_fmt = date_fmt
-        self.time_fmt = time_fmt
-        self.fname_datetime_fmt = fname_datetime_fmt
-        self.local_timezone = local_timezone
 
         self.model_name: str | None = None
         self.chosen_hyperparams: dict = {}
@@ -357,8 +392,18 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             Description of model as str.
         """
         return f"""
+{self.dfp_trainable_evergreen.index.size = }
+{self.dt_val_start_datetime_local = }
+{self.work_dir_base = }
+{self.random_state = }
+{self.date_fmt = }
+{self.time_fmt = }
+{self.fname_datetime_fmt = }
+{self.local_timezone = }
+
 {self.model_class = }
 {self.is_nn = }
+{self.work_dir = }
 {self.model_name_tag = }
 self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
 self.required_hyperparams_model = {pprint.pformat(self.required_hyperparams_model)}
@@ -366,20 +411,18 @@ self.allowed_variable_hyperparams = {pprint.pformat(self.allowed_variable_hyperp
 self.variable_hyperparams = {pprint.pformat(self.variable_hyperparams)}
 self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
 
-{self.dfp_trainable_evergreen.index.size = }
-{self.dt_val_start_datetime_local = }
-{self.work_dir = }
-{self.random_state = }
-{self.date_fmt = }
-{self.time_fmt = }
-{self.fname_datetime_fmt = }
-{self.local_timezone = }
-
 {self.model_name = }
 self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 {self.model = }
 {self.is_trained = }
 """
+
+    def reset_wrapper(self: "TSModelWrapper") -> None:
+        """Reset the wrapper after training, used in Bayesian optimization."""
+        self.model_name = None
+        self.chosen_hyperparams = {}
+        self.model = None
+        self.is_trained = False
 
     def get_random_state(self: "TSModelWrapper", default_random_state: int = 42) -> int:
         """Get the random_state of this model wrapper.
@@ -408,20 +451,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
-    def get_utilized_hyperparameters(self: "TSModelWrapper") -> dict:
-        """Get the hyperparameters actually used in train_model() for this model wrapper.
-
-        Raises:
-            ValueError: Model is not trained.
-
-        Returns:
-            The hyperparameters actually used in train_model().
-        """
-        if not self.is_trained or not self.chosen_hyperparams:
-            raise ValueError("Model must be trained first!")
-
-        return self.chosen_hyperparams
-
     def set_enable_progress_bar(self: "TSModelWrapper", *, enable_progress_bar: bool) -> None:
         """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
 
@@ -445,6 +474,34 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             logger_level = logging.ERROR
         logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
         logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
+
+    def set_work_dir(
+        self: "TSModelWrapper",
+        *,
+        work_dir_relative_to_base: str | None = None,
+        work_dir_absolute: str | None = None,
+    ) -> None:
+        """Set the work_dir for this model wrapper.
+
+        Args:
+            work_dir_relative_to_base: Set work_dir with this extension to work_dir_base.
+            work_dir_absolute: Absolute path for work_dir, disregard work_dir_base.
+
+        Raises:
+            ValueError: Bad configuration.
+        """
+        if work_dir_relative_to_base is not None and work_dir_absolute is not None:
+            raise ValueError("Can not use both parameters, choose one!")
+        if work_dir_relative_to_base is not None and work_dir_relative_to_base != "":
+            if self.work_dir_base is None:
+                raise ValueError("Must have a valid work_dir_base!")
+            self.work_dir = os.path.join(self.work_dir_base, work_dir_relative_to_base)
+        elif (
+            work_dir_absolute is not None and work_dir_absolute != ""
+        ):  # pylint: disable=no-else-raise
+            self.work_dir = work_dir_absolute
+        else:
+            raise ValueError("Must use at least one parameter!")
 
     def get_generic_model_name(self: "TSModelWrapper") -> str:
         """Get the generic name for this model, without a time stamp.
@@ -681,6 +738,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     f"Hyperparameter {k} with value {v} is not allowed, {60 % v = } should be 0!"
                 )
 
+    def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict:
+        """Return hyperparameters the model would actually run with if trained now, used in Bayesian optimization.
+
+        Args:
+            **kwargs: Hyperparameters to change.
+
+        Returns:
+            Hyperparameters the model would actually run with if trained now.
+        """
+        if kwargs:
+            self.variable_hyperparams = kwargs
+        self._assemble_hyperparams()
+        return self.chosen_hyperparams
+
     def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
         """Train the model and return loss.
 
@@ -691,10 +762,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             Loss.
         """
         # setup hyperparams
-        if kwargs:
-            self.variable_hyperparams = kwargs
         self._name_model()
-        self._assemble_hyperparams()
+        _ = self.preview_hyperparameters(**kwargs)
 
         # construct model object
         if TYPE_CHECKING:
@@ -794,6 +863,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
             **model_covariates_kwargs,
         )
+        print("Train Done")  # TODO Debug
 
         # measure loss on validation
         y_pred_val = self.model.predict(
@@ -806,10 +876,38 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
         y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
-        self.is_trained = True
+        loss = float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
+        print("Loss Done")  # TODO debug
 
-        # return negative as we want to maximize
-        return -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
+        # clean up TODO delete?
+        # small objects, can ignore: time_bin_size, freq_str, y_bin_edges, covariates_type
+        #        print_memory_usage(header="Train GC Start")
+        #        del y_val_tensor
+        #        del y_pred_val_tensor
+        #
+        #        del y_pred_val
+        #
+        #        del dart_series_y_val
+        #        del dart_series_y_train
+        #        del dart_series_y_trainable
+        #
+        #        if covariates_type is not None:
+        #            del model_covariates_kwargs
+        #            del prediction_covariates_kwargs
+        #            del dart_series_covariates_val
+        #            del dart_series_covariates_train
+        #            del dart_series_covariates_trainable
+        #
+        #        del dfp_trainable
+        #
+        #        if torch.cuda.is_available():
+        #            torch.cuda.empty_cache()
+        #        gc.collect()
+        #        print_memory_usage(header="Train GC Done")
+
+        # return negative loss as we want to maximize the target, and set the is_trained flag
+        self.is_trained = True
+        return -loss
 
 
 ################################################################################
@@ -853,6 +951,7 @@ class NBEATSModelWrapper(TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
             self.is_nn = self._is_nn
+            self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
@@ -861,35 +960,41 @@ class NBEATSModelWrapper(TSModelWrapper):
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
             super().__init__(
+                dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
+                dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],
+                work_dir_base=kwargs["work_dir_base"],
+                random_state=kwargs["random_state"],
+                date_fmt=kwargs["date_fmt"],
+                time_fmt=kwargs["time_fmt"],
+                fname_datetime_fmt=kwargs["fname_datetime_fmt"],
+                local_timezone=kwargs["local_timezone"],
                 model_class=self._model_class,
                 is_nn=self._is_nn,
+                work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
-                dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
-                dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],
-                work_dir=kwargs["work_dir"],
-                random_state=kwargs["random_state"],
-                date_fmt=kwargs["date_fmt"],
-                time_fmt=kwargs["time_fmt"],
-                fname_datetime_fmt=kwargs["fname_datetime_fmt"],
-                local_timezone=kwargs["local_timezone"],
             )
 
 
 ################################################################################
 # Setup Bayesian optimization
-def run_bayesian_opt(  # pylint: disable=too-many-locals
+n_points = 0  # # pylint: disable=invalid-name
+
+
+def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     model_wrapper: TSModelWrapper,
     hyperparams_to_opt: list[str],
     *,
     n_iter: int = 100,
+    allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
     verbose: int = 2,
+    display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
@@ -902,6 +1007,11 @@ def run_bayesian_opt(  # pylint: disable=too-many-locals
         model_wrapper: TSModelWrapper object to optimize.
         hyperparams_to_opt: List of hyperparameters to optimize.
         n_iter: How many iterations of Bayesian optimization to perform.
+            This is the number of new models to train, in addition to any duplicated or reloaded points.
+        allow_duplicate_points: If True, the optimizer will allow duplicate points to be registered.
+            This behavior may be desired in high noise situations where repeatedly probing
+            the same point will give different answers. In other situations, the acquisition
+            may occasionally generate a duplicate point.
         utility_kind: {'ucb', 'ei', 'poi'}
             * 'ucb' stands for the Upper Confidence Bounds method
             * 'ei' is the Expected Improvement method
@@ -910,11 +1020,12 @@ def run_bayesian_opt(  # pylint: disable=too-many-locals
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
-        enable_json_logging: Enable JSON logging of iterations.
-        enable_reloading: Enable reloading of prior iterations from JSON log.
+        enable_json_logging: Enable JSON logging of points.
+        enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
-        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the model_wrapper.work_dir.
+        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the model_wrapper.work_dir_base.
 
     Returns:
         optimal_values: Optimal hyperparameter values.
@@ -922,7 +1033,9 @@ def run_bayesian_opt(  # pylint: disable=too-many-locals
 
     Raises:
         ValueError: Bad configuration.
+        RuntimeError: Run time error that is not "out of memory".
     """
+    global n_points
     model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
 
     # Setup hyperparameter bounds
@@ -945,17 +1058,29 @@ def run_bayesian_opt(  # pylint: disable=too-many-locals
         pbounds=hyperparam_bounds,
         random_state=model_wrapper.get_random_state(),
         verbose=verbose,
+        allow_duplicate_points=allow_duplicate_points,
     )
 
     # Setup Logging
     generic_model_name: Final = model_wrapper.get_generic_model_name()
     bayesian_opt_work_dir: Final = os.path.expanduser(
-        os.path.join(model_wrapper.work_dir, bayesian_opt_work_dir_name, generic_model_name)
+        os.path.join(model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name)
     )
 
     fname_json_log: Final = os.path.join(
         bayesian_opt_work_dir, f"bayesian_opt_{generic_model_name}.json"
     )
+
+    # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
+    n_points = 0
+    if enable_reloading and os.path.isfile(fname_json_log):
+        print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
+        optimizer.dispatch(Events.OPTIMIZATION_START)
+        load_logs(optimizer, logs=fname_json_log)
+        n_points = len(optimizer.space)
+        print(f"Loaded {n_points} existing points.\n")
+
+    # Continue to setup logging
     if enable_json_logging:
         os.makedirs(bayesian_opt_work_dir, exist_ok=True)
         json_logger = JSONLogger(path=fname_json_log, reset=False)
@@ -971,34 +1096,84 @@ def run_bayesian_opt(  # pylint: disable=too-many-locals
     if enable_model_saves:
         os.makedirs(bayesian_opt_work_dir_models, exist_ok=True)
 
-    # Reload prior iterations
-    i_iter_start = 0
-    if enable_reloading and os.path.isfile(fname_json_log):
-        print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
-        optimizer.dispatch(Events.OPTIMIZATION_START)
-        load_logs(optimizer, logs=fname_json_log)
-        i_iter_start = len(optimizer.space)
-        print(f"\nLoaded {i_iter_start} existing iterations.\n")
+    # Define function to complete an iteration
+    def complete_iter(
+        target: float, point_to_probe: dict, *, probed_point: dict | None = None
+    ) -> None:
+        """Complete this iteration, register point(s) and clean up.
+
+        Args:
+            target: Target value to register.
+            point_to_probe: Raw point to probe.
+            probed_point: Point that was actually probed.
+        """
+        global n_points
+        optimizer.register(params=point_to_probe, target=target)
+        n_points += 1
+        if probed_point:
+            optimizer.register(params=probed_point, target=target)
+            n_points += 1
+
+        model_wrapper.reset_wrapper()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+        if display_memory_usage:
+            print_memory_usage(header="GC Done")
+        print(f"Completed {i_iter = }, with {n_points = }")  # TODO debug
 
     # run Bayesian optimization iterations
+    if n_points == 0:
+        optimizer.dispatch(Events.OPTIMIZATION_START)
     try:
-        if i_iter_start == 0:
-            optimizer.dispatch(Events.OPTIMIZATION_START)
-        for i_iter in range(i_iter_start, n_iter):
+        for i_iter in range(n_iter):
+            print(f"\nStarting {i_iter = }, with {n_points = }")  # TODO debug
             next_point_to_probe = optimizer.suggest(utility)
 
-            target = model_wrapper.train_model(**next_point_to_probe)
+            # Check if we already tested this point, if so save the raw next_point_to_probe with the same target
+            chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
+            next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
+
+            is_duplicate_point = False
+            for i_param in range(optimizer.space.params.shape[0]):
+                if np.array_equiv(
+                    optimizer.space.params_to_array(next_point_to_probe_cleaned),
+                    optimizer.space.params[i_param],
+                ):
+                    target = optimizer.space.target[i_param]
+                    print(
+                        f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
+                    )
+                    complete_iter(target, next_point_to_probe)
+                    is_duplicate_point = True
+                    break
+            if is_duplicate_point:
+                continue
+
+            # set work_dir for this iteration
+            iter_models_path = os.path.join(bayesian_opt_work_dir_models, f"iteration_{n_points}")
+            model_wrapper.set_work_dir(work_dir_absolute=iter_models_path)
+
+            # train the model
+            try:
+                target = model_wrapper.train_model(**next_point_to_probe)
+            except RuntimeError as error:
+                if "out of memory" in str(error):
+                    print("Ran out of memory, returning -inf as loss")
+                    complete_iter(
+                        -float("inf"), next_point_to_probe, probed_point=next_point_to_probe_cleaned
+                    )
+                    continue
+                raise error
 
             if enable_model_saves:
                 fname_model = os.path.join(
-                    bayesian_opt_work_dir_models, f"iteration_{i_iter}_{generic_model_name}.pt"
+                    iter_models_path, f"iteration_{n_points}_{generic_model_name}.pt"
                 )
                 model_wrapper.get_model().save(fname_model)
 
-            utilized_hyperparameters = model_wrapper.get_utilized_hyperparameters()
-            probed_point = {k: utilized_hyperparameters[k] for k in hyperparams_to_opt}
-
-            optimizer.register(params=probed_point, target=target)
+            # Register the point
+            complete_iter(target, next_point_to_probe, probed_point=next_point_to_probe_cleaned)
 
     except bayes_opt.util.NotUniqueError as error:
         print(

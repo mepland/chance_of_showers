@@ -22,7 +22,7 @@ import sys
 # import natsort
 # import numpy as np
 import zoneinfo
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pandas as pd
 from hydra import compose, initialize
@@ -236,6 +236,7 @@ dfp_val = dfp_trainable_evergreen.loc[
 
 # %%
 import torch  # noqa: E402
+from darts.models.forecasting.forecasting_model import ForecastingModel  # noqa: E402
 
 if torch.cuda.is_available():
     print("CUDA is available")
@@ -247,7 +248,7 @@ else:
 PARENT_WRAPPER: Final = TSModelWrapper(
     dfp_trainable_evergreen=dfp_trainable_evergreen,
     dt_val_start_datetime_local=DT_VAL_START_DATETIME_LOCAL,
-    work_dir=MODELS_PATH,
+    work_dir_base=MODELS_PATH,
     random_state=RANDOM_SEED,
     date_fmt=DATE_FMT,
     time_fmt=TIME_FMT,
@@ -275,19 +276,30 @@ pprint.pprint(configurable_hyperparams)
 # ### Bayesian Optimization
 
 # %%
-hyperparams_NOT_to_opt: list[str] = []
-hyperparams_to_opt = [
-    _ for _ in list(configurable_hyperparams.keys()) if _ not in hyperparams_NOT_to_opt
-]
+BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+if TYPE_CHECKING:
+    assert isinstance(  # noqa: SCS108 # nosec assert_used
+        model_wrapper.model_class, ForecastingModel
+    )
+tensorboard_logs = os.path.join(
+    model_wrapper.work_dir_base,
+    BAYESIAN_OPT_WORK_DIR_NAME,
+    model_wrapper.model_class.__name__,
+    "models",
+)
+# print(tensorboard_logs)
 
 # %%
-pprint.pprint(hyperparams_to_opt)
+# %tensorboard --logdir $tensorboard_logs
 
 # %%
 optimal_values, optimizer = run_bayesian_opt(
-    model_wrapper,
-    hyperparams_to_opt,
-    n_iter=20,
+    model_wrapper=model_wrapper,
+    hyperparams_to_opt=list(configurable_hyperparams.keys()),
+    n_iter=200,
+    enable_progress_bar=True,
+    display_memory_usage=True,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
 
 
@@ -309,7 +321,7 @@ print(f"{val_loss = }")
 print(model_wrapper)
 
 # %%
-tensorboard_logs = os.path.join(model_wrapper.work_dir, model_wrapper.model_name, "logs")  # type: ignore[arg-type]
+tensorboard_logs = os.path.join(model_wrapper.work_dir_base, model_wrapper.model_name, "logs")  # type: ignore[arg-type]
 print(tensorboard_logs)
 
 # %%
