@@ -22,7 +22,7 @@ import sys
 # import natsort
 # import numpy as np
 import zoneinfo
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 import pandas as pd
 from hydra import compose, initialize
@@ -236,7 +236,6 @@ dfp_val = dfp_trainable_evergreen.loc[
 
 # %%
 import torch  # noqa: E402
-from darts.models.forecasting.forecasting_model import ForecastingModel  # noqa: E402
 
 if torch.cuda.is_available():
     print("CUDA is available")
@@ -258,6 +257,37 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 # print(PARENT_WRAPPER)
 
 # %% [markdown]
+# ## Bayesian Optimization
+
+# %%
+BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+tensorboard_logs = os.path.join(
+    PARENT_WRAPPER.work_dir_base,
+    BAYESIAN_OPT_WORK_DIR_NAME,
+)
+# print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %%
+optimal_values, optimizer = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=NBEATSModelWrapper,
+    n_iter=200,
+    enable_progress_bar=True,
+    max_time_per_model=datetime.timedelta(minutes=20),
+    display_memory_usage=True,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+
+# %%
+pprint.pprint(optimal_values)
+
+# %%
+raise UserWarning("Stopping Here")
+
+# %% [markdown]
 # ## N-BEATS
 
 # %%
@@ -267,53 +297,15 @@ model_wrapper = NBEATSModelWrapper(
 )
 # print(model_wrapper)
 
-
 # %%
 configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %% [markdown]
-# ### Bayesian Optimization
-
-# %%
-BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-if TYPE_CHECKING:
-    assert isinstance(  # noqa: SCS108 # nosec assert_used
-        model_wrapper.model_class, ForecastingModel
-    )
-tensorboard_logs = os.path.join(
-    model_wrapper.work_dir_base,
-    BAYESIAN_OPT_WORK_DIR_NAME,
-    model_wrapper.model_class.__name__,
-    "models",
-)
-# print(tensorboard_logs)
-
-# %%
-# %tensorboard --logdir $tensorboard_logs
-
-# %%
-optimal_values, optimizer = run_bayesian_opt(
-    model_wrapper=model_wrapper,
-    hyperparams_to_opt=list(configurable_hyperparams.keys()),
-    n_iter=200,
-    enable_progress_bar=True,
-    display_memory_usage=True,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
-)
-
-
-# %%
-pprint.pprint(optimal_values)
-
-# %%
-raise UserWarning("Stopping Here")
-
-# %% [markdown]
 # ### Training
 
 # %%
-model_wrapper.set_enable_progress_bar(enable_progress_bar=True)
+model_wrapper.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper.train_model()
 print(f"{val_loss = }")
 

@@ -99,9 +99,15 @@ def print_memory_usage(*, header: str | None = None) -> None:
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
-# copy docs from https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/early_stopping.html#EarlyStopping
+# copy docs from
+# https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/early_stopping.html#EarlyStopping
+# https://lightning.ai/docs/pytorch/stable/common/trainer.html
 def get_pl_trainer_kwargs(
-    es_min_delta: float, es_patience: int, *, enable_progress_bar: bool
+    es_min_delta: float,
+    es_patience: int,
+    *,
+    enable_progress_bar: bool,
+    max_time: str | datetime.timedelta | dict[str, int] | None,
 ) -> dict:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
@@ -118,12 +124,14 @@ def get_pl_trainer_kwargs(
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
         enable_progress_bar: Enable torch progress bar during training.
+        max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
 
     Returns:
         pl_trainer_kwargs.
     """
     return {
         "enable_progress_bar": enable_progress_bar,
+        "max_time": max_time,
         "callbacks": [
             EarlyStopping(
                 min_delta=es_min_delta,
@@ -212,6 +220,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
     "output_chunk_length",
     "dropout",
     "n_epochs",
+    "batch_size",
     "work_dir",
     "model_name",
     "pl_trainer_kwargs",
@@ -228,6 +237,11 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 60,
         "default": 2,
+    },
+    "batch_size": {
+        "min": 1,
+        "max": 64,
+        "default": 32,
     },
     "dropout": {
         "min": 0.0,
@@ -289,6 +303,7 @@ NN_FIXED_HYPERPARAMS: Final = {
     "log_tensorboard": True,
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
     "enable_progress_bar": True,
+    "max_time": None,
 }
 
 INTEGER_HYPERPARAMS: Final = [
@@ -296,6 +311,7 @@ INTEGER_HYPERPARAMS: Final = [
     "input_chunk_length",
     "output_chunk_length",
     "n_epochs",
+    "batch_size",
     "es_patience",
     "lr_patience",
     # NBEATSModel
@@ -451,16 +467,23 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
-    def set_enable_progress_bar(self: "TSModelWrapper", *, enable_progress_bar: bool) -> None:
+    def set_enable_progress_bar_and_max_time(
+        self: "TSModelWrapper",
+        *,
+        enable_progress_bar: bool,
+        max_time: str | datetime.timedelta | dict[str, int] | None,
+    ) -> None:
         """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
 
         Args:
             enable_progress_bar: Enable torch progress bar during training.
+            max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
         _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
+        _fixed_hyperparams["max_time"] = max_time
 
         self.fixed_hyperparams = _fixed_hyperparams
 
@@ -502,6 +525,17 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             self.work_dir = work_dir_absolute
         else:
             raise ValueError("Must use at least one parameter!")
+
+    def set_model_name_tag(
+        self: "TSModelWrapper",
+        model_name_tag: str,
+    ) -> None:
+        """Set the model_name_tag for this model wrapper.
+
+        Args:
+            model_name_tag: Descriptive tag to add to the model name, optional.
+        """
+        self.model_name_tag = model_name_tag
 
     def get_generic_model_name(self: "TSModelWrapper") -> str:
         """Get the generic name for this model, without a time stamp.
@@ -694,10 +728,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["enable_progress_bar"] = get_hyperparam_value(
                     "enable_progress_bar"
                 )
+                self.chosen_hyperparams["max_time"] = get_hyperparam_value("max_time")
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
                     enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
+                    max_time=self.chosen_hyperparams["max_time"],
                 )
             elif hyperparam == "lr_scheduler_kwargs":
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
@@ -863,7 +899,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
             **model_covariates_kwargs,
         )
-        print("Train Done")  # TODO Debug
 
         # measure loss on validation
         y_pred_val = self.model.predict(
@@ -877,33 +912,32 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
         loss = float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
-        print("Loss Done")  # TODO debug
 
-        # clean up TODO delete?
+        # clean up
         # small objects, can ignore: time_bin_size, freq_str, y_bin_edges, covariates_type
-        #        print_memory_usage(header="Train GC Start")
-        #        del y_val_tensor
-        #        del y_pred_val_tensor
-        #
-        #        del y_pred_val
-        #
-        #        del dart_series_y_val
-        #        del dart_series_y_train
-        #        del dart_series_y_trainable
-        #
-        #        if covariates_type is not None:
-        #            del model_covariates_kwargs
-        #            del prediction_covariates_kwargs
-        #            del dart_series_covariates_val
-        #            del dart_series_covariates_train
-        #            del dart_series_covariates_trainable
-        #
-        #        del dfp_trainable
-        #
-        #        if torch.cuda.is_available():
-        #            torch.cuda.empty_cache()
-        #        gc.collect()
-        #        print_memory_usage(header="Train GC Done")
+        print_memory_usage(header="Train GC Start")
+        del y_val_tensor
+        del y_pred_val_tensor
+
+        del y_pred_val
+
+        del dart_series_y_val
+        del dart_series_y_train
+        del dart_series_y_trainable
+
+        if covariates_type is not None:
+            del model_covariates_kwargs
+            del prediction_covariates_kwargs
+            del dart_series_covariates_val
+            del dart_series_covariates_train
+            del dart_series_covariates_trainable
+
+        del dfp_trainable
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+        print_memory_usage(header="Train GC Done")
 
         # return negative loss as we want to maximize the target, and set the is_trained flag
         self.is_trained = True
@@ -986,9 +1020,10 @@ n_points = 0  # # pylint: disable=invalid-name
 
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
-    model_wrapper: TSModelWrapper,
-    hyperparams_to_opt: list[str],
+    parent_wrapper: TSModelWrapper,
+    model_wrapper_class: type[NBEATSModelWrapper],  # expand with more classes
     *,
+    hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
     allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
@@ -996,6 +1031,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     verbose: int = 2,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
+    max_time_per_model: str | datetime.timedelta | dict[str, int] | None = None,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -1004,8 +1040,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     """Run Bayesian optimization for this model wrapper.
 
     Args:
-        model_wrapper: TSModelWrapper object to optimize.
+        parent_wrapper: TSModelWrapper object containing all parent configs.
+        model_wrapper_class: TSModelWrapper class to optimize.
         hyperparams_to_opt: List of hyperparameters to optimize.
+            If None, use all configurable hyperparameters.
         n_iter: How many iterations of Bayesian optimization to perform.
             This is the number of new models to train, in addition to any duplicated or reloaded points.
         allow_duplicate_points: If True, the optimizer will allow duplicate points to be registered.
@@ -1022,10 +1060,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
+        max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
-        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the model_wrapper.work_dir_base.
+        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the parent_wrapper.work_dir_base.
 
     Returns:
         optimal_values: Optimal hyperparameter values.
@@ -1036,11 +1075,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         RuntimeError: Run time error that is not "out of memory".
     """
     global n_points
-    model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+
+    # Setup hyperparameters
+    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
+    if hyperparams_to_opt is None:
+        hyperparams_to_opt = list(configurable_hyperparams.keys())
 
     # Setup hyperparameter bounds
-    configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
-
     hyperparam_bounds = {}
     for hyperparam in hyperparams_to_opt:
         hyperparam_min = configurable_hyperparams.get(hyperparam, {}).get("min")
@@ -1056,15 +1098,15 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     optimizer = bayes_opt.BayesianOptimization(
         f=None,
         pbounds=hyperparam_bounds,
-        random_state=model_wrapper.get_random_state(),
+        random_state=_model_wrapper.get_random_state(),
         verbose=verbose,
         allow_duplicate_points=allow_duplicate_points,
     )
 
     # Setup Logging
-    generic_model_name: Final = model_wrapper.get_generic_model_name()
+    generic_model_name: Final = _model_wrapper.get_generic_model_name()
     bayesian_opt_work_dir: Final = os.path.expanduser(
-        os.path.join(model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name)
+        os.path.join(_model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name)
     )
 
     fname_json_log: Final = os.path.join(
@@ -1091,18 +1133,18 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         for event in DEFAULT_EVENTS:
             optimizer.subscribe(event, screen_logger)
 
-    # Setup model saves
-    bayesian_opt_work_dir_models: Final = os.path.join(bayesian_opt_work_dir, "models")
-    if enable_model_saves:
-        os.makedirs(bayesian_opt_work_dir_models, exist_ok=True)
-
     # Define function to complete an iteration
     def complete_iter(
-        target: float, point_to_probe: dict, *, probed_point: dict | None = None
+        model_wrapper: TSModelWrapper,
+        target: float,
+        point_to_probe: dict,
+        *,
+        probed_point: dict | None = None,
     ) -> None:
         """Complete this iteration, register point(s) and clean up.
 
         Args:
+            model_wrapper: Model wrapper object to rest.
             target: Target value to register.
             point_to_probe: Raw point to probe.
             probed_point: Point that was actually probed.
@@ -1115,20 +1157,31 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             n_points += 1
 
         model_wrapper.reset_wrapper()
+        del model_wrapper
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
         if display_memory_usage:
             print_memory_usage(header="GC Done")
-        print(f"Completed {i_iter = }, with {n_points = }")  # TODO debug
+        print(f"Completed {i_iter = }, with {n_points = }")
+
+    # clean up _model_wrapper
+    del _model_wrapper
 
     # run Bayesian optimization iterations
     if n_points == 0:
         optimizer.dispatch(Events.OPTIMIZATION_START)
     try:
         for i_iter in range(n_iter):
-            print(f"\nStarting {i_iter = }, with {n_points = }")  # TODO debug
+            print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
+
+            # Create a fresh model_wrapper object to try to avoid GPU memory leaks TODO
+            model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+            model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
+            model_wrapper.set_enable_progress_bar_and_max_time(
+                enable_progress_bar=enable_progress_bar, max_time=max_time_per_model
+            )
 
             # Check if we already tested this point, if so save the raw next_point_to_probe with the same target
             chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
@@ -1144,15 +1197,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     print(
                         f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
                     )
-                    complete_iter(target, next_point_to_probe)
+                    complete_iter(model_wrapper, target, next_point_to_probe)
                     is_duplicate_point = True
                     break
             if is_duplicate_point:
                 continue
 
-            # set work_dir for this iteration
-            iter_models_path = os.path.join(bayesian_opt_work_dir_models, f"iteration_{n_points}")
-            model_wrapper.set_work_dir(work_dir_absolute=iter_models_path)
+            # set model_name_tag for this iteration
+            model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
 
             # train the model
             try:
@@ -1161,19 +1213,24 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 if "out of memory" in str(error):
                     print("Ran out of memory, returning -inf as loss")
                     complete_iter(
-                        -float("inf"), next_point_to_probe, probed_point=next_point_to_probe_cleaned
+                        model_wrapper,
+                        -float("inf"),
+                        next_point_to_probe,
+                        probed_point=next_point_to_probe_cleaned,
                     )
                     continue
                 raise error
 
             if enable_model_saves:
                 fname_model = os.path.join(
-                    iter_models_path, f"iteration_{n_points}_{generic_model_name}.pt"
+                    bayesian_opt_work_dir, f"iteration_{n_points}_{generic_model_name}.pt"
                 )
                 model_wrapper.get_model().save(fname_model)
 
             # Register the point
-            complete_iter(target, next_point_to_probe, probed_point=next_point_to_probe_cleaned)
+            complete_iter(
+                model_wrapper, target, next_point_to_probe, probed_point=next_point_to_probe_cleaned
+            )
 
     except bayes_opt.util.NotUniqueError as error:
         print(
