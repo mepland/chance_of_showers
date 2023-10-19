@@ -240,7 +240,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     },
     "batch_size": {
         "min": 1,
-        "max": 64,
+        "max": 1000,
         "default": 32,
     },
     "dropout": {
