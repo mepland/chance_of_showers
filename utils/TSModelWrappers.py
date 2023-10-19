@@ -82,20 +82,20 @@ def print_memory_usage(*, header: str | None = None) -> None:
         header = f"{header}\n"
     else:
         header = ""
-    print(
+    memory_usage_str = (
         header
         + f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
-        + f"Used on System: {humanize.naturalsize(ram_info.used)}, "
-        + f"Percent: {ram_info.percent:.2f}%, "
-        + f"Used by Process {humanize.naturalsize(process.memory_info().rss)}"
+        + f"System Used: {humanize.naturalsize(ram_info.used)}, {ram_info.percent:.2f}%, "
+        + f"Process Used: {humanize.naturalsize(process.memory_info().rss)}"
     )
+
     if torch.cuda.is_available():
         gpu_memory_stats = torch.cuda.memory_stats()
-        print(
-            f"GPU RAM Current Used: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
-            + f"Peak Used: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}, "
-            + f"Ever Allocated: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.allocated'])}"
-        )
+    memory_usage_str = (
+        f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
+        + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
+    )
+    print(memory_usage_str)
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
@@ -915,7 +915,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         # clean up
         # small objects, can ignore: time_bin_size, freq_str, y_bin_edges, covariates_type
-        print_memory_usage(header="Train GC Start")
         del y_val_tensor
         del y_pred_val_tensor
 
@@ -937,7 +936,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
-        print_memory_usage(header="Train GC Done")
 
         # return negative loss as we want to maximize the target, and set the is_trained flag
         self.is_trained = True
@@ -1162,7 +1160,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             torch.cuda.empty_cache()
         gc.collect()
         if display_memory_usage:
-            print_memory_usage(header="GC Done")
+            print_memory_usage()
         print(f"Completed {i_iter = }, with {n_points = }")
 
     # clean up _model_wrapper
