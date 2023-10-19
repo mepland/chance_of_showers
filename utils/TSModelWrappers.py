@@ -10,6 +10,7 @@ import math
 import os
 import pprint
 import traceback
+import warnings
 import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
@@ -28,6 +29,7 @@ from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.utilities.warnings import PossibleUserWarning
 
 # isort: off
 from darts.models import (
@@ -57,6 +59,12 @@ from utils.shared_functions import (
 
 ################################################################################
 # Setup global parameters
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"The number of training batches (\d*) is smaller than the logging interval",
+    category=PossibleUserWarning,
+)
 
 # loss function
 LOSS_FN: Final = torchmetrics.MeanSquaredError()
@@ -91,7 +99,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
 
     if torch.cuda.is_available():
         gpu_memory_stats = torch.cuda.memory_stats()
-    memory_usage_str = (
+    memory_usage_str += (
         f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
         + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
     )
@@ -108,6 +116,7 @@ def get_pl_trainer_kwargs(
     *,
     enable_progress_bar: bool,
     max_time: str | datetime.timedelta | dict[str, int] | None,
+    log_every_n_steps: int | None = None,
 ) -> dict:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
@@ -125,6 +134,7 @@ def get_pl_trainer_kwargs(
                 epochs before being stopped.
         enable_progress_bar: Enable torch progress bar during training.
         max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
+        log_every_n_steps: How often to log within steps.
 
     Returns:
         pl_trainer_kwargs.
@@ -132,6 +142,7 @@ def get_pl_trainer_kwargs(
     return {
         "enable_progress_bar": enable_progress_bar,
         "max_time": max_time,
+        "log_every_n_steps": log_every_n_steps,
         "callbacks": [
             EarlyStopping(
                 min_delta=es_min_delta,
@@ -700,10 +711,17 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
             elif hyperparam in [  # noqa: R507
+                # these are not needed
                 "y_bin_edges",
                 "time_bin_size",
                 "time_bin_size_in_minutes",
                 "prediction_length_in_minutes",
+                "es_min_delta",
+                "es_patience",
+                "enable_progress_bar",
+                "max_time",
+                "lr_factor",
+                "lr_patience",
             ]:
                 continue
             elif hyperparam == "output_chunk_length":
@@ -734,6 +752,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["es_patience"],
                     enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
                     max_time=self.chosen_hyperparams["max_time"],
+                    # Could set log_every_n_steps = 1 to avoid a warning, but that would make large logs, so just use filterwarnings instead
+                    # https://github.com/Lightning-AI/lightning/issues/10644
+                    # https://github.com/Lightning-AI/lightning/blob/c68ff6482f97f388d6b0c37151fafc0fae789094/src/lightning/pytorch/loops/fit_loop.py#L292-L298
                 )
             elif hyperparam == "lr_scheduler_kwargs":
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
@@ -1167,21 +1188,22 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     del _model_wrapper
 
     # run Bayesian optimization iterations
-    if n_points == 0:
-        optimizer.dispatch(Events.OPTIMIZATION_START)
     try:
         for i_iter in range(n_iter):
+            if i_iter == 0:
+                optimizer.dispatch(Events.OPTIMIZATION_START)
             print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
 
-            # Create a fresh model_wrapper object to try to avoid GPU memory leaks TODO
+            # Create a fresh model_wrapper object to try to avoid GPU memory leaks TODO probably can safely revert
             model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
             model_wrapper.set_enable_progress_bar_and_max_time(
                 enable_progress_bar=enable_progress_bar, max_time=max_time_per_model
             )
 
-            # Check if we already tested this point, if so save the raw next_point_to_probe with the same target
+            # Check if we already tested this chosen_hyperparams point
+            # If it has been tested, save the raw next_point_to_probe with the same target and continue
             chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
             next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
 
