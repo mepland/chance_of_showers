@@ -62,7 +62,7 @@ from utils.shared_functions import (
 
 warnings.filterwarnings(
     "ignore",
-    message=r"The number of training batches (\d*) is smaller than the logging interval",
+    message="The number of training batches",
     category=PossibleUserWarning,
 )
 
