@@ -285,7 +285,7 @@ optimal_values, optimizer = run_bayesian_opt(
 pprint.pprint(optimal_values)
 
 # %%
-raise UserWarning("Stopping Here")
+# raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ## N-BEATS
