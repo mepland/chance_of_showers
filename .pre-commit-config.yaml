@@ -18,11 +18,11 @@ repos:
 
   # black
   - repo: https://github.com/psf/black
-    rev: '23.7.0'
+    rev: '23.11.0'
     hooks:
       - id: black-jupyter
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: '1.15.0'
+    rev: '1.16.0'
     hooks:
       - id: blacken-docs
         args: ['--line-length=100']
@@ -30,7 +30,7 @@ repos:
 
   # flake8
   - repo: https://github.com/pycqa/flake8
-    rev: '6.0.0'
+    rev: '6.1.0'
     hooks:
       - id: flake8
         additional_dependencies: [
@@ -77,7 +77,7 @@ repos:
 
   # mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.4.1'
+    rev: 'v1.7.0'
     hooks:
       - id: mypy
 
@@ -107,19 +107,19 @@ repos:
 
   # vulture
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.7'
+    rev: 'v2.10'
     hooks:
       - id: vulture
 
   # pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.9.0'
+    rev: 'v3.15.0'
     hooks:
       - id: pyupgrade
 
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: 'v1.32.0'
+    rev: 'v1.33.0'
     hooks:
       - id: yamllint
         args: ['-c', '.dev_config/.yamllint.yaml', '--strict']
@@ -217,7 +217,7 @@ repos:
 
   # pre-commit-hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 'v4.4.0'
+    rev: 'v4.5.0'
     hooks:
       #### python
       # simply checks whether the files parse as valid python
