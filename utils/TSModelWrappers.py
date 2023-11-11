@@ -996,7 +996,9 @@ class NBEATSModelWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(kwargs["TSModelWrapper"].__class__)  # pylint: disable=unidiomatic-typecheck
+            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
+                kwargs["TSModelWrapper"].__class__
+            )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
