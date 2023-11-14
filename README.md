@@ -30,7 +30,7 @@ Open this link in your browser to see the live dashboard, as demonstrated below:
 
 <div align="center">
   <video autoplay loop>
-    <source src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd" type="video/mp4">
+    <source src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd">
     Your browser does not support the video tag.
   </video>
 </div>
