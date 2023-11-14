@@ -29,7 +29,10 @@ the local IP address and port of the dashboard will be logged on DAQ startup.
 Open this link in your browser to see the live dashboard, as demonstrated below:
 
 <div align="center">
-  <video autoplay loop src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd" width=100></video>
+  <video autoplay loop>
+    <source src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 </div>
 
 ### Setting up cron Jobs
