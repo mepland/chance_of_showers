@@ -28,7 +28,11 @@ If `daq: {display_web: true}` is set in [`config.yaml`](config.yaml),
 the local IP address and port of the dashboard will be logged on DAQ startup.
 Open this link in your browser to see the live dashboard, as demonstrated below:
 
-<video src="media/chance_of_showers_dashboard_demo.mp4" width=200></video>
+TODO 1
+<video src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd" width=200></video>
+
+TODO 2
+https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd
 
 ### Setting up cron Jobs
 Jobs to restart the DAQ on boot and every 30 minutes,
