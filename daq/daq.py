@@ -97,10 +97,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     # DAQ variables
     N_POLLING: Final = int(np.ceil(AVERAGING_PERIOD_SECONDS / POLLING_PERIOD_SECONDS))
     # pylint: enable=invalid-name
-    # test if defining here first saves memory?
-    polling_pressure_samples = np.empty(N_POLLING)
-    polling_pressure_samples.fill(np.nan)
-    polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841 # pylint: disable=unused-variable
 
     ################################################################################
     # Lock script, avoid launching duplicates
@@ -620,6 +616,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             i_polling = 0
             # reset variables
             had_flow = 0  # avoid sticking high if we lose pressure while flowing
+            polling_pressure_samples = np.empty(N_POLLING)
             polling_pressure_samples.fill(np.nan)
             polling_flow_samples = np.zeros(N_POLLING)
             while running_daq_loop and t_stop - t_start < datetime.timedelta(

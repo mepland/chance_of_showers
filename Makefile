@@ -1,9 +1,9 @@
 setupDAQ:
-	poetry install --with daq,web,dev
+	poetry install --with daq,web,dev --no-root
 	poetry run pre-commit install
 
 setupANA:
-	poetry install --with ana,dev
+	poetry install --with ana,dev --no-root
 	poetry run pre-commit install
 
 poetry:
