@@ -1,23 +1,85 @@
 # chance\_of\_showers
 Matthew Epland, PhD
 
-TODO Project description
+This project provides live water pressure measurements via a web dashboard running on a Raspberry Pi,
+logs the data, and creates time series forecasts of future water pressure.
 
 [![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
-[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
-[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
+
+[![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=flat&logo=Raspberry-Pi)](https://www.raspberrypi.com)
+[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org)
+[![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=flat&logo=Matplotlib&logoColor=black)](https://matplotlib.org)
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
+[![Socket.io](https://img.shields.io/badge/Socket.io-black?style=flat&logo=socket.io&badgeColor=010101)](https://socket.io)
+
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json?style=flat)](https://python-poetry.org)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
+[![Linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen?style=flat)](https://github.com/pylint-dev/pylint)
+[![Linting: flake8](https://img.shields.io/badge/flake8-checked-blueviolet?style=flat)](https://github.com/PyCQA/flake8)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org)
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort)
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
+
+## Introduction
+
+Living in a 5th floor walk up in NYC can save you on rent and gym memberships,
+but runs the risk of leaving you high and dry when your water pressure gives out!
+The pressure delivered from the city's water mains is
+_[typically](https://cooperatornews.com/article/dispelling-myths-about-poor-water-pressure)_
+sufficient to reach the 6th floor,
+with higher buildings needing a booster pump and one of NYC's iconic rooftop
+[water towers](https://www.amny.com/real-estate/water-towers-nyc-s-misunderstood-icons-1-6982696).
+My building lacks a pump and water tower,
+leaving my top floor apartment with _just barely_ satisfactory pressure,
+as long as no other units are using water!
+As you can see in the data below,
+my daytime water pressure is all over the place.
+After being stranded soapy and cold halfway through a shower one too many times,
+I decided to use my data science and electronics skills to record
+the time series of my apartment's hot water pressure with the goal of forecasting future availability,
+and hence `chance_of_showers` was born!
+
+## Hardware
+
+### Bill of Materials
+
+Here is a list of the major components I used in my build.
+With suitable alterations, the project could definitely be carried out with a wide array of other
+sensors, single board computers or microcontrollers, plumbing supplies, etc.
+
+#### Electronics
+- [Raspberry Pi 4 Model B 2 GB](https://www.raspberrypi.com/products/raspberry-pi-4-model-b) with USB C power supply and microSDHC card
+- [MCP3008 8-Channel 10-Bit ADC With SPI Interface](https://www.digikey.com/en/products/detail/microchip-technology/MCP3008-I-P/319422)
+- [DFRobot Gravity Water Pressure Sensor SEN0257](https://wiki.dfrobot.com/Gravity__Water_Pressure_Sensor_SKU__SEN0257)
+- [YWBL-WH Water Flow Hall Effect Sensor Switch](https://www.amazon.com/Interface-Electromagnetic-Flowmeter-Industrial-Accessory/dp/B08B1NG4FZ)
+- Breadboard and Dupont jumper wires
+
+####  Plumbing
+- [1/2" 3 Way Tee Connector](https://www.amazon.com/Stainless-Diverter-Movable-Flexible-Connector/dp/B07ZZYWP2F)
+- [B1F09 Faucet Connector, Braided Stainless Steel - 3/8 Female Compression Thread x 1/2 F.I.P. Thread](https://www.amazon.com/gp/product/B000BQWNP8)
+- [NPT Thread Pipe Fitting Converter - 3/8" Male to 1/2" Female and 1/2" Male to 3/8" Female](https://www.amazon.com/gp/product/B07LD3GN4X/ref=ppx_od_dt_b_asin_title_s01)
+- [1/2" NPT Male x 1/2" G Thread (BSP) Female Adapter](https://www.amazon.com/gp/product/B09QBVBDZW) TODO check this is the final one used
+- PTFE (Teflon) Thread Seal Tape
+
+#### Optional Components
+TODO
+- [LCD]()
+- [GPIO extension cable](https://www.amazon.com/gp/product/B08B4SHS18)
+- [heat sink](), [fan](), and [screws]()
+- [baseplate]()
 
 ## Data Acquisition (DAQ)
 
 ### Launching the DAQ Script
-The provided [`start_daq`](daq/start_daq) bash script will start the [`daq.py`](daq/daq.py) script in a new `tmux` window.
+The provided [`start_daq`](daq/start_daq) bash script
+will start the [`daq.py`](daq/daq.py) and [`fan_control.py`](fan_control/fan_control.py)
+scripts in new `tmux` windows.
 You will need to update the `pkg_path` variable in `start_daq` per your installation location.
 ```bash
 source daq/start_daq
@@ -52,7 +114,7 @@ grep CRON /var/log/syslog | grep $LOGNAME
 ### Heartbeat Monitoring
 You can use the provided [`heartbeat`](daq/heartbeat) bash script to send heartbeat API calls
 for the DAQ script to [healthchecks.io](https://healthchecks.io) for monitoring and alerting.
-[Configure your alert online at healthchecks.io](https://healthchecks.io/docs/configuring_checks/),
+[Configure your alert online at healthchecks.io](https://healthchecks.io/docs/configuring_checks),
 and then run the below commands to setup a `secrets.json` file with your alert's `uuid`.
 You will need to update the `pkg_path` variable in `heartbeat` per your installation location.
 The provided `cron_jobs.txt` will setup a cron job to send the heartbeat on the 15 and 45 minute of each hour.
@@ -67,10 +129,10 @@ source daq/heartbeat
 TODO
 
 ### Installing CUDA and PyTorch
-1. Find the supported CUDA version (`11.8.0`) for the current release of PyTorch (`2.0.1`) [here](https://pytorch.org/get-started/locally/).
+1. Find the supported CUDA version (`11.8.0`) for the current release of PyTorch (`2.0.1`) [here](https://pytorch.org/get-started/locally).
 2. Install CUDA following the steps for the proper version and target platform [here](https://developer.nvidia.com/cuda-toolkit-archive).
 3. Update the poetry `pytorch-gpu-src` source to point to the correct PyTorch version in `pyproject.toml`.
-	- This is in place of `pip install --index-url=...` as provided by the [PyTorch installation instructions](https://pytorch.org/get-started/locally/).
+    - This is in place of `pip install --index-url=...` as provided by the [PyTorch installation instructions](https://pytorch.org/get-started/locally).
 4. Install the poetry `ana` group, `make setupANA`. This will install `pytorch`, along with the other needed packages.
 5. Check that PyTorch and CUDA are correctly configured with the following `python` commands:
 ```python
