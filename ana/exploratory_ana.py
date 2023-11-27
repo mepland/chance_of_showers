@@ -22,7 +22,7 @@ import sys
 # import natsort
 # import numpy as np
 import zoneinfo
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pandas as pd
 from hydra import compose, initialize
@@ -46,11 +46,17 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
     create_datetime_component_cols,
     normalize_pressure_value,
 )
+
+# isort: off
 from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
-    NBEATSModelWrapper,
-    TSModelWrapper,
     run_bayesian_opt,
+    TSModelWrapper,
+    ProphetWrapper,
+    NBEATSModelWrapper,
 )
+
+# isort: on
+# pylint: disable=unreachable
 
 # %%
 initialize(version_base=None, config_path="..")
@@ -257,7 +263,131 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 # print(PARENT_WRAPPER)
 
 # %% [markdown]
+# ## Prophet
+
+# %%
+raise UserWarning("Stopping Here")
+
+# %%
+import prophet  # noqa: E402
+from darts.models.forecasting.prophet_model import (  # noqa: E402
+    Prophet as darts_Prophet,
+)
+
+# %%
+model_wrapper_Prophet = ProphetWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"time_bin_size_in_minutes": 5, "rebin_y": True},
+)
+model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base="local_dev")
+# print(model_wrapper_Prophet)
+
+# %%
+configurable_hyperparams = model_wrapper_Prophet.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+val_loss = -model_wrapper_Prophet.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_Prophet)
+
+# %% [markdown]
+# ### Prophet Diagnostic Plots
+
+# %%
+n_prediction_steps, time_bin_size = model_wrapper_Prophet.get_n_prediction_steps_and_time_bin_size()
+
+if TYPE_CHECKING:
+    assert isinstance(  # noqa: SCS108 # nosec assert_used
+        model_wrapper_Prophet.model, darts_Prophet
+    )
+model_prophet = model_wrapper_Prophet.model.model
+
+dfp_prophet_future = model_prophet.make_future_dataframe(
+    periods=n_prediction_steps, freq=time_bin_size
+)
+dfp_prophet_future = pd.merge(
+    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
+)
+dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
+
+dfp_predict = model_prophet.predict(dfp_prophet_future)
+
+# %%
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+#     display(dfp_predict.dtypes)
+
+# %%
+display(dfp_predict.tail(2))
+
+# %%
+_fig_predict = model_prophet.plot(dfp_predict)
+
+# %%
+# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# instead using go.Figure(data=data, layout=layout). See:
+# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
+
+prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+# %%
+_fig_components = model_prophet.plot_components(dfp_predict)
+
+# %%
+# The plotly version is not working. See:
+# https://github.com/facebook/prophet/pull/2461
+
+prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+
+# %% [markdown]
+# ## N-BEATS
+
+# %%
+raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_NBEATS = NBEATSModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base="local_dev")
+# print(model_wrapper_NBEATS)
+
+# %%
+configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_NBEATS)
+
+# %%
+model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NBEATS.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NBEATS)
+
+# %%
+tensorboard_logs = os.path.join(model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs")  # type: ignore[arg-type]
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
 # ## Bayesian Optimization
+
+# %%
+raise UserWarning("Stopping Here")
 
 # %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
@@ -288,39 +418,10 @@ pprint.pprint(optimal_values)
 # raise UserWarning("Stopping Here")
 
 # %% [markdown]
-# ## N-BEATS
-
-# %%
-model_wrapper = NBEATSModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-# print(model_wrapper)
-
-# %%
-configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
-
-# %%
-model_wrapper.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
-val_loss = -model_wrapper.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper)
-
-# %%
-tensorboard_logs = os.path.join(model_wrapper.work_dir_base, model_wrapper.model_name, "logs")  # type: ignore[arg-type]
-print(tensorboard_logs)
-
-# %%
-# %tensorboard --logdir $tensorboard_logs
-
-# %% [markdown]
 # ## AutoARIMA
+
+# %%
+raise UserWarning("Stopping Here")
 
 # %% [raw]
 # hyperpar_fixed_AutoARIMA = {
@@ -359,6 +460,7 @@ print(tensorboard_logs)
 # %% [markdown]
 # ***
 # # Prophet Modeling
+# Native `prophet` package
 
 # %%
 # Hyperparams - Rework these!
@@ -369,7 +471,7 @@ n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
 
 
 # %%
-import prophet  # noqa: E402
+import prophet  # noqa: E402 # pylint: disable=reimported
 
 # %%
 model_prophet = prophet.Prophet(growth="flat")
@@ -419,6 +521,9 @@ _fig_components = model_prophet.plot_components(dfp_predict)
 # %% [markdown]
 # ***
 # # Explore the Data
+
+# %%
+raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ## Time Series of All Raw ADC Pressure Values
