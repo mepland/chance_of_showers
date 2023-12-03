@@ -95,7 +95,7 @@ TODO
 ### Photos
 | ![Bottom](/../main/media/1_bottom.jpg) | ![Left](/../main/media/2_left.jpg) | ![Top](/../main/media/3_top.jpg) | ![Right](/../main/media/4_right.jpg) |
 | :---: | :---: | :---: | :---: |
-| ![Overhead](/../main/media/5_Overhead.jpg) | ![Overhead Bottom OLED](/../main/media/6_overhead_bottom_oled.jpg) | ![Overhead Middle](/../main/media/7_overhead_middle.jpg) | ![Overhead Top GPIO](/../main/media/8_overhead_top_gpio.jpg) |
+| ![Overhead](/../main/media/5_overhead.jpg) | ![Overhead Bottom OLED](/../main/media/6_overhead_bottom_oled.jpg) | ![Overhead Middle](/../main/media/7_overhead_middle.jpg) | ![Overhead Top GPIO](/../main/media/8_overhead_top_gpio.jpg) |
 | ![Left Bottom](/../main/media/9_left_bottom.jpg) | ![Left Top](/../main/media/10_left_top.jpg) | ![Right Top](/../main/media/11_right_top.jpg) | ![In Situ](/../main/media/12_insitu.jpg) |
 | ![In Situ OLED](/../main/media/13_insitu_oled.jpg) | ![In Situe OLED (Flash)](/../main/media/14_insitu_oled_flash.jpg) | ![Plumbing Front](/../main/media/15_plumbing_front.jpg) | ![Plumbing Back](/../main/media/16_plumbing_back.jpg) |
 
