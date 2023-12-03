@@ -88,6 +88,13 @@ sensors, single board computers or microcontrollers, plumbing supplies, etc.
   - One [M3 Screw](https://www.amazon.com/gp/product/B01I74TTWU) to attach fan to heatsink
   - Four [M2.5 Screws](https://www.amazon.com/HELIFOUNER-Screws-Washers-Kit-Threaded/dp/B0BKSGC86F) to attach heatsink to Pi and baseplate
 
+
+### Circuit Diagram
+TODO
+
+### Photos
+TODO
+
 ## Data Acquisition (DAQ)
 
 ### Launching the DAQ Script
