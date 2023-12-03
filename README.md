@@ -46,7 +46,7 @@ the time series of my apartment's hot water pressure with the goal of forecastin
 and hence `chance_of_showers` was born!
 
 <div align="center">
-  <video src="/../main/media/chance_of_showers_dashboard_demo.mp4"></video>
+  <video src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd"></video>
 </div>
 
 ## Hardware
