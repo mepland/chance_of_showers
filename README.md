@@ -95,7 +95,7 @@ TODO
 ### Photos
 TODO
 
-![Bottom](/../ main/media/1_bottom.jpg)
+![Bottom](/../main/media/1_bottom.jpg)
 
 ## Data Acquisition (DAQ)
 
