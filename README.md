@@ -95,6 +95,8 @@ TODO
 ### Photos
 TODO
 
+![Bottom](/../ main/media/1_bottom.jpg)
+
 ## Data Acquisition (DAQ)
 
 ### Launching the DAQ Script
