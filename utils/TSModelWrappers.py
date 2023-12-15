@@ -166,7 +166,7 @@ def get_pl_trainer_kwargs(
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) -> dict:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
@@ -178,6 +178,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
             with no improvement, and will only decrease the LR after the
             3rd epoch if the loss still hasn't improved then.
             Default: 10.
+        verbose: If non-zero, prints a message to stdout for each update.
 
     Returns:
         lr_scheduler_kwargs.
@@ -190,7 +191,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
         "cooldown": 0,
         "min_lr": 0.0,
         "eps": 1e-08,
-        "verbose": False,
+        "verbose": bool(verbose),
     }
 
 
@@ -364,6 +365,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         *,
         model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
+        verbose: int = 1,
         work_dir: str | None = None,
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
@@ -385,6 +387,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             local_timezone: Local timezone.
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
+            verbose: Verbosity level.
             work_dir: Full path to directory to save this model's files.
             model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
@@ -409,6 +412,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
         self.model_class = model_class
         self.is_nn = is_nn
+        self.verbose = verbose
         self.work_dir = work_dir
         self.model_name_tag = model_name_tag
         self.required_hyperparams_data = required_hyperparams_data
@@ -440,6 +444,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
 {self.model_class = }
 {self.is_nn = }
+{self.verbose = }
 {self.work_dir = }
 {self.model_name_tag = }
 self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
@@ -805,7 +810,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
                 self.chosen_hyperparams["lr_patience"] = get_hyperparam_value("lr_patience")
                 hyperparam_value = get_lr_scheduler_kwargs(
-                    self.chosen_hyperparams["lr_factor"], self.chosen_hyperparams["lr_patience"]
+                    self.chosen_hyperparams["lr_factor"],
+                    self.chosen_hyperparams["lr_patience"],
+                    self.verbose,
                 )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -932,12 +939,38 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # fill missing values
         frac_missing = missing_values_ratio(dart_series_y_trainable)
         if 0 < frac_missing:
-            # Missing {frac_missing:.2%} of values, filling via interpolation
-            dart_series_y_trainable = fill_missing_values(dart_series_y_trainable)
-            if covariates_type is not None:
-                dart_series_covariates_trainable = fill_missing_values(
-                    dart_series_covariates_trainable
+            interpolate_method = "linear"
+            interpolate_limit_direction = "both"
+            if self.chosen_hyperparams.get("rebin_y", 0):
+                interpolate_method = "pad"
+                interpolate_limit_direction = "forward"
+            if 0 < self.verbose:
+                print(
+                    f"Missing {frac_missing:.2%} of values, filling via {interpolate_method} interpolation"
                 )
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="DataFrame.interpolate with method=pad is deprecated",
+                    category=FutureWarning,
+                )
+                # ignore this for now and just use pad, would require a rewrite of the following code in darts
+                # https://github.com/unit8co/darts/blob/4362df272c4a3e51ab33cf6596fb2d159be82b73/darts/utils/missing_values.py#L176
+                # See the following for context
+                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.ffill.html
+
+                dart_series_y_trainable = fill_missing_values(
+                    dart_series_y_trainable,
+                    method=interpolate_method,
+                    limit_direction=interpolate_limit_direction,
+                )
+                if covariates_type is not None:
+                    dart_series_covariates_trainable = fill_missing_values(
+                        dart_series_covariates_trainable,
+                        method=interpolate_method,
+                        limit_direction=interpolate_limit_direction,
+                    )
 
         # split train and validation sets
         dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
@@ -966,7 +999,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         train_kwargs = {}
         if self.is_nn:
             train_kwargs["val_series"] = dart_series_y_val
-            train_kwargs["verbose"] = self.chosen_hyperparams.get("enable_progress_bar", False)
+            train_kwargs["verbose"] = self.verbose
 
         _ = self.model.fit(
             dart_series_y_train,
@@ -978,7 +1011,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_pred_val = self.model.predict(
             dart_series_y_val.n_timesteps,
             num_samples=1,
-            verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
+            verbose=self.verbose,
             **prediction_covariates_kwargs,
         )
 
@@ -1212,7 +1245,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         utility_kappa: Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
@@ -1233,6 +1266,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    _model_wrapper.verbose = verbose
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
