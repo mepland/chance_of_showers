@@ -18,6 +18,7 @@ import datetime
 import os
 import pprint
 import sys
+import warnings
 
 # import natsort
 # import numpy as np
@@ -277,7 +278,7 @@ from darts.models.forecasting.prophet_model import (  # noqa: E402
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 5, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 20, "rebin_y": False},
 )
 model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base="local_dev")
 # print(model_wrapper_Prophet)
@@ -292,9 +293,6 @@ pprint.pprint(configurable_hyperparams)
 # %%
 val_loss = -model_wrapper_Prophet.train_model()
 print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_Prophet)
 
 # %% [markdown]
 # ### Prophet Diagnostic Plots
@@ -323,25 +321,32 @@ dfp_predict = model_prophet.predict(dfp_prophet_future)
 #     display(dfp_predict.dtypes)
 
 # %%
-display(dfp_predict.tail(2))
+# display(dfp_predict.tail(5))
 
 # %%
-_fig_predict = model_prophet.plot(dfp_predict)
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    _fig_predict = model_prophet.plot(dfp_predict)
 
 # %%
-# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
 # instead using go.Figure(data=data, layout=layout). See:
 # https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
 
 prophet.plot.plot_plotly(model_prophet, dfp_predict)
 
 # %%
-_fig_components = model_prophet.plot_components(dfp_predict)
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    _fig_components = model_prophet.plot_components(dfp_predict)
 
 # %%
-# The plotly version is not working. See:
-# https://github.com/facebook/prophet/pull/2461
-
 prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
 
 # %% [markdown]
@@ -400,6 +405,23 @@ tensorboard_logs = os.path.join(
 # %%
 # %tensorboard --logdir $tensorboard_logs
 
+# %% [markdown]
+# ### Prophet
+
+# %%
+optimal_values, optimizer = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=ProphetWrapper,
+    n_iter=100,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+
+# %%
+pprint.pprint(optimal_values)
+
+# %% [markdown]
+# ### N-BEATS
+
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
@@ -413,9 +435,6 @@ optimal_values, optimizer = run_bayesian_opt(
 
 # %%
 pprint.pprint(optimal_values)
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ## AutoARIMA
@@ -503,7 +522,7 @@ display(dfp_predict.tail(2))
 _fig_predict = model_prophet.plot(dfp_predict)
 
 # %%
-# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
 # instead using go.Figure(data=data, layout=layout). See:
 # https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
 
