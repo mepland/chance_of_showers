@@ -7,13 +7,14 @@ logs the data, and creates time series forecasts of future water pressure.
 [![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 
-[![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=flat&logo=Raspberry-Pi)](https://www.raspberrypi.com)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org)
 [![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=flat&logo=Matplotlib&logoColor=black)](https://matplotlib.org)
 [![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
 [![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![Socket.io](https://img.shields.io/badge/Socket.io-black?style=flat&logo=socket.io&badgeColor=010101)](https://socket.io)
+[![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=flat&logo=Raspberry-Pi)](https://www.raspberrypi.com)
+[![KiCad](https://img.shields.io/badge/KiCad-314CB0.svg?style=flat&logo=KiCad&logoColor=white)](https://www.kicad.org)
 
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json?style=flat)](https://python-poetry.org)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
@@ -90,7 +91,11 @@ sensors, single board computers or microcontrollers, plumbing supplies, etc.
 
 
 ### Circuit Diagram
-TODO
+The circuit diagram for this implmentation using the above bill of materials
+is provided as a [KiCad](https://www.kicad.org) schematic
+[here](/../main/circuit_diagram/circuit_diagram.kicad_sch).
+
+![Circuit Diagram](/../docs_v0.0.1/circuit_diagram/circuit_diagram.svg)
 
 ### Photos
 | ![Bottom](/../main/media/1_bottom.jpg) | ![Left](/../main/media/2_left.jpg) | ![Top](/../main/media/3_top.jpg) | ![Right](/../main/media/4_right.jpg) |
