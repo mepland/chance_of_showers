@@ -91,7 +91,7 @@ sensors, single board computers or microcontrollers, plumbing supplies, etc.
 
 
 ### Circuit Diagram
-The circuit diagram for this implmentation using the above bill of materials
+The circuit diagram for this implementation
 is provided as a [KiCad](https://www.kicad.org) schematic
 [here](/../main/circuit_diagram/circuit_diagram.kicad_sch).
 
