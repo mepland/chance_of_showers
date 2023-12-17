@@ -81,3 +81,11 @@ jobs:
 
       - name: blocklint
         run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
+
+      - name: markdownlint-cli
+        uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: .
+          dot: true
+          config_file: .dev_config/.markdownlint.yaml
+          ignore_files: LICENSE.md
