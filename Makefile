@@ -61,6 +61,9 @@ yamllint:
 bklint: # Renamed to bklint so "make bl" autocompletes to "make black"
 	poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
+markdownlint:
+	markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot --fix .
+
 # flake8 ~ noqa
 # pylint ~ pylint
 # mypy ~ type:
