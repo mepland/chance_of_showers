@@ -25,7 +25,7 @@ logs the data, and creates time series forecasts of future water pressure.
 [![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](https://github.com/mepland/chance_of_showers/blob/main/LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](LICENSE.md)
 
 ## Introduction
 
@@ -54,7 +54,7 @@ and hence `chance_of_showers` was born!
 
 ### Bill of Materials
 
-Here is a list of the major components I used in my build.
+Here is a list of the components I used in my build.
 With suitable alterations, the project could definitely be carried out with a wide array of other
 sensors, single board computers or microcontrollers, plumbing supplies, etc.
 
@@ -69,7 +69,7 @@ sensors, single board computers or microcontrollers, plumbing supplies, etc.
 - 830 Point Breadboard and Dupont Jumper Wires - [Included in GPIO Kit](https://www.amazon.com/gp/product/B08B4SHS18)
 
 #### Plumbing
-- [1/2" NPT 3 Way Tee Connector](https://www.amazon.com/Stainless-Diverter-Movable-Flexible-Connector/dp/B07ZZYWP2F)
+- [1/2" NPT 3 Way Tee Connector](https://www.amazon.com/Stainless-Diverter-Movable-Flexible-Connector/dp/B09MT39487)
 - [Faucet Connector Hose, 3/8" Female Compression Thread to 1/2" Female NPT Thread - B1F09](https://www.amazon.com/gp/product/B000BQWNP8)
 - [Adapter, 3/8" Male NPT to 1/2" Female NPT](https://www.amazon.com/gp/product/B07LD3GN4X/ref=ppx_od_dt_b_asin_title_s01)
 - [Adapter, 1/2" Male NPT to G1/4" Female - ADT-N12M-G14F](https://koolance.com/threading-adapter-npt-1-2-male-to-g-1-4-female-adt-n12m-g14f)
@@ -98,7 +98,7 @@ is provided as a [KiCad](https://www.kicad.org) schematic
 ![Circuit Diagram](/../docs_v0.0.1/circuit_diagram/circuit_diagram.svg)
 
 ### Photos
-| ![Bottom](/../main/media/1_bottom.jpg) | ![Left](/../main/media/2_left.jpg) | ![Top](/../main/media/3_top.jpg) | ![Right](/../main/media/4_right.jpg) |
+| ![Bottom](media/1_bottom.jpg) | ![Left](/../main/media/2_left.jpg) | ![Top](/../main/media/3_top.jpg) | ![Right](/../main/media/4_right.jpg) |
 | :---: | :---: | :---: | :---: |
 | ![Overhead](/../main/media/5_overhead.jpg) | ![Overhead Bottom OLED](/../main/media/6_overhead_bottom_oled.jpg) | ![Overhead Middle](/../main/media/7_overhead_middle.jpg) | ![Overhead Top GPIO](/../main/media/8_overhead_top_gpio.jpg) |
 | ![Left Bottom](/../main/media/9_left_bottom.jpg) | ![Left Top](/../main/media/10_left_top.jpg) | ![Right Top](/../main/media/11_right_top.jpg) | ![In Situ](/../main/media/12_insitu.jpg) |
