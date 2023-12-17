@@ -50,6 +50,9 @@ and hence `chance_of_showers` was born!
   <video src="https://github.com/mepland/chance_of_showers/assets/4729931/f3b94d00-fa40-4b0b-8b95-1105d11e7acd"></video>
 </div>
 
+## Data Analysis Results
+WIP
+
 ## Hardware
 
 ### Bill of Materials
@@ -95,7 +98,7 @@ The circuit diagram for this implementation
 is provided as a [KiCad](https://www.kicad.org) schematic
 [here](circuit_diagram/circuit_diagram.kicad_sch).
 
-![Circuit Diagram](/../docs_v0.0.1/circuit_diagram/circuit_diagram.svg)
+![Circuit Diagram](circuit_diagram/circuit_diagram.svg)
 
 ### Photos
 | ![Bottom](media/1_bottom.jpg) | ![Left](media/2_left.jpg) | ![Top](media/3_top.jpg) | ![Right](media/4_right.jpg) |
@@ -150,16 +153,14 @@ echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > sec
 source daq/heartbeat
 ```
 
-## Data Analysis
+## Dev Notes
 
-TODO
-
-### Installing CUDA and PyTorch
+### Data Analysis Setup - Installing CUDA and PyTorch
 1. Find the supported CUDA version (`11.8.0`) for the current release of PyTorch (`2.0.1`) [here](https://pytorch.org/get-started/locally).
 2. Install CUDA following the steps for the proper version and target platform [here](https://developer.nvidia.com/cuda-toolkit-archive).
-3. Update the poetry `pytorch-gpu-src` source to point to the correct PyTorch version in `pyproject.toml`.
+3. Update the poetry `pytorch-gpu-src` source to point to the correct PyTorch version in [`pyproject.toml`](pyproject.toml).
     - This is in place of `pip install --index-url=...` as provided by the [PyTorch installation instructions](https://pytorch.org/get-started/locally).
-4. Install the poetry `ana` group, `make setupANA`. This will install `pytorch`, along with the other needed packages.
+4. Install the poetry `ana` group with `make setupANA`. This will install `pytorch`, along with the other necessary packages.
 5. Check that PyTorch and CUDA are correctly configured with the following `python` commands:
 ```python
 import torch
@@ -171,9 +172,7 @@ else:
     print("CUDA IS NOT AVAILABLE!")
 ```
 
-## Dev
-
-### Installing Python 3.11 on Raspbian
+### DAQ Setup - Installing Python 3.11 on Raspbian
 If `python 3.11` is not available in your release of Raspbian,
 you can compile it from source following the instructions [here](https://aruljohn.com/blog/python-raspberrypi),
 but will also need to [install the sqlite extensions](https://stackoverflow.com/a/24449632):
@@ -201,7 +200,7 @@ python -VV
 ```
 
 ### Installing Dependencies with Poetry
-Install `poetry` following the [instructions here](https://python-poetry.org/docs/#installation).
+Install `poetry` following the [instructions here](https://python-poetry.org/docs#installation).
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
@@ -209,7 +208,7 @@ Then install the `python` packages needed for this installation. Groups include:
 - `daq` for packages needed to run the DAQ script on a Raspberry Pi, optional
 - `web` for packages needed to run the live dashboard from the DAQ script, optional
 - `ana` for analysis tools, optional
-- `dev` for CI and linting tools
+- `dev` for continuous integration (CI) and linting tools
 
 ```bash
 poetry install --with daq,web
@@ -219,14 +218,16 @@ or
 poetry install --with ana
 ```
 
-### Using the Makefile
-A [`Makefile`](Makefile) is provided for convenience,
-with commands to `make setupDAQ` or `make setupANA`,
-as well run individual CI tests.
-
 ### Setting up pre-commit
-It is recommended to use [`pre-commit`](https://pre-commit.com) tool to automatically check your commits locally as they are created.
+It is recommended to use the [`pre-commit`](https://pre-commit.com) tool to automatically check your commits locally as they are created.
 You should just need to [install the git hook scripts](https://pre-commit.com/#3-install-the-git-hook-scripts), see below, after installing the `dev` dependencies. This will run the checks in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) when you create a new commit.
 ```bash
 pre-commit install
 ```
+
+### Using the Makefile
+A [`Makefile`](Makefile) is provided for convenience,
+with commands to setup the DAQ and analysis environments,
+`make setupDAQ` and `make setupANA`,
+as well run CI and linting tools,
+e.g. `make black`, `make pylint`, `make pre-commit`.
