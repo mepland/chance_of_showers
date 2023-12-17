@@ -1,0 +1,87 @@
+# yamllint disable-file
+# MD013/line-length : Line length : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md013.md
+MD013:
+  # Number of characters
+  line_length: 100
+  # Number of characters for headings
+  heading_line_length: 100
+  # Number of characters for code blocks
+  code_block_line_length: 100
+  # Include code blocks
+  code_blocks: true
+  # Include tables
+  tables: true
+  # Include headings
+  headings: true
+  # Strict length checking
+  strict: false
+  # Stern length checking
+  stern: false
+
+# MD033/no-inline-html : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md033.md
+MD033:
+  # Allowed elements
+  allowed_elements: ["div", "video"]
+
+# MD043/required-headings : Required heading structure : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md043.md
+MD043:
+  # List of headings
+  headings: ["*"]
+  # Match case of headings
+  match_case: false
+
+# MD003/heading-style : Heading style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md003.md
+MD003:
+  # Heading style
+  style: "atx"
+
+# MD004/ul-style : Unordered list style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md004.md
+MD004:
+  # List style
+  style: "asterisk"
+
+# MD009/no-trailing-spaces : Trailing spaces : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md009.md
+MD009:
+  # Spaces for line break
+  br_spaces: 2
+  # Allow spaces for empty lines in list items
+  list_item_empty_lines: false
+  # Include unnecessary breaks
+  strict: true
+
+# MD022/blanks-around-headings : Headings should be surrounded by blank lines : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md022.md
+MD022:
+  # Blank lines above heading
+  lines_above: 1
+  # Blank lines below heading
+  lines_below: 0
+
+# MD029/ol-prefix : Ordered list item prefix : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md029.md
+MD029:
+  # List style
+  style: "ordered"
+
+# MD035/hr-style : Horizontal rule style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md035.md
+MD035:
+  # Horizontal rule style
+  style: "---"
+
+# MD046/code-block-style : Code block style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md046.md
+MD046:
+  # Block style
+  style: "fenced"
+
+# MD048/code-fence-style : Code fence style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md048.md
+MD048:
+  # Code fence style
+  style: "backtick"
+
+# MD049/emphasis-style : Emphasis style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md049.md
+MD049:
+  # Emphasis style
+  style: "underscore"
+
+# MD050/strong-style : Strong style : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md050.md
+MD050:
+  # Strong style
+  style: "asterisk"
