@@ -93,16 +93,16 @@ sensors, single board computers or microcontrollers, plumbing supplies, etc.
 ### Circuit Diagram
 The circuit diagram for this implementation
 is provided as a [KiCad](https://www.kicad.org) schematic
-[here](/../main/circuit_diagram/circuit_diagram.kicad_sch).
+[here](circuit_diagram/circuit_diagram.kicad_sch).
 
 ![Circuit Diagram](/../docs_v0.0.1/circuit_diagram/circuit_diagram.svg)
 
 ### Photos
-| ![Bottom](media/1_bottom.jpg) | ![Left](/../main/media/2_left.jpg) | ![Top](/../main/media/3_top.jpg) | ![Right](/../main/media/4_right.jpg) |
+| ![Bottom](media/1_bottom.jpg) | ![Left](media/2_left.jpg) | ![Top](media/3_top.jpg) | ![Right](media/4_right.jpg) |
 | :---: | :---: | :---: | :---: |
-| ![Overhead](/../main/media/5_overhead.jpg) | ![Overhead Bottom OLED](/../main/media/6_overhead_bottom_oled.jpg) | ![Overhead Middle](/../main/media/7_overhead_middle.jpg) | ![Overhead Top GPIO](/../main/media/8_overhead_top_gpio.jpg) |
-| ![Left Bottom](/../main/media/9_left_bottom.jpg) | ![Left Top](/../main/media/10_left_top.jpg) | ![Right Top](/../main/media/11_right_top.jpg) | ![In Situ](/../main/media/12_insitu.jpg) |
-| ![In Situ OLED](/../main/media/13_insitu_oled.jpg) | ![In Situe OLED (Flash)](/../main/media/14_insitu_oled_flash.jpg) | ![Plumbing Front](/../main/media/15_plumbing_front.jpg) | ![Plumbing Back](/../main/media/16_plumbing_back.jpg) |
+| ![Overhead](media/5_overhead.jpg) | ![Overhead Bottom OLED](media/6_overhead_bottom_oled.jpg) | ![Overhead Middle](media/7_overhead_middle.jpg) | ![Overhead Top GPIO](media/8_overhead_top_gpio.jpg) |
+| ![Left Bottom](media/9_left_bottom.jpg) | ![Left Top](media/10_left_top.jpg) | ![Right Top](media/11_right_top.jpg) | ![In Situ](media/12_insitu.jpg) |
+| ![In Situ OLED](media/13_insitu_oled.jpg) | ![In Situe OLED (Flash)](media/14_insitu_oled_flash.jpg) | ![Plumbing Front](media/15_plumbing_front.jpg) | ![Plumbing Back](media/16_plumbing_back.jpg) |
 
 ## Data Acquisition (DAQ)
 
