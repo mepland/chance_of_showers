@@ -7,7 +7,7 @@ import datetime
 import gc
 import logging
 import math
-import os
+import pathlib
 import pprint
 import traceback
 import warnings
@@ -355,7 +355,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         # required
         dfp_trainable_evergreen: pd.DataFrame,
         dt_val_start_datetime_local: datetime.datetime,
-        work_dir_base: str,
+        work_dir_base: pathlib.Path,
         random_state: int,
         date_fmt: str,
         time_fmt: str,
@@ -366,7 +366,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
         verbose: int = 1,
-        work_dir: str | None = None,
+        work_dir: pathlib.Path | None = None,
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
@@ -556,8 +556,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def set_work_dir(
         self: "TSModelWrapper",
         *,
-        work_dir_relative_to_base: str | None = None,
-        work_dir_absolute: str | None = None,
+        work_dir_relative_to_base: pathlib.Path | None = None,
+        work_dir_absolute: pathlib.Path | None = None,
     ) -> None:
         """Set the work_dir for this model wrapper.
 
@@ -570,13 +570,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         if work_dir_relative_to_base is not None and work_dir_absolute is not None:
             raise ValueError("Can not use both parameters, choose one!")
-        if work_dir_relative_to_base is not None and work_dir_relative_to_base != "":
+        if work_dir_relative_to_base is not None:
             if self.work_dir_base is None:
                 raise ValueError("Must have a valid work_dir_base!")
-            self.work_dir = os.path.join(self.work_dir_base, work_dir_relative_to_base)
-        elif (
-            work_dir_absolute is not None and work_dir_absolute != ""
-        ):  # pylint: disable=no-else-raise
+            self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
+        elif work_dir_absolute is not None:  # pylint: disable=no-else-raise
             self.work_dir = work_dir_absolute
         else:
             raise ValueError("Must use at least one parameter!")
@@ -1294,27 +1292,26 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup Logging
     generic_model_name: Final = _model_wrapper.get_generic_model_name()
-    bayesian_opt_work_dir: Final = os.path.expanduser(
-        os.path.join(_model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name)
-    )
-
-    fname_json_log: Final = os.path.join(
+    bayesian_opt_work_dir: Final = pathlib.Path(
+        _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
+    ).expanduser()
+    fname_json_log: Final = pathlib.Path(
         bayesian_opt_work_dir, f"bayesian_opt_{generic_model_name}.json"
     )
 
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
-    if enable_reloading and os.path.isfile(fname_json_log):
+    if enable_reloading and fname_json_log.is_file():
         print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
         optimizer.dispatch(Events.OPTIMIZATION_START)
-        load_logs(optimizer, logs=fname_json_log)
+        load_logs(optimizer, logs=str(fname_json_log))
         n_points = len(optimizer.space)
         print(f"Loaded {n_points} existing points.\n")
 
     # Continue to setup logging
     if enable_json_logging:
-        os.makedirs(bayesian_opt_work_dir, exist_ok=True)
-        json_logger = JSONLogger(path=fname_json_log, reset=False)
+        bayesian_opt_work_dir.mkdir(parents=True, exist_ok=True)
+        json_logger = JSONLogger(path=str(fname_json_log), reset=False)
         optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
 
     if 0 < verbose:
@@ -1412,7 +1409,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
 
             if enable_model_saves:
-                fname_model = os.path.join(
+                fname_model = pathlib.Path(
                     bayesian_opt_work_dir, f"iteration_{n_points}_{generic_model_name}.pt"
                 )
                 model_wrapper.get_model().save(fname_model)

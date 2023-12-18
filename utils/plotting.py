@@ -1,6 +1,6 @@
 """This module contains common plotting code."""
 import datetime
-import os
+import pathlib
 from typing import TYPE_CHECKING, Final
 
 import matplotlib as mpl
@@ -308,7 +308,7 @@ def ann_and_save(
     _fig: mpl.figure.Figure,
     ann_texts: list[dict],
     plot_inline: bool,  # noqa: FBT001
-    m_path: str,
+    m_path: pathlib.Path,
     fname: str,
     tag: str,
     *,
@@ -348,10 +348,10 @@ def ann_and_save(
 
     _fig.tight_layout()
     if not plot_inline:
-        os.makedirs(m_path, exist_ok=True)
+        m_path.mkdir(parents=True, exist_ok=True)
         if PLOT_PNG:
-            _fig.savefig(f"{m_path}/{fname}{tag}.png", dpi=PNG_DPI)
-        _fig.savefig(f"{m_path}/{fname}{tag}.pdf")
+            _fig.savefig(m_path / f"{fname}{tag}.png", dpi=PNG_DPI)
+        _fig.savefig(m_path / f"{fname}{tag}.pdf")
         plt.close("all")
 
 
@@ -425,7 +425,7 @@ def _process_hist_binning(
 def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function-args, too-many-statements
     hist_dicts: list[dict],
     *,
-    m_path: str,
+    m_path: pathlib.Path,
     fname: str = "hist",
     tag: str = "",
     dt_start: datetime.date | None = None,
@@ -661,7 +661,7 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
     x_values: list[float] | np.ndarray | pd.Series,
     y_values: list[float] | np.ndarray | pd.Series,
     *,
-    m_path: str,
+    m_path: pathlib.Path,
     fname: str = "hist_2d",
     tag: str = "",
     dt_start: datetime.date | None = None,
@@ -821,7 +821,7 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
     y_axis_params: dict,
     *,
     z_axis_params: dict | None = None,
-    m_path: str = ".",
+    m_path: pathlib.Path | None = None,
     fname: str = "ts",
     tag: str = "",
     dt_start: datetime.date | None = None,

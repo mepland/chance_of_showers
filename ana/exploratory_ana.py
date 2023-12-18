@@ -15,7 +15,7 @@
 # pylint: disable=wrong-import-order
 
 import datetime
-import os
+import pathlib
 import pprint
 import sys
 import warnings
@@ -29,7 +29,7 @@ import pandas as pd
 from hydra import compose, initialize
 from IPython.display import display
 
-sys.path.append(os.path.dirname(os.path.realpath("")))
+sys.path.append(str(pathlib.Path.cwd().parent))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     C_GREEN,
     C_GREY,
@@ -109,14 +109,11 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
 
 # %%
-MODELS_PATH: Final = os.path.expanduser(
-    os.path.join(
-        PACKAGE_PATH,
-        "ana",
-        "models",
-    )
-)
-os.makedirs(MODELS_PATH, exist_ok=True)
+MODELS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/models").expanduser()
+MODELS_PATH.mkdir(parents=True, exist_ok=True)
+
+OUTPUTS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/outputs").expanduser()
+OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
 
 # %% [markdown]
 # ***
@@ -126,13 +123,7 @@ os.makedirs(MODELS_PATH, exist_ok=True)
 FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-09-25-16-01-00.parquet"
 
 # %%
-F_PARQUET: Final = os.path.expanduser(
-    os.path.join(
-        PACKAGE_PATH,
-        SAVED_DATA_RELATIVE_PATH,
-        FNAME_PARQUET,
-    )
-)
+F_PARQUET: Final = pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH, FNAME_PARQUET).expanduser()
 
 dfp_data = pd.read_parquet(F_PARQUET)
 
@@ -340,7 +331,7 @@ fig_prophet_predict = prophet.plot.plot_plotly(model_prophet, dfp_predict)
 
 fig_prophet_predict.show()
 
-fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs='cdn')
+fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs="cdn")
 
 # %%
 with warnings.catch_warnings():
@@ -355,7 +346,7 @@ fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_
 
 fig_prophet_components.show()
 
-fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs='cdn')
+fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs="cdn")
 
 # %% [markdown]
 # ## N-BEATS
@@ -390,7 +381,9 @@ print(f"{val_loss = }")
 print(model_wrapper_NBEATS)
 
 # %%
-tensorboard_logs = os.path.join(model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs")  # type: ignore[arg-type]
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs"
+)
 print(tensorboard_logs)
 
 # %%
@@ -404,10 +397,7 @@ raise UserWarning("Stopping Here")
 
 # %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-tensorboard_logs = os.path.join(
-    PARENT_WRAPPER.work_dir_base,
-    BAYESIAN_OPT_WORK_DIR_NAME,
-)
+tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
 # print(tensorboard_logs)
 
 # %%
@@ -605,7 +595,7 @@ hist_dicts = [
 
 plot_hists(
     hist_dicts,
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_density",
     tag="",
     dt_start=dt_start_local,
@@ -681,7 +671,7 @@ plot_chance_of_showers_time_series(
 plot_2d_hist(
     dfp_data["datetime_local_same_day"],
     100 * dfp_data["mean_pressure_value_normalized"],
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_vs_time_of_day",
     tag="",
     dt_start=dt_start_local,
@@ -725,7 +715,7 @@ plot_2d_hist(
 plot_2d_hist(
     dfp_data["datetime_local_same_week"],
     100 * dfp_data["mean_pressure_value_normalized"],
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_vs_time_of_week",
     tag="",
     dt_start=dt_start_local,

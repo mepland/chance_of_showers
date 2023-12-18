@@ -5,8 +5,7 @@ Cleans and combines raw_data/*.csv files into a single parquet file.
 ################################################################################
 # python imports
 import datetime
-import glob
-import os
+import pathlib
 import traceback
 import zoneinfo
 from typing import Final
@@ -69,14 +68,13 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     dfpl_list = []
 
     csv_total_bytes = 0
-    for f_csv in glob.glob(
-        os.path.expanduser(os.path.join(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH, "*.csv"))
-    ):
+    for f_csv in pathlib.Path(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH).expanduser().glob("*.csv"):
         try:
+            f_csv = pathlib.Path(f_csv)
             dfpl = pl.scan_csv(f_csv)
-            dfpl = dfpl.with_columns(pl.lit(f_csv.split("/")[-1]).alias("fname"))
+            dfpl = dfpl.with_columns(pl.lit(f_csv.name).alias("fname"))
             dfpl_list.append(dfpl)
-            csv_total_bytes += os.path.getsize(f_csv)
+            csv_total_bytes += f_csv.stat().st_size
         except Exception as error:
             raise OSError(
                 f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
@@ -164,8 +162,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         dfpl.select("datetime_utc", "mean_pressure_value").collect(streaming=True).describe(),
     )
 
-    os.makedirs(
-        os.path.expanduser(os.path.join(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH)), exist_ok=True
+    pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH).expanduser().mkdir(
+        parents=True, exist_ok=True
     )
 
     PARQUET_DATETIME_MIN: Final = (  # pylint: disable=invalid-name
@@ -182,15 +180,14 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         .strftime(FNAME_DATETIME_FMT)
     )
 
-    f_parquet = os.path.expanduser(
-        os.path.join(
-            PACKAGE_PATH,
-            SAVED_DATA_RELATIVE_PATH,
-            f"data_{PARQUET_DATETIME_MIN}_to_{PARQUET_DATETIME_MAX}.parquet",
-        )
-    )
+    f_parquet = pathlib.Path(
+        PACKAGE_PATH,
+        SAVED_DATA_RELATIVE_PATH,
+        f"data_{PARQUET_DATETIME_MIN}_to_{PARQUET_DATETIME_MAX}.parquet",
+    ).expanduser()
+
     dfpl.collect(streaming=True).write_parquet(f_parquet)
-    parquet_total_bytes = os.path.getsize(f_parquet)
+    parquet_total_bytes = f_parquet.stat().st_size
 
     print(
         f"\nCombined parquet saved to {f_parquet}"
