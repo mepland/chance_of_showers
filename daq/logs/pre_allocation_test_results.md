@@ -4,6 +4,7 @@ Below are the tails of log files for complete weeks, without any web logging mes
 ## Pre-allocated Results
 `daq_2023-11-12-05-00-16.log` and prior use pre-allocated array variables, and have less memory usage.
 
+<!-- markdownlint-disable MD013 -->
 ```bash
 ==> daq_2023-10-01-04-00-16.log <==
 2023-10-07 23:01:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.7 GB, Used: 229.7 MB, Percent: 15.80%
@@ -65,11 +66,14 @@ Below are the tails of log files for complete weeks, without any web logging mes
 2023-11-12 04:01:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.7 GB, Used: 233.0 MB, Percent: 15.90%
 2023-11-12 04:31:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.7 GB, Used: 235.1 MB, Percent: 16.00%
 ```
+<!-- markdownlint-enable MD013 -->
 
 ## NOT Pre-allocated Results
-`daq_2023-11-12-19-05-30.log` to `daq_2023-12-17-05-00-17.log` have no pre-allocation, and more memory usage.
+`daq_2023-11-12-19-05-30.log` to `daq_2023-12-17-05-00-17.log`
+have no pre-allocation, and more memory usage.
 This concludes the test, restoring pre-allocation code.
 
+<!-- markdownlint-disable MD013 -->
 ```bash
 ==> daq_2023-11-14-04-49-21.log <==
 2023-11-19 00:01:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.6 GB, Used: 291.6 MB, Percent: 19.10%
@@ -128,3 +132,4 @@ This concludes the test, restoring pre-allocation code.
 2023-12-17 04:01:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.6 GB, Used: 288.0 MB, Percent: 18.80%
 2023-12-17 04:31:00 UTC [daq     ] [Thread-6 (] [INFO    ] RAM Available: 1.6 GB, Used: 287.5 MB, Percent: 18.80%
 ```
+<!-- markdownlint-enable MD013 -->
