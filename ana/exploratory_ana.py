@@ -336,7 +336,11 @@ with warnings.catch_warnings():
 # instead using go.Figure(data=data, layout=layout). See:
 # https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
 
-prophet.plot.plot_plotly(model_prophet, dfp_predict)
+fig_prophet_predict = prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+fig_prophet_predict.show()
+
+fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs='cdn')
 
 # %%
 with warnings.catch_warnings():
@@ -347,7 +351,11 @@ with warnings.catch_warnings():
     _fig_components = model_prophet.plot_components(dfp_predict)
 
 # %%
-prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+
+fig_prophet_components.show()
+
+fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs='cdn')
 
 # %% [markdown]
 # ## N-BEATS
