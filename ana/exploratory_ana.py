@@ -271,7 +271,7 @@ model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"time_bin_size_in_minutes": 20, "rebin_y": False},
 )
-model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base="local_dev")
+model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Prophet)
 
 # %%
@@ -359,7 +359,7 @@ model_wrapper_NBEATS = NBEATSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
 )
-model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base="local_dev")
+model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NBEATS)
 
 # %%
@@ -382,7 +382,7 @@ print(model_wrapper_NBEATS)
 
 # %%
 tensorboard_logs = pathlib.Path(
-    model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs"
+    model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs"  # type: ignore[arg-type]
 )
 print(tensorboard_logs)
 
