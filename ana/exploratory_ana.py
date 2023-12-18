@@ -15,20 +15,21 @@
 # pylint: disable=wrong-import-order
 
 import datetime
-import os
+import pathlib
 import pprint
 import sys
+import warnings
 
 # import natsort
 # import numpy as np
 import zoneinfo
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pandas as pd
 from hydra import compose, initialize
 from IPython.display import display
 
-sys.path.append(os.path.dirname(os.path.realpath("")))
+sys.path.append(str(pathlib.Path.cwd().parent))
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     C_GREEN,
     C_GREY,
@@ -46,11 +47,17 @@ from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-erro
     create_datetime_component_cols,
     normalize_pressure_value,
 )
+
+# isort: off
 from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
-    NBEATSModelWrapper,
-    TSModelWrapper,
     run_bayesian_opt,
+    TSModelWrapper,
+    ProphetWrapper,
+    NBEATSModelWrapper,
 )
+
+# isort: on
+# pylint: disable=unreachable
 
 # %%
 initialize(version_base=None, config_path="..")
@@ -102,14 +109,11 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
 
 # %%
-MODELS_PATH: Final = os.path.expanduser(
-    os.path.join(
-        PACKAGE_PATH,
-        "ana",
-        "models",
-    )
-)
-os.makedirs(MODELS_PATH, exist_ok=True)
+MODELS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/models").expanduser()
+MODELS_PATH.mkdir(parents=True, exist_ok=True)
+
+OUTPUTS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/outputs").expanduser()
+OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
 
 # %% [markdown]
 # ***
@@ -119,13 +123,7 @@ os.makedirs(MODELS_PATH, exist_ok=True)
 FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-09-25-16-01-00.parquet"
 
 # %%
-F_PARQUET: Final = os.path.expanduser(
-    os.path.join(
-        PACKAGE_PATH,
-        SAVED_DATA_RELATIVE_PATH,
-        FNAME_PARQUET,
-    )
-)
+F_PARQUET: Final = pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH, FNAME_PARQUET).expanduser()
 
 dfp_data = pd.read_parquet(F_PARQUET)
 
@@ -257,18 +255,170 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 # print(PARENT_WRAPPER)
 
 # %% [markdown]
+# ## Prophet
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+import prophet  # noqa: E402
+from darts.models.forecasting.prophet_model import (  # noqa: E402
+    Prophet as darts_Prophet,
+)
+
+# %%
+model_wrapper_Prophet = ProphetWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"time_bin_size_in_minutes": 20, "rebin_y": False},
+)
+model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_Prophet)
+
+# %%
+configurable_hyperparams = model_wrapper_Prophet.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+val_loss = -model_wrapper_Prophet.train_model()
+print(f"{val_loss = }")
+
+# %% [markdown]
+# ### Prophet Diagnostic Plots
+
+# %%
+n_prediction_steps, time_bin_size = model_wrapper_Prophet.get_n_prediction_steps_and_time_bin_size()
+
+if TYPE_CHECKING:
+    assert isinstance(  # noqa: SCS108 # nosec assert_used
+        model_wrapper_Prophet.model, darts_Prophet
+    )
+model_prophet = model_wrapper_Prophet.model.model
+
+dfp_prophet_future = model_prophet.make_future_dataframe(
+    periods=n_prediction_steps, freq=time_bin_size
+)
+dfp_prophet_future = pd.merge(
+    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
+)
+dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
+
+dfp_predict = model_prophet.predict(dfp_prophet_future)
+
+# %%
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+#     display(dfp_predict.dtypes)
+
+# %%
+# display(dfp_predict.tail(5))
+
+# %%
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    _fig_predict = model_prophet.plot(dfp_predict)
+
+# %%
+# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# instead using go.Figure(data=data, layout=layout). See:
+# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
+
+fig_prophet_predict = prophet.plot.plot_plotly(model_prophet, dfp_predict)
+
+fig_prophet_predict.show()
+
+fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs="cdn")
+
+# %%
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    _fig_components = model_prophet.plot_components(dfp_predict)
+
+# %%
+fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
+
+fig_prophet_components.show()
+
+fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs="cdn")
+
+# %% [markdown]
+# ## N-BEATS
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_NBEATS = NBEATSModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_NBEATS)
+
+# %%
+configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_NBEATS)
+
+# %%
+model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NBEATS.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NBEATS)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NBEATS.work_dir, model_wrapper_NBEATS.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
 # ## Bayesian Optimization
 
 # %%
+# raise UserWarning("Stopping Here")
+
+# %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-tensorboard_logs = os.path.join(
-    PARENT_WRAPPER.work_dir_base,
-    BAYESIAN_OPT_WORK_DIR_NAME,
-)
+tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
 # print(tensorboard_logs)
 
 # %%
 # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ### Prophet
+
+# %%
+optimal_values, optimizer = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=ProphetWrapper,
+    n_iter=100,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+
+# %%
+pprint.pprint(optimal_values)
+
+# %% [markdown]
+# ### N-BEATS
 
 # %%
 optimal_values, optimizer = run_bayesian_opt(
@@ -284,43 +434,11 @@ optimal_values, optimizer = run_bayesian_opt(
 # %%
 pprint.pprint(optimal_values)
 
-# %%
-# raise UserWarning("Stopping Here")
-
-# %% [markdown]
-# ## N-BEATS
-
-# %%
-model_wrapper = NBEATSModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-# print(model_wrapper)
-
-# %%
-configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
-
-# %%
-model_wrapper.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
-val_loss = -model_wrapper.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper)
-
-# %%
-tensorboard_logs = os.path.join(model_wrapper.work_dir_base, model_wrapper.model_name, "logs")  # type: ignore[arg-type]
-print(tensorboard_logs)
-
-# %%
-# %tensorboard --logdir $tensorboard_logs
-
 # %% [markdown]
 # ## AutoARIMA
+
+# %%
+# raise UserWarning("Stopping Here")
 
 # %% [raw]
 # hyperpar_fixed_AutoARIMA = {
@@ -359,6 +477,7 @@ print(tensorboard_logs)
 # %% [markdown]
 # ***
 # # Prophet Modeling
+# Native `prophet` package
 
 # %%
 # Hyperparams - Rework these!
@@ -369,7 +488,7 @@ n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
 
 
 # %%
-import prophet  # noqa: E402
+import prophet  # noqa: E402 # pylint: disable=reimported
 
 # %%
 model_prophet = prophet.Prophet(growth="flat")
@@ -401,7 +520,7 @@ display(dfp_predict.tail(2))
 _fig_predict = model_prophet.plot(dfp_predict)
 
 # %%
-# The plotly version is quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
+# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
 # instead using go.Figure(data=data, layout=layout). See:
 # https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
 
@@ -419,6 +538,9 @@ _fig_components = model_prophet.plot_components(dfp_predict)
 # %% [markdown]
 # ***
 # # Explore the Data
+
+# %%
+# raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ## Time Series of All Raw ADC Pressure Values
@@ -473,7 +595,7 @@ hist_dicts = [
 
 plot_hists(
     hist_dicts,
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_density",
     tag="",
     dt_start=dt_start_local,
@@ -549,7 +671,7 @@ plot_chance_of_showers_time_series(
 plot_2d_hist(
     dfp_data["datetime_local_same_day"],
     100 * dfp_data["mean_pressure_value_normalized"],
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_vs_time_of_day",
     tag="",
     dt_start=dt_start_local,
@@ -593,7 +715,7 @@ plot_2d_hist(
 plot_2d_hist(
     dfp_data["datetime_local_same_week"],
     100 * dfp_data["mean_pressure_value_normalized"],
-    m_path=".",
+    m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_vs_time_of_week",
     tag="",
     dt_start=dt_start_local,

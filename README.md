@@ -252,7 +252,7 @@ Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/m
 which can be installed via:
 
 ```bash
-sudo npm install -g markdownlint-cli
+npm install -g markdownlint-cli
 ```
 
 ### Using the Makefile

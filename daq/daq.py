@@ -5,7 +5,7 @@ from __future__ import annotations
 # python imports
 import datetime
 import logging
-import os
+import pathlib
 import signal
 import socket
 import sys
@@ -100,8 +100,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     ################################################################################
     # Lock script, avoid launching duplicates
-
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    sys.path.append(str(pathlib.Path.cwd().parent))
     from utils.shared_functions import (  # pylint: disable=import-error
         get_lock,
         get_SoC_temp,
@@ -112,14 +111,15 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     ################################################################################
     # Paths
-    RAW_DATA_FULL_PATH: Final = os.path.expanduser(  # pylint: disable=invalid-name
-        os.path.join(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH)
-    )
-    LOGS_FULL_PATH: Final = os.path.expanduser(  # pylint: disable=invalid-name
-        os.path.join(PACKAGE_PATH, LOGS_RELATIVE_PATH)
-    )
-    os.makedirs(RAW_DATA_FULL_PATH, exist_ok=True)
-    os.makedirs(LOGS_FULL_PATH, exist_ok=True)
+    RAW_DATA_FULL_PATH: Final = pathlib.Path(  # pylint: disable=invalid-name
+        PACKAGE_PATH, RAW_DATA_RELATIVE_PATH
+    ).expanduser()
+    LOGS_FULL_PATH: Final = pathlib.Path(  # pylint: disable=invalid-name
+        PACKAGE_PATH, LOGS_RELATIVE_PATH
+    ).expanduser()
+
+    RAW_DATA_FULL_PATH.mkdir(parents=True, exist_ok=True)
+    LOGS_FULL_PATH.mkdir(parents=True, exist_ok=True)
 
     ################################################################################
     # Logging
@@ -134,7 +134,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         ).strftime(FNAME_DATETIME_FMT)
 
         FNAME_LOG: Final = f"daq_{LOG_DATETIME}.log"  # pylint: disable=invalid-name
-        logging_fh = logging.FileHandler(f"{LOGS_FULL_PATH}/{FNAME_LOG}")
+        logging_fh = logging.FileHandler(LOGS_FULL_PATH / FNAME_LOG)
         logging_fh.setLevel(logging.INFO)
         if 0 < VERBOSITY:
             logging_fh.setLevel(logging.DEBUG)
@@ -706,7 +706,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
                 fname_date_utc = t_stop.astimezone(UTC_TIMEZONE).strftime(DATE_FMT)
                 with open(
-                    f"{RAW_DATA_FULL_PATH}/date_{fname_date_utc}.csv", "a", encoding="utf-8"
+                    RAW_DATA_FULL_PATH / f"date_{fname_date_utc}.csv", "a", encoding="utf-8"
                 ) as f_csv:
                     m_writer = writer(f_csv)
                     if f_csv.tell() == 0:

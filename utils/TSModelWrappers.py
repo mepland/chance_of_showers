@@ -7,7 +7,7 @@ import datetime
 import gc
 import logging
 import math
-import os
+import pathlib
 import pprint
 import traceback
 import warnings
@@ -33,6 +33,7 @@ from pytorch_lightning.utilities.warnings import PossibleUserWarning
 
 # isort: off
 from darts.models import (
+    Prophet,
     #    AutoARIMA,
     #    RandomForest,
     #    XGBModel,
@@ -60,11 +61,20 @@ from utils.shared_functions import (
 ################################################################################
 # Setup global parameters
 
+# Control warnings
+
+# torch
 warnings.filterwarnings(
     "ignore",
     message="The number of training batches",
     category=PossibleUserWarning,
 )
+
+# prophet / cmdstanpy
+logger_cmdstanpy = logging.getLogger("cmdstanpy")
+logger_cmdstanpy.addHandler(logging.NullHandler())
+logger_cmdstanpy.propagate = False
+logger_cmdstanpy.setLevel(logging.ERROR)
 
 # loss function
 LOSS_FN: Final = torchmetrics.MeanSquaredError()
@@ -156,7 +166,7 @@ def get_pl_trainer_kwargs(
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) -> dict:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
@@ -168,6 +178,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
             with no improvement, and will only decrease the LR after the
             3rd epoch if the loss still hasn't improved then.
             Default: 10.
+        verbose: If non-zero, prints a message to stdout for each update.
 
     Returns:
         lr_scheduler_kwargs.
@@ -180,7 +191,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
         "cooldown": 0,
         "min_lr": 0.0,
         "eps": 1e-08,
-        "verbose": False,
+        "verbose": bool(verbose),
     }
 
 
@@ -344,7 +355,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         # required
         dfp_trainable_evergreen: pd.DataFrame,
         dt_val_start_datetime_local: datetime.datetime,
-        work_dir_base: str,
+        work_dir_base: pathlib.Path,
         random_state: int,
         date_fmt: str,
         time_fmt: str,
@@ -354,7 +365,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         *,
         model_class: ForecastingModel | None = None,
         is_nn: bool | None = None,
-        work_dir: str | None = None,
+        verbose: int = 1,
+        work_dir: pathlib.Path | None = None,
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
@@ -375,6 +387,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             local_timezone: Local timezone.
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
+            verbose: Verbosity level.
             work_dir: Full path to directory to save this model's files.
             model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
@@ -399,6 +412,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
         self.model_class = model_class
         self.is_nn = is_nn
+        self.verbose = verbose
         self.work_dir = work_dir
         self.model_name_tag = model_name_tag
         self.required_hyperparams_data = required_hyperparams_data
@@ -408,7 +422,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.fixed_hyperparams = fixed_hyperparams
 
         self.model_name: str | None = None
-        self.chosen_hyperparams: dict = {}
+        self.chosen_hyperparams: dict | None = None
         self.model = None
         self.is_trained = False
 
@@ -430,6 +444,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
 {self.model_class = }
 {self.is_nn = }
+{self.verbose = }
 {self.work_dir = }
 {self.model_name_tag = }
 self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
@@ -447,7 +462,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def reset_wrapper(self: "TSModelWrapper") -> None:
         """Reset the wrapper after training, used in Bayesian optimization."""
         self.model_name = None
-        self.chosen_hyperparams = {}
+        self.chosen_hyperparams = None
         self.model = None
         self.is_trained = False
 
@@ -477,6 +492,35 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             Model object from this model wrapper
         """
         return self.model
+
+    def get_n_prediction_steps_and_time_bin_size(
+        self: "TSModelWrapper",
+    ) -> tuple[int, datetime.timedelta]:
+        """Get number of prediction steps from prediction_length_in_minutes and time_bin_size, used for Prophet predictions.
+
+        Raises:
+            ValueError: Bad configuration.
+
+        Returns:
+            Number of prediction steps and time bin size.
+        """
+        if not (
+            isinstance(self.fixed_hyperparams, dict) and isinstance(self.chosen_hyperparams, dict)
+        ):
+            raise ValueError("Need to assemble the hyperparams first!")
+
+        prediction_length_in_minutes = self.fixed_hyperparams.get("prediction_length_in_minutes")
+        if not isinstance(prediction_length_in_minutes, (int, float)):
+            raise ValueError("Could not load prediction_length_in_minutes from fixed_hyperparams!")
+
+        time_bin_size = self.chosen_hyperparams.get("time_bin_size")
+        if not isinstance(time_bin_size, datetime.timedelta):
+            raise ValueError("Could not load time_bin_size from chosen_hyperparams!")
+
+        prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
+        n_prediction_steps = math.ceil(prediction_length.seconds / time_bin_size.seconds)
+
+        return n_prediction_steps, time_bin_size
 
     def set_enable_progress_bar_and_max_time(
         self: "TSModelWrapper",
@@ -512,8 +556,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def set_work_dir(
         self: "TSModelWrapper",
         *,
-        work_dir_relative_to_base: str | None = None,
-        work_dir_absolute: str | None = None,
+        work_dir_relative_to_base: pathlib.Path | None = None,
+        work_dir_absolute: pathlib.Path | None = None,
     ) -> None:
         """Set the work_dir for this model wrapper.
 
@@ -526,13 +570,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         if work_dir_relative_to_base is not None and work_dir_absolute is not None:
             raise ValueError("Can not use both parameters, choose one!")
-        if work_dir_relative_to_base is not None and work_dir_relative_to_base != "":
+        if work_dir_relative_to_base is not None:
             if self.work_dir_base is None:
                 raise ValueError("Must have a valid work_dir_base!")
-            self.work_dir = os.path.join(self.work_dir_base, work_dir_relative_to_base)
-        elif (
-            work_dir_absolute is not None and work_dir_absolute != ""
-        ):  # pylint: disable=no-else-raise
+            self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
+        elif work_dir_absolute is not None:  # pylint: disable=no-else-raise
             self.work_dir = work_dir_absolute
         else:
             raise ValueError("Must use at least one parameter!")
@@ -615,6 +657,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Raises:
             ValueError: Bad configuration.
         """
+        self.chosen_hyperparams = {}
         required_hyperparams_all = []
         if isinstance(self.required_hyperparams_data, list):
             required_hyperparams_all += self.required_hyperparams_data
@@ -628,11 +671,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         ):
             raise ValueError("Need to give model the hyperparams first, should not happen!")
 
-        def get_hyperparam_value(hyperparam: str) -> str | float | int | None:
+        def get_hyperparam_value(
+            hyperparam: str, *, return_none_if_not_found: bool = False
+        ) -> str | float | int | None:
             """Get hyperparam value from variable and fixed hyperparams dicts.
 
             Args:
                 hyperparam: Key to search for.
+                return_none_if_not_found: Return None if the key is not found. Defaults to True, i.e. raise a ValueError.
 
             Returns:
                 hyperparam_value
@@ -659,7 +705,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam in self.fixed_hyperparams:  # noqa: SIM908
                 hyperparam_value = self.fixed_hyperparams[hyperparam]
 
-            if hyperparam_value is None:
+            if not return_none_if_not_found and hyperparam_value is None:
                 raise ValueError(f"Could not find value for required hyperparameter {hyperparam}!")
 
             return hyperparam_value
@@ -746,7 +792,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["enable_progress_bar"] = get_hyperparam_value(
                     "enable_progress_bar"
                 )
-                self.chosen_hyperparams["max_time"] = get_hyperparam_value("max_time")
+                self.chosen_hyperparams["max_time"] = get_hyperparam_value(
+                    "max_time", return_none_if_not_found=True
+                )
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
@@ -760,7 +808,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["lr_factor"] = get_hyperparam_value("lr_factor")
                 self.chosen_hyperparams["lr_patience"] = get_hyperparam_value("lr_patience")
                 hyperparam_value = get_lr_scheduler_kwargs(
-                    self.chosen_hyperparams["lr_factor"], self.chosen_hyperparams["lr_patience"]
+                    self.chosen_hyperparams["lr_factor"],
+                    self.chosen_hyperparams["lr_patience"],
+                    self.verbose,
                 )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -807,6 +857,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if kwargs:
             self.variable_hyperparams = kwargs
         self._assemble_hyperparams()
+        if TYPE_CHECKING:
+            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
     def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
@@ -830,6 +882,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(  # noqa: SCS108 # nosec assert_used
                 self.required_hyperparams_model, list
             )
+            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
 
         chosen_hyperparams_model = {
             k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
@@ -884,12 +937,38 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # fill missing values
         frac_missing = missing_values_ratio(dart_series_y_trainable)
         if 0 < frac_missing:
-            # Missing {frac_missing:.2%} of values, filling via interpolation
-            dart_series_y_trainable = fill_missing_values(dart_series_y_trainable)
-            if covariates_type is not None:
-                dart_series_covariates_trainable = fill_missing_values(
-                    dart_series_covariates_trainable
+            interpolate_method = "linear"
+            interpolate_limit_direction = "both"
+            if self.chosen_hyperparams.get("rebin_y", 0):
+                interpolate_method = "pad"
+                interpolate_limit_direction = "forward"
+            if 0 < self.verbose:
+                print(
+                    f"Missing {frac_missing:.2%} of values, filling via {interpolate_method} interpolation"
                 )
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="DataFrame.interpolate with method=pad is deprecated",
+                    category=FutureWarning,
+                )
+                # ignore this for now and just use pad, would require a rewrite of the following code in darts
+                # https://github.com/unit8co/darts/blob/4362df272c4a3e51ab33cf6596fb2d159be82b73/darts/utils/missing_values.py#L176
+                # See the following for context
+                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.ffill.html
+
+                dart_series_y_trainable = fill_missing_values(
+                    dart_series_y_trainable,
+                    method=interpolate_method,
+                    limit_direction=interpolate_limit_direction,
+                )
+                if covariates_type is not None:
+                    dart_series_covariates_trainable = fill_missing_values(
+                        dart_series_covariates_trainable,
+                        method=interpolate_method,
+                        limit_direction=interpolate_limit_direction,
+                    )
 
         # split train and validation sets
         dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
@@ -906,18 +985,23 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 pd.Timestamp(self.dt_val_start_datetime_local)
             )
             model_covariates_kwargs[f"{covariates_type}_covariates"] = dart_series_covariates_train
-            model_covariates_kwargs[
-                f"val_{covariates_type}_covariates"
-            ] = dart_series_covariates_val
+            if self.is_nn:
+                model_covariates_kwargs[
+                    f"val_{covariates_type}_covariates"
+                ] = dart_series_covariates_val
             prediction_covariates_kwargs[
                 f"{covariates_type}_covariates"
             ] = dart_series_covariates_train.append(dart_series_covariates_val)
 
         # train
+        train_kwargs = {}
+        if self.is_nn:
+            train_kwargs["val_series"] = dart_series_y_val
+            train_kwargs["verbose"] = self.verbose
+
         _ = self.model.fit(
             dart_series_y_train,
-            val_series=dart_series_y_val,
-            verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
+            **train_kwargs,
             **model_covariates_kwargs,
         )
 
@@ -925,7 +1009,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         y_pred_val = self.model.predict(
             dart_series_y_val.n_timesteps,
             num_samples=1,
-            verbose=self.chosen_hyperparams.get("enable_progress_bar", False),
+            verbose=self.verbose,
             **prediction_covariates_kwargs,
         )
 
@@ -965,6 +1049,87 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
 ################################################################################
 # model classes
+class ProphetWrapper(TSModelWrapper):
+    """Prophet wrapper."""
+
+    # config wrapper for Prophet
+    PROPHET_FIXED_HYPERPARAMS: Final = {
+        "growth": "flat",
+        "country_holidays": "US",
+        "suppress_stdout_stderror": True,
+    }
+
+    _model_class = Prophet
+    _is_nn = False
+    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
+    _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
+
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
+    # Prophet makes "day_of_week_frac", "time_of_day_frac", "is_holiday" equivalent components, so remove as covariates
+    _covariates = [
+        _
+        for _ in _allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
+        if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
+    ]
+
+    _allowed_variable_hyperparams["covariates"]["allowed"] = _covariates  # type: ignore[index]
+    _allowed_variable_hyperparams["covariates"]["default"] = _covariates  # type: ignore[index]
+
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
+
+    def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # boilerplate - the same for all models below here
+        """Int method.
+
+        Args:
+            **kwargs: Keyword arguments.
+                Can be a parent TSModelWrapper instance plus the undefined parameters,
+                or all the necessary parameters.
+        """
+        # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
+        # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
+        # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
+        if (
+            "TSModelWrapper" in kwargs
+            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
+                kwargs["TSModelWrapper"].__class__
+            )
+            == type(TSModelWrapper)  # <class 'type'>
+            and str(kwargs["TSModelWrapper"].__class__)
+            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+        ):
+            self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
+            self.model_class = self._model_class
+            self.is_nn = self._is_nn
+            self.work_dir = kwargs.get("work_dir")
+            self.model_name_tag = kwargs.get("model_name_tag")
+            self.required_hyperparams_data = self._required_hyperparams_data
+            self.required_hyperparams_model = self._required_hyperparams_model
+            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
+            self.fixed_hyperparams = self._fixed_hyperparams
+        else:
+            super().__init__(
+                dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
+                dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],
+                work_dir_base=kwargs["work_dir_base"],
+                random_state=kwargs["random_state"],
+                date_fmt=kwargs["date_fmt"],
+                time_fmt=kwargs["time_fmt"],
+                fname_datetime_fmt=kwargs["fname_datetime_fmt"],
+                local_timezone=kwargs["local_timezone"],
+                model_class=self._model_class,
+                is_nn=self._is_nn,
+                work_dir=kwargs["work_dir"],
+                model_name_tag=kwargs.get("model_name_tag"),
+                required_hyperparams_data=self._required_hyperparams_data,
+                required_hyperparams_model=self._required_hyperparams_model,
+                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                variable_hyperparams=kwargs.get("variable_hyperparams"),
+                fixed_hyperparams=self._fixed_hyperparams,
+            )
+
+
 class NBEATSModelWrapper(TSModelWrapper):
     """NBEATSModel wrapper."""
 
@@ -1042,7 +1207,7 @@ n_points = 0  # # pylint: disable=invalid-name
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     parent_wrapper: TSModelWrapper,
-    model_wrapper_class: type[NBEATSModelWrapper],  # expand with more classes
+    model_wrapper_class: type[NBEATSModelWrapper | ProphetWrapper],  # expand with more classes
     *,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
@@ -1078,7 +1243,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         utility_kappa: Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
@@ -1099,6 +1264,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    _model_wrapper.verbose = verbose
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -1126,27 +1292,26 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup Logging
     generic_model_name: Final = _model_wrapper.get_generic_model_name()
-    bayesian_opt_work_dir: Final = os.path.expanduser(
-        os.path.join(_model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name)
-    )
-
-    fname_json_log: Final = os.path.join(
+    bayesian_opt_work_dir: Final = pathlib.Path(
+        _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
+    ).expanduser()
+    fname_json_log: Final = pathlib.Path(
         bayesian_opt_work_dir, f"bayesian_opt_{generic_model_name}.json"
     )
 
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
-    if enable_reloading and os.path.isfile(fname_json_log):
+    if enable_reloading and fname_json_log.is_file():
         print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
         optimizer.dispatch(Events.OPTIMIZATION_START)
-        load_logs(optimizer, logs=fname_json_log)
+        load_logs(optimizer, logs=str(fname_json_log))
         n_points = len(optimizer.space)
         print(f"Loaded {n_points} existing points.\n")
 
     # Continue to setup logging
     if enable_json_logging:
-        os.makedirs(bayesian_opt_work_dir, exist_ok=True)
-        json_logger = JSONLogger(path=fname_json_log, reset=False)
+        bayesian_opt_work_dir.mkdir(parents=True, exist_ok=True)
+        json_logger = JSONLogger(path=str(fname_json_log), reset=False)
         optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
 
     if 0 < verbose:
@@ -1244,7 +1409,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
 
             if enable_model_saves:
-                fname_model = os.path.join(
+                fname_model = pathlib.Path(
                     bayesian_opt_work_dir, f"iteration_{n_points}_{generic_model_name}.pt"
                 )
                 model_wrapper.get_model().save(fname_model)

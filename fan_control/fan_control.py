@@ -3,7 +3,7 @@
 Adapted from https://blog.driftking.tw/en/2019/11/Using-Raspberry-Pi-to-Control-a-PWM-Fan-and-Monitor-its-Speed/
 """
 
-import os
+import pathlib
 import sys
 import time
 from typing import Final
@@ -51,7 +51,7 @@ def fan_control(cfg: DictConfig) -> None:
     # pylint: enable=invalid-name
 
     # Lock script, avoid launching duplicates
-    sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    sys.path.append(str(pathlib.Path.cwd().parent))
     from utils.shared_functions import (  # pylint: disable=import-error, import-outside-toplevel
         get_lock,
         get_SoC_temp,
