@@ -1207,7 +1207,7 @@ n_points = 0  # # pylint: disable=invalid-name
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     parent_wrapper: TSModelWrapper,
-    model_wrapper_class: type[NBEATSModelWrapper],  # expand with more classes
+    model_wrapper_class: type[NBEATSModelWrapper | ProphetWrapper],  # expand with more classes
     *,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
