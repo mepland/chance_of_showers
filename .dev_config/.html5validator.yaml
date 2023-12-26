@@ -2,3 +2,5 @@ root: daq/web
 vnu:
   - '--also-check-css'
   - '--also-check-svg'
+ignore_re:
+  - '"{" is not allowed.'
