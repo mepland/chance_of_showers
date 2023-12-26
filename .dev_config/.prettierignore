@@ -2,4 +2,3 @@
 **/*.yml
 **/*.yaml
 **/*.js
-.mypy_cache
