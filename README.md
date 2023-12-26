@@ -247,12 +247,14 @@ when you create a new commit.
 pre-commit install
 ```
 
-### Setting up markdownlint
-Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli)
-which can be installed via:
+### Setting up JavaScript-based Linters
+Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli),
+JavaScript by [`standard`](https://github.com/standard/standard),
+and HTML, SCSS, and CSS by [`prettier`](https://prettier.io/).
+You can install these JavaScript-based linters globally with:
 
 ```bash
-npm install -g markdownlint-cli
+sudo npm install -g  markdownlint-cli standard prettier
 ```
 
 ### Using the Makefile

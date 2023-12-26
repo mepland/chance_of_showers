@@ -98,13 +98,6 @@ repos:
       - id: bandit
         args: ['-q']
 
-  # detect-secrets
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: 'v1.4.0'
-    hooks:
-      - id: detect-secrets
-        args: ['--exclude-lines', 'integrity=']
-
   # vulture
   - repo: https://github.com/jendrikseipp/vulture
     rev: 'v2.10'
@@ -116,6 +109,13 @@ repos:
     rev: 'v3.15.0'
     hooks:
       - id: pyupgrade
+
+  # detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 'v1.4.0'
+    hooks:
+      - id: detect-secrets
+        args: ['--exclude-lines', 'integrity=']
 
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
@@ -137,6 +137,27 @@ repos:
     hooks:
       - id: markdownlint
         args: ['--config', '.dev_config/.markdownlint.yaml', '--ignore', 'LICENSE.md', '--dot']
+
+  # standard
+  - repo: https://github.com/standard/standard
+    rev: v17.1.0
+    hooks:
+      - id: standard
+
+  # html5validator does not work with pre-commit since it checks modified files iteratively.
+  # Use `make html5validator` for local testing instead.
+
+  # prettier
+  # This pre-commit hook does not respect --ignore-path or --config,
+  # so we have to code the settings in here independently.
+  # It also runs quite slowly, so just use `make fmt_prettier` instead.
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: "v4.0.0-alpha.8"
+  #   hooks:
+  #     - id: prettier
+  #       args: ['--no-config', '--print-width', '100', '--single-attribute-per-line']
+  #       types_or: [html, css, scss, text]
+  #       exclude: '.\.md|.\.yml|.\.yaml|.\.js|.\.min.css|Makefile'
 
   # pygrep-hooks
   - repo: https://github.com/pre-commit/pygrep-hooks

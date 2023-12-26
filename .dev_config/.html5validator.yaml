@@ -1,0 +1,4 @@
+root: daq/web
+vnu:
+  - '--also-check-css'
+  - '--also-check-svg'
