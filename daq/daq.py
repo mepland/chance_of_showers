@@ -678,7 +678,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             ] = mean_pressure_value_normalized_n_last
                             _data["past_had_flow_n_last"] = past_had_flow_n_last
 
-                        sio.emit("emit_data", json.dumps(_data))
+                        sio.emit("emitData", json.dumps(_data))
                     except Exception as error:
                         # don't want to kill the DAQ just because of a web problem
                         my_print(
