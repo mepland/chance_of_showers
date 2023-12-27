@@ -254,7 +254,7 @@ and HTML, SCSS, and CSS by [`prettier`](https://prettier.io/).
 You can install these JavaScript-based linters globally with:
 
 ```bash
-sudo npm install -g  markdownlint-cli standard prettier
+sudo npm install -g markdownlint-cli standard prettier
 ```
 
 ### Using the Makefile
