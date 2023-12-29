@@ -159,6 +159,12 @@ repos:
   #       types_or: [html, css, scss, text]
   #       exclude: '.\.md|.\.yml|.\.yaml|.\.js|.\.min.css|Makefile'
 
+  # checkmake
+  - repo: https://github.com/mrtazz/checkmake.git
+    rev: '0.2.2'
+    hooks:
+      - id: checkmake
+
   # pygrep-hooks
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: 'v1.10.0'

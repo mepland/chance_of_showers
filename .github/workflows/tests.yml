@@ -111,3 +111,6 @@ jobs:
       - name: prettier
         id: prettier
         run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
+
+      - name: checkmake
+        uses: Uno-Takashi/checkmake-action@main
