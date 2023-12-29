@@ -111,3 +111,13 @@ jobs:
       - name: prettier
         id: prettier
         run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
+
+      - name: checkmake
+        uses: Uno-Takashi/checkmake-action@main
+
+      - name: shellcheck shfmt checkbashisms
+        uses: luizm/action-sh-checker@master  # blocklint: pragma
+        env:
+          SHFMT_OPTS: -bn -ci -sr -s -d
+        with:
+          sh_checker_checkbashisms_enable: true

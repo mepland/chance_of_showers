@@ -159,6 +159,25 @@ repos:
   #       types_or: [html, css, scss, text]
   #       exclude: '.\.md|.\.yml|.\.yaml|.\.js|.\.min.css|Makefile'
 
+  # checkmake
+  - repo: https://github.com/mrtazz/checkmake.git
+    rev: '0.2.2'
+    hooks:
+      - id: checkmake
+
+  # shellcheck
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: 'v0.9.0'
+    hooks:
+      - id: shellcheck
+
+  # shfmt
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: 'v3.7.0-4'
+    hooks:
+      - id: shfmt
+        args: ['-bn', '-ci', '-sr', '-s', '-w']
+
   # pygrep-hooks
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: 'v1.10.0'
