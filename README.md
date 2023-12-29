@@ -31,6 +31,7 @@ logs the data, and creates time series forecasts of future water pressure.
 [![linting: StandardJS](https://img.shields.io/badge/StandardJS-222222.svg?style=flat&logo=StandardJS&logoColor=f3df49)](https://github.com/standard/standard)
 [![linting: yamllint](https://img.shields.io/badge/linting-yamllint-blue?style=flat)](https://github.com/adrienverge/yamllint)
 [![code style: Prettier](https://img.shields.io/badge/Prettier-222222.svg?style=flat&logo=Prettier&logoColor=f7b93e)](https://prettier.io)
+[![linting: checkmake](https://img.shields.io/badge/linting-checkmake-blue?style=flat)](https://github.com/mrtazz/checkmake)
 [![linting: shellcheck](https://img.shields.io/badge/linting-shellcheck-blue?style=flat)](https://github.com/koalaman/shellcheck)
 [![linting: shfmt](https://img.shields.io/badge/linting-shfmt-blue?style=flat)](https://github.com/mvdan/sh)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
