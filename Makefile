@@ -19,6 +19,9 @@ pre-commit-this-commit:
 pre-commit-update:
 	poetry run pre-commit autoupdate
 
+isort:
+	poetry run isort .
+
 black:
 	poetry run black .
 	poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py') $(shell git ls-files '*.md') $(shell git ls-files '*.rst')
@@ -29,18 +32,12 @@ flake8:
 mypy:
 	poetry run mypy .
 
-isort:
-	poetry run isort .
-
 # https://stackoverflow.com/a/63044665
 pylint:
 	poetry run pylint $(shell git ls-files '*.py')
 
 bandit:
 	poetry run bandit -q -r .
-
-detect-secrets:
-	poetry run detect-secrets-hook --exclude-lines 'integrity='
 
 vulture:
 	poetry run vulture
@@ -55,6 +52,9 @@ vulture-update_ignore:
 pyupgrade:
 	poetry run pyupgrade $(shell git ls-files '*.py')
 
+detect-secrets:
+	poetry run detect-secrets-hook --exclude-lines 'integrity='
+
 yamllint:
 	poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
 
@@ -64,12 +64,30 @@ bklint: # Renamed to bklint so "make bl" autocompletes to "make black"
 markdownlint:
 	markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot --fix .
 
+standard:
+	standard --fix
+
+html5validator:
+	html5validator --config .dev_config/.html5validator.yaml
+
+fmt_prettier:
+	prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --write .
+
+# isort ~ isort:
 # flake8 ~ noqa
-# pylint ~ pylint
 # mypy ~ type:
+# pylint ~ pylint
 # bandit ~ nosec
-# detect-secrets ~ pragma
+# detect-secrets ~ pragma: allowlist
 # yamllint ~ yamllint
+# blocklint ~ blocklint: pragma
+# markdownlint ~ <!-- markdownlint-disable -->
+# standard ~ eslint
+# prettier ~ <!-- prettier-ignore -->
 find_noqa_comments:
-	@grep -rIn 'noqa\|pylint\|type:\|nosec\|pragma' $(shell git ls-files '*.py')
-	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml')
+	@grep -rIn 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py')
+	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml' '*.yml')
+	@grep -rIn 'pragma\|blocklint:' $(shell git ls-files '*')
+	@grep -rIn 'markdownlint-' $(shell git ls-files '*.md')
+	@grep -rIn 'eslint' $(shell git ls-files '*.js')
+	@grep -rIn 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css')

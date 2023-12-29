@@ -662,23 +662,23 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                         # send data to socket
                         _data = {
                             # time
-                            "t_local_str": t_local_str,
-                            "i_polling": i_polling,
+                            "tLocalStr": t_local_str,
+                            "iPolling": i_polling,
                             # live values
-                            "pressure_value": pressure_value,
-                            "pressure_value_normalized": pressure_value_normalized,
-                            "had_flow": flow_value,
+                            "pressureValue": pressure_value,
+                            "pressureValueNormalized": pressure_value_normalized,
+                            "hadFlow": flow_value,
                         }
                         # N_LAST_POINTS_WEB mean values
                         if i_polling == 0 or new_connection:
                             new_connection = False
-                            _data["t_local_str_n_last"] = t_local_str_n_last
+                            _data["tLocalStrNLast"] = t_local_str_n_last
                             _data[
-                                "mean_pressure_value_normalized_n_last"
+                                "meanPressureValueNormalizedNLast"
                             ] = mean_pressure_value_normalized_n_last
-                            _data["past_had_flow_n_last"] = past_had_flow_n_last
+                            _data["pastHadFlowNLast"] = past_had_flow_n_last
 
-                        sio.emit("emit_data", json.dumps(_data))
+                        sio.emit("emitData", json.dumps(_data))
                     except Exception as error:
                         # don't want to kill the DAQ just because of a web problem
                         my_print(

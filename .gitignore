@@ -1,6 +1,8 @@
 .ipynb_checkpoints
 .DS_Store
 output
+.mypy_cache
+
 *.swp
 *.pyc
 *style_file*.html

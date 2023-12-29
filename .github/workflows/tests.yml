@@ -24,6 +24,7 @@ jobs:
       matrix:
         python-version: ["3.11"]
         poetry-version: ["1.5"]
+        node_version: ["lts/*"]
 
     steps:
       - name: Check out source repository
@@ -40,8 +41,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      - name: Install Dependencies
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node_version }}
+          check-latest: true
+
+      - name: Install Python Dependencies
         run: poetry install --with daq,web,ana,dev
+
+      - name: Install Node Dependencies
+        run: sudo npm install --global standard prettier
 
       - name: poetry
         run: poetry check && poetry lock --no-update
@@ -67,14 +77,14 @@ jobs:
       - name: bandit
         run: poetry run bandit -r .
 
-      - name: detect-secrets
-        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
-
       - name: vulture
         run: poetry run vulture
 
       - name: pyupgrade
         run: poetry run pyupgrade
+
+      - name: detect-secrets
+        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
 
       - name: yamllint
         run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
@@ -89,3 +99,15 @@ jobs:
           dot: true
           config_file: .dev_config/.markdownlint.yaml
           ignore_files: LICENSE.md
+
+      - name: standard
+        run: standard
+
+      - name: html5validator
+        uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
+        with:
+          config: .dev_config/.html5validator.yaml
+
+      - name: prettier
+        id: prettier
+        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length

@@ -5,26 +5,36 @@ This project provides live water pressure measurements
 via a web dashboard running on a Raspberry Pi,
 logs the data, and creates time series forecasts of future water pressure.
 
-[![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
-[![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
-
+[![Prophet](https://img.shields.io/badge/Prophet-3b5998.svg?style=flat&logo=data:image/svg%2bxml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDIxLjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA3Mi42IDcyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA3Mi42IDcyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0xMC4yLDQ5LjF2LTAuMWMwLTcuNiw1LjQtMTMuOCwxMy4zLTEzLjhjMS4yLDAsMi4zLDAuMiwzLjQsMC40bDYuMi03LjZjLTIuOC0xLjItNi0xLjgtOS41LTEuOAoJQzkuOSwyNi4xLDAsMzYuNSwwLDQ5LjF2MC4xYzAsNS4yLDEuNywxMC4xLDQuNywxMy45bDYuNy04LjNDMTAuNiw1My4xLDEwLjIsNTEuMSwxMC4yLDQ5LjF6Ii8+CjxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0zNi42LDQ2LjFjMC4yLDEsMC4zLDIsMC4zLDN2MC4xYzAsNy42LTUuNCwxMy44LTEzLjMsMTMuOGMtMi4zLDAtNC4zLTAuNS02LjEtMS41bC03LjgsNi4zCgljMy44LDIuNiw4LjUsNC4yLDEzLjgsNC4yYzEzLjcsMCwyMy42LTEwLjMsMjMuNi0yMi45di0wLjFjMC0zLjUtMC44LTYuNy0yLjEtOS42TDM2LjYsNDYuMXoiLz4KPGNpcmNsZSBjbGFzcz0ic3QwIiBjeD0iNTIuNCIgY3k9IjIwLjIiIHI9IjYuOSIvPgo8Y2lyY2xlIGNsYXNzPSJzdDAiIGN4PSI2OC43IiBjeT0iMy45IiByPSIzLjkiLz4KPC9zdmc+Cg==&logoColor=white)](https://github.com/facebook/prophet)
+[![Darts](https://img.shields.io/badge/Darts-blue?style=flat)](https://github.com/unit8co/darts)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org)
+
 [![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=flat&logo=Matplotlib&logoColor=black)](https://matplotlib.org)
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
-[![Bootstrap](https://img.shields.io/badge/bootstrap-%238511FA.svg?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
+[![Polars](https://img.shields.io/badge/Polars-cd792c.svg?style=flat&logo=Polars&logoColor=white)](https://github.com/pola-rs/polars)
+[![Pandas](https://img.shields.io/badge/Pandas-%150458.svg?style=flat&logo=pandas&logoColor=white)](https://github.com/pandas-dev/pandas)
+[![Flask](https://img.shields.io/badge/Flask-%23000.svg?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-%238511FA.svg?style=flat&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![Socket.io](https://img.shields.io/badge/Socket.io-black?style=flat&logo=socket.io&badgeColor=010101)](https://socket.io)
 [![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=flat&logo=Raspberry-Pi)](https://www.raspberrypi.com)
 [![KiCad](https://img.shields.io/badge/KiCad-314CB0.svg?style=flat&logo=KiCad&logoColor=white)](https://www.kicad.org)
 
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json?style=flat)](https://python-poetry.org)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
-[![Linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen?style=flat)](https://github.com/pylint-dev/pylint)
-[![Linting: flake8](https://img.shields.io/badge/flake8-checked-blueviolet?style=flat)](https://github.com/PyCQA/flake8)
-[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org)
-[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort)
-[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
+[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen?style=flat)](https://github.com/pylint-dev/pylint)
+[![linting: flake8](https://img.shields.io/badge/flake8-checked-blueviolet?style=flat)](https://github.com/PyCQA/flake8)
+[![checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://github.com/python/mypy)
+[![imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://github.com/PyCQA/isort)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
+[![linting: markdownlint](https://img.shields.io/badge/linting-markdownlint-blue?style=flat)](https://github.com/DavidAnson/markdownlint)
+[![linting: html5validator](https://img.shields.io/badge/linting-html5validator-blue?style=flat)](https://github.com/svenkreiss/html5validator)
+[![linting: StandardJS](https://img.shields.io/badge/StandardJS-222222.svg?style=flat&logo=StandardJS&logoColor=f3df49)](https://github.com/standard/standard)
+[![linting: yamllint](https://img.shields.io/badge/linting-yamllint-blue?style=flat)](https://github.com/adrienverge/yamllint)
+[![code style: Prettier](https://img.shields.io/badge/Prettier-222222.svg?style=flat&logo=Prettier&logoColor=f7b93e)](https://prettier.io)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+[![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
+[![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](LICENSE.md)
 
@@ -247,12 +257,14 @@ when you create a new commit.
 pre-commit install
 ```
 
-### Setting up markdownlint
-Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli)
-which can be installed via:
+### Setting up JavaScript-based Linters
+Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli),
+JavaScript by [`standard`](https://github.com/standard/standard),
+and HTML, SCSS, and CSS by [`prettier`](https://prettier.io).
+You can install these JavaScript-based linters globally with:
 
 ```bash
-npm install -g markdownlint-cli
+sudo npm install -g markdownlint-cli standard prettier
 ```
 
 ### Using the Makefile

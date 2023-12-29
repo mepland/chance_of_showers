@@ -26,7 +26,7 @@ daq:
   raw_data_relative_path: "daq/raw_data"
   # Log parameters
   logs_relative_path: "daq/logs"
-  log_memory_usage: true
+  log_memory_usage: false
   log_memory_usage_minutes_mod: 30
   # Web parameters
   n_last_points_web: 15
