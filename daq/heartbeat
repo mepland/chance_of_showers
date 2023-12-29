@@ -16,7 +16,7 @@ last_record_datetime_utc=$(tail -1 $pkg_path/daq/raw_data/"$last_modified_csv_fi
 # https://stackoverflow.com/questions/10990949/convert-date-time-string-to-epoch-in-bash#comment92569832_10990961
 last_record_datetime_epoch_seconds=$(date --date="$last_record_datetime_utc -0000" +"%s")
 current_epoch_seconds=$(date -u +"%s")
-delta_seconds="$((current_epoch_seconds-last_record_datetime_epoch_seconds))"
+delta_seconds="$((current_epoch_seconds - last_record_datetime_epoch_seconds))"
 
 # Send status to healthchecks.io
 
