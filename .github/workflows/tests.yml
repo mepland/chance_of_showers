@@ -119,3 +119,5 @@ jobs:
         uses: luizm/action-sh-checker@master  # blocklint: pragma
         env:
           SHFMT_OPTS: -bn -ci -sr -s -d
+        with:
+          sh_checker_checkbashisms_enable: true
