@@ -114,3 +114,8 @@ jobs:
 
       - name: checkmake
         uses: Uno-Takashi/checkmake-action@main
+
+      - name: shellcheck shfmt checkbashisms
+        uses: luizm/action-sh-checker@master  # blocklint: pragma
+        env:
+          SHFMT_OPTS: -bn -ci -sr -s -d
