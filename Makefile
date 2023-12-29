@@ -102,6 +102,10 @@ fmt_prettier:
 checkmake:
 	pre-commit run checkmake --all-files
 
+.PHONY: shellcheck
+shellcheck:
+	shellcheck $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
+
 # isort ~ isort:
 # flake8 ~ noqa
 # mypy ~ type:

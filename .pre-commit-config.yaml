@@ -165,6 +165,12 @@ repos:
     hooks:
       - id: checkmake
 
+  # shellcheck
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: 'v0.9.0'
+    hooks:
+      - id: shellcheck
+
   # pygrep-hooks
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: 'v1.10.0'
