@@ -171,6 +171,13 @@ repos:
     hooks:
       - id: shellcheck
 
+  # shfmt
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: 'v3.7.0-4'
+    hooks:
+      - id: shfmt
+        args: ['-bn', '-ci', '-sr', '-s', '-w']
+
   # pygrep-hooks
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: 'v1.10.0'

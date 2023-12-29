@@ -106,6 +106,10 @@ checkmake:
 shellcheck:
 	shellcheck $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
 
+.PHONY: shfmt
+shfmt:
+	shfmt -bn -ci -sr -s -w $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
+
 # isort ~ isort:
 # flake8 ~ noqa
 # mypy ~ type:
