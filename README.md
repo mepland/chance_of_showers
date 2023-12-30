@@ -116,6 +116,11 @@ is provided as a [KiCad](https://www.kicad.org) schematic
 
 ![Circuit Diagram](circuit_diagram/circuit_diagram.svg)
 
+#### Determining R1 = 10 kOhm
+
+* 3.3 Volts / 10 kOhm = 0.33 mA < [0.5 mA limit of GPIO input current](https://raspberrypi.stackexchange.com/questions/3209/what-are-the-min-max-voltage-current-values-the-gpio-pins-can-handle)
+* (3.3 Volts)^2 / 10 kOhm = 1.1 mW << [10 W limit of flow switch](https://www.amazon.com/dp/B08B1NG4FZ)
+
 ### Photos
 | ![Bottom](media/1_bottom.jpg) | ![Left](media/2_left.jpg) | ![Top](media/3_top.jpg) | ![Right](media/4_right.jpg) |
 | :---: | :---: | :---: | :---: |
