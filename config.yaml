@@ -1,6 +1,6 @@
 general:
   # Set 0% and 100% normalized pressure values
-  observed_pressure_min: 6300
+  observed_pressure_min: 5500
   observed_pressure_max: 13600
   # Repo location
   package_path: "~/chance_of_showers"
