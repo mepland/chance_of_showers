@@ -906,8 +906,8 @@ def plot_prophet(
         # Improve graphics of Forcast line
         for child in ax.get_children():
             if hasattr(child, "get_label") and child.get_label() == "Forecast":
-                child.set_color(MPL_C1)
-                child.set_lw(2)
+                child.set_color(MPL_C1)  # type: ignore[attr-defined]
+                child.set_lw(2)  # type: ignore[attr-defined]
 
         if legend_params is not None:
             for child in ax.get_children():
@@ -917,7 +917,7 @@ def plot_prophet(
                     and child.get_label() != ""
                     and not isinstance(child, mpl.axis.Axis)
                 ):
-                    child.set_label(child.get_label().title())
+                    child.set_label(child.get_label().title())  # type: ignore[attr-defined]
                     leg_objects.append(child)
 
     draw_legend(fig, leg_objects, legend_params)
