@@ -17,6 +17,7 @@
 import datetime
 import pathlib
 import pprint
+import shutil
 import sys
 import warnings
 
@@ -74,7 +75,7 @@ TRAINABLE_VAL_FRACTION: Final = cfg["ana"]["trainable_val_fraction"]
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
 
-PACKAGE_PATH: Final = cfg["general"]["package_path"]
+PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
 SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
 
 DATE_FMT: Final = cfg["general"]["date_fmt"]
@@ -120,11 +121,13 @@ DT_START_OF_CRON_HEARTBEAT_MONITORING: Final = datetime.datetime.strptime(
 TS_LABEL: Final = f"Timestamp [{LOCAL_TIMEZONE_STR}]"
 
 # %%
-MODELS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/models").expanduser()
+MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
-OUTPUTS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/outputs").expanduser()
+OUTPUTS_PATH: Final = PACKAGE_PATH / "ana" / "outputs"
 OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
+
+MEDIA_PATH: Final = PACKAGE_PATH / "media"
 
 # %% [markdown]
 # ***
@@ -134,7 +137,7 @@ OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
 FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-12-30-18-52-00.parquet"
 
 # %%
-F_PARQUET: Final = pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH, FNAME_PARQUET).expanduser()
+F_PARQUET: Final = PACKAGE_PATH / SAVED_DATA_RELATIVE_PATH / FNAME_PARQUET
 
 dfp_data = pd.read_parquet(F_PARQUET)
 
@@ -990,3 +993,12 @@ plot_chance_of_showers_time_series(
     fname="mean_pressure_value_normalized_selected_data",
     tag="",
 )
+
+# %% [markdown]
+# # Save outputs to `/media/ana_outputs`
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+_ = shutil.copytree(OUTPUTS_PATH, MEDIA_PATH / "ana_outputs", dirs_exist_ok=True)
