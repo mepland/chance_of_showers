@@ -45,7 +45,7 @@ VSIZE: Final = 11  # inches
 # aspect ratio width / height
 ASPECT_RATIO_SINGLE: Final = 4.0 / 3.0
 
-PLOT_PNG: Final = False
+PLOT_PNG: Final = True
 PNG_DPI: Final = 200
 
 STD_ANN_X: Final = 0.80
@@ -361,6 +361,29 @@ def ann_and_save(
             _fig.savefig(m_path / f"{fname}{tag}.png", dpi=PNG_DPI)
         _fig.savefig(m_path / f"{fname}{tag}.pdf")
         plt.close("all")
+
+
+########################################################
+def save_ploty_to_html(
+    fig: go.Figure,
+    m_path: pathlib.Path,
+    fname: str,
+    tag: str,
+    *,
+    include_plotlyjs: str = "cdn",
+) -> None:
+    """Save the plotly plot to html.
+
+    Args:
+        fig: Plotly object.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        include_plotlyjs: Include plotly js, use CDN, or other options. For more see:
+            https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#plotly.graph_objects.Figure.write_html
+    """
+    m_path.mkdir(parents=True, exist_ok=True)
+    fig.write_html(m_path / f"{fname}{tag}.html", include_plotlyjs=include_plotlyjs)
 
 
 ########################################################
@@ -835,6 +858,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
     dt_start: datetime.date | None = None,
     dt_stop: datetime.date | None = None,
     plot_inline: bool = True,
+    save_html: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[dict] | None = None,
     reference_lines: list[dict] | None = None,
@@ -859,6 +883,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
         dt_start: Data start date.
         dt_stop: Data end date.
         plot_inline: Display plot inline in a notebook, or save to file.
+        save_html: Save plot as html.
         ann_text_std_add: Text to add to the standard annotation.
         ann_texts_in: List of annotation dictionaries.
         reference_lines: List of reference line dicts.
@@ -962,6 +987,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
     ):
         trace_layout["xaxis"]["rangeselector"] = {"buttons": []}
         known_buttons = {
+            "10m": {"count": 10, "label": "10m", "step": "minute", "stepmode": "todate"},
             "15m": {"count": 15, "label": "15m", "step": "minute", "stepmode": "todate"},
             "1h": {"count": 1, "label": "1h", "step": "hour", "stepmode": "todate"},
             "12h": {"count": 12, "label": "12h", "step": "hour", "stepmode": "todate"},
@@ -1092,7 +1118,11 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
             ann_texts_in,
         )
 
+    if save_html:
+        if TYPE_CHECKING:
+            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec assert_used
+        save_ploty_to_html(fig, m_path, fname, tag)
     if plot_inline:
         fig.show()
-    else:
-        raise ValueError("Have not written save function yet!", m_path, fname, tag)
+    if not (save_html or plot_inline):
+        raise ValueError("Will not display or save anything!")
