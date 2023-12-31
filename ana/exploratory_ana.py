@@ -1005,4 +1005,6 @@ plot_chance_of_showers_time_series(
 # raise UserWarning("Stopping Here")
 
 # %%
-_ = shutil.copytree(OUTPUTS_PATH, MEDIA_PATH / "ana_outputs", dirs_exist_ok=True)
+_ = shutil.copytree(
+    OUTPUTS_PATH, MEDIA_PATH / "ana_outputs", dirs_exist_ok=True, copy_function=shutil.copy
+)
