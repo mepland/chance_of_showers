@@ -406,8 +406,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         flask_app = Flask(
             __name__,
             static_url_path="",
-            static_folder="web/static",
-            template_folder="web/templates",
+            static_folder=str(pathlib.Path("web", "static")),
+            template_folder=str(pathlib.Path("web", "templates")),
         )
 
         # pragma: allowlist nextline secret
