@@ -29,7 +29,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     """
     # setup variables
     # pylint: disable=invalid-name
-    PACKAGE_PATH: Final = cfg["general"]["package_path"]
+    PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
     SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
 
@@ -68,7 +68,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     dfpl_list = []
 
     csv_total_bytes = 0
-    for f_csv in pathlib.Path(PACKAGE_PATH, RAW_DATA_RELATIVE_PATH).expanduser().glob("*.csv"):
+    for f_csv in (PACKAGE_PATH / RAW_DATA_RELATIVE_PATH).glob("*.csv"):
         try:
             f_csv = pathlib.Path(f_csv)
             dfpl = pl.scan_csv(f_csv)
@@ -162,9 +162,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         dfpl.select("datetime_utc", "mean_pressure_value").collect(streaming=True).describe(),
     )
 
-    pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH).expanduser().mkdir(
-        parents=True, exist_ok=True
-    )
+    (PACKAGE_PATH / SAVED_DATA_RELATIVE_PATH).mkdir(parents=True, exist_ok=True)
 
     PARQUET_DATETIME_MIN: Final = (  # pylint: disable=invalid-name
         dfpl.select(pl.col("datetime_utc").min())
@@ -180,11 +178,11 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         .strftime(FNAME_DATETIME_FMT)
     )
 
-    f_parquet = pathlib.Path(
-        PACKAGE_PATH,
-        SAVED_DATA_RELATIVE_PATH,
-        f"data_{PARQUET_DATETIME_MIN}_to_{PARQUET_DATETIME_MAX}.parquet",
-    ).expanduser()
+    f_parquet = (
+        PACKAGE_PATH
+        / SAVED_DATA_RELATIVE_PATH
+        / f"data_{PARQUET_DATETIME_MIN}_to_{PARQUET_DATETIME_MAX}.parquet"
+    )
 
     dfpl.collect(streaming=True).write_parquet(f_parquet)
     parquet_total_bytes = f_parquet.stat().st_size

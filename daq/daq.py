@@ -82,7 +82,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
-    PACKAGE_PATH: Final = cfg["general"]["package_path"]
+    PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
+
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
     LOGS_RELATIVE_PATH: Final = cfg["daq"]["logs_relative_path"]
 
@@ -116,13 +117,10 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     ################################################################################
     # Paths
-    RAW_DATA_FULL_PATH: Final = pathlib.Path(  # pylint: disable=invalid-name
-        PACKAGE_PATH, RAW_DATA_RELATIVE_PATH
-    ).expanduser()
-    LOGS_FULL_PATH: Final = pathlib.Path(  # pylint: disable=invalid-name
-        PACKAGE_PATH, LOGS_RELATIVE_PATH
-    ).expanduser()
-
+    RAW_DATA_FULL_PATH: Final = (  # pylint: disable=invalid-name
+        PACKAGE_PATH / RAW_DATA_RELATIVE_PATH
+    )
+    LOGS_FULL_PATH: Final = PACKAGE_PATH / LOGS_RELATIVE_PATH  # pylint: disable=invalid-name
     RAW_DATA_FULL_PATH.mkdir(parents=True, exist_ok=True)
     LOGS_FULL_PATH.mkdir(parents=True, exist_ok=True)
 

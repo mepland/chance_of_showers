@@ -1295,9 +1295,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     bayesian_opt_work_dir: Final = pathlib.Path(
         _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
     ).expanduser()
-    fname_json_log: Final = pathlib.Path(
-        bayesian_opt_work_dir, f"bayesian_opt_{generic_model_name}.json"
-    )
+    fname_json_log: Final = bayesian_opt_work_dir / f"bayesian_opt_{generic_model_name}.json"
 
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
@@ -1409,8 +1407,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
 
             if enable_model_saves:
-                fname_model = pathlib.Path(
-                    bayesian_opt_work_dir, f"iteration_{n_points}_{generic_model_name}.pt"
+                fname_model = (
+                    bayesian_opt_work_dir / f"iteration_{n_points}_{generic_model_name}.pt"
                 )
                 model_wrapper.get_model().save(fname_model)
 
