@@ -979,6 +979,10 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
     Raises:
         ValueError: Bad configuration.
     """
+    if not (save_html or plot_inline):
+        print("Will not display or save anything, continuing!")
+        return
+
     if z_axis_params is None:
         z_axis_params = {}
 
@@ -1211,5 +1215,3 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
         save_ploty_to_html(fig, m_path, fname, tag)
     if plot_inline:
         fig.show()
-    if not (save_html or plot_inline):
-        raise ValueError("Will not display or save anything!")
