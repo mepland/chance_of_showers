@@ -25,9 +25,10 @@ import warnings
 import zoneinfo
 from typing import TYPE_CHECKING, Final
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from hydra import compose, initialize
-from IPython.display import display
+from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
@@ -52,6 +53,8 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     MPL_C0,
     MPL_C1,
     make_epoch_bins,
+    ann_and_save,
+    save_ploty_to_html,
     plot_2d_hist,
     plot_chance_of_showers_time_series,
     plot_hists,
@@ -326,6 +329,9 @@ dfp_predict = model_prophet.predict(dfp_prophet_future)
 # %%
 # display(dfp_predict.tail(5))
 
+# %% [markdown]
+# #### Predictions
+
 # %%
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -334,6 +340,18 @@ with warnings.catch_warnings():
     )
     _fig_predict = model_prophet.plot(dfp_predict)
 
+ann_and_save(
+    _fig_predict,
+    ann_texts=[],
+    plot_inline=False,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_predict",
+    tag="",
+)
+
+# %%
+Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
+
 # %%
 # The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
 # instead using go.Figure(data=data, layout=layout). See:
@@ -341,9 +359,19 @@ with warnings.catch_warnings():
 
 fig_prophet_predict = prophet.plot.plot_plotly(model_prophet, dfp_predict)
 
+save_ploty_to_html(
+    fig_prophet_predict,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_predict",
+    tag="",
+)
+
+# %%
 fig_prophet_predict.show()
 
-fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs="cdn")
+
+# %% [markdown]
+# #### Components
 
 # %%
 with warnings.catch_warnings():
@@ -353,12 +381,79 @@ with warnings.catch_warnings():
     )
     _fig_components = model_prophet.plot_components(dfp_predict)
 
+ann_and_save(
+    _fig_components,
+    ann_texts=[],
+    plot_inline=False,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_components",
+    tag="",
+)
+
+# %%
+Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
+
 # %%
 fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
 
+save_ploty_to_html(
+    fig_prophet_components,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_components",
+    tag="",
+)
+
+# %%
 fig_prophet_components.show()
 
-fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs="cdn")
+
+# %% [markdown]
+# #### Individual Components
+
+# %%
+_fig_component_weekly, _ax_component_weekly = plt.subplots()
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    prophet.plot.plot_seasonality(model_prophet, "weekly", ax=_ax_component_weekly)
+
+ann_and_save(
+    _fig_component_weekly,
+    ann_texts=[],
+    plot_inline=False,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_component_weekly",
+    tag="",
+)
+
+# %%
+Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
+
+
+# %%
+_fig_component_daily, _ax_component_daily = plt.subplots()
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    prophet.plot.plot_seasonality(model_prophet, "daily", ax=_ax_component_daily)
+
+ann_and_save(
+    _fig_component_daily,
+    ann_texts=[],
+    plot_inline=False,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_component_daily",
+    tag="",
+)
+
+# %%
+Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
 # ## N-BEATS
@@ -630,7 +725,7 @@ plot_hists(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
+    plot_inline=False,
     binning={
         "bin_size": 100,
         "bin_size_str_fmt": ".0f",
@@ -664,6 +759,9 @@ plot_hists(
         },
     ],
 )
+
+# %%
+Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
 
 # %% [markdown]
 # ## Time Series of All Normalized Pressure Values
@@ -710,6 +808,11 @@ plot_chance_of_showers_time_series(
             "lw": 2,
         },
     ],
+    plot_inline=True,
+    save_html=False,  # 24 MB
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_normalized_all_data",
+    tag="",
 )
 
 # %% [markdown]
@@ -724,7 +827,7 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
+    plot_inline=False,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -755,6 +858,9 @@ plot_2d_hist(
     },
 )
 
+# %%
+Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
+
 # %% [markdown]
 # ## 2D Histogram of All Normalized Pressure Values - Same Week
 
@@ -767,7 +873,7 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
+    plot_inline=False,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -796,4 +902,54 @@ plot_2d_hist(
         "norm": "log",
         "density": True,
     },
+)
+
+# %%
+Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
+
+# %% [markdown]
+# ## Time Series of Selected Normalized Pressure Values - For Web
+
+# %%
+dt_plotly_web_selection_start = datetime.datetime(year=2023, month=11, day=1, tzinfo=LOCAL_TIMEZONE)
+dt_plotly_web_selection_end = datetime.datetime(year=2023, month=12, day=1, tzinfo=LOCAL_TIMEZONE)
+
+dfp_plotly_web_selection = dfp_data.loc[
+    (dt_plotly_web_selection_start <= dfp_data["datetime_local"])
+    & (dfp_data["datetime_local"] <= dt_plotly_web_selection_end)
+]
+
+plot_chance_of_showers_time_series(
+    dfp_plotly_web_selection,
+    x_axis_params={
+        "col": "datetime_local",
+        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
+        "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
+        "min": dt_plotly_web_selection_start,
+        "max": dt_plotly_web_selection_end,
+        "rangeselector_buttons": [
+            "10m",
+            "15m",
+            "1h",
+            "12h",
+            "1d",
+            "1w",
+            "1m",
+            "all",
+        ],
+    },
+    y_axis_params={
+        "col": "mean_pressure_value_normalized",
+        "axis_label": "Mean Pressure %",
+        "hover_label": "Mean Pressure: %{y:.2%}",
+    },
+    z_axis_params={
+        "col": "had_flow",
+        "hover_label": "Had Flow: %{customdata:df}",
+    },
+    plot_inline=True,
+    save_html=True,
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_normalized_selected_data",
+    tag="",
 )
