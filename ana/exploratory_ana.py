@@ -53,8 +53,8 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     MPL_C0,
     MPL_C1,
     make_epoch_bins,
-    ann_and_save,
     save_ploty_to_html,
+    plot_prophet,
     plot_2d_hist,
     plot_chance_of_showers_time_series,
     plot_hists,
@@ -111,6 +111,8 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 )
 
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
+
+TS_LABEL: Final = f"Timestamp [{LOCAL_TIMEZONE_STR}]"
 
 # %%
 MODELS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/models").expanduser()
@@ -194,7 +196,19 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
-print(f"{dt_start_local = },\n{dt_stop_local  = }")
+
+minutes_observed = dfp_data.index.size
+minutes_possible = int((dt_stop_local - dt_start_local).total_seconds() / 60.0)
+
+print(
+    f"""
+{dt_start_local = }
+{dt_stop_local  = }
+
+DAQ recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible minutes overall,
+and TODO since implementing the cron jobs.
+"""
+)
 
 # %%
 actual_min_mean_pressure_value_with_flow = dfp_data.loc[dfp_data["had_flow"] == 1][
@@ -203,6 +217,7 @@ actual_min_mean_pressure_value_with_flow = dfp_data.loc[dfp_data["had_flow"] == 
 print(
     f"""Config {OBSERVED_PRESSURE_MIN = }
 Actual Min Mean Pressure with Flow = {actual_min_mean_pressure_value_with_flow}
+
 % Difference = {(OBSERVED_PRESSURE_MIN-actual_min_mean_pressure_value_with_flow)/OBSERVED_PRESSURE_MIN:.1%}
 """
 )
@@ -340,13 +355,18 @@ with warnings.catch_warnings():
     )
     _fig_predict = model_prophet.plot(dfp_predict)
 
-ann_and_save(
+plot_prophet(
     _fig_predict,
-    ann_texts=[],
     plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_predict",
     tag="",
+    x_axis_params_list=[{"axis_label": TS_LABEL}],
+    y_axis_params_list=[{"axis_label": "Mean Pressure", "min": 0, "max": 1.2}],
+    legend_params={
+        "bbox_to_anchor": (0.1, 0.0, 0.2, 0.2),
+        "box_color": "white",
+    },
 )
 
 # %%
@@ -381,13 +401,26 @@ with warnings.catch_warnings():
     )
     _fig_components = model_prophet.plot_components(dfp_predict)
 
-ann_and_save(
+plot_prophet(
     _fig_components,
-    ann_texts=[],
     plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_components",
     tag="",
+    x_axis_params_list=[
+        {"axis_label": TS_LABEL},
+        {"axis_label": TS_LABEL},
+        {"axis_label": "Day of Week"},
+        {"axis_label": "Time of Day"},
+        {"axis_label": TS_LABEL},
+    ],
+    y_axis_params_list=[
+        {"axis_label": "Trend"},
+        {"axis_label": "Holidays"},
+        {"axis_label": "Weekly"},
+        {"axis_label": "Daily"},
+        {"axis_label": "Had Flow"},
+    ],
 )
 
 # %%
@@ -420,18 +453,18 @@ with warnings.catch_warnings():
     )
     prophet.plot.plot_seasonality(model_prophet, "weekly", ax=_ax_component_weekly)
 
-ann_and_save(
+plot_prophet(
     _fig_component_weekly,
-    ann_texts=[],
     plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_component_weekly",
     tag="",
+    x_axis_params_list=[{"axis_label": "Day of Week"}],
+    y_axis_params_list=[{"axis_label": "Weekly Component"}],
 )
 
 # %%
 Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
-
 
 # %%
 _fig_component_daily, _ax_component_daily = plt.subplots()
@@ -443,13 +476,14 @@ with warnings.catch_warnings():
     )
     prophet.plot.plot_seasonality(model_prophet, "daily", ax=_ax_component_daily)
 
-ann_and_save(
+plot_prophet(
     _fig_component_daily,
-    ann_texts=[],
     plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_component_daily",
     tag="",
+    x_axis_params_list=[{"axis_label": "Hour of Day"}],
+    y_axis_params_list=[{"axis_label": "Daily Component"}],
 )
 
 # %%
@@ -657,7 +691,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
+        "axis_label": TS_LABEL,
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -771,7 +805,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
+        "axis_label": TS_LABEL,
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -908,7 +942,7 @@ plot_2d_hist(
 Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
 
 # %% [markdown]
-# ## Time Series of Selected Normalized Pressure Values - For Web
+# ## Time Series of Selected Pressure Values - For Web
 
 # %%
 dt_plotly_web_selection_start = datetime.datetime(year=2023, month=11, day=1, tzinfo=LOCAL_TIMEZONE)
@@ -919,11 +953,59 @@ dfp_plotly_web_selection = dfp_data.loc[
     & (dfp_data["datetime_local"] <= dt_plotly_web_selection_end)
 ]
 
+# %% [markdown]
+# ## Normalized
+
+# %%
 plot_chance_of_showers_time_series(
     dfp_plotly_web_selection,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
+        "axis_label": TS_LABEL,
+        "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
+        "min": dt_plotly_web_selection_start,
+        "max": dt_plotly_web_selection_end,
+        "rangeselector_buttons": [
+            "10m",
+            "15m",
+            "1h",
+            "12h",
+            "1d",
+            "1w",
+            "1m",
+            "all",
+        ],
+    },
+    y_axis_params={
+        "col": "mean_pressure_value",
+        "axis_label": "Mean Pressure [Raw ADC]",
+        "hover_label": "Mean Pressure [Raw ADC]: %{y:d}",
+    },
+    z_axis_params={
+        "col": "had_flow",
+        "hover_label": "Had Flow: %{customdata:df}",
+    },
+    reference_lines=[
+        {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
+        {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
+    ],
+    plot_inline=True,
+    save_html=True,
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_selected_data",
+    tag="",
+)
+
+
+# %% [markdown]
+# ## Normalized
+
+# %%
+plot_chance_of_showers_time_series(
+    dfp_plotly_web_selection,
+    x_axis_params={
+        "col": "datetime_local",
+        "axis_label": TS_LABEL,
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_plotly_web_selection_start,
         "max": dt_plotly_web_selection_end,
