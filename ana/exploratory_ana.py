@@ -112,6 +112,11 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
 
+START_OF_CRON_HEARTBEAT_MONITORING: Final = cfg["daq"]["start_of_cron_heartbeat_monitoring"]
+DT_START_OF_CRON_HEARTBEAT_MONITORING: Final = datetime.datetime.strptime(
+    START_OF_CRON_HEARTBEAT_MONITORING, DATETIME_FMT
+).replace(tzinfo=LOCAL_TIMEZONE)
+
 TS_LABEL: Final = f"Timestamp [{LOCAL_TIMEZONE_STR}]"
 
 # %%
@@ -200,13 +205,19 @@ dt_stop_local = dfp_data["datetime_local"].max()
 minutes_observed = dfp_data.index.size
 minutes_possible = int((dt_stop_local - dt_start_local).total_seconds() / 60.0)
 
+minutes_observed_since_start_of_cron_heartbeat_monitoring = dfp_data.loc[
+    DT_START_OF_CRON_HEARTBEAT_MONITORING <= dfp_data["datetime_local"]
+].index.size
+minutes_possible_since_start_of_cron_heartbeat_monitoring = int(
+    (dt_stop_local - DT_START_OF_CRON_HEARTBEAT_MONITORING).total_seconds() / 60.0
+)
+
 print(
     f"""
 {dt_start_local = }
 {dt_stop_local  = }
 
-DAQ recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible minutes overall,
-and TODO since implementing the cron jobs.
+The DAQ recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible minutes overall, and {1 - (minutes_possible_since_start_of_cron_heartbeat_monitoring - minutes_observed_since_start_of_cron_heartbeat_monitoring)/minutes_possible_since_start_of_cron_heartbeat_monitoring:.3%} since implementing the cron job heartbeat monitoring.
 """
 )
 
