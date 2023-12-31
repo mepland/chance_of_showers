@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 
 mpl.rcParams["axes.labelsize"] = 16
 mpl.rcParams["xtick.top"] = True
+mpl.rcParams["xtick.bottom"] = True
+mpl.rcParams["ytick.left"] = True
 mpl.rcParams["ytick.right"] = True
 mpl.rcParams["xtick.direction"] = "in"
 mpl.rcParams["ytick.direction"] = "in"
@@ -18,18 +20,24 @@ mpl.rcParams["xtick.labelsize"] = 13
 mpl.rcParams["ytick.labelsize"] = 13
 mpl.rcParams["xtick.minor.visible"] = True
 mpl.rcParams["ytick.minor.visible"] = True
-mpl.rcParams["xtick.major.width"] = 0.8  # major tick width in points
-mpl.rcParams["xtick.minor.width"] = 0.8  # minor tick width in points
+mpl.rcParams["xtick.major.width"] = 1.0  # major tick width in points
+mpl.rcParams["xtick.minor.width"] = 1.0  # minor tick width in points
 mpl.rcParams["xtick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["xtick.minor.size"] = 4.0  # minor tick size in points
-mpl.rcParams["xtick.major.pad"] = 1.5  # distance to major tick label in points
-mpl.rcParams["xtick.minor.pad"] = 1.4  # distance to the minor tick label in points
-mpl.rcParams["ytick.major.width"] = 0.8  # major tick width in points
-mpl.rcParams["ytick.minor.width"] = 0.8  # minor tick width in points
+mpl.rcParams["xtick.major.pad"] = 5.0  # distance to major tick label in points
+mpl.rcParams["xtick.minor.pad"] = 4.0  # distance to the minor tick label in points
+mpl.rcParams["ytick.major.width"] = 1.0  # major tick width in points
+mpl.rcParams["ytick.minor.width"] = 1.0  # minor tick width in points
 mpl.rcParams["ytick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["ytick.minor.size"] = 4.0  # minor tick size in points
-mpl.rcParams["ytick.major.pad"] = 1.5  # distance to major tick label in points
-mpl.rcParams["ytick.minor.pad"] = 1.4  # distance to the minor tick label in points
+mpl.rcParams["ytick.major.pad"] = 5.0  # distance to major tick label in points
+mpl.rcParams["ytick.minor.pad"] = 4.0  # distance to the minor tick label in points
+mpl.rcParams["axes.grid"] = False
+mpl.rcParams["axes.spines.left"] = True
+mpl.rcParams["axes.spines.right"] = True
+mpl.rcParams["axes.spines.top"] = True
+mpl.rcParams["axes.spines.bottom"] = True
+mpl.rcParams["axes.labelweight"] = "normal"
 
 ########################################################
 # Set common plot parameters
@@ -815,7 +823,7 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
 
 
 ########################################################
-def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
+def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals
     dfp_in: pd.DataFrame,
     x_axis_params: dict,
     y_axis_params: dict,
@@ -1010,6 +1018,11 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
                 }
             else:
                 raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+
+            _name = reference_line.get("name")
+            if _name is not None and isinstance(_name, str):
+                shape_coords["showlegend"] = True
+                shape_coords["name"] = _name
 
             final_shape = {
                 "type": "line",
