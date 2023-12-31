@@ -846,6 +846,93 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
 
 
 ########################################################
+def plot_prophet(
+    fig: mpl.figure.Figure,
+    *,
+    m_path: pathlib.Path,
+    fname: str = "prophet",
+    tag: str = "",
+    dt_start: datetime.date | None = None,
+    dt_stop: datetime.date | None = None,
+    plot_inline: bool = False,
+    ann_text_std_add: str | None = None,
+    ann_texts_in: list[dict] | None = None,
+    x_axis_params_list: list[dict | None] | None = None,
+    y_axis_params_list: list[dict | None] | None = None,
+    legend_params: dict | None = None,
+) -> None:
+    """Plot prophet figures nicely.
+
+    Example parameter values:
+      ann_texts_in = [{"label": "Hello", "x": 0.0, "y": 0.0, "ha": "center", "size": 18}]
+      x_axis_params_list = [{"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}, ]
+      y_axis_params_list = [{"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}, ]
+      legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
+
+    Args:
+        fig: Output figure from prophet.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        dt_start: Data start date.
+        dt_stop: Data end date.
+        plot_inline: Display plot inline in a notebook, or save to file.
+        ann_text_std_add: Text to add to the standard annotation.
+        ann_texts_in: List of annotation dictionaries.
+        x_axis_params_list: List of X axis parameters.
+        y_axis_params_list: List of Y axis parameters.
+        legend_params: Legend parameters.
+    """
+    fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)
+
+    if x_axis_params_list is None:
+        x_axis_params_list = [None for _ in fig.axes]
+    if y_axis_params_list is None:
+        y_axis_params_list = [None for _ in fig.axes]
+
+    leg_objects = []
+
+    for ax, x_axis_params, y_axis_params in zip(
+        fig.axes, x_axis_params_list, y_axis_params_list, strict=True
+    ):
+        ax.grid(False)
+        ann_texts, x_axis_params, y_axis_params = _setup_vars(
+            ann_texts_in, x_axis_params, y_axis_params
+        )
+
+        clean_ax(ax, x_axis_params, y_axis_params)
+        set_ax_limits(ax, x_axis_params, y_axis_params, allow_max_mult=True)
+
+        # Improve graphics of Forcast line
+        for child in ax.get_children():
+            if hasattr(child, "get_label") and child.get_label() == "Forecast":
+                child.set_color(MPL_C1)
+                child.set_lw(2)
+
+        if legend_params is not None:
+            for child in ax.get_children():
+                if (
+                    hasattr(child, "get_label")
+                    and child.get_label() is not None
+                    and child.get_label() != ""
+                    and not isinstance(child, mpl.axis.Axis)
+                ):
+                    child.set_label(child.get_label().title())
+                    leg_objects.append(child)
+
+    draw_legend(fig, leg_objects, legend_params)
+
+    ann_texts.append(
+        {
+            "label": ann_text_std(dt_start, dt_stop, ann_text_std_add=ann_text_std_add),
+            "ha": "center",
+        }
+    )
+
+    ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+
+
+########################################################
 def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals
     dfp_in: pd.DataFrame,
     x_axis_params: dict,
