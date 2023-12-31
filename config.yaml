@@ -38,6 +38,8 @@ daq:
   end_of_threading_duplicates: "2023-05-31 04:36:00"
   # When sticking flow variable was fixed
   end_of_sticking_flow: "2023-05-15 04:00:00"
+  # When cron job restarts and heartbeat monitoring was live
+  start_of_cron_heartbeat_monitoring: "2023-07-26 00:00:00"
 fan_control:
   # Print temperature, PWM, and RPM
   verbose: true
