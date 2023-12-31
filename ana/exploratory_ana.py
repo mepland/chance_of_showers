@@ -30,6 +30,19 @@ from hydra import compose, initialize
 from IPython.display import display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
+
+from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+    create_datetime_component_cols,
+    normalize_pressure_value,
+)
+
+# isort: off
+from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
+    run_bayesian_opt,
+    TSModelWrapper,
+    ProphetWrapper,
+    NBEATSModelWrapper,
+)
 from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     C_GREEN,
     C_GREY,
@@ -42,18 +55,6 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     plot_2d_hist,
     plot_chance_of_showers_time_series,
     plot_hists,
-)
-from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
-    create_datetime_component_cols,
-    normalize_pressure_value,
-)
-
-# isort: off
-from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
-    run_bayesian_opt,
-    TSModelWrapper,
-    ProphetWrapper,
-    NBEATSModelWrapper,
 )
 
 # isort: on
@@ -120,7 +121,7 @@ OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-09-25-16-01-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-12-30-18-52-00.parquet"
 
 # %%
 F_PARQUET: Final = pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH, FNAME_PARQUET).expanduser()
@@ -191,6 +192,17 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
 print(f"{dt_start_local = },\n{dt_stop_local  = }")
+
+# %%
+actual_min_mean_pressure_value_with_flow = dfp_data.loc[dfp_data["had_flow"] == 1][
+    "mean_pressure_value"
+].min()
+print(
+    f"""Config {OBSERVED_PRESSURE_MIN = }
+Actual Min Mean Pressure with Flow = {actual_min_mean_pressure_value_with_flow}
+% Difference = {(OBSERVED_PRESSURE_MIN-actual_min_mean_pressure_value_with_flow)/OBSERVED_PRESSURE_MIN:.1%}
+"""
+)
 
 # %% [markdown]
 # ## Evergreen Training Data Prep
@@ -550,7 +562,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": LOCAL_TIMEZONE_STR,
+        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -567,9 +579,27 @@ plot_chance_of_showers_time_series(
     reference_lines=[
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
-        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
-        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
-        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
+        {
+            "orientation": "v",
+            "value": TRAINABLE_START_DATETIME_LOCAL,
+            "name": "Train Start",
+            "c": C_GREEN,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": DT_VAL_START_DATETIME_LOCAL,
+            "name": "Val Start",
+            "c": C_GREY,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": TRAINABLE_END_DATETIME_LOCAL,
+            "name": "Val End",
+            "c": C_RED,
+            "lw": 2,
+        },
     ],
 )
 
@@ -614,7 +644,7 @@ plot_hists(
         "log": True,
     },
     legend_params={
-        "bbox_to_anchor": (0.72, 0.72, 0.2, 0.2),
+        "bbox_to_anchor": (0.73, 0.72, 0.2, 0.2),
         "box_color": "white",
     },
     reference_lines=[
@@ -643,7 +673,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": LOCAL_TIMEZONE_STR,
+        "axis_label": f"Timestamp [{LOCAL_TIMEZONE_STR}]",
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -658,9 +688,27 @@ plot_chance_of_showers_time_series(
         "hover_label": "Had Flow: %{customdata:df}",
     },
     reference_lines=[
-        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
-        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
-        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
+        {
+            "orientation": "v",
+            "value": TRAINABLE_START_DATETIME_LOCAL,
+            "name": "Train Start",
+            "c": C_GREEN,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": DT_VAL_START_DATETIME_LOCAL,
+            "name": "Val Start",
+            "c": C_GREY,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": TRAINABLE_END_DATETIME_LOCAL,
+            "name": "Val End",
+            "c": C_RED,
+            "lw": 2,
+        },
     ],
 )
 
@@ -697,7 +745,6 @@ plot_2d_hist(
         "tick_format": TIME_FMT,
     },
     y_axis_params={
-        "min": -2,
         "axis_label": "Mean Pressure",
         "units": "%",
     },
@@ -741,7 +788,6 @@ plot_2d_hist(
         "tick_format": f"%A {TIME_FMT}",
     },
     y_axis_params={
-        "min": -2,
         "axis_label": "Mean Pressure",
         "units": "%",
     },
