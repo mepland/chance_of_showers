@@ -129,6 +129,9 @@ OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
 
 MEDIA_PATH: Final = PACKAGE_PATH / "media"
 
+# %%
+PLOT_INLINE: Final = False
+
 # %% [markdown]
 # ***
 # # Load Data
@@ -371,7 +374,6 @@ with warnings.catch_warnings():
 
 plot_prophet(
     _fig_predict,
-    plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_predict",
     tag="",
@@ -384,7 +386,8 @@ plot_prophet(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
 
 # %%
 # The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
@@ -401,8 +404,8 @@ save_ploty_to_html(
 )
 
 # %%
-fig_prophet_predict.show()
-
+if PLOT_INLINE:
+    fig_prophet_predict.show()
 
 # %% [markdown]
 # #### Components
@@ -417,7 +420,6 @@ with warnings.catch_warnings():
 
 plot_prophet(
     _fig_components,
-    plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_components",
     tag="",
@@ -438,7 +440,8 @@ plot_prophet(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
 
 # %%
 fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
@@ -451,8 +454,8 @@ save_ploty_to_html(
 )
 
 # %%
-fig_prophet_components.show()
-
+if PLOT_INLINE:
+    fig_prophet_components.show()
 
 # %% [markdown]
 # #### Individual Components
@@ -469,7 +472,6 @@ with warnings.catch_warnings():
 
 plot_prophet(
     _fig_component_weekly,
-    plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_component_weekly",
     tag="",
@@ -478,7 +480,8 @@ plot_prophet(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
 
 # %%
 _fig_component_daily, _ax_component_daily = plt.subplots()
@@ -492,7 +495,6 @@ with warnings.catch_warnings():
 
 plot_prophet(
     _fig_component_daily,
-    plot_inline=False,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_component_daily",
     tag="",
@@ -501,7 +503,8 @@ plot_prophet(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
 # ## N-BEATS
@@ -683,6 +686,7 @@ plot_chance_of_showers_time_series(
             "lw": 2,
         },
     ],
+    plot_inline=PLOT_INLINE,
 )
 
 # %% [markdown]
@@ -712,7 +716,6 @@ plot_hists(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=False,
     binning={
         "bin_size": 100,
         "bin_size_str_fmt": ".0f",
@@ -748,7 +751,8 @@ plot_hists(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
 
 # %% [markdown]
 # ## Time Series of All Normalized Pressure Values
@@ -795,7 +799,7 @@ plot_chance_of_showers_time_series(
             "lw": 2,
         },
     ],
-    plot_inline=True,
+    plot_inline=PLOT_INLINE,
     save_html=False,  # 24 MB
     m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_all_data",
@@ -814,7 +818,6 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=False,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -846,7 +849,8 @@ plot_2d_hist(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
 
 # %% [markdown]
 # ## 2D Histogram of All Normalized Pressure Values - Same Week
@@ -860,7 +864,6 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=False,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -892,7 +895,8 @@ plot_2d_hist(
 )
 
 # %%
-Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
 
 # %% [markdown]
 # ## Time Series of Selected Pressure Values - For Web
@@ -947,7 +951,7 @@ plot_chance_of_showers_time_series(
             "c": MPL_C1,
         },
     ],
-    plot_inline=True,
+    plot_inline=PLOT_INLINE,
     save_html=True,
     m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_selected_data",
@@ -987,7 +991,7 @@ plot_chance_of_showers_time_series(
         "col": "had_flow",
         "hover_label": "Had Flow: %{customdata:df}",
     },
-    plot_inline=True,
+    plot_inline=PLOT_INLINE,
     save_html=True,
     m_path=OUTPUTS_PATH,
     fname="mean_pressure_value_normalized_selected_data",
