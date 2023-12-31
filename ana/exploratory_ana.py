@@ -904,7 +904,7 @@ dfp_plotly_web_selection = dfp_data.loc[
 ]
 
 # %% [markdown]
-# ## Normalized
+# ## Raw
 
 # %%
 plot_chance_of_showers_time_series(
@@ -936,8 +936,13 @@ plot_chance_of_showers_time_series(
         "hover_label": "Had Flow: %{customdata:df}",
     },
     reference_lines=[
-        {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
-        {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
+        {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "name": "Normalized 0%", "c": MPL_C0},
+        {
+            "orientation": "h",
+            "value": OBSERVED_PRESSURE_MAX,
+            "name": "Normalized 100%",
+            "c": MPL_C1,
+        },
     ],
     plot_inline=True,
     save_html=True,
