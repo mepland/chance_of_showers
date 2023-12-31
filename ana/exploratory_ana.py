@@ -628,67 +628,6 @@ pprint.pprint(optimal_values)
 
 # %% [markdown]
 # ***
-# # Prophet Modeling
-# Native `prophet` package
-
-# %%
-# Hyperparams - Rework these!
-time_bin_size = datetime.timedelta(minutes=5)
-
-prediction_time_size = datetime.timedelta(hours=1.5)
-n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
-
-
-# %%
-import prophet  # noqa: E402 # pylint: disable=reimported
-
-# %%
-model_prophet = prophet.Prophet(growth="flat")
-_ = model_prophet.add_country_holidays(country_name="US")
-_ = model_prophet.add_regressor("had_flow", mode="multiplicative")
-
-# %%
-_ = model_prophet.fit(dfp_train)
-
-# %%
-dfp_prophet_future = model_prophet.make_future_dataframe(
-    periods=n_prediction_steps, freq=time_bin_size
-)
-dfp_prophet_future = pd.merge(
-    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
-)
-dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
-
-dfp_predict = model_prophet.predict(dfp_prophet_future)
-
-# %%
-# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-#     display(dfp_predict.dtypes)
-
-# %%
-display(dfp_predict.tail(2))
-
-# %%
-_fig_predict = model_prophet.plot(dfp_predict)
-
-# %%
-# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
-# instead using go.Figure(data=data, layout=layout). See:
-# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
-
-# prophet.plot.plot_plotly(model_prophet, dfp_predict)
-
-# %%
-_fig_components = model_prophet.plot_components(dfp_predict)
-
-# %%
-# The plotly version is not working. See:
-# https://github.com/facebook/prophet/pull/2461
-
-# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
-
-# %% [markdown]
-# ***
 # # Explore the Data
 
 # %%
