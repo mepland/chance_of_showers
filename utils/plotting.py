@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 
 mpl.rcParams["axes.labelsize"] = 16
 mpl.rcParams["xtick.top"] = True
+mpl.rcParams["xtick.bottom"] = True
+mpl.rcParams["ytick.left"] = True
 mpl.rcParams["ytick.right"] = True
 mpl.rcParams["xtick.direction"] = "in"
 mpl.rcParams["ytick.direction"] = "in"
@@ -18,18 +20,24 @@ mpl.rcParams["xtick.labelsize"] = 13
 mpl.rcParams["ytick.labelsize"] = 13
 mpl.rcParams["xtick.minor.visible"] = True
 mpl.rcParams["ytick.minor.visible"] = True
-mpl.rcParams["xtick.major.width"] = 0.8  # major tick width in points
-mpl.rcParams["xtick.minor.width"] = 0.8  # minor tick width in points
+mpl.rcParams["xtick.major.width"] = 1.0  # major tick width in points
+mpl.rcParams["xtick.minor.width"] = 1.0  # minor tick width in points
 mpl.rcParams["xtick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["xtick.minor.size"] = 4.0  # minor tick size in points
-mpl.rcParams["xtick.major.pad"] = 1.5  # distance to major tick label in points
-mpl.rcParams["xtick.minor.pad"] = 1.4  # distance to the minor tick label in points
-mpl.rcParams["ytick.major.width"] = 0.8  # major tick width in points
-mpl.rcParams["ytick.minor.width"] = 0.8  # minor tick width in points
+mpl.rcParams["xtick.major.pad"] = 5.0  # distance to major tick label in points
+mpl.rcParams["xtick.minor.pad"] = 4.0  # distance to the minor tick label in points
+mpl.rcParams["ytick.major.width"] = 1.0  # major tick width in points
+mpl.rcParams["ytick.minor.width"] = 1.0  # minor tick width in points
 mpl.rcParams["ytick.major.size"] = 7.0  # major tick size in points
 mpl.rcParams["ytick.minor.size"] = 4.0  # minor tick size in points
-mpl.rcParams["ytick.major.pad"] = 1.5  # distance to major tick label in points
-mpl.rcParams["ytick.minor.pad"] = 1.4  # distance to the minor tick label in points
+mpl.rcParams["ytick.major.pad"] = 5.0  # distance to major tick label in points
+mpl.rcParams["ytick.minor.pad"] = 4.0  # distance to the minor tick label in points
+mpl.rcParams["axes.grid"] = False
+mpl.rcParams["axes.spines.left"] = True
+mpl.rcParams["axes.spines.right"] = True
+mpl.rcParams["axes.spines.top"] = True
+mpl.rcParams["axes.spines.bottom"] = True
+mpl.rcParams["axes.labelweight"] = "normal"
 
 ########################################################
 # Set common plot parameters
@@ -37,7 +45,7 @@ VSIZE: Final = 11  # inches
 # aspect ratio width / height
 ASPECT_RATIO_SINGLE: Final = 4.0 / 3.0
 
-PLOT_PNG: Final = False
+PLOT_PNG: Final = True
 PNG_DPI: Final = 200
 
 STD_ANN_X: Final = 0.80
@@ -353,6 +361,29 @@ def ann_and_save(
             _fig.savefig(m_path / f"{fname}{tag}.png", dpi=PNG_DPI)
         _fig.savefig(m_path / f"{fname}{tag}.pdf")
         plt.close("all")
+
+
+########################################################
+def save_ploty_to_html(
+    fig: go.Figure,
+    m_path: pathlib.Path,
+    fname: str,
+    tag: str,
+    *,
+    include_plotlyjs: str = "cdn",
+) -> None:
+    """Save the plotly plot to html.
+
+    Args:
+        fig: Plotly object.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        include_plotlyjs: Include plotly js, use CDN, or other options. For more see:
+            https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#plotly.graph_objects.Figure.write_html
+    """
+    m_path.mkdir(parents=True, exist_ok=True)
+    fig.write_html(m_path / f"{fname}{tag}.html", include_plotlyjs=include_plotlyjs)
 
 
 ########################################################
@@ -815,7 +846,94 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
 
 
 ########################################################
-def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
+def plot_prophet(
+    fig: mpl.figure.Figure,
+    *,
+    m_path: pathlib.Path,
+    fname: str = "prophet",
+    tag: str = "",
+    dt_start: datetime.date | None = None,
+    dt_stop: datetime.date | None = None,
+    plot_inline: bool = False,
+    ann_text_std_add: str | None = None,
+    ann_texts_in: list[dict] | None = None,
+    x_axis_params_list: list[dict | None] | None = None,
+    y_axis_params_list: list[dict | None] | None = None,
+    legend_params: dict | None = None,
+) -> None:
+    """Plot prophet figures nicely.
+
+    Example parameter values:
+      ann_texts_in = [{"label": "Hello", "x": 0.0, "y": 0.0, "ha": "center", "size": 18}]
+      x_axis_params_list = [{"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}, ]
+      y_axis_params_list = [{"is_datetime": False, "axis_label": None, "min": None, "max": None, "units": "", "log": False}, ]
+      legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
+
+    Args:
+        fig: Output figure from prophet.
+        m_path: Path output directory for saved plots.
+        fname: Plot output file name.
+        tag: Tag to append to file name.
+        dt_start: Data start date.
+        dt_stop: Data end date.
+        plot_inline: Display plot inline in a notebook, or save to file.
+        ann_text_std_add: Text to add to the standard annotation.
+        ann_texts_in: List of annotation dictionaries.
+        x_axis_params_list: List of X axis parameters.
+        y_axis_params_list: List of Y axis parameters.
+        legend_params: Legend parameters.
+    """
+    fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)
+
+    if x_axis_params_list is None:
+        x_axis_params_list = [None for _ in fig.axes]
+    if y_axis_params_list is None:
+        y_axis_params_list = [None for _ in fig.axes]
+
+    leg_objects = []
+
+    for ax, x_axis_params, y_axis_params in zip(
+        fig.axes, x_axis_params_list, y_axis_params_list, strict=True
+    ):
+        ax.grid(False)
+        ann_texts, x_axis_params, y_axis_params = _setup_vars(
+            ann_texts_in, x_axis_params, y_axis_params
+        )
+
+        clean_ax(ax, x_axis_params, y_axis_params)
+        set_ax_limits(ax, x_axis_params, y_axis_params, allow_max_mult=True)
+
+        # Improve graphics of Forcast line
+        for child in ax.get_children():
+            if hasattr(child, "get_label") and child.get_label() == "Forecast":
+                child.set_color(MPL_C1)  # type: ignore[attr-defined]
+                child.set_lw(2)  # type: ignore[attr-defined]
+
+        if legend_params is not None:
+            for child in ax.get_children():
+                if (
+                    hasattr(child, "get_label")
+                    and child.get_label() is not None
+                    and child.get_label() != ""
+                    and not isinstance(child, mpl.axis.Axis)
+                ):
+                    child.set_label(child.get_label().title())  # type: ignore[attr-defined]
+                    leg_objects.append(child)
+
+    draw_legend(fig, leg_objects, legend_params)
+
+    ann_texts.append(
+        {
+            "label": ann_text_std(dt_start, dt_stop, ann_text_std_add=ann_text_std_add),
+            "ha": "center",
+        }
+    )
+
+    ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+
+
+########################################################
+def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals
     dfp_in: pd.DataFrame,
     x_axis_params: dict,
     y_axis_params: dict,
@@ -827,6 +945,7 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
     dt_start: datetime.date | None = None,
     dt_stop: datetime.date | None = None,
     plot_inline: bool = True,
+    save_html: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[dict] | None = None,
     reference_lines: list[dict] | None = None,
@@ -851,6 +970,7 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
         dt_start: Data start date.
         dt_stop: Data end date.
         plot_inline: Display plot inline in a notebook, or save to file.
+        save_html: Save plot as html.
         ann_text_std_add: Text to add to the standard annotation.
         ann_texts_in: List of annotation dictionaries.
         reference_lines: List of reference line dicts.
@@ -859,6 +979,10 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
     Raises:
         ValueError: Bad configuration.
     """
+    if not (save_html or plot_inline):
+        print("Will not display or save anything, continuing!")
+        return
+
     if z_axis_params is None:
         z_axis_params = {}
 
@@ -954,6 +1078,7 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
     ):
         trace_layout["xaxis"]["rangeselector"] = {"buttons": []}
         known_buttons = {
+            "10m": {"count": 10, "label": "10m", "step": "minute", "stepmode": "todate"},
             "15m": {"count": 15, "label": "15m", "step": "minute", "stepmode": "todate"},
             "1h": {"count": 1, "label": "1h", "step": "hour", "stepmode": "todate"},
             "12h": {"count": 12, "label": "12h", "step": "hour", "stepmode": "todate"},
@@ -1010,6 +1135,11 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
                 }
             else:
                 raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+
+            _name = reference_line.get("name")
+            if _name is not None and isinstance(_name, str):
+                shape_coords["showlegend"] = True
+                shape_coords["name"] = _name
 
             final_shape = {
                 "type": "line",
@@ -1079,7 +1209,9 @@ def plot_chance_of_showers_time_series(  # pylint: disable=too-many-locals
             ann_texts_in,
         )
 
+    if save_html:
+        if TYPE_CHECKING:
+            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec assert_used
+        save_ploty_to_html(fig, m_path, fname, tag)
     if plot_inline:
         fig.show()
-    else:
-        raise ValueError("Have not written save function yet!", m_path, fname, tag)

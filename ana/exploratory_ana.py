@@ -17,6 +17,7 @@
 import datetime
 import pathlib
 import pprint
+import shutil
 import sys
 import warnings
 
@@ -25,24 +26,13 @@ import warnings
 import zoneinfo
 from typing import TYPE_CHECKING, Final
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from hydra import compose, initialize
-from IPython.display import display
+from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
-from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
-    C_GREEN,
-    C_GREY,
-    C_RED,
-    MC_FLOW_0,
-    MC_FLOW_1,
-    MPL_C0,
-    MPL_C1,
-    make_epoch_bins,
-    plot_2d_hist,
-    plot_chance_of_showers_time_series,
-    plot_hists,
-)
+
 from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -54,6 +44,21 @@ from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
     TSModelWrapper,
     ProphetWrapper,
     NBEATSModelWrapper,
+)
+from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
+    C_GREEN,
+    C_GREY,
+    C_RED,
+    MC_FLOW_0,
+    MC_FLOW_1,
+    MPL_C0,
+    MPL_C1,
+    make_epoch_bins,
+    save_ploty_to_html,
+    plot_prophet,
+    plot_2d_hist,
+    plot_chance_of_showers_time_series,
+    plot_hists,
 )
 
 # isort: on
@@ -70,7 +75,7 @@ TRAINABLE_VAL_FRACTION: Final = cfg["ana"]["trainable_val_fraction"]
 OBSERVED_PRESSURE_MIN: Final = cfg["general"]["observed_pressure_min"]
 OBSERVED_PRESSURE_MAX: Final = cfg["general"]["observed_pressure_max"]
 
-PACKAGE_PATH: Final = cfg["general"]["package_path"]
+PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
 SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
 
 DATE_FMT: Final = cfg["general"]["date_fmt"]
@@ -108,22 +113,34 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
 
+START_OF_CRON_HEARTBEAT_MONITORING: Final = cfg["daq"]["start_of_cron_heartbeat_monitoring"]
+DT_START_OF_CRON_HEARTBEAT_MONITORING: Final = datetime.datetime.strptime(
+    START_OF_CRON_HEARTBEAT_MONITORING, DATETIME_FMT
+).replace(tzinfo=LOCAL_TIMEZONE)
+
+TS_LABEL: Final = f"Timestamp [{LOCAL_TIMEZONE_STR}]"
+
 # %%
-MODELS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/models").expanduser()
+MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
 MODELS_PATH.mkdir(parents=True, exist_ok=True)
 
-OUTPUTS_PATH: Final = pathlib.Path(PACKAGE_PATH, "ana/outputs").expanduser()
+OUTPUTS_PATH: Final = PACKAGE_PATH / "ana" / "outputs"
 OUTPUTS_PATH.mkdir(parents=True, exist_ok=True)
+
+MEDIA_PATH: Final = PACKAGE_PATH / "media"
+
+# %%
+PLOT_INLINE: Final = False
 
 # %% [markdown]
 # ***
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-09-25-16-01-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-12-30-18-52-00.parquet"
 
 # %%
-F_PARQUET: Final = pathlib.Path(PACKAGE_PATH, SAVED_DATA_RELATIVE_PATH, FNAME_PARQUET).expanduser()
+F_PARQUET: Final = PACKAGE_PATH / SAVED_DATA_RELATIVE_PATH / FNAME_PARQUET
 
 dfp_data = pd.read_parquet(F_PARQUET)
 
@@ -190,7 +207,37 @@ dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
 dt_stop_local = dfp_data["datetime_local"].max()
-print(f"{dt_start_local = },\n{dt_stop_local  = }")
+
+minutes_observed = dfp_data.index.size
+minutes_possible = int((dt_stop_local - dt_start_local).total_seconds() / 60.0)
+
+minutes_observed_since_start_of_cron_heartbeat_monitoring = dfp_data.loc[
+    DT_START_OF_CRON_HEARTBEAT_MONITORING <= dfp_data["datetime_local"]
+].index.size
+minutes_possible_since_start_of_cron_heartbeat_monitoring = int(
+    (dt_stop_local - DT_START_OF_CRON_HEARTBEAT_MONITORING).total_seconds() / 60.0
+)
+
+print(
+    f"""
+{dt_start_local = }
+{dt_stop_local  = }
+
+The DAQ recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible minutes overall, and {1 - (minutes_possible_since_start_of_cron_heartbeat_monitoring - minutes_observed_since_start_of_cron_heartbeat_monitoring)/minutes_possible_since_start_of_cron_heartbeat_monitoring:.3%} since implementing the cron job heartbeat monitoring.
+"""
+)
+
+# %%
+actual_min_mean_pressure_value_with_flow = dfp_data.loc[dfp_data["had_flow"] == 1][
+    "mean_pressure_value"
+].min()
+print(
+    f"""Config {OBSERVED_PRESSURE_MIN = }
+Actual Min Mean Pressure with Flow = {actual_min_mean_pressure_value_with_flow}
+
+% Difference = {(OBSERVED_PRESSURE_MIN-actual_min_mean_pressure_value_with_flow)/OBSERVED_PRESSURE_MIN:.1%}
+"""
+)
 
 # %% [markdown]
 # ## Evergreen Training Data Prep
@@ -314,6 +361,9 @@ dfp_predict = model_prophet.predict(dfp_prophet_future)
 # %%
 # display(dfp_predict.tail(5))
 
+# %% [markdown]
+# #### Predictions
+
 # %%
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -322,6 +372,23 @@ with warnings.catch_warnings():
     )
     _fig_predict = model_prophet.plot(dfp_predict)
 
+plot_prophet(
+    _fig_predict,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_predict",
+    tag="",
+    x_axis_params_list=[{"axis_label": TS_LABEL}],
+    y_axis_params_list=[{"axis_label": "Mean Pressure", "min": 0, "max": 1.2}],
+    legend_params={
+        "bbox_to_anchor": (0.1, 0.0, 0.2, 0.2),
+        "box_color": "white",
+    },
+)
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
+
 # %%
 # The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
 # instead using go.Figure(data=data, layout=layout). See:
@@ -329,9 +396,19 @@ with warnings.catch_warnings():
 
 fig_prophet_predict = prophet.plot.plot_plotly(model_prophet, dfp_predict)
 
-fig_prophet_predict.show()
+save_ploty_to_html(
+    fig_prophet_predict,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_predict",
+    tag="",
+)
 
-fig_prophet_predict.write_html("plotly_prophet_predict.html", include_plotlyjs="cdn")
+# %%
+if PLOT_INLINE:
+    fig_prophet_predict.show()
+
+# %% [markdown]
+# #### Components
 
 # %%
 with warnings.catch_warnings():
@@ -341,12 +418,93 @@ with warnings.catch_warnings():
     )
     _fig_components = model_prophet.plot_components(dfp_predict)
 
+plot_prophet(
+    _fig_components,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_components",
+    tag="",
+    x_axis_params_list=[
+        {"axis_label": TS_LABEL},
+        {"axis_label": TS_LABEL},
+        {"axis_label": "Day of Week"},
+        {"axis_label": "Time of Day"},
+        {"axis_label": TS_LABEL},
+    ],
+    y_axis_params_list=[
+        {"axis_label": "Trend"},
+        {"axis_label": "Holidays"},
+        {"axis_label": "Weekly"},
+        {"axis_label": "Daily"},
+        {"axis_label": "Had Flow"},
+    ],
+)
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
+
 # %%
 fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
 
-fig_prophet_components.show()
+save_ploty_to_html(
+    fig_prophet_components,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_components",
+    tag="",
+)
 
-fig_prophet_components.write_html("plotly_prophet_components.html", include_plotlyjs="cdn")
+# %%
+if PLOT_INLINE:
+    fig_prophet_components.show()
+
+# %% [markdown]
+# #### Individual Components
+
+# %%
+_fig_component_weekly, _ax_component_weekly = plt.subplots()
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    prophet.plot.plot_seasonality(model_prophet, "weekly", ax=_ax_component_weekly)
+
+plot_prophet(
+    _fig_component_weekly,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_component_weekly",
+    tag="",
+    x_axis_params_list=[{"axis_label": "Day of Week"}],
+    y_axis_params_list=[{"axis_label": "Weekly Component"}],
+)
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
+
+# %%
+_fig_component_daily, _ax_component_daily = plt.subplots()
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=FutureWarning,
+    )
+    prophet.plot.plot_seasonality(model_prophet, "daily", ax=_ax_component_daily)
+
+plot_prophet(
+    _fig_component_daily,
+    m_path=OUTPUTS_PATH / "prophet",
+    fname="prophet_component_daily",
+    tag="",
+    x_axis_params_list=[{"axis_label": "Hour of Day"}],
+    y_axis_params_list=[{"axis_label": "Daily Component"}],
+)
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
 # ## N-BEATS
@@ -476,67 +634,6 @@ pprint.pprint(optimal_values)
 
 # %% [markdown]
 # ***
-# # Prophet Modeling
-# Native `prophet` package
-
-# %%
-# Hyperparams - Rework these!
-time_bin_size = datetime.timedelta(minutes=5)
-
-prediction_time_size = datetime.timedelta(hours=1.5)
-n_prediction_steps = prediction_time_size.seconds // time_bin_size.seconds
-
-
-# %%
-import prophet  # noqa: E402 # pylint: disable=reimported
-
-# %%
-model_prophet = prophet.Prophet(growth="flat")
-_ = model_prophet.add_country_holidays(country_name="US")
-_ = model_prophet.add_regressor("had_flow", mode="multiplicative")
-
-# %%
-_ = model_prophet.fit(dfp_train)
-
-# %%
-dfp_prophet_future = model_prophet.make_future_dataframe(
-    periods=n_prediction_steps, freq=time_bin_size
-)
-dfp_prophet_future = pd.merge(
-    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
-)
-dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
-
-dfp_predict = model_prophet.predict(dfp_prophet_future)
-
-# %%
-# with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-#     display(dfp_predict.dtypes)
-
-# %%
-display(dfp_predict.tail(2))
-
-# %%
-_fig_predict = model_prophet.plot(dfp_predict)
-
-# %%
-# The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
-# instead using go.Figure(data=data, layout=layout). See:
-# https://github.com/facebook/prophet/blob/main/python/prophet/plot.py
-
-# prophet.plot.plot_plotly(model_prophet, dfp_predict)
-
-# %%
-_fig_components = model_prophet.plot_components(dfp_predict)
-
-# %%
-# The plotly version is not working. See:
-# https://github.com/facebook/prophet/pull/2461
-
-# prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
-
-# %% [markdown]
-# ***
 # # Explore the Data
 
 # %%
@@ -550,7 +647,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": LOCAL_TIMEZONE_STR,
+        "axis_label": TS_LABEL,
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -567,10 +664,29 @@ plot_chance_of_showers_time_series(
     reference_lines=[
         {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "c": MPL_C0},
         {"orientation": "h", "value": OBSERVED_PRESSURE_MAX, "c": MPL_C1},
-        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
-        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
-        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
+        {
+            "orientation": "v",
+            "value": TRAINABLE_START_DATETIME_LOCAL,
+            "name": "Train Start",
+            "c": C_GREEN,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": DT_VAL_START_DATETIME_LOCAL,
+            "name": "Val Start",
+            "c": C_GREY,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": TRAINABLE_END_DATETIME_LOCAL,
+            "name": "Val End",
+            "c": C_RED,
+            "lw": 2,
+        },
     ],
+    plot_inline=PLOT_INLINE,
 )
 
 # %% [markdown]
@@ -600,7 +716,6 @@ plot_hists(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
     binning={
         "bin_size": 100,
         "bin_size_str_fmt": ".0f",
@@ -614,7 +729,7 @@ plot_hists(
         "log": True,
     },
     legend_params={
-        "bbox_to_anchor": (0.72, 0.72, 0.2, 0.2),
+        "bbox_to_anchor": (0.73, 0.72, 0.2, 0.2),
         "box_color": "white",
     },
     reference_lines=[
@@ -635,6 +750,10 @@ plot_hists(
     ],
 )
 
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
+
 # %% [markdown]
 # ## Time Series of All Normalized Pressure Values
 
@@ -643,7 +762,7 @@ plot_chance_of_showers_time_series(
     dfp_data,
     x_axis_params={
         "col": "datetime_local",
-        "axis_label": LOCAL_TIMEZONE_STR,
+        "axis_label": TS_LABEL,
         "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
         "min": dt_start_local,
         "max": dt_stop_local,
@@ -658,10 +777,33 @@ plot_chance_of_showers_time_series(
         "hover_label": "Had Flow: %{customdata:df}",
     },
     reference_lines=[
-        {"orientation": "v", "value": TRAINABLE_START_DATETIME_LOCAL, "c": C_GREEN, "lw": 2},
-        {"orientation": "v", "value": DT_VAL_START_DATETIME_LOCAL, "c": C_GREY, "lw": 2},
-        {"orientation": "v", "value": TRAINABLE_END_DATETIME_LOCAL, "c": C_RED, "lw": 2},
+        {
+            "orientation": "v",
+            "value": TRAINABLE_START_DATETIME_LOCAL,
+            "name": "Train Start",
+            "c": C_GREEN,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": DT_VAL_START_DATETIME_LOCAL,
+            "name": "Val Start",
+            "c": C_GREY,
+            "lw": 2,
+        },
+        {
+            "orientation": "v",
+            "value": TRAINABLE_END_DATETIME_LOCAL,
+            "name": "Val End",
+            "c": C_RED,
+            "lw": 2,
+        },
     ],
+    plot_inline=PLOT_INLINE,
+    save_html=False,  # 24 MB
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_normalized_all_data",
+    tag="",
 )
 
 # %% [markdown]
@@ -676,7 +818,6 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -697,7 +838,6 @@ plot_2d_hist(
         "tick_format": TIME_FMT,
     },
     y_axis_params={
-        "min": -2,
         "axis_label": "Mean Pressure",
         "units": "%",
     },
@@ -707,6 +847,10 @@ plot_2d_hist(
         "density": True,
     },
 )
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
 
 # %% [markdown]
 # ## 2D Histogram of All Normalized Pressure Values - Same Week
@@ -720,7 +864,6 @@ plot_2d_hist(
     tag="",
     dt_start=dt_start_local,
     dt_stop=dt_stop_local,
-    plot_inline=True,
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
@@ -741,7 +884,6 @@ plot_2d_hist(
         "tick_format": f"%A {TIME_FMT}",
     },
     y_axis_params={
-        "min": -2,
         "axis_label": "Mean Pressure",
         "units": "%",
     },
@@ -750,4 +892,119 @@ plot_2d_hist(
         "norm": "log",
         "density": True,
     },
+)
+
+# %%
+if PLOT_INLINE:
+    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
+
+# %% [markdown]
+# ## Time Series of Selected Pressure Values - For Web
+
+# %%
+dt_plotly_web_selection_start = datetime.datetime(year=2023, month=11, day=1, tzinfo=LOCAL_TIMEZONE)
+dt_plotly_web_selection_end = datetime.datetime(year=2023, month=12, day=1, tzinfo=LOCAL_TIMEZONE)
+
+dfp_plotly_web_selection = dfp_data.loc[
+    (dt_plotly_web_selection_start <= dfp_data["datetime_local"])
+    & (dfp_data["datetime_local"] <= dt_plotly_web_selection_end)
+]
+
+# %% [markdown]
+# ## Raw
+
+# %%
+plot_chance_of_showers_time_series(
+    dfp_plotly_web_selection,
+    x_axis_params={
+        "col": "datetime_local",
+        "axis_label": TS_LABEL,
+        "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
+        "min": dt_plotly_web_selection_start,
+        "max": dt_plotly_web_selection_end,
+        "rangeselector_buttons": [
+            "10m",
+            "15m",
+            "1h",
+            "12h",
+            "1d",
+            "1w",
+            "1m",
+            "all",
+        ],
+    },
+    y_axis_params={
+        "col": "mean_pressure_value",
+        "axis_label": "Mean Pressure [Raw ADC]",
+        "hover_label": "Mean Pressure [Raw ADC]: %{y:d}",
+    },
+    z_axis_params={
+        "col": "had_flow",
+        "hover_label": "Had Flow: %{customdata:df}",
+    },
+    reference_lines=[
+        {"orientation": "h", "value": OBSERVED_PRESSURE_MIN, "name": "Normalized 0%", "c": MPL_C0},
+        {
+            "orientation": "h",
+            "value": OBSERVED_PRESSURE_MAX,
+            "name": "Normalized 100%",
+            "c": MPL_C1,
+        },
+    ],
+    plot_inline=PLOT_INLINE,
+    save_html=True,
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_selected_data",
+    tag="",
+)
+
+
+# %% [markdown]
+# ## Normalized
+
+# %%
+plot_chance_of_showers_time_series(
+    dfp_plotly_web_selection,
+    x_axis_params={
+        "col": "datetime_local",
+        "axis_label": TS_LABEL,
+        "hover_label": "1 Min Sample: %{x:" + DATETIME_FMT + "}",
+        "min": dt_plotly_web_selection_start,
+        "max": dt_plotly_web_selection_end,
+        "rangeselector_buttons": [
+            "10m",
+            "15m",
+            "1h",
+            "12h",
+            "1d",
+            "1w",
+            "1m",
+            "all",
+        ],
+    },
+    y_axis_params={
+        "col": "mean_pressure_value_normalized",
+        "axis_label": "Mean Pressure %",
+        "hover_label": "Mean Pressure: %{y:.2%}",
+    },
+    z_axis_params={
+        "col": "had_flow",
+        "hover_label": "Had Flow: %{customdata:df}",
+    },
+    plot_inline=PLOT_INLINE,
+    save_html=True,
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_normalized_selected_data",
+    tag="",
+)
+
+# %% [markdown]
+# # Save outputs to `/media/ana_outputs`
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+_ = shutil.copytree(
+    OUTPUTS_PATH, MEDIA_PATH / "ana_outputs", dirs_exist_ok=True, copy_function=shutil.copy
 )
