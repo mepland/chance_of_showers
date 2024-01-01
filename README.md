@@ -67,6 +67,15 @@ and hence `chance_of_showers` was born!
 ## Data Analysis Results
 WIP
 
+### Overall Pressure Distributions
+| ![Mean Pressure Value Density](media/ana_outputs/mean_pressure_value_density.png) | ![Mean Pressure Value Normalized vs Time of Week](media/ana_outputs/mean_pressure_value_normalized_vs_time_of_week.png) | ![Mean Pressure Value Normalized vs Time of Day](media/ana_outputs/mean_pressure_value_normalized_vs_time_of_day.png) |
+| :---: | :---: | :---: |
+
+### Prophet Results
+| ![Prophet Predict](media/ana_outputs/prophet/prophet_predict.png) | ![Prophet Components](media/ana_outputs/prophet/prophet_components.png) |
+| :---: | :---: |
+| ![Prophet Components Weekly](media/ana_outputs/prophet/prophet_component_weekly.png) | ![Prophet Components Daily](media/ana_outputs/prophet/prophet_component_daily.png) |
+
 ## Hardware
 
 ### Bill of Materials
@@ -124,6 +133,9 @@ is provided as a [KiCad](https://www.kicad.org) schematic
 | ![In Situ OLED](media/13_insitu_oled.jpg) | ![In Situe OLED (Flash)](media/14_insitu_oled_flash.jpg) | ![Plumbing Front](media/15_plumbing_front.jpg) | ![Plumbing Back](media/16_plumbing_back.jpg) |
 
 ## Data Acquisition (DAQ)
+
+The DAQ system recorded 95.4% of possible data points overall,
+and 99.870% since implementing the cron job heartbeat monitoring.
 
 ### Launching the DAQ Script
 The provided [`start_daq`](daq/start_daq) bash script
