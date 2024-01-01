@@ -223,7 +223,8 @@ print(
 {dt_start_local = }
 {dt_stop_local  = }
 
-The DAQ recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible minutes overall, and {1 - (minutes_possible_since_start_of_cron_heartbeat_monitoring - minutes_observed_since_start_of_cron_heartbeat_monitoring)/minutes_possible_since_start_of_cron_heartbeat_monitoring:.3%} since implementing the cron job heartbeat monitoring.
+The DAQ system recorded {1 - (minutes_possible - minutes_observed)/minutes_possible:.1%} of possible data points overall,
+and {1 - (minutes_possible_since_start_of_cron_heartbeat_monitoring - minutes_observed_since_start_of_cron_heartbeat_monitoring)/minutes_possible_since_start_of_cron_heartbeat_monitoring:.3%} since implementing the cron job heartbeat monitoring.
 """
 )
 
