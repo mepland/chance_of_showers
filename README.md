@@ -70,7 +70,7 @@ WIP
 ### Time Series Plots
 
 Below is a sample of the pressure data collected in November 2023.
-Clicking the linked headers will open interactive plotly plots, please explore!
+Clicking the links will open interactive plotly plots, please explore!
 
 #### [Raw analog to digital converter (ADC) values](https://mepland.github.io/chance_of_showers/media/ana_outputs/mean_pressure_value_selected_data.html)
 
@@ -87,7 +87,7 @@ and abruptly ends overpressure events.
 #### [Normalized values](https://mepland.github.io/chance_of_showers/media/ana_outputs/mean_pressure_value_normalized_selected_data.html)
 
 To clean the data before fitting any models,
-we rescale the values to 0 and 1 between the steady state extrema.
+I rescale the values to 0 and 1 between the steady state extrema.
 Any values that are outside the normalization range are capped.
 
 ### Overall Pressure Distributions
