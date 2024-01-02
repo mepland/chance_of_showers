@@ -72,7 +72,7 @@ WIP
 Below is a sample of the pressure data collected in November 2023.
 Clicking the linked headers will open interactive plotly plots, please explore!
 
-#### [Raw analog to digital converter (ADC) values](media/ana_outputs/mean_pressure_value_selected_data.html)
+#### [Raw analog to digital converter (ADC) values](https://mepland.github.io/chance_of_showers/media/ana_outputs/mean_pressure_value_selected_data.html)
 
 The data acquisition (DAQ) system saves the raw pressure data
 from the analog to digital converter (ADC) as an integer between 0 and 65472.
@@ -84,7 +84,7 @@ the data is shown with an open purple marker.
 Using water reduces the pressure slightly under normal conditions,
 and abruptly ends overpressure events.
 
-#### [Normalized values](media/ana_outputs/mean_pressure_value_normalized_selected_data.html)
+#### [Normalized values](https://mepland.github.io/chance_of_showers/media/ana_outputs/mean_pressure_value_normalized_selected_data.html)
 
 To clean the data before fitting any models,
 we rescale the values to 0 and 1 between the steady state extrema.
