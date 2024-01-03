@@ -2,4 +2,4 @@
 ana/*.ipynb linguist-generated=true
 ana/*.html linguist-generated=true
 # ignore media files in github languages stats
-media/* linguist-documentation=true
+media/** linguist-documentation=true
