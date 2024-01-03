@@ -1,5 +1,5 @@
 # ignore all ana ipynb and html files in diffs and github languages stats
 ana/*.ipynb linguist-generated=true
 ana/*.html linguist-generated=true
-# ignore media files in github languages stats
-media/** linguist-documentation=true
+# ignore html media files in github languages stats
+media/**/*.html linguist-documentation=true
