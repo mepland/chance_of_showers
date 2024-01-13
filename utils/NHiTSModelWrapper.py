@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,duplicate-code
 """Wrapper for NHiTS."""
 # pylint: enable=invalid-name
 
