@@ -20,9 +20,6 @@ import pprint
 import shutil
 import sys
 import warnings
-
-# import natsort
-# import numpy as np
 import zoneinfo
 from typing import TYPE_CHECKING, Final
 
@@ -33,19 +30,21 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+# pylint: disable=import-error
+from utils.shared_functions import (  # noqa: E402
     create_datetime_component_cols,
     normalize_pressure_value,
 )
 
 # isort: off
-from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
-    run_bayesian_opt,
-    TSModelWrapper,
-    ProphetWrapper,
-    NBEATSModelWrapper,
-)
-from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
+from utils.TSModelWrapper import TSModelWrapper  # noqa: E402
+from utils.bayesian_opt import run_bayesian_opt  # noqa: E402
+
+from utils.ProphetWrapper import ProphetWrapper  # noqa: E402
+from utils.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: E402
+from utils.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: E402
+
+from utils.plotting import (  # noqa: E402
     C_GREEN,
     C_GREY,
     C_RED,
@@ -61,6 +60,7 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     plot_hists,
 )
 
+# pylint: enable=import-error
 # isort: on
 # pylint: disable=unreachable
 
@@ -547,6 +547,48 @@ print(tensorboard_logs)
 
 # %%
 # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ##  N-HiTS
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_NHiTS = NHiTSModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NHiTS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_NHiTS)
+
+# %%
+configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_NHiTS)
+
+# %%
+model_wrapper_NHiTS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NHiTS.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NHiTS)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NHiTS.work_dir, model_wrapper_NHiTS.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
 
 # %% [markdown]
 # ## Bayesian Optimization
