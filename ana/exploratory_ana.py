@@ -630,34 +630,6 @@ print(tensorboard_logs)
 # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ***
-# # Bayesian Optimization
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
-# print(tensorboard_logs)
-
-# %%
-# %tensorboard --logdir $tensorboard_logs
-
-optimal_values, optimizer = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NBEATSModelWrapper,
-    n_iter=200,
-    enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=20),
-    display_memory_usage=True,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
-)
-
-# %%
-pprint.pprint(optimal_values)
-
-# %% [markdown]
 # ## AutoARIMA
 
 # %%
@@ -696,6 +668,34 @@ pprint.pprint(optimal_values)
 #     "scoring": "mse",
 #     "with_intercept": "auto",
 # }
+
+# %% [markdown]
+# ***
+# # Bayesian Optimization
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
+# print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+optimal_values, optimizer = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=NBEATSModelWrapper,
+    n_iter=200,
+    enable_progress_bar=True,
+    max_time_per_model=datetime.timedelta(minutes=20),
+    display_memory_usage=True,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+
+# %%
+pprint.pprint(optimal_values)
 
 # %% [markdown]
 # ***
@@ -1064,6 +1064,7 @@ plot_chance_of_showers_time_series(
 )
 
 # %% [markdown]
+# ***
 # # Save outputs to `/media/ana_outputs`
 
 # %%
