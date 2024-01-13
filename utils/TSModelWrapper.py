@@ -265,6 +265,27 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 1,
         "default": 1,
     },
+    # TCNModel
+    "kernel_size": {
+        "min": 0,
+        "max": 10,
+        "default": 3,
+    },
+    "num_filters": {
+        "min": 0,
+        "max": 10,
+        "default": 3,
+    },
+    "dilation_base": {
+        "min": 1,
+        "max": 10,
+        "default": 2,
+    },
+    "weight_norm": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -294,6 +315,11 @@ INTEGER_HYPERPARAMS: Final = [
     "expansion_coefficient_dim",
     # NHiTSModel only
     "MaxPool1d",
+    # TCNModel
+    "kernel_size",
+    "num_filters",
+    "dilation_base",
+    "weight_norm",
 ]
 
 

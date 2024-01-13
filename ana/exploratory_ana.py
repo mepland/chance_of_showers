@@ -43,6 +43,7 @@ from utils.bayesian_opt import run_bayesian_opt
 from utils.ProphetWrapper import ProphetWrapper
 from utils.NBEATSModelWrapper import NBEATSModelWrapper
 from utils.NHiTSModelWrapper import NHiTSModelWrapper
+from utils.TCNModelWrapper import TCNModelWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -587,6 +588,46 @@ print(tensorboard_logs)
 # %%
 # %tensorboard --logdir $tensorboard_logs
 
+# %% [markdown]
+# ## TCN
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TCN = TCNModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_TCN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TCN)
+
+# %%
+configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_TCN)
+
+# %%
+model_wrapper_TCN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TCN.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TCN)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TCN.work_dir, model_wrapper_TCN.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ***
