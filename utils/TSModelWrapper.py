@@ -193,6 +193,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
     "log_tensorboard",
     "lr_scheduler_cls",
     "lr_scheduler_kwargs",
+    "random_state",
 ]
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
@@ -641,6 +642,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             required_hyperparams_all += self.required_hyperparams_data
         if isinstance(self.required_hyperparams_model, list):
             required_hyperparams_all += self.required_hyperparams_model
+
+        # Remove duplicates, e.g. random_state, while preserving order
+        required_hyperparams_all = list(dict.fromkeys(required_hyperparams_all))
 
         if not required_hyperparams_all or not (
             isinstance(self.allowed_variable_hyperparams, dict)
