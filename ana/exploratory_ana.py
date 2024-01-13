@@ -31,20 +31,20 @@ from IPython.display import Image, display
 sys.path.append(str(pathlib.Path.cwd().parent))
 
 # pylint: disable=import-error
-from utils.shared_functions import (  # noqa: E402
+from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
 )
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper  # noqa: E402
-from utils.bayesian_opt import run_bayesian_opt  # noqa: E402
+from utils.TSModelWrapper import TSModelWrapper
+from utils.bayesian_opt import run_bayesian_opt
 
-from utils.ProphetWrapper import ProphetWrapper  # noqa: E402
-from utils.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: E402
-from utils.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: E402
+from utils.ProphetWrapper import ProphetWrapper
+from utils.NBEATSModelWrapper import NBEATSModelWrapper
+from utils.NHiTSModelWrapper import NHiTSModelWrapper
 
-from utils.plotting import (  # noqa: E402
+from utils.plotting import (
     C_GREEN,
     C_GREY,
     C_RED,
@@ -281,7 +281,7 @@ dfp_val = dfp_trainable_evergreen.loc[
 # # Darts Modeling
 
 # %%
-import torch  # noqa: E402
+import torch
 
 if torch.cuda.is_available():
     print("CUDA is available")
@@ -309,10 +309,8 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 # raise UserWarning("Stopping Here")
 
 # %%
-import prophet  # noqa: E402
-from darts.models.forecasting.prophet_model import (  # noqa: E402
-    Prophet as darts_Prophet,
-)
+import prophet
+from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
 # %%
 model_wrapper_Prophet = ProphetWrapper(
@@ -591,7 +589,8 @@ print(tensorboard_logs)
 
 
 # %% [markdown]
-# ## Bayesian Optimization
+# ***
+# # Bayesian Optimization
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -604,24 +603,6 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 # %tensorboard --logdir $tensorboard_logs
 
-# %% [markdown]
-# ### Prophet
-
-# %%
-optimal_values, optimizer = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=ProphetWrapper,
-    n_iter=100,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
-)
-
-# %%
-pprint.pprint(optimal_values)
-
-# %% [markdown]
-# ### N-BEATS
-
-# %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
     model_wrapper_class=NBEATSModelWrapper,
