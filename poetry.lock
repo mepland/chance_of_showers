@@ -4400,19 +4400,6 @@ xlsx2csv = ["xlsx2csv (>=0.8.0)"]
 xlsxwriter = ["xlsxwriter"]
 
 [[package]]
-name = "powerline-status"
-version = "2.7"
-description = "The ultimate statusline/prompt utility."
-optional = false
-python-versions = "*"
-files = [
-    {file = "powerline-status-2.7.tar.gz", hash = "sha256:8c7e7da45beb2332bc8226b166b732ef70db2cb0a1f3f0fdc3c539115522ecb6"},
-]
-
-[package.extras]
-docs = ["Sphinx", "sphinx_rtd_theme"]
-
-[[package]]
 name = "pre-commit"
 version = "3.6.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
@@ -6725,4 +6712,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "f292464338d5088c8372a5277adaa50514207948091819da08788b9d1d01b40c"
+content-hash = "c76fd325679f17886917f4c5a5d33a2039aae7cf91d698df06ae1451d85fc439"
