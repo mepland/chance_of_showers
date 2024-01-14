@@ -45,6 +45,7 @@ from utils.NBEATSModelWrapper import NBEATSModelWrapper
 from utils.NHiTSModelWrapper import NHiTSModelWrapper
 from utils.TCNModelWrapper import TCNModelWrapper
 from utils.TransformerModelWrapper import TransformerModelWrapper
+from utils.TFTModelWrapper import TFTModelWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -667,6 +668,47 @@ print(model_wrapper_Transformer)
 # %%
 tensorboard_logs = pathlib.Path(
     model_wrapper_Transformer.work_dir, model_wrapper_Transformer.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## TFT
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TFT = TFTModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TFT)
+
+# %%
+configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_TFT)
+
+# %%
+model_wrapper_TFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TFT.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TFT)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TFT.work_dir, model_wrapper_TFT.model_name, "logs"  # type: ignore[arg-type]
 )
 print(tensorboard_logs)
 

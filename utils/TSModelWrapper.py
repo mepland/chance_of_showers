@@ -313,6 +313,32 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 1024,
         "default": 512,
     },
+    # TFT
+    "hidden_size": {
+        "min": 1,
+        "max": 32,
+        "default": 16,
+    },
+    "lstm_layers": {
+        "min": 1,
+        "max": 5,
+        "default": 1,
+    },
+    "num_attention_heads": {
+        "min": 1,
+        "max": 10,
+        "default": 4,
+    },
+    "full_attention": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+    },
+    "hidden_continuous_size": {
+        "min": 1,
+        "max": 20,
+        "default": 8,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -353,6 +379,12 @@ INTEGER_HYPERPARAMS: Final = [
     "num_encoder_layers",
     "num_decoder_layers",
     "dim_feedforward",
+    # TFT
+    "hidden_size",
+    "lstm_layers",
+    "num_attention_heads",
+    "full_attention",
+    "hidden_continuous_size",
 ]
 
 
