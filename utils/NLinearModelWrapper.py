@@ -27,7 +27,7 @@ class NLinearModelWrapper(TSModelWrapper):
     _model_class = NLinearModel
     _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = [_ for _ in NN_REQUIRED_HYPERPARAMS if _ != "dropout"] + [
         "const_init",
         "normalize",
     ]
