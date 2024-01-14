@@ -388,15 +388,15 @@ integer_hyperparams = [
     "output_chunk_length",
     "n_epochs",
 ]
-for k, v in VARIABLE_HYPERPARAMS.items():
-    if k == "y_bin_edges":
+for _k, _v in VARIABLE_HYPERPARAMS.items():
+    if _k == "y_bin_edges":
         continue
     if TYPE_CHECKING:
-        assert isinstance(v, dict)  # noqa: SCS108 # nosec assert_used
-    if v.get("type") == bool:
-        boolean_hyperparams.append(k)
-    elif v.get("type") == int:
-        integer_hyperparams.append(k)
+        assert isinstance(_v, dict)  # noqa: SCS108 # nosec assert_used
+    if _v.get("type") == bool:
+        boolean_hyperparams.append(_k)
+    elif _v.get("type") == int:
+        integer_hyperparams.append(_k)
 
 
 ################################################################################
@@ -876,32 +876,32 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         # make sure int hyperparameters are int, as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
-        for k, v in self.chosen_hyperparams.items():
-            if k in boolean_hyperparams:
-                self.chosen_hyperparams[k] = bool(v)
-            elif k in integer_hyperparams:
-                self.chosen_hyperparams[k] = int(v)
-            if k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
+        for _k, _v in self.chosen_hyperparams.items():
+            if _k in boolean_hyperparams:
+                self.chosen_hyperparams[_k] = bool(_v)
+            elif _k in integer_hyperparams:
+                self.chosen_hyperparams[_k] = int(_v)
+            if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
                 pass
-            elif k in self.allowed_variable_hyperparams:
-                allowed_min = self.allowed_variable_hyperparams[k].get("min")
-                allowed_max = self.allowed_variable_hyperparams[k].get("max")
-                allowed_values = self.allowed_variable_hyperparams[k].get("allowed")
+            elif _k in self.allowed_variable_hyperparams:
+                allowed_min = self.allowed_variable_hyperparams[_k].get("min")
+                allowed_max = self.allowed_variable_hyperparams[_k].get("max")
+                allowed_values = self.allowed_variable_hyperparams[_k].get("allowed")
                 if allowed_min is not None and allowed_max is not None:
-                    if v < allowed_min or allowed_max < v:
+                    if _v < allowed_min or allowed_max < _v:
                         raise ValueError(
-                            f"Hyperparameter {k} with value {v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
+                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
                         )
                 elif allowed_values is not None and isinstance(allowed_values, list):
-                    if not set(v).issubset(set(allowed_values)):
+                    if not set(_v).issubset(set(allowed_values)):
                         raise ValueError(
-                            f"Hyperparameter {k} with value {v} is not allowed, expected to be a subset of {allowed_values}!"
+                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be a subset of {allowed_values}!"
                         )
                 else:
-                    raise ValueError(f"Hyperparameter {k} with value {v} can not be checked!")
-            if k == "time_bin_size_in_minutes" and 60 % v != 0:
+                    raise ValueError(f"Hyperparameter {_k} with value {_v} can not be checked!")
+            if _k == "time_bin_size_in_minutes" and 60 % _v != 0:
                 raise ValueError(
-                    f"Hyperparameter {k} with value {v} is not allowed, {60 % v = } should be 0!"
+                    f"Hyperparameter {_k} with value {_v} is not allowed, {60 % _v = } should be 0!"
                 )
 
     def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict:
