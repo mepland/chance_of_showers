@@ -244,7 +244,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 10,
         "default": 1,
     },
-    "num_layers": {
+    "num_layers": {  # and TCNModel
         "min": 1,
         "max": 10,
         "default": 1,
@@ -254,23 +254,21 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 1024,
         "default": 256,
     },
-    # NBEATSModel only
-    "expansion_coefficient_dim": {
+    "expansion_coefficient_dim": {  # NBEATSModel only
         "min": 1,
         "max": 10,
         "default": 5,
     },
-    # NHiTSModel only
-    "MaxPool1d": {
+    "MaxPool1d": {  # NHiTSModel only
         "min": 0,
         "max": 1,
         "default": 1,
     },
     # TCNModel
-    "kernel_size": {
+    "kernel_size": {  # and DLinear
         "min": 0,
         "max": 10,
-        "default": 3,
+        "default": 50,
     },
     "num_filters": {
         "min": 0,
@@ -339,6 +337,12 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 20,
         "default": 8,
     },
+    # DLinear
+    "const_init": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -385,6 +389,8 @@ INTEGER_HYPERPARAMS: Final = [
     "num_attention_heads",
     "full_attention",
     "hidden_continuous_size",
+    # DLinear
+    "const_init",
 ]
 
 
