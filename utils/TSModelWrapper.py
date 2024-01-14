@@ -287,6 +287,32 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 1,
         "default": 1,
     },
+    # TransformerModel
+    "d_model": {
+        "min": 0,
+        "max": 128,
+        "default": 64,
+    },
+    "nhead": {
+        "min": 0,
+        "max": 20,
+        "default": 4,
+    },
+    "num_encoder_layers": {
+        "min": 0,
+        "max": 20,
+        "default": 3,
+    },
+    "num_decoder_layers": {
+        "min": 0,
+        "max": 20,
+        "default": 3,
+    },
+    "dim_feedforward": {
+        "min": 0,
+        "max": 1024,
+        "default": 512,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -321,6 +347,12 @@ INTEGER_HYPERPARAMS: Final = [
     "num_filters",
     "dilation_base",
     "weight_norm",
+    # TransformerModel
+    "d_model",
+    "nhead",
+    "num_encoder_layers",
+    "num_decoder_layers",
+    "dim_feedforward",
 ]
 
 
