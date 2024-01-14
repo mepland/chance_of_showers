@@ -163,6 +163,7 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "min": 0,
         "max": 1,
         "default": 0,
+        "type": bool,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
     # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
@@ -202,11 +203,13 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 60,
         "default": 2,
+        "type": int,
     },
     "batch_size": {
         "min": 1,
         "max": 1000,
         "default": 32,
+        "type": int,
     },
     "dropout": {
         "min": 0.0,
@@ -222,6 +225,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 10,
         "max": 50,
         "default": 20,
+        "type": int,
     },
     "lr_factor": {
         "min": 0.0,
@@ -232,116 +236,138 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 0,
         "max": 20,
         "default": 5,
+        "type": int,
     },
     # NBEATSModel and NHiTSModel
     "num_stacks": {
         "min": 1,
         "max": 50,
         "default": 30,
+        "type": int,
     },
     "num_blocks": {
         "min": 1,
         "max": 10,
         "default": 1,
+        "type": int,
     },
     "num_layers": {  # and TCNModel
         "min": 1,
         "max": 10,
         "default": 1,
+        "type": int,
     },
     "layer_widths": {
         "min": 16,
         "max": 1024,
         "default": 256,
+        "type": int,
     },
     "expansion_coefficient_dim": {  # NBEATSModel only
         "min": 1,
         "max": 10,
         "default": 5,
+        "type": int,
     },
     "MaxPool1d": {  # NHiTSModel only
         "min": 0,
         "max": 1,
         "default": 1,
+        "type": bool,
     },
     # TCNModel
     "kernel_size": {  # and DLinear
         "min": 0,
         "max": 10,
         "default": 50,
+        "type": int,
     },
     "num_filters": {
         "min": 0,
         "max": 10,
         "default": 3,
+        "type": int,
     },
     "dilation_base": {
         "min": 1,
         "max": 10,
         "default": 2,
+        "type": int,
     },
     "weight_norm": {
         "min": 0,
         "max": 1,
         "default": 1,
+        "type": bool,
     },
     # TransformerModel
     "d_model": {
         "min": 0,
         "max": 128,
         "default": 64,
+        "type": int,
     },
     "nhead": {
         "min": 0,
         "max": 20,
         "default": 4,
+        "type": int,
     },
     "num_encoder_layers": {
         "min": 0,
         "max": 20,
         "default": 3,
+        "type": int,
     },
     "num_decoder_layers": {
         "min": 0,
         "max": 20,
         "default": 3,
+        "type": int,
     },
     "dim_feedforward": {
         "min": 0,
         "max": 1024,
         "default": 512,
+        "type": int,
     },
     # TFT
     "hidden_size": {
         "min": 1,
         "max": 32,
         "default": 16,
+        "type": int,
     },
     "lstm_layers": {
         "min": 1,
         "max": 5,
         "default": 1,
+        "type": int,
     },
     "num_attention_heads": {
         "min": 1,
         "max": 10,
         "default": 4,
+        "type": int,
     },
     "full_attention": {
         "min": 0,
         "max": 1,
         "default": 0,
+        "type": bool,
     },
     "hidden_continuous_size": {
         "min": 1,
         "max": 20,
         "default": 8,
+        "type": int,
     },
     # DLinear
     "const_init": {
         "min": 0,
         "max": 1,
         "default": 1,
+        "type": bool,
     },
 }
 
@@ -355,43 +381,22 @@ NN_FIXED_HYPERPARAMS: Final = {
     "max_time": None,
 }
 
-INTEGER_HYPERPARAMS: Final = [
-    "rebin_y",
-    "input_chunk_length",
+VARIABLE_HYPERPARAMS: Final = {**NN_ALLOWED_VARIABLE_HYPERPARAMS, **DATA_VARIABLE_HYPERPARAMS}
+
+boolean_hyperparams = []
+integer_hyperparams = [
     "output_chunk_length",
     "n_epochs",
-    "batch_size",
-    "es_patience",
-    "lr_patience",
-    # NBEATSModel and NHiTSModel
-    "num_stacks",
-    "num_blocks",
-    "num_layers",
-    "layer_widths",
-    # NBEATSModel only
-    "expansion_coefficient_dim",
-    # NHiTSModel only
-    "MaxPool1d",
-    # TCNModel
-    "kernel_size",
-    "num_filters",
-    "dilation_base",
-    "weight_norm",
-    # TransformerModel
-    "d_model",
-    "nhead",
-    "num_encoder_layers",
-    "num_decoder_layers",
-    "dim_feedforward",
-    # TFT
-    "hidden_size",
-    "lstm_layers",
-    "num_attention_heads",
-    "full_attention",
-    "hidden_continuous_size",
-    # DLinear
-    "const_init",
 ]
+for k, v in VARIABLE_HYPERPARAMS.items():
+    if k == "y_bin_edges":
+        continue
+    if TYPE_CHECKING:
+        assert isinstance(v, dict)  # noqa: SCS108 # nosec assert_used
+    if v.get("type") == bool:
+        boolean_hyperparams.append(k)
+    elif v.get("type") == int:
+        integer_hyperparams.append(k)
 
 
 ################################################################################
@@ -872,7 +877,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # make sure int hyperparameters are int, as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
         for k, v in self.chosen_hyperparams.items():
-            if k in INTEGER_HYPERPARAMS:
+            if k in boolean_hyperparams:
+                self.chosen_hyperparams[k] = bool(v)
+            elif k in integer_hyperparams:
                 self.chosen_hyperparams[k] = int(v)
             if k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
                 pass
