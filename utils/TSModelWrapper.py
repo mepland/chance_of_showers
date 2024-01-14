@@ -362,11 +362,18 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 8,
         "type": int,
     },
-    # DLinear
+    # DLinear and NLinear
     "const_init": {
         "min": 0,
         "max": 1,
         "default": 1,
+        "type": bool,
+    },
+    # NLinear
+    "normalize": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
         "type": bool,
     },
 }

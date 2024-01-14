@@ -47,6 +47,7 @@ from utils.TCNModelWrapper import TCNModelWrapper
 from utils.TransformerModelWrapper import TransformerModelWrapper
 from utils.TFTModelWrapper import TFTModelWrapper
 from utils.DLinearModelWrapper import DLinearModelWrapper
+from utils.NLinearModelWrapper import NLinearModelWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -751,6 +752,47 @@ print(model_wrapper_DLinear)
 # %%
 tensorboard_logs = pathlib.Path(
     model_wrapper_DLinear.work_dir, model_wrapper_DLinear.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## N-Linear
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_NLinear = NLinearModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_NLinear)
+
+# %%
+configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_NLinear)
+
+# %%
+model_wrapper_NLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NLinear.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NLinear)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NLinear.work_dir, model_wrapper_NLinear.model_name, "logs"  # type: ignore[arg-type]
 )
 print(tensorboard_logs)
 
