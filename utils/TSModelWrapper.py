@@ -276,7 +276,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": bool,
     },
     # TCNModel
-    "kernel_size": {  # and DLinear
+    "kernel_size": {  # and DLinearModel
         "min": 0,
         "max": 10,
         "default": 50,
@@ -313,13 +313,13 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 4,
         "type": int,
     },
-    "num_encoder_layers": {
+    "num_encoder_layers": {  # and TiDEModel
         "min": 0,
         "max": 20,
         "default": 3,
         "type": int,
     },
-    "num_decoder_layers": {
+    "num_decoder_layers": {  # and TiDEModel
         "min": 0,
         "max": 20,
         "default": 3,
@@ -331,10 +331,10 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 512,
         "type": int,
     },
-    # TFT
-    "hidden_size": {
+    # TFTModel
+    "hidden_size": {  # and TiDEModel
         "min": 1,
-        "max": 32,
+        "max": 256,
         "default": 16,
         "type": int,
     },
@@ -362,15 +362,46 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 8,
         "type": int,
     },
-    # DLinear and NLinear
+    # DLinearModel and NLinearModel
     "const_init": {
         "min": 0,
         "max": 1,
         "default": 1,
         "type": bool,
     },
-    # NLinear
+    # NLinearModel
     "normalize": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "type": bool,
+    },
+    # TiDEModel
+    "decoder_output_dim": {
+        "min": 1,
+        "max": 50,
+        "default": 16,
+        "type": int,
+    },
+    "temporal_width_past": {
+        "min": 1,
+        "max": 10,
+        "default": 4,
+        "type": int,
+    },
+    "temporal_width_future": {
+        "min": 1,
+        "max": 10,
+        "default": 4,
+        "type": int,
+    },
+    "temporal_decoder_hidden": {
+        "min": 1,
+        "max": 64,
+        "default": 32,
+        "type": int,
+    },
+    "use_layer_norm": {
         "min": 0,
         "max": 1,
         "default": 0,
