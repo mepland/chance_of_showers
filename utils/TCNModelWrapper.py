@@ -34,6 +34,7 @@ class TCNModelWrapper(TSModelWrapper):
         "dilation_base",
         "weight_norm",
     ]
+    # TODO ValueError: The output length must be strictly smaller than the input length
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
