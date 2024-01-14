@@ -1196,13 +1196,13 @@ files = [
 
 [[package]]
 name = "darts"
-version = "0.25.0"
+version = "0.27.1"
 description = "A python library for easy manipulation and forecasting of time series."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "darts-0.25.0-py3-none-any.whl", hash = "sha256:52fb0305e7cfff7a605f67a86176b0de710ff1e9038eadfe43eb5f315f1a142a"},
-    {file = "darts-0.25.0.tar.gz", hash = "sha256:de2f8e021090648f8905c5a0752d2f883b1c2591ff03064c8b11844ccc4dff57"},
+    {file = "darts-0.27.1-py3-none-any.whl", hash = "sha256:f52720f3b9c1edff78b641c60f776270a2d1a5c6d947cd5634cd6f660dc20a1d"},
+    {file = "darts-0.27.1.tar.gz", hash = "sha256:9370263f1028f84276bbb9ba516b4ea3eccb2de8f1bd7cd045201aaf6de89fa9"},
 ]
 
 [package.dependencies]
@@ -6737,4 +6737,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "c76fd325679f17886917f4c5a5d33a2039aae7cf91d698df06ae1451d85fc439"
+content-hash = "bdd05d20211a9a1b9a5a48158b5564cede822d3092c33201d58545a2bcf863f5"
