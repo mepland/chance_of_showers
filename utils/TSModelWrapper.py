@@ -276,10 +276,13 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": bool,
     },
     # TCNModel
+    # TODO ValueError: The kernel size must be strictly smaller than the input length.
     "kernel_size": {  # and DLinearModel
-        "min": 0,
-        "max": 10,
-        "default": 50,
+        "min": 1,
+        # "max": 100,
+        # "default": 50,
+        "max": 1,
+        "default": 1,
         "type": int,
     },
     "num_filters": {
