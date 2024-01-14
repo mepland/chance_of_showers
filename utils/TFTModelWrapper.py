@@ -28,7 +28,11 @@ class TFTModelWrapper(TSModelWrapper):
     _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
     _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
-        "",
+        "hidden_size",
+        "lstm_layers",
+        "num_attention_heads",
+        "full_attention",
+        "hidden_continuous_size",
     ]
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
