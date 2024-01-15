@@ -7,8 +7,10 @@ import datetime
 import gc
 import logging
 import math
+import operator
 import pathlib
 import pprint
+import sys
 import warnings
 import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
@@ -45,6 +47,12 @@ logger_cmdstanpy = logging.getLogger("cmdstanpy")
 logger_cmdstanpy.addHandler(logging.NullHandler())
 logger_cmdstanpy.propagate = False
 logger_cmdstanpy.setLevel(logging.ERROR)
+
+# logging
+logger_ts_wrapper = logging.getLogger(__name__)
+logger_ts_wrapper.setLevel(logging.INFO)
+if not logger_ts_wrapper.handlers:
+    logger_ts_wrapper.addHandler(logging.StreamHandler(sys.stdout))
 
 # loss function
 LOSS_FN: Final = torchmetrics.MeanSquaredError()
@@ -276,14 +284,17 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": bool,
     },
     # TCNModel
-    # TODO ValueError: The kernel size must be strictly smaller than the input length.
     "kernel_size": {  # and DLinearModel
         "min": 1,
-        # "max": 100,
-        # "default": 50,
-        "max": 1,
-        "default": 1,
+        "max": 100,
+        "default": 50,
         "type": int,
+        # TCNModel only: The kernel size must be strictly smaller than the input length.
+        "condition_TCNModel": {
+            "hyperparam": "kernel_size",
+            "condition": operator.lt,
+            "rhs": "input_chunk_length",
+        },
     },
     "num_filters": {
         "min": 0,
@@ -468,6 +479,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         allowed_variable_hyperparams: dict | None = None,
         variable_hyperparams: dict | None = None,
         fixed_hyperparams: dict | None = None,
+        hyperparams_conditions: list[dict] | None = None,
     ) -> None:
         """Int method.
 
@@ -490,6 +502,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
             variable_hyperparams: Dictionary of variable hyperparameters for this model.
             fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
+            hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
         """
         if required_hyperparams_data is None:
             required_hyperparams_data = []
@@ -515,11 +528,15 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.allowed_variable_hyperparams = allowed_variable_hyperparams
         self.variable_hyperparams = variable_hyperparams
         self.fixed_hyperparams = fixed_hyperparams
+        self.hyperparams_conditions = hyperparams_conditions
 
         self.model_name: str | None = None
         self.chosen_hyperparams: dict | None = None
         self.model = None
         self.is_trained = False
+
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
 
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
@@ -547,6 +564,7 @@ self.required_hyperparams_model = {pprint.pformat(self.required_hyperparams_mode
 self.allowed_variable_hyperparams = {pprint.pformat(self.allowed_variable_hyperparams)}
 self.variable_hyperparams = {pprint.pformat(self.variable_hyperparams)}
 self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
+self.hyperparams_conditions = {pprint.pformat(self.hyperparams_conditions)}
 
 {self.model_name = }
 self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
@@ -913,7 +931,35 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
-            self.chosen_hyperparams[hyperparam] = hyperparam_value
+            if isinstance(self.hyperparams_conditions, list) and len(self.hyperparams_conditions):
+                for condition_dict in self.hyperparams_conditions:
+                    if condition_dict["hyperparam"] != hyperparam:
+                        continue
+                    # This hyperparam has conditions set on other hyperparams, we will ensure they is satisfied
+                    rhs_value = self.chosen_hyperparams.get(
+                        condition_dict["rhs"], get_hyperparam_value(condition_dict["rhs"])
+                    )
+                    op_func = condition_dict["condition"]
+                    if op_func == operator.lt:  # pylint: disable=comparison-with-callable
+                        new_value = rhs_value - 1
+                        if new_value < 0 <= rhs_value:
+                            logger_ts_wrapper.warning(
+                                "Keeping hyperparam %s from becoming negative, model might complain!",
+                                hyperparam,
+                            )
+                            new_value = 0
+                    else:
+                        raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
+                    if not op_func(hyperparam_value, rhs_value):
+                        logger_ts_wrapper.info(
+                            "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
+                            hyperparam,
+                            new_value,
+                            pprint.pformat(condition_dict),
+                        )
+                        hyperparam_value = new_value
+
+                self.chosen_hyperparams[hyperparam] = hyperparam_value
 
         # make sure int hyperparameters are int, as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
@@ -1042,10 +1088,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.chosen_hyperparams.get("rebin_y", 0):
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
-            if 0 < self.verbose:
-                print(
-                    f"Missing {frac_missing:.2%} of values, filling via {interpolate_method} interpolation"
-                )
+            logger_ts_wrapper.debug(
+                "Missing %.2f of values, filling via %s interpolation",
+                frac_missing,
+                interpolate_method,
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",

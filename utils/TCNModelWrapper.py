@@ -2,7 +2,7 @@
 """Wrapper for TCN."""
 # pylint: enable=invalid-name
 
-from typing import Any
+from typing import Any, cast
 
 from darts.models import TCNModel
 
@@ -17,7 +17,7 @@ from utils.TSModelWrapper import (
 )
 
 
-class TCNModelWrapper(TSModelWrapper):
+class TCNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attributes
     """TCNModel wrapper.
 
     https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tcn_model.html
@@ -34,9 +34,14 @@ class TCNModelWrapper(TSModelWrapper):
         "dilation_base",
         "weight_norm",
     ]
-    # TODO ValueError: The output length must be strictly smaller than the input length
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+
+    # TODO ValueError: The output length must be strictly smaller than the input length
+
+    _hyperparams_conditions = [
+        cast("dict[Any, dict]", _allowed_variable_hyperparams["kernel_size"])["condition_TCNModel"]
+    ]
 
     def __init__(self: "TCNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -69,6 +74,7 @@ class TCNModelWrapper(TSModelWrapper):
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
+            self.hyperparams_conditions = self._hyperparams_conditions
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -88,4 +94,5 @@ class TCNModelWrapper(TSModelWrapper):
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
+                hyperparams_conditions=self._hyperparams_conditions,
             )
