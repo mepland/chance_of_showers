@@ -2,7 +2,8 @@
 """Wrapper for TCN."""
 # pylint: enable=invalid-name
 
-from typing import Any, cast
+import operator
+from typing import Any
 
 from darts.models import TCNModel
 
@@ -37,10 +38,19 @@ class TCNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attr
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
-    # TODO ValueError: The output length must be strictly smaller than the input length
-
     _hyperparams_conditions = [
-        cast("dict[Any, dict]", _allowed_variable_hyperparams["kernel_size"])["condition_TCNModel"]
+        # The kernel size must be strictly smaller than the input length.
+        {
+            "hyperparam": "kernel_size",
+            "condition": operator.lt,
+            "rhs": "input_chunk_length",
+        },
+        # The output length must be strictly smaller than the input length
+        {
+            "hyperparam": "output_chunk_length",
+            "condition": operator.lt,
+            "rhs": "input_chunk_length",
+        },
     ]
 
     def __init__(self: "TCNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401

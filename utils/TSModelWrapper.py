@@ -289,12 +289,6 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 100,
         "default": 50,
         "type": int,
-        # TCNModel only: The kernel size must be strictly smaller than the input length.
-        "condition_TCNModel": {
-            "hyperparam": "kernel_size",
-            "condition": operator.lt,
-            "rhs": "input_chunk_length",
-        },
     },
     "num_filters": {
         "min": 0,
@@ -893,15 +887,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         prediction_length_in_minutes, float
                     )
                 prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
-                self.chosen_hyperparams["output_chunk_length"] = math.ceil(
+                hyperparam_value = math.ceil(
                     prediction_length.seconds / self.chosen_hyperparams["time_bin_size"].seconds
                 )
-                self.chosen_hyperparams["prediction_length_in_minutes"] = (
-                    self.chosen_hyperparams["output_chunk_length"]
-                    * self.chosen_hyperparams["time_bin_size_in_minutes"]
-                )
-
-                continue
+                self.chosen_hyperparams["output_chunk_length"] = hyperparam_value
+                # Will update prediction_length_in_minutes to match later when output_chunk_length is final
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
@@ -931,6 +921,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
+            # Check for additional conditions
             if isinstance(self.hyperparams_conditions, list) and len(self.hyperparams_conditions):
                 for condition_dict in self.hyperparams_conditions:
                     if condition_dict["hyperparam"] != hyperparam:
@@ -961,7 +952,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
                 self.chosen_hyperparams[hyperparam] = hyperparam_value
 
-        # make sure int hyperparameters are int, as Bayesian optimization will always give floats
+        # Update prediction_length_in_minutes, now that any conditions have been applied
+        if "output_chunk_length" in self.chosen_hyperparams:
+            self.chosen_hyperparams["prediction_length_in_minutes"] = (
+                self.chosen_hyperparams["output_chunk_length"]
+                * self.chosen_hyperparams["time_bin_size_in_minutes"]
+            )
+
+        # Make sure int (bool) hyperparameters are int (bool), as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
         for _k, _v in self.chosen_hyperparams.items():
             if _k in boolean_hyperparams:
