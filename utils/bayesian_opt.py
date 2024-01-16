@@ -215,7 +215,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
 
-            # Create a fresh model_wrapper object to try to avoid GPU memory leaks TODO probably can safely revert
+            # Create a fresh model_wrapper object to try to avoid GPU memory leaks
+            # This may not be necessary, but as it is already coded, just be safe and leave it
             model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
             model_wrapper.set_enable_progress_bar_and_max_time(
