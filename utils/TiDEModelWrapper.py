@@ -37,7 +37,6 @@ class TiDEModelWrapper(TSModelWrapper):
         "temporal_decoder_hidden",
         "use_layer_norm",
     ]
-    # TODO number of `future_covariates` features is <= `temporal_width_future`, leading to feature expansion.number of covariates: 1, `temporal_width_future=4`.
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
