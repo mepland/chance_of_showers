@@ -398,9 +398,11 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "temporal_width_future": {
-        "min": 1,
-        "max": 10,
-        "default": 4,
+        # We only have 1 covariate, so temporal_width_future should either be 0 or 1, but is still an int. See:
+        # https://github.com/unit8co/darts/blob/962fd78cb526887c47bddc33bea4b731adf72a87/darts/models/forecasting/tide_model.py#L668-L672
+        "min": 0,
+        "max": 1,
+        "default": 1,
         "type": int,
     },
     "temporal_decoder_hidden": {
@@ -950,7 +952,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         )
                         hyperparam_value = new_value
 
-                self.chosen_hyperparams[hyperparam] = hyperparam_value
+            # Finally set the hyperparam value
+            self.chosen_hyperparams[hyperparam] = hyperparam_value
 
         # Update prediction_length_in_minutes, now that any conditions have been applied
         if "output_chunk_length" in self.chosen_hyperparams:
