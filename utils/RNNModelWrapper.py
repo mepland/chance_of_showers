@@ -73,7 +73,7 @@ class RNNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attr
                     kwargs["model_name_tag"] = f'{model}_{kwargs["model_name_tag"]}'
                 else:
                     kwargs["model_name_tag"] = model
-            elif issubclass(model, CustomRNNModule):  # type: ignore[arg-type]
+            elif isinstance(model, type) and issubclass(model, CustomRNNModule):  # type: ignore[arg-type]
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
