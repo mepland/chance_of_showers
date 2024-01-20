@@ -20,9 +20,6 @@ import pprint
 import shutil
 import sys
 import warnings
-
-# import natsort
-# import numpy as np
 import zoneinfo
 from typing import TYPE_CHECKING, Final
 
@@ -33,19 +30,29 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-from utils.shared_functions import (  # noqa: E402 # pylint: disable=import-error
+# pylint: disable=import-error
+from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
 )
 
 # isort: off
-from utils.TSModelWrappers import (  # noqa: E402 # pylint: disable=import-error
-    run_bayesian_opt,
-    TSModelWrapper,
-    ProphetWrapper,
-    NBEATSModelWrapper,
-)
-from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
+from utils.TSModelWrapper import TSModelWrapper
+from utils.bayesian_opt import run_bayesian_opt
+
+from utils.ProphetWrapper import ProphetWrapper
+from utils.NBEATSModelWrapper import NBEATSModelWrapper
+from utils.NHiTSModelWrapper import NHiTSModelWrapper
+from utils.TCNModelWrapper import TCNModelWrapper
+from utils.TransformerModelWrapper import TransformerModelWrapper
+from utils.TFTModelWrapper import TFTModelWrapper
+from utils.DLinearModelWrapper import DLinearModelWrapper
+from utils.NLinearModelWrapper import NLinearModelWrapper
+from utils.TiDEModelWrapper import TiDEModelWrapper
+from utils.RNNModelWrapper import RNNModelWrapper
+from utils.BlockRNNModelWrapper import BlockRNNModelWrapper
+
+from utils.plotting import (
     C_GREEN,
     C_GREY,
     C_RED,
@@ -61,6 +68,7 @@ from utils.plotting import (  # noqa: E402 # pylint: disable=import-error
     plot_hists,
 )
 
+# pylint: enable=import-error
 # isort: on
 # pylint: disable=unreachable
 
@@ -281,7 +289,7 @@ dfp_val = dfp_trainable_evergreen.loc[
 # # Darts Modeling
 
 # %%
-import torch  # noqa: E402
+import torch
 
 if torch.cuda.is_available():
     print("CUDA is available")
@@ -309,10 +317,8 @@ PARENT_WRAPPER: Final = TSModelWrapper(
 # raise UserWarning("Stopping Here")
 
 # %%
-import prophet  # noqa: E402
-from darts.models.forecasting.prophet_model import (  # noqa: E402
-    Prophet as darts_Prophet,
-)
+import prophet
+from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
 # %%
 model_wrapper_Prophet = ProphetWrapper(
@@ -529,9 +535,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_NBEATS)
-
-# %%
 model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_NBEATS.train_model()
 print(f"{val_loss = }")
@@ -546,52 +549,355 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## Bayesian Optimization
+# ##  N-HiTS
 
 # %%
 # raise UserWarning("Stopping Here")
 
 # %%
-BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
-# print(tensorboard_logs)
+model_wrapper_NHiTS = NHiTSModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NHiTS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_NHiTS)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
 
 # %% [markdown]
-# ### Prophet
+# ### Training
 
 # %%
-optimal_values, optimizer = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=ProphetWrapper,
-    n_iter=100,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+model_wrapper_NHiTS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NHiTS.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NHiTS)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NHiTS.work_dir, model_wrapper_NHiTS.model_name, "logs"  # type: ignore[arg-type]
 )
+print(tensorboard_logs)
 
 # %%
-pprint.pprint(optimal_values)
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ### N-BEATS
+# ## TCN
 
 # %%
-optimal_values, optimizer = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NBEATSModelWrapper,
-    n_iter=200,
-    enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=20),
-    display_memory_usage=True,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TCN = TCNModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
 )
+model_wrapper_TCN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TCN)
 
 # %%
-pprint.pprint(optimal_values)
+configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_TCN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TCN.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TCN)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TCN.work_dir, model_wrapper_TCN.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## Transformer
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_Transformer = TransformerModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_Transformer.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_Transformer)
+
+# %%
+configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_Transformer.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_Transformer.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_Transformer)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_Transformer.work_dir, model_wrapper_Transformer.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## TFT
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TFT = TFTModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TFT)
+
+# %%
+configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_TFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TFT.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TFT)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TFT.work_dir, model_wrapper_TFT.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## D-Linear
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_DLinear = DLinearModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_DLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_DLinear)
+
+# %%
+configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_DLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_DLinear.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_DLinear)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_DLinear.work_dir, model_wrapper_DLinear.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## N-Linear
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_NLinear = NLinearModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_NLinear)
+
+# %%
+configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_NLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_NLinear.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_NLinear)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_NLinear.work_dir, model_wrapper_NLinear.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## TiDE
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TiDE = TiDEModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_TiDE.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TiDE)
+
+# %%
+configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_TiDE.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TiDE.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TiDE)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TiDE.work_dir, model_wrapper_TiDE.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## RNN
+# `models = ["RNN", "LSTM", "GRU"]`
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_RNN = RNNModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    model="RNN",
+)
+model_wrapper_RNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_RNN)
+
+# %%
+configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_RNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_RNN.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_RNN)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_RNN.work_dir, model_wrapper_RNN.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## BlockRNN
+# `models = ["RNN", "LSTM", "GRU"]`
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_BlockRNN = BlockRNNModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    model="RNN",
+)
+model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_BlockRNN)
+
+# %%
+configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_BlockRNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_BlockRNN.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_BlockRNN)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_BlockRNN.work_dir, model_wrapper_BlockRNN.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## AutoARIMA
@@ -632,6 +938,34 @@ pprint.pprint(optimal_values)
 #     "scoring": "mse",
 #     "with_intercept": "auto",
 # }
+
+# %% [markdown]
+# ***
+# # Bayesian Optimization
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
+# print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+optimal_values, optimizer = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=NBEATSModelWrapper,
+    n_iter=200,
+    enable_progress_bar=True,
+    max_time_per_model=datetime.timedelta(minutes=20),
+    display_memory_usage=True,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+
+# %%
+pprint.pprint(optimal_values)
 
 # %% [markdown]
 # ***
@@ -1000,6 +1334,7 @@ plot_chance_of_showers_time_series(
 )
 
 # %% [markdown]
+# ***
 # # Save outputs to `/media/ana_outputs`
 
 # %%

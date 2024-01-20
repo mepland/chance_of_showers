@@ -1,57 +1,29 @@
 # pylint: disable=invalid-name
-"""Wrapper classes for time series models."""
-
+"""Wrapper class for time series models."""
 # pylint: enable=invalid-name
+
 
 import datetime
 import gc
 import logging
 import math
+import operator
 import pathlib
 import pprint
-import traceback
+import sys
 import warnings
 import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
-import bayes_opt
-import humanize
-import numpy as np
 import pandas as pd
-import psutil
 import sympy
 import torch
 import torchmetrics
-from bayes_opt.event import DEFAULT_EVENTS, Events
-from bayes_opt.logger import JSONLogger, ScreenLogger
-from bayes_opt.util import load_logs
 from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.utilities.warnings import PossibleUserWarning
-
-# isort: off
-from darts.models import (
-    Prophet,
-    #    AutoARIMA,
-    #    RandomForest,
-    #    XGBModel,
-    #    LightGBMModel,
-    #    CatBoostModel,
-    #    RNNModel,
-    #    BlockRNNModel,
-    NBEATSModel,
-    #    NHiTSModel,
-    #    TCNModel,
-    #    TransformerModel,
-    #    TFTModel,
-    #    DLinearModel,
-    #    NLinearModel,
-    #    TiDEModel,
-)
-
-# isort: on
 
 from utils.shared_functions import (
     create_datetime_component_cols,
@@ -76,6 +48,12 @@ logger_cmdstanpy.addHandler(logging.NullHandler())
 logger_cmdstanpy.propagate = False
 logger_cmdstanpy.setLevel(logging.ERROR)
 
+# logging
+logger_ts_wrapper = logging.getLogger(__name__)
+logger_ts_wrapper.setLevel(logging.INFO)
+if not logger_ts_wrapper.handlers:
+    logger_ts_wrapper.addHandler(logging.StreamHandler(sys.stdout))
+
 # loss function
 LOSS_FN: Final = torchmetrics.MeanSquaredError()
 
@@ -86,34 +64,6 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
         torchmetrics.MeanAbsolutePercentageError(),
     ]
 )
-
-
-def print_memory_usage(*, header: str | None = None) -> None:
-    """Print system memory usage statistics.
-
-    Args:
-        header: Header to print before the rest of the memory usage.
-    """
-    ram_info = psutil.virtual_memory()
-    process = psutil.Process()
-    if header is not None and header != "":
-        header = f"{header}\n"
-    else:
-        header = ""
-    memory_usage_str = (
-        header
-        + f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
-        + f"System Used: {humanize.naturalsize(ram_info.used)}, {ram_info.percent:.2f}%, "
-        + f"Process Used: {humanize.naturalsize(process.memory_info().rss)}"
-    )
-
-    if torch.cuda.is_available():
-        gpu_memory_stats = torch.cuda.memory_stats()
-    memory_usage_str += (
-        f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
-        + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
-    )
-    print(memory_usage_str)
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
@@ -221,6 +171,7 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "min": 0,
         "max": 1,
         "default": 0,
+        "type": bool,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
     # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
@@ -251,6 +202,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
     "log_tensorboard",
     "lr_scheduler_cls",
     "lr_scheduler_kwargs",
+    "random_state",
 ]
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
@@ -259,11 +211,13 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 60,
         "default": 2,
+        "type": int,
     },
     "batch_size": {
         "min": 1,
         "max": 1000,
         "default": 32,
+        "type": int,
     },
     "dropout": {
         "min": 0.0,
@@ -279,6 +233,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 10,
         "max": 50,
         "default": 20,
+        "type": int,
     },
     "lr_factor": {
         "min": 0.0,
@@ -289,32 +244,197 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 0,
         "max": 20,
         "default": 5,
+        "type": int,
     },
-    # NBEATSModel
+    # NBEATSModel and NHiTSModel
     "num_stacks": {
         "min": 1,
         "max": 50,
         "default": 30,
+        "type": int,
     },
     "num_blocks": {
         "min": 1,
         "max": 10,
         "default": 1,
+        "type": int,
     },
-    "num_layers": {
+    "num_layers": {  # and TCNModel
         "min": 1,
         "max": 10,
         "default": 1,
+        "type": int,
     },
     "layer_widths": {
         "min": 16,
-        "max": 512,
+        "max": 1024,
         "default": 256,
+        "type": int,
     },
-    "expansion_coefficient_dim": {
+    "expansion_coefficient_dim": {  # NBEATSModel only
         "min": 1,
         "max": 10,
         "default": 5,
+        "type": int,
+    },
+    "MaxPool1d": {  # NHiTSModel only
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": bool,
+    },
+    # TCNModel
+    "kernel_size": {  # and DLinearModel
+        "min": 1,
+        "max": 100,
+        "default": 50,
+        "type": int,
+    },
+    "num_filters": {
+        "min": 0,
+        "max": 10,
+        "default": 3,
+        "type": int,
+    },
+    "dilation_base": {
+        "min": 1,
+        "max": 10,
+        "default": 2,
+        "type": int,
+    },
+    "weight_norm": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": bool,
+    },
+    # TransformerModel
+    "d_model": {
+        "min": 0,
+        "max": 128,
+        "default": 64,
+        "type": int,
+    },
+    "nhead": {
+        "min": 0,
+        "max": 20,
+        "default": 4,
+        "type": int,
+    },
+    "num_encoder_layers": {  # and TiDEModel
+        "min": 0,
+        "max": 20,
+        "default": 3,
+        "type": int,
+    },
+    "num_decoder_layers": {  # and TiDEModel
+        "min": 0,
+        "max": 20,
+        "default": 3,
+        "type": int,
+    },
+    "dim_feedforward": {
+        "min": 0,
+        "max": 1024,
+        "default": 512,
+        "type": int,
+    },
+    # TFTModel
+    "hidden_size": {  # and TiDEModel
+        "min": 1,
+        "max": 256,
+        "default": 16,
+        "type": int,
+    },
+    "lstm_layers": {
+        "min": 1,
+        "max": 5,
+        "default": 1,
+        "type": int,
+    },
+    "num_attention_heads": {
+        "min": 1,
+        "max": 10,
+        "default": 4,
+        "type": int,
+    },
+    "full_attention": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "type": bool,
+    },
+    "hidden_continuous_size": {
+        "min": 1,
+        "max": 20,
+        "default": 8,
+        "type": int,
+    },
+    # DLinearModel and NLinearModel
+    "const_init": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": bool,
+    },
+    # NLinearModel
+    "normalize": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "type": bool,
+    },
+    # TiDEModel
+    "decoder_output_dim": {
+        "min": 1,
+        "max": 50,
+        "default": 16,
+        "type": int,
+    },
+    "temporal_width_past": {
+        "min": 1,
+        "max": 10,
+        "default": 4,
+        "type": int,
+    },
+    "temporal_width_future": {
+        # We only have 1 covariate, so temporal_width_future should either be 0 or 1, but is still an int. See:
+        # https://github.com/unit8co/darts/blob/962fd78cb526887c47bddc33bea4b731adf72a87/darts/models/forecasting/tide_model.py#L668-L672
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": int,
+    },
+    "temporal_decoder_hidden": {
+        "min": 1,
+        "max": 64,
+        "default": 32,
+        "type": int,
+    },
+    "use_layer_norm": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "type": bool,
+    },
+    # RNNModel and BlockRNNModel
+    "hidden_dim": {
+        "min": 1,
+        "max": 50,
+        "default": 25,
+        "type": int,
+    },
+    "n_rnn_layers": {
+        "min": 1,
+        "max": 20,
+        "default": 1,
+        "type": int,
+    },
+    "training_length": {  # RNNModel only
+        "min": 1,
+        "max": 50,
+        "default": 24,
+        "type": int,
     },
 }
 
@@ -328,21 +448,22 @@ NN_FIXED_HYPERPARAMS: Final = {
     "max_time": None,
 }
 
-INTEGER_HYPERPARAMS: Final = [
-    "rebin_y",
-    "input_chunk_length",
+VARIABLE_HYPERPARAMS: Final = {**NN_ALLOWED_VARIABLE_HYPERPARAMS, **DATA_VARIABLE_HYPERPARAMS}
+
+boolean_hyperparams = []
+integer_hyperparams = [
     "output_chunk_length",
     "n_epochs",
-    "batch_size",
-    "es_patience",
-    "lr_patience",
-    # NBEATSModel
-    "num_stacks",
-    "num_blocks",
-    "num_layers",
-    "layer_widths",
-    "expansion_coefficient_dim",
 ]
+for _k, _v in VARIABLE_HYPERPARAMS.items():
+    if _k == "y_bin_edges":
+        continue
+    if TYPE_CHECKING:
+        assert isinstance(_v, dict)  # noqa: SCS108 # nosec assert_used
+    if _v.get("type") == bool:
+        boolean_hyperparams.append(_k)
+    elif _v.get("type") == int:
+        integer_hyperparams.append(_k)
 
 
 ################################################################################
@@ -373,6 +494,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         allowed_variable_hyperparams: dict | None = None,
         variable_hyperparams: dict | None = None,
         fixed_hyperparams: dict | None = None,
+        hyperparams_conditions: list[dict] | None = None,
     ) -> None:
         """Int method.
 
@@ -395,6 +517,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
             variable_hyperparams: Dictionary of variable hyperparameters for this model.
             fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
+            hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
         """
         if required_hyperparams_data is None:
             required_hyperparams_data = []
@@ -420,11 +543,15 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.allowed_variable_hyperparams = allowed_variable_hyperparams
         self.variable_hyperparams = variable_hyperparams
         self.fixed_hyperparams = fixed_hyperparams
+        self.hyperparams_conditions = hyperparams_conditions
 
         self.model_name: str | None = None
         self.chosen_hyperparams: dict | None = None
         self.model = None
         self.is_trained = False
+
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
 
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
@@ -449,9 +576,9 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.model_name_tag = }
 self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
 self.required_hyperparams_model = {pprint.pformat(self.required_hyperparams_model)}
-self.allowed_variable_hyperparams = {pprint.pformat(self.allowed_variable_hyperparams)}
 self.variable_hyperparams = {pprint.pformat(self.variable_hyperparams)}
 self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
+self.hyperparams_conditions = {pprint.pformat(self.hyperparams_conditions)}
 
 {self.model_name = }
 self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
@@ -664,6 +791,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if isinstance(self.required_hyperparams_model, list):
             required_hyperparams_all += self.required_hyperparams_model
 
+        # Remove duplicates, e.g. random_state, while preserving order
+        required_hyperparams_all = list(dict.fromkeys(required_hyperparams_all))
+
         if not required_hyperparams_all or not (
             isinstance(self.allowed_variable_hyperparams, dict)
             and isinstance(self.variable_hyperparams, dict)
@@ -777,15 +907,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         prediction_length_in_minutes, float
                     )
                 prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
-                self.chosen_hyperparams["output_chunk_length"] = math.ceil(
+                hyperparam_value = math.ceil(
                     prediction_length.seconds / self.chosen_hyperparams["time_bin_size"].seconds
                 )
-                self.chosen_hyperparams["prediction_length_in_minutes"] = (
-                    self.chosen_hyperparams["output_chunk_length"]
-                    * self.chosen_hyperparams["time_bin_size_in_minutes"]
-                )
-
-                continue
+                self.chosen_hyperparams["output_chunk_length"] = hyperparam_value
+                # Will update prediction_length_in_minutes to match later when output_chunk_length is final
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
@@ -815,34 +941,75 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
+            # Check for additional conditions
+            if isinstance(self.hyperparams_conditions, list) and len(self.hyperparams_conditions):
+                for condition_dict in self.hyperparams_conditions:
+                    if condition_dict["hyperparam"] != hyperparam:
+                        continue
+                    # This hyperparam has conditions set on other hyperparams, we will ensure they is satisfied
+                    rhs_value = self.chosen_hyperparams.get(
+                        condition_dict["rhs"], get_hyperparam_value(condition_dict["rhs"])
+                    )
+                    op_func = condition_dict["condition"]
+                    if op_func == operator.lt:  # pylint: disable=comparison-with-callable
+                        new_value = rhs_value - 1
+                        if new_value < 0 <= rhs_value:
+                            logger_ts_wrapper.warning(
+                                "Keeping hyperparam %s from becoming negative, model might complain!",
+                                hyperparam,
+                            )
+                            new_value = 0
+                    elif op_func == operator.ge:  # pylint: disable=comparison-with-callable
+                        new_value = rhs_value
+                    else:
+                        raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
+                    if not op_func(hyperparam_value, rhs_value):
+                        logger_ts_wrapper.info(
+                            "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
+                            hyperparam,
+                            new_value,
+                            pprint.pformat(condition_dict),
+                        )
+                        hyperparam_value = new_value
+
+            # Finally set the hyperparam value
             self.chosen_hyperparams[hyperparam] = hyperparam_value
 
-        # make sure int hyperparameters are int, as Bayesian optimization will always give floats
+        # Update prediction_length_in_minutes, now that any conditions have been applied
+        if "output_chunk_length" in self.chosen_hyperparams:
+            self.chosen_hyperparams["prediction_length_in_minutes"] = (
+                self.chosen_hyperparams["output_chunk_length"]
+                * self.chosen_hyperparams["time_bin_size_in_minutes"]
+            )
+
+        # Make sure int (bool) hyperparameters are int (bool), as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
-        for k, v in self.chosen_hyperparams.items():
-            if k in INTEGER_HYPERPARAMS:
-                self.chosen_hyperparams[k] = int(v)
-            if k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
+        for _k, _v in self.chosen_hyperparams.items():
+            if _k in boolean_hyperparams:
+                self.chosen_hyperparams[_k] = bool(_v)
+            elif _k in integer_hyperparams:
+                self.chosen_hyperparams[_k] = int(_v)
+            if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
                 pass
-            elif k in self.allowed_variable_hyperparams:
-                allowed_min = self.allowed_variable_hyperparams[k].get("min")
-                allowed_max = self.allowed_variable_hyperparams[k].get("max")
-                allowed_values = self.allowed_variable_hyperparams[k].get("allowed")
+            elif _k in self.allowed_variable_hyperparams:
+                allowed_min = self.allowed_variable_hyperparams[_k].get("min")
+                allowed_max = self.allowed_variable_hyperparams[_k].get("max")
+                allowed_values = self.allowed_variable_hyperparams[_k].get("allowed")
                 if allowed_min is not None and allowed_max is not None:
-                    if v < allowed_min or allowed_max < v:
+                    if _v < allowed_min or allowed_max < _v:
                         raise ValueError(
-                            f"Hyperparameter {k} with value {v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
+                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
                         )
                 elif allowed_values is not None and isinstance(allowed_values, list):
-                    if not set(v).issubset(set(allowed_values)):
+                    if not set(_v).issubset(set(allowed_values)):
                         raise ValueError(
-                            f"Hyperparameter {k} with value {v} is not allowed, expected to be a subset of {allowed_values}!"
+                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be a subset of {allowed_values}!"
                         )
                 else:
-                    raise ValueError(f"Hyperparameter {k} with value {v} can not be checked!")
-            if k == "time_bin_size_in_minutes" and 60 % v != 0:
+                    raise ValueError(f"Hyperparameter {_k} with value {_v} can not be checked!")
+            if _k == "time_bin_size_in_minutes" and 60 % _v != 0:
                 raise ValueError(
-                    f"Hyperparameter {k} with value {v} is not allowed, {60 % v = } should be 0!"
+                    f"Hyperparameter {_k} with value {_v} is not allowed, {60 % _v = } should be 0!"
                 )
 
     def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict:
@@ -942,10 +1109,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.chosen_hyperparams.get("rebin_y", 0):
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
-            if 0 < self.verbose:
-                print(
-                    f"Missing {frac_missing:.2%} of values, filling via {interpolate_method} interpolation"
-                )
+            logger_ts_wrapper.debug(
+                "Missing %.1g%% of values, filling via %s interpolation.",
+                100.0 * frac_missing,
+                interpolate_method,
+            )
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
@@ -1045,389 +1213,3 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # return negative loss as we want to maximize the target, and set the is_trained flag
         self.is_trained = True
         return -loss
-
-
-################################################################################
-# model classes
-class ProphetWrapper(TSModelWrapper):
-    """Prophet wrapper."""
-
-    # config wrapper for Prophet
-    PROPHET_FIXED_HYPERPARAMS: Final = {
-        "growth": "flat",
-        "country_holidays": "US",
-        "suppress_stdout_stderror": True,
-    }
-
-    _model_class = Prophet
-    _is_nn = False
-    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
-
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
-    # Prophet makes "day_of_week_frac", "time_of_day_frac", "is_holiday" equivalent components, so remove as covariates
-    _covariates = [
-        _
-        for _ in _allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
-        if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
-    ]
-
-    _allowed_variable_hyperparams["covariates"]["allowed"] = _covariates  # type: ignore[index]
-    _allowed_variable_hyperparams["covariates"]["default"] = _covariates  # type: ignore[index]
-
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
-
-    def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        # boilerplate - the same for all models below here
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-        """
-        # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
-        # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
-        # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
-        if (
-            "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
-            == type(TSModelWrapper)  # <class 'type'>
-            and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
-        ):
-            self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
-            self.model_class = self._model_class
-            self.is_nn = self._is_nn
-            self.work_dir = kwargs.get("work_dir")
-            self.model_name_tag = kwargs.get("model_name_tag")
-            self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
-            self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
-        else:
-            super().__init__(
-                dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
-                dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],
-                work_dir_base=kwargs["work_dir_base"],
-                random_state=kwargs["random_state"],
-                date_fmt=kwargs["date_fmt"],
-                time_fmt=kwargs["time_fmt"],
-                fname_datetime_fmt=kwargs["fname_datetime_fmt"],
-                local_timezone=kwargs["local_timezone"],
-                model_class=self._model_class,
-                is_nn=self._is_nn,
-                work_dir=kwargs["work_dir"],
-                model_name_tag=kwargs.get("model_name_tag"),
-                required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
-                variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
-            )
-
-
-class NBEATSModelWrapper(TSModelWrapper):
-    """NBEATSModel wrapper."""
-
-    # config wrapper for NBEATSModel
-    _model_class = NBEATSModel
-    _is_nn = True
-    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
-        "num_stacks",
-        "num_blocks",
-        "num_layers",
-        "layer_widths",
-        "expansion_coefficient_dim",
-    ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
-
-    def __init__(self: "NBEATSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        # boilerplate - the same for all models below here
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-        """
-        # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
-        # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
-        # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
-        if (
-            "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
-            == type(TSModelWrapper)  # <class 'type'>
-            and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
-        ):
-            self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
-            self.model_class = self._model_class
-            self.is_nn = self._is_nn
-            self.work_dir = kwargs.get("work_dir")
-            self.model_name_tag = kwargs.get("model_name_tag")
-            self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
-            self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
-        else:
-            super().__init__(
-                dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
-                dt_val_start_datetime_local=kwargs["dt_val_start_datetime_local"],
-                work_dir_base=kwargs["work_dir_base"],
-                random_state=kwargs["random_state"],
-                date_fmt=kwargs["date_fmt"],
-                time_fmt=kwargs["time_fmt"],
-                fname_datetime_fmt=kwargs["fname_datetime_fmt"],
-                local_timezone=kwargs["local_timezone"],
-                model_class=self._model_class,
-                is_nn=self._is_nn,
-                work_dir=kwargs["work_dir"],
-                model_name_tag=kwargs.get("model_name_tag"),
-                required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
-                variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
-            )
-
-
-################################################################################
-# Setup Bayesian optimization
-n_points = 0  # # pylint: disable=invalid-name
-
-
-def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
-    parent_wrapper: TSModelWrapper,
-    model_wrapper_class: type[NBEATSModelWrapper | ProphetWrapper],  # expand with more classes
-    *,
-    hyperparams_to_opt: list[str] | None = None,
-    n_iter: int = 100,
-    allow_duplicate_points: bool = False,
-    utility_kind: str = "ucb",
-    utility_kappa: float = 2.576,
-    verbose: int = 2,
-    display_memory_usage: bool = False,
-    enable_progress_bar: bool = False,
-    max_time_per_model: str | datetime.timedelta | dict[str, int] | None = None,
-    enable_json_logging: bool = True,
-    enable_reloading: bool = True,
-    enable_model_saves: bool = False,
-    bayesian_opt_work_dir_name: str = "bayesian_optimization",
-) -> tuple[dict, bayes_opt.BayesianOptimization]:
-    """Run Bayesian optimization for this model wrapper.
-
-    Args:
-        parent_wrapper: TSModelWrapper object containing all parent configs.
-        model_wrapper_class: TSModelWrapper class to optimize.
-        hyperparams_to_opt: List of hyperparameters to optimize.
-            If None, use all configurable hyperparameters.
-        n_iter: How many iterations of Bayesian optimization to perform.
-            This is the number of new models to train, in addition to any duplicated or reloaded points.
-        allow_duplicate_points: If True, the optimizer will allow duplicate points to be registered.
-            This behavior may be desired in high noise situations where repeatedly probing
-            the same point will give different answers. In other situations, the acquisition
-            may occasionally generate a duplicate point.
-        utility_kind: {'ucb', 'ei', 'poi'}
-            * 'ucb' stands for the Upper Confidence Bounds method
-            * 'ei' is the Expected Improvement method
-            * 'poi' is the Probability Of Improvement criterion.
-        utility_kappa: Parameter to indicate how closed are the next parameters sampled.
-            Higher value = favors spaces that are least explored.
-            Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
-        display_memory_usage: Print memory usage at each training iteration.
-        enable_progress_bar: Enable torch progress bar during training.
-        max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
-        enable_json_logging: Enable JSON logging of points.
-        enable_reloading: Enable reloading of prior points from JSON log.
-        enable_model_saves: Save the trained model at each iteration.
-        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the parent_wrapper.work_dir_base.
-
-    Returns:
-        optimal_values: Optimal hyperparameter values.
-        optimizer: bayes_opt.BayesianOptimization object for further details.
-
-    Raises:
-        ValueError: Bad configuration.
-        RuntimeError: Run time error that is not "out of memory".
-    """
-    global n_points
-
-    # Setup hyperparameters
-    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-    _model_wrapper.verbose = verbose
-    configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
-    if hyperparams_to_opt is None:
-        hyperparams_to_opt = list(configurable_hyperparams.keys())
-
-    # Setup hyperparameter bounds
-    hyperparam_bounds = {}
-    for hyperparam in hyperparams_to_opt:
-        hyperparam_min = configurable_hyperparams.get(hyperparam, {}).get("min")
-        hyperparam_max = configurable_hyperparams.get(hyperparam, {}).get("max")
-        if hyperparam_min is None or hyperparam_max is None:
-            raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
-        hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
-
-    # Setup Bayesian optimization objects
-    # https://github.com/bayesian-optimization/BayesianOptimization/blob/11a0c6aba1fcc6b5d2716052da5222a84259c5b9/bayes_opt/util.py#L113
-    utility = bayes_opt.UtilityFunction(kind=utility_kind, kappa=utility_kappa)
-
-    optimizer = bayes_opt.BayesianOptimization(
-        f=None,
-        pbounds=hyperparam_bounds,
-        random_state=_model_wrapper.get_random_state(),
-        verbose=verbose,
-        allow_duplicate_points=allow_duplicate_points,
-    )
-
-    # Setup Logging
-    generic_model_name: Final = _model_wrapper.get_generic_model_name()
-    bayesian_opt_work_dir: Final = pathlib.Path(
-        _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
-    ).expanduser()
-    fname_json_log: Final = bayesian_opt_work_dir / f"bayesian_opt_{generic_model_name}.json"
-
-    # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
-    n_points = 0
-    if enable_reloading and fname_json_log.is_file():
-        print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
-        optimizer.dispatch(Events.OPTIMIZATION_START)
-        load_logs(optimizer, logs=str(fname_json_log))
-        n_points = len(optimizer.space)
-        print(f"Loaded {n_points} existing points.\n")
-
-    # Continue to setup logging
-    if enable_json_logging:
-        bayesian_opt_work_dir.mkdir(parents=True, exist_ok=True)
-        json_logger = JSONLogger(path=str(fname_json_log), reset=False)
-        optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
-
-    if 0 < verbose:
-        screen_logger = ScreenLogger(verbose=verbose)
-        for event in DEFAULT_EVENTS:
-            optimizer.subscribe(event, screen_logger)
-
-    # Define function to complete an iteration
-    def complete_iter(
-        model_wrapper: TSModelWrapper,
-        target: float,
-        point_to_probe: dict,
-        *,
-        probed_point: dict | None = None,
-    ) -> None:
-        """Complete this iteration, register point(s) and clean up.
-
-        Args:
-            model_wrapper: Model wrapper object to rest.
-            target: Target value to register.
-            point_to_probe: Raw point to probe.
-            probed_point: Point that was actually probed.
-        """
-        global n_points
-        optimizer.register(params=point_to_probe, target=target)
-        n_points += 1
-        if probed_point:
-            optimizer.register(params=probed_point, target=target)
-            n_points += 1
-
-        model_wrapper.reset_wrapper()
-        del model_wrapper
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        gc.collect()
-        if display_memory_usage:
-            print_memory_usage()
-        print(f"Completed {i_iter = }, with {n_points = }")
-
-    # clean up _model_wrapper
-    del _model_wrapper
-
-    # run Bayesian optimization iterations
-    try:
-        for i_iter in range(n_iter):
-            if i_iter == 0:
-                optimizer.dispatch(Events.OPTIMIZATION_START)
-            print(f"\nStarting {i_iter = }, with {n_points = }")
-            next_point_to_probe = optimizer.suggest(utility)
-
-            # Create a fresh model_wrapper object to try to avoid GPU memory leaks TODO probably can safely revert
-            model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-            model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
-            model_wrapper.set_enable_progress_bar_and_max_time(
-                enable_progress_bar=enable_progress_bar, max_time=max_time_per_model
-            )
-
-            # Check if we already tested this chosen_hyperparams point
-            # If it has been tested, save the raw next_point_to_probe with the same target and continue
-            chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
-            next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
-
-            is_duplicate_point = False
-            for i_param in range(optimizer.space.params.shape[0]):
-                if np.array_equiv(
-                    optimizer.space.params_to_array(next_point_to_probe_cleaned),
-                    optimizer.space.params[i_param],
-                ):
-                    target = optimizer.space.target[i_param]
-                    print(
-                        f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
-                    )
-                    complete_iter(model_wrapper, target, next_point_to_probe)
-                    is_duplicate_point = True
-                    break
-            if is_duplicate_point:
-                continue
-
-            # set model_name_tag for this iteration
-            model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
-
-            # train the model
-            try:
-                target = model_wrapper.train_model(**next_point_to_probe)
-            except RuntimeError as error:
-                if "out of memory" in str(error):
-                    print("Ran out of memory, returning -inf as loss")
-                    complete_iter(
-                        model_wrapper,
-                        -float("inf"),
-                        next_point_to_probe,
-                        probed_point=next_point_to_probe_cleaned,
-                    )
-                    continue
-                raise error
-
-            if enable_model_saves:
-                fname_model = (
-                    bayesian_opt_work_dir / f"iteration_{n_points}_{generic_model_name}.pt"
-                )
-                model_wrapper.get_model().save(fname_model)
-
-            # Register the point
-            complete_iter(
-                model_wrapper, target, next_point_to_probe, probed_point=next_point_to_probe_cleaned
-            )
-
-    except bayes_opt.util.NotUniqueError as error:
-        print(
-            str(error).replace(
-                '. You can set "allow_duplicate_points=True" to avoid this error', ""
-            )
-            + ", stopping optimization here."
-        )
-    except Exception as error:
-        print(
-            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
-        )
-    optimizer.dispatch(Events.OPTIMIZATION_END)
-
-    return optimizer.max, optimizer

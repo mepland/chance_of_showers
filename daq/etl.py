@@ -28,7 +28,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ValueError: A data quality check failed.
     """
     # setup variables
-    # pylint: disable=invalid-name
+    # pylint: disable=invalid-name,duplicate-code
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
     SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
@@ -38,7 +38,6 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
     DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
-    # pylint: disable=duplicate-code
     LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
