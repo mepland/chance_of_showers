@@ -417,7 +417,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 0,
         "type": bool,
     },
-    # RNNModel
+    # RNNModel and BlockRNNModel
     "hidden_dim": {
         "min": 1,
         "max": 50,
@@ -430,7 +430,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": int,
     },
-    "training_length": {
+    "training_length": {  # RNNModel only
         "min": 1,
         "max": 50,
         "default": 24,

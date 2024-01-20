@@ -50,6 +50,7 @@ from utils.DLinearModelWrapper import DLinearModelWrapper
 from utils.NLinearModelWrapper import NLinearModelWrapper
 from utils.TiDEModelWrapper import TiDEModelWrapper
 from utils.RNNModelWrapper import RNNModelWrapper
+from utils.BlockRNNModelWrapper import BlockRNNModelWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -882,6 +883,52 @@ print(model_wrapper_RNN)
 # %%
 tensorboard_logs = pathlib.Path(
     model_wrapper_RNN.work_dir, model_wrapper_RNN.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## BlockRNN
+# `models = ["RNN", "LSTM", "GRU"]`
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_BlockRNN = BlockRNNModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    model="RNN",
+)
+model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_BlockRNN)
+
+# %%
+print(model_wrapper_BlockRNN._valid_models)  # pylint: disable=protected-access
+
+# %%
+configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+print(model_wrapper_BlockRNN)
+
+# %%
+model_wrapper_BlockRNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_BlockRNN.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_BlockRNN)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_BlockRNN.work_dir, model_wrapper_BlockRNN.model_name, "logs"  # type: ignore[arg-type]
 )
 print(tensorboard_logs)
 
