@@ -417,6 +417,25 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 0,
         "type": bool,
     },
+    # RNNModel
+    "hidden_dim": {
+        "min": 1,
+        "max": 50,
+        "default": 25,
+        "type": int,
+    },
+    "n_rnn_layers": {
+        "min": 1,
+        "max": 20,
+        "default": 1,
+        "type": int,
+    },
+    "training_length": {
+        "min": 1,
+        "max": 50,
+        "default": 24,
+        "type": int,
+    },
 }
 
 NN_FIXED_HYPERPARAMS: Final = {
@@ -941,6 +960,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                                 hyperparam,
                             )
                             new_value = 0
+                    elif op_func == operator.ge:  # pylint: disable=comparison-with-callable
+                        new_value = rhs_value
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
                     if not op_func(hyperparam_value, rhs_value):
