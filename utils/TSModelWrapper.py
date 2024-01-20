@@ -576,7 +576,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.model_name_tag = }
 self.required_hyperparams_data = {pprint.pformat(self.required_hyperparams_data)}
 self.required_hyperparams_model = {pprint.pformat(self.required_hyperparams_model)}
-self.allowed_variable_hyperparams = {pprint.pformat(self.allowed_variable_hyperparams)}
 self.variable_hyperparams = {pprint.pformat(self.variable_hyperparams)}
 self.fixed_hyperparams = {pprint.pformat(self.fixed_hyperparams)}
 self.hyperparams_conditions = {pprint.pformat(self.hyperparams_conditions)}
