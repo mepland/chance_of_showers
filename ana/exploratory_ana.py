@@ -535,9 +535,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_NBEATS)
-
-# %%
 model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_NBEATS.train_model()
 print(f"{val_loss = }")
@@ -552,7 +549,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ##  N-HiTS
@@ -576,9 +573,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_NHiTS)
-
-# %%
 model_wrapper_NHiTS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_NHiTS.train_model()
 print(f"{val_loss = }")
@@ -593,7 +587,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## TCN
@@ -617,9 +611,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_TCN)
-
-# %%
 model_wrapper_TCN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_TCN.train_model()
 print(f"{val_loss = }")
@@ -634,7 +625,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## Transformer
@@ -658,9 +649,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_Transformer)
-
-# %%
 model_wrapper_Transformer.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
 )
@@ -677,7 +665,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## TFT
@@ -701,9 +689,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_TFT)
-
-# %%
 model_wrapper_TFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_TFT.train_model()
 print(f"{val_loss = }")
@@ -718,7 +703,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## D-Linear
@@ -742,9 +727,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_DLinear)
-
-# %%
 model_wrapper_DLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_DLinear.train_model()
 print(f"{val_loss = }")
@@ -759,7 +741,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## N-Linear
@@ -783,9 +765,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_NLinear)
-
-# %%
 model_wrapper_NLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_NLinear.train_model()
 print(f"{val_loss = }")
@@ -800,7 +779,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## TiDE
@@ -824,9 +803,6 @@ pprint.pprint(configurable_hyperparams)
 # ### Training
 
 # %%
-print(model_wrapper_TiDE)
-
-# %%
 model_wrapper_TiDE.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_TiDE.train_model()
 print(f"{val_loss = }")
@@ -841,7 +817,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## RNN
@@ -860,17 +836,11 @@ model_wrapper_RNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev
 # print(model_wrapper_RNN)
 
 # %%
-print(model_wrapper_RNN._valid_models)  # pylint: disable=protected-access
-
-# %%
 configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %% [markdown]
 # ### Training
-
-# %%
-print(model_wrapper_RNN)
 
 # %%
 model_wrapper_RNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -887,7 +857,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## BlockRNN
@@ -906,17 +876,11 @@ model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("loca
 # print(model_wrapper_BlockRNN)
 
 # %%
-print(model_wrapper_BlockRNN._valid_models)  # pylint: disable=protected-access
-
-# %%
 configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %% [markdown]
 # ### Training
-
-# %%
-print(model_wrapper_BlockRNN)
 
 # %%
 model_wrapper_BlockRNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -933,7 +897,7 @@ tensorboard_logs = pathlib.Path(
 print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
 # ## AutoARIMA
