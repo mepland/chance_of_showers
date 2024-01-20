@@ -1111,7 +1111,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
             logger_ts_wrapper.debug(
-                "Missing %.2f of values, filling via %s interpolation",
+                "Missing %.1g of values, filling via %s interpolation",
                 frac_missing,
                 interpolate_method,
             )
