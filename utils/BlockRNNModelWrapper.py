@@ -22,7 +22,7 @@ from utils.TSModelWrapper import (
 class BlockRNNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attributes
     """BlockRNNModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.rnn_model.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.block_rnn_model.html
     """
 
     # config wrapper for BlockRNNModel
