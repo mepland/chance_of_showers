@@ -844,6 +844,7 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ## RNN
+# `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
 # raise UserWarning("Stopping Here")
