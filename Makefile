@@ -13,7 +13,7 @@ setupANA:
 .PHONY: poetry
 poetry:
 	@poetry check
-	@poetry lock
+	@poetry lock --no-update
 
 .PHONY: pre-commit
 pre-commit:
