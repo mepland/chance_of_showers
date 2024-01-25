@@ -140,12 +140,24 @@ MEDIA_PATH: Final = PACKAGE_PATH / "media"
 # %%
 PLOT_INLINE: Final = False
 
+
+def display_image(fname: pathlib.Path, *, plot_inline: bool = PLOT_INLINE) -> None:
+    """Show image from local file in jupyter.
+
+    Args:
+        fname: Full path to image file.
+        plot_inline: Display plot, or not.
+    """
+    if plot_inline:
+        display(Image(filename=fname))
+
+
 # %% [markdown]
 # ***
 # # Load Data
 
 # %%
-FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2023-12-30-18-52-00.parquet"
+FNAME_PARQUET: Final = "data_2023-04-27-03-00-04_to_2024-01-21-22-51-00.parquet"
 
 # %%
 F_PARQUET: Final = PACKAGE_PATH / SAVED_DATA_RELATIVE_PATH / FNAME_PARQUET
@@ -178,7 +190,14 @@ dfp_data["datetime_local_same_day"] = dfp_data.apply(
 
 dfp_data["datetime_local_same_week"] = dfp_data.apply(
     lambda row: row["datetime_local"].replace(
-        year=dt_common.year, month=dt_common.month, day=row["datetime_local"].isoweekday()
+        year=dt_common.year,
+        month=dt_common.month,
+        day=dt_common.day
+        + (
+            delta_days + 7
+            if (delta_days := row["datetime_local"].dayofweek - dt_common.weekday()) < 0
+            else delta_days
+        ),
     ),
     axis=1,
 )
@@ -393,8 +412,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_predict.png")
 
 # %%
 # The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
@@ -447,8 +465,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_components.png")
 
 # %%
 fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
@@ -487,8 +504,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
 
 # %%
 _fig_component_daily, _ax_component_daily = plt.subplots()
@@ -510,8 +526,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
 # ## N-BEATS
@@ -975,6 +990,68 @@ pprint.pprint(optimal_values)
 # raise UserWarning("Stopping Here")
 
 # %% [markdown]
+# ## Quick look at morning commute shower for past 30 days
+
+# %%
+dt_recent_mornings_start = dt_stop_local - datetime.timedelta(days=30)
+dt_recent_mornings_end = dt_stop_local
+
+dfp_recent_mornings = dfp_data.loc[
+    (dt_recent_mornings_start <= dfp_data["datetime_local"])
+    & (dfp_data["datetime_local"] <= dt_recent_mornings_end)
+    & (7 <= dfp_data["datetime_local"].dt.hour)
+    & (dfp_data["datetime_local"].dt.hour <= 9)
+    # Monday=0, Sunday=6
+    & dfp_data["day_of_week_int"].isin([1, 2, 3])
+]
+
+print(
+    f'Mean pressure during morning commute shower for past 30 days = {100*dfp_recent_mornings["mean_pressure_value_normalized"].mean():.2f} ± {dfp_recent_mornings["mean_pressure_value_normalized"].std():.2%}'
+)
+
+# %%
+plot_2d_hist(
+    dfp_recent_mornings["datetime_local_same_week"],
+    100 * dfp_recent_mornings["mean_pressure_value_normalized"],
+    m_path=OUTPUTS_PATH,
+    fname="mean_pressure_value_normalized_vs_time_of_week",
+    tag="_recent_mornings",
+    dt_start=dt_recent_mornings_start,
+    dt_stop=dt_recent_mornings_end,
+    binning={
+        "x": {
+            "bin_edges": make_epoch_bins(
+                dt_common, dt_common + datetime.timedelta(days=7), 60 * 60
+            ),
+            "bin_size": "1 [Hours]",
+            "bin_size_str_fmt": "",
+        },
+        "y": {
+            "bin_size": 5,
+            "bin_size_str_fmt": ".0f",
+        },
+    },
+    x_axis_params={
+        "is_datetime": True,
+        "axis_label": f"Time of Week [{LOCAL_TIMEZONE_STR}]",
+        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=7), 12 * 60 * 60),
+        "tick_format": f"%A {TIME_FMT}",
+    },
+    y_axis_params={
+        "axis_label": "Mean Pressure",
+        "units": "%",
+    },
+    z_axis_params={
+        "axis_label": "Density",
+        "norm": "log",
+        "density": True,
+    },
+)
+
+# %%
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week_recent_mornings.png")
+
+# %% [markdown]
 # ## Time Series of All Raw ADC Pressure Values
 
 # %%
@@ -1086,8 +1163,7 @@ plot_hists(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_density.png")
 
 # %% [markdown]
 # ## Time Series of All Normalized Pressure Values
@@ -1184,8 +1260,7 @@ plot_2d_hist(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
 
 # %% [markdown]
 # ## 2D Histogram of All Normalized Pressure Values - Same Week
@@ -1230,8 +1305,7 @@ plot_2d_hist(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
 
 # %% [markdown]
 # ## Time Series of Selected Pressure Values - For Web
@@ -1246,7 +1320,7 @@ dfp_plotly_web_selection = dfp_data.loc[
 ]
 
 # %% [markdown]
-# ## Raw
+# ### Raw
 
 # %%
 plot_chance_of_showers_time_series(
@@ -1295,7 +1369,7 @@ plot_chance_of_showers_time_series(
 
 
 # %% [markdown]
-# ## Normalized
+# ### Normalized
 
 # %%
 plot_chance_of_showers_time_series(
