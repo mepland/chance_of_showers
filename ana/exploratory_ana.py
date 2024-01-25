@@ -140,6 +140,18 @@ MEDIA_PATH: Final = PACKAGE_PATH / "media"
 # %%
 PLOT_INLINE: Final = False
 
+
+def display_image(fname: pathlib.Path, *, plot_inline: bool = PLOT_INLINE) -> None:
+    """Show image from local file in jupyter.
+
+    Args:
+        fname: Full path to image file.
+        plot_inline: Display plot, or not.
+    """
+    if plot_inline:
+        display(Image(filename=fname))
+
+
 # %% [markdown]
 # ***
 # # Load Data
@@ -400,8 +412,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_predict.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_predict.png")
 
 # %%
 # The plotly version can be quite slow as it does not use go.Scattergl as in plot_chance_of_showers_time_series(),
@@ -454,8 +465,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_components.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_components.png")
 
 # %%
 fig_prophet_components = prophet.plot.plot_components_plotly(model_prophet, dfp_predict)
@@ -494,8 +504,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_component_weekly.png")
 
 # %%
 _fig_component_daily, _ax_component_daily = plt.subplots()
@@ -517,8 +526,7 @@ plot_prophet(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
+display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
 # ## N-BEATS
@@ -1041,10 +1049,7 @@ plot_2d_hist(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(
-        filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week_recent_mornings.png"
-    )
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week_recent_mornings.png")
 
 # %% [markdown]
 # ## Time Series of All Raw ADC Pressure Values
@@ -1158,8 +1163,7 @@ plot_hists(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_density.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_density.png")
 
 # %% [markdown]
 # ## Time Series of All Normalized Pressure Values
@@ -1256,8 +1260,7 @@ plot_2d_hist(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_day.png")
 
 # %% [markdown]
 # ## 2D Histogram of All Normalized Pressure Values - Same Week
@@ -1302,8 +1305,7 @@ plot_2d_hist(
 )
 
 # %%
-if PLOT_INLINE:
-    Image(filename=OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
+display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png")
 
 # %% [markdown]
 # ## Time Series of Selected Pressure Values - For Web
