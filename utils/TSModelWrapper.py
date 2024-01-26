@@ -1226,6 +1226,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             num_samples=1,
             verbose=self.verbose,
             **prediction_covariates_kwargs,
+            # Do not show warnings like
+            # https://github.com/unit8co/darts/blob/20ee5ece4e02ed7c1e84db07679c83ceeb1f8a13/darts/models/forecasting/forecasting_model.py#L2334-L2337
+            show_warnings=False,
         )
 
         y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
