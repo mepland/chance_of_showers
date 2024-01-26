@@ -448,7 +448,54 @@ NN_FIXED_HYPERPARAMS: Final = {
     "max_time": None,
 }
 
-VARIABLE_HYPERPARAMS: Final = {**NN_ALLOWED_VARIABLE_HYPERPARAMS, **DATA_VARIABLE_HYPERPARAMS}
+TREE_REQUIRED_HYPERPARAMS: Final = [
+    "output_chunk_length",
+    "lags",
+    "lags_past_covariates",
+    "multi_models",
+    "random_state",
+]
+
+TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
+    # All Trees
+    "lags": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
+    "lags_past_covariates": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
+    "multi_models": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": bool,
+    },
+    # RandomForest
+    "n_estimators": {
+        "min": 1,
+        "max": 300,
+        "default": 100,
+        "type": int,
+    },
+    "max_depth": {
+        "min": 2,
+        "max": 30,
+        "default": 10,
+        "type": int,
+    },
+}
+
+VARIABLE_HYPERPARAMS: Final = {
+    **DATA_VARIABLE_HYPERPARAMS,
+    **NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+}
 
 boolean_hyperparams = []
 integer_hyperparams = [
@@ -938,6 +985,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["lr_patience"],
                     self.verbose,
                 )
+            elif hyperparam == "verbose":
+                hyperparam_value = self.verbose
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1179,6 +1228,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             num_samples=1,
             verbose=self.verbose,
             **prediction_covariates_kwargs,
+            # Do not show warnings like
+            # https://github.com/unit8co/darts/blob/20ee5ece4e02ed7c1e84db07679c83ceeb1f8a13/darts/models/forecasting/forecasting_model.py#L2334-L2337
+            show_warnings=False,
         )
 
         y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
