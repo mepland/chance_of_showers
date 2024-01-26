@@ -985,6 +985,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["lr_patience"],
                     self.verbose,
                 )
+            elif hyperparam == "verbose":
+                hyperparam_value = self.verbose
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
