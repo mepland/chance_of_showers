@@ -51,6 +51,7 @@ from utils.NLinearModelWrapper import NLinearModelWrapper
 from utils.TiDEModelWrapper import TiDEModelWrapper
 from utils.RNNModelWrapper import RNNModelWrapper
 from utils.BlockRNNModelWrapper import BlockRNNModelWrapper
+from utils.RandomForestWrapper import RandomForestWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -913,6 +914,37 @@ print(tensorboard_logs)
 
 # %%
 # # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ## RandomForest
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_RandomForest = RandomForestWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_RandomForest)
+
+# %%
+configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_RandomForest.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_RandomForest.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_RandomForest)
 
 # %% [markdown]
 # ## AutoARIMA

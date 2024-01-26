@@ -448,7 +448,54 @@ NN_FIXED_HYPERPARAMS: Final = {
     "max_time": None,
 }
 
-VARIABLE_HYPERPARAMS: Final = {**NN_ALLOWED_VARIABLE_HYPERPARAMS, **DATA_VARIABLE_HYPERPARAMS}
+TREE_REQUIRED_HYPERPARAMS: Final = [
+    "output_chunk_length",
+    "lags",
+    "lags_past_covariates",
+    "multi_models",
+    "random_state",
+]
+
+TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
+    # All Trees
+    "lags": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
+    "lags_past_covariates": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
+    "multi_models": {
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "type": bool,
+    },
+    # RandomForest
+    "n_estimators": {
+        "min": 1,
+        "max": 300,
+        "default": 100,
+        "type": int,
+    },
+    "max_depth": {
+        "min": 2,
+        "max": 30,
+        "default": 10,
+        "type": int,
+    },
+}
+
+VARIABLE_HYPERPARAMS: Final = {
+    **DATA_VARIABLE_HYPERPARAMS,
+    **NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+}
 
 boolean_hyperparams = []
 integer_hyperparams = [
