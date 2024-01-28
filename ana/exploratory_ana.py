@@ -58,6 +58,7 @@ from utils.CatBoostModelWrapper import CatBoostModelWrapper
 from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
 from utils.BATSWrapper import BATSWrapper
 from utils.TBATSWrapper import TBATSWrapper
+from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -358,9 +359,6 @@ model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local
 configurable_hyperparams = model_wrapper_Prophet.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 val_loss = -model_wrapper_Prophet.train_model()
 print(f"{val_loss = }")
@@ -539,7 +537,10 @@ plot_prophet(
 display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
-# ## N-BEATS
+# ## NN Models
+
+# %% [markdown]
+# ### N-BEATS
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -555,9 +556,6 @@ model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_
 # %%
 configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -577,7 +575,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ##  N-HiTS
+# ###  N-HiTS
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -593,9 +591,6 @@ model_wrapper_NHiTS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_d
 # %%
 configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_NHiTS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -615,7 +610,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## TCN
+# ### TCN
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -631,9 +626,6 @@ model_wrapper_TCN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev
 # %%
 configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_TCN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -653,7 +645,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## Transformer
+# ### Transformer
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -669,9 +661,6 @@ model_wrapper_Transformer.set_work_dir(work_dir_relative_to_base=pathlib.Path("l
 # %%
 configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_Transformer.set_enable_progress_bar_and_max_time(
@@ -693,7 +682,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## TFT
+# ### TFT
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -709,9 +698,6 @@ model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev
 # %%
 configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_TFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -731,7 +717,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## D-Linear
+# ### D-Linear
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -747,9 +733,6 @@ model_wrapper_DLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local
 # %%
 configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_DLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -769,7 +752,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## N-Linear
+# ### N-Linear
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -785,9 +768,6 @@ model_wrapper_NLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local
 # %%
 configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_NLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -807,7 +787,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## TiDE
+# ### TiDE
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -823,9 +803,6 @@ model_wrapper_TiDE.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_de
 # %%
 configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_TiDE.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -845,7 +822,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## RNN
+# ### RNN
 # `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
@@ -863,9 +840,6 @@ model_wrapper_RNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev
 # %%
 configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_RNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -885,7 +859,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## BlockRNN
+# ### BlockRNN
 # `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
@@ -903,9 +877,6 @@ model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("loca
 # %%
 configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
-
-# %% [markdown]
-# ### Training
 
 # %%
 model_wrapper_BlockRNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
@@ -925,7 +896,10 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## RandomForest
+# ## Tree-based Models
+
+# %% [markdown]
+# ### RandomForest
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -942,9 +916,6 @@ model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("
 configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_RandomForest.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
@@ -956,7 +927,7 @@ print(f"{val_loss = }")
 print(model_wrapper_RandomForest)
 
 # %% [markdown]
-# ## XGBModel
+# ### XGBModel
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -973,9 +944,6 @@ model_wrapper_XGBModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("loca
 configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_XGBModel.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_XGBModel.train_model()
@@ -985,7 +953,7 @@ print(f"{val_loss = }")
 print(model_wrapper_XGBModel)
 
 # %% [markdown]
-# ## LightGBMModel
+# ### LightGBMModel
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -1003,9 +971,6 @@ model_wrapper_LightGBMModel.set_work_dir(work_dir_relative_to_base=pathlib.Path(
 configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_LightGBMModel.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
@@ -1017,7 +982,7 @@ print(f"{val_loss = }")
 print(model_wrapper_LightGBMModel)
 
 # %% [markdown]
-# ## CatBoostModel
+# ### CatBoostModel
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -1034,9 +999,6 @@ model_wrapper_CatBoostModel.set_work_dir(work_dir_relative_to_base=pathlib.Path(
 configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_CatBoostModel.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
@@ -1048,7 +1010,10 @@ print(f"{val_loss = }")
 print(model_wrapper_CatBoostModel)
 
 # %% [markdown]
-# ## LinearRegressionModel
+# ## Other Models
+
+# %% [markdown]
+# ### LinearRegressionModel
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -1067,9 +1032,6 @@ model_wrapper_LinearRegressionModel.set_work_dir(
 configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_LinearRegressionModel.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
@@ -1081,7 +1043,7 @@ print(f"{val_loss = }")
 print(model_wrapper_LinearRegressionModel)
 
 # %% [markdown]
-# ## BATS
+# ### BATS
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -1098,9 +1060,6 @@ model_wrapper_BATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_de
 configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_BATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_BATS.train_model()
@@ -1110,7 +1069,7 @@ print(f"{val_loss = }")
 print(model_wrapper_BATS)
 
 # %% [markdown]
-# ## TBATS
+# ### TBATS
 
 # %%
 # raise UserWarning("Stopping Here")
@@ -1127,9 +1086,6 @@ model_wrapper_TBATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_d
 configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
-# %% [markdown]
-# ### Training
-
 # %%
 model_wrapper_TBATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
 val_loss = -model_wrapper_TBATS.train_model()
@@ -1137,6 +1093,34 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_TBATS)
+
+# %% [markdown]
+# ### KalmanForecaster
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_KalmanForecaster.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_KalmanForecaster)
+
+# %%
+configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_KalmanForecaster.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_KalmanForecaster.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_KalmanForecaster)
 
 # %% [markdown]
 # ## AutoARIMA
