@@ -499,6 +499,13 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": int,
     },
+    # FFT
+    "nr_freqs_to_keep": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
 }
 
 VARIABLE_HYPERPARAMS: Final = {

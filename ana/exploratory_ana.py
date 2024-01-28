@@ -59,6 +59,7 @@ from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
 from utils.BATSWrapper import BATSWrapper
 from utils.TBATSWrapper import TBATSWrapper
 from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
+from utils.FFTWrapper import FFTWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -1121,6 +1122,32 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_KalmanForecaster)
+
+# %% [markdown]
+# ### FFT
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_FFT = FFTWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_FFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_FFT)
+
+# %%
+configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_FFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_FFT.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_FFT)
 
 # %% [markdown]
 # ## AutoARIMA
