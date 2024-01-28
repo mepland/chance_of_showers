@@ -491,10 +491,21 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     },
 }
 
+OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
+    # KalmanForecaster
+    "dim_x": {
+        "min": 1,
+        "max": 10,
+        "default": 1,
+        "type": int,
+    },
+}
+
 VARIABLE_HYPERPARAMS: Final = {
     **DATA_VARIABLE_HYPERPARAMS,
     **NN_ALLOWED_VARIABLE_HYPERPARAMS,
     **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+    **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
 }
 
 boolean_hyperparams = []
@@ -918,6 +929,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
                 minutes=time_bin_size_in_minutes
             )
+        else:
+            raise ValueError("time_bin_size_in_minutes should be in required_hyperparams_all!")
 
         # set required hyperparams
         for hyperparam in required_hyperparams_all:
@@ -987,6 +1000,22 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
+            elif hyperparam == "seasonal_periods_BATS":
+                seasonal_periods = []
+                period_minutes = [
+                    # 1 day
+                    24 * 60,
+                    # 1 week
+                    7 * 24 * 60,
+                ]
+                for _period_minutes in period_minutes:
+                    seasonal_periods.append(
+                        math.ceil(
+                            _period_minutes * 60 / self.chosen_hyperparams["time_bin_size"].seconds
+                        )
+                    )
+
+                hyperparam_value = seasonal_periods
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1103,6 +1132,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         chosen_hyperparams_model = {
             k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
         }
+
+        if "seasonal_periods_BATS" in chosen_hyperparams_model:
+            chosen_hyperparams_model["seasonal_periods"] = chosen_hyperparams_model.pop(
+                "seasonal_periods_BATS"
+            )
 
         self.model = self.model_class(**chosen_hyperparams_model)
         if TYPE_CHECKING:
