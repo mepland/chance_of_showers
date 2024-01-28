@@ -57,6 +57,7 @@ from utils.LightGBMModelWrapper import LightGBMModelWrapper
 from utils.CatBoostModelWrapper import CatBoostModelWrapper
 from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
 from utils.BATSWrapper import BATSWrapper
+from utils.TBATSWrapper import TBATSWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -1107,6 +1108,35 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_BATS)
+
+# %% [markdown]
+# ## TBATS
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_TBATS = TBATSWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_TBATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TBATS)
+
+# %%
+configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %% [markdown]
+# ### Training
+
+# %%
+model_wrapper_TBATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_TBATS.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_TBATS)
 
 # %% [markdown]
 # ## AutoARIMA
