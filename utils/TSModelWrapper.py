@@ -526,6 +526,13 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,  # Multiplicative
         "type": int,
     },
+    # StatsForecastAutoTheta
+    "decomposition_type_StatsForecastAutoTheta": {
+        "min": 1,
+        "max": 2,
+        "default": 1,  # Multiplicative
+        "type": int,
+    },
 }
 
 VARIABLE_HYPERPARAMS: Final = {
@@ -1043,6 +1050,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     )
 
                 hyperparam_value = seasonal_periods
+            elif hyperparam == "season_length_StatsForecastAutoTheta":
+                # 1 day
+                hyperparam_value = math.ceil(
+                    24 * 60 * 60 / self.chosen_hyperparams["time_bin_size"].seconds
+                )
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if hyperparam_value == 0:
@@ -1063,6 +1075,16 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     hyperparam_value = SeasonalityMode.ADDITIVE
                 else:
                     raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 1:
+                    hyperparam_value = "multiplicative"
+                elif hyperparam_value == 2:
+                    hyperparam_value = "additive"
+                else:
+                    raise ValueError(
+                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1110,7 +1132,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # Make sure int (bool) hyperparameters are int (bool), as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
         for _k, _v in self.chosen_hyperparams.items():
-            if _k in ["model_mode_FourTheta", "season_mode_FourTheta"]:
+            if _k in [
+                "model_mode_FourTheta",
+                "season_mode_FourTheta",
+                "decomposition_type_StatsForecastAutoTheta",
+            ]:
                 continue
             if _k in boolean_hyperparams:
                 self.chosen_hyperparams[_k] = bool(_v)
@@ -1188,6 +1214,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             "seasonal_periods_BATS": "seasonal_periods",
             "model_mode_FourTheta": "model_mode",
             "season_mode_FourTheta": "season_mode",
+            "season_length_StatsForecastAutoTheta": "season_length",
+            "decomposition_type_StatsForecastAutoTheta": "decomposition_type",
         }
         for k, v in hyperparams_to_rename.items():
             if k in chosen_hyperparams_model:

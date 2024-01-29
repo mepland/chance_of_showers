@@ -62,6 +62,7 @@ from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
 from utils.FFTWrapper import FFTWrapper
 from utils.CrostonWrapper import CrostonWrapper
 from utils.FourThetaWrapper import FourThetaWrapper
+from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -1208,6 +1209,36 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_FourTheta)
+
+# %% [markdown]
+# ### StatsForecastAutoTheta
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_StatsForecastAutoTheta = StatsForecastAutoThetaWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_StatsForecastAutoTheta.set_work_dir(
+    work_dir_relative_to_base=pathlib.Path("local_dev")
+)
+# print(model_wrapper_StatsForecastAutoTheta)
+
+# %%
+configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_StatsForecastAutoTheta.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_StatsForecastAutoTheta)
 
 # %% [markdown]
 # ## AutoARIMA
