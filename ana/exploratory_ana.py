@@ -60,6 +60,8 @@ from utils.BATSWrapper import BATSWrapper
 from utils.TBATSWrapper import TBATSWrapper
 from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
 from utils.FFTWrapper import FFTWrapper
+from utils.CrostonWrapper import CrostonWrapper
+from utils.FourThetaWrapper import FourThetaWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -1148,6 +1150,64 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_FFT)
+
+# %% [markdown]
+# ### Croston
+# `versions = ["classic", "optimized", "sba"]`
+#
+# Do not use `"tsb"` as `alpha_d` and `alpha_p` must be set
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_Croston = CrostonWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    version="optimized",
+)
+model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_Croston)
+
+# %%
+configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_Croston.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_Croston.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_Croston)
+
+# %% [markdown]
+# ### FourTheta
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_FourTheta = FourThetaWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_FourTheta.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_FourTheta)
+
+# %%
+configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_FourTheta.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_FourTheta.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_FourTheta)
 
 # %% [markdown]
 # ## AutoARIMA
