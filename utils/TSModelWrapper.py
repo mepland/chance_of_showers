@@ -22,6 +22,7 @@ import torchmetrics
 from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
+from darts.utils.utils import ModelMode, SeasonalityMode
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.utilities.warnings import PossibleUserWarning
 
@@ -491,10 +492,67 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     },
 }
 
+OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
+    # KalmanForecaster
+    "dim_x": {
+        "min": 1,
+        "max": 10,
+        "default": 1,
+        "type": int,
+    },
+    # FFT
+    "nr_freqs_to_keep": {
+        "min": 1,
+        "max": 100,
+        "default": 10,
+        "type": int,
+    },
+    # FourTheta
+    "theta": {
+        "min": 0,
+        "max": 10,
+        "default": 2,
+        "type": int,
+    },
+    "model_mode_FourTheta": {
+        "min": 0,
+        "max": 2,
+        "default": 2,  # Additive
+        "type": int,
+    },
+    "season_mode_FourTheta": {
+        "min": 0,
+        "max": 2,
+        "default": 1,  # Multiplicative
+        "type": int,
+    },
+    # StatsForecastAutoTheta
+    "season_length_StatsForecastAutoTheta": {
+        "min": 0,  # 24 hours, set in _assemble_hyperparams()
+        "max": 1,  # Default
+        "default": 1,
+        "type": int,
+    },
+    "decomposition_type_StatsForecastAutoTheta": {
+        "min": 1,
+        "max": 2,
+        "default": 1,  # Multiplicative
+        "type": int,
+    },
+    # AutoARIMA
+    "m_AutoARIMA": {
+        "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+        "max": 1,  # Default
+        "default": 1,
+        "type": int,
+    },
+}
+
 VARIABLE_HYPERPARAMS: Final = {
     **DATA_VARIABLE_HYPERPARAMS,
     **NN_ALLOWED_VARIABLE_HYPERPARAMS,
     **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+    **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
 }
 
 boolean_hyperparams = []
@@ -918,6 +976,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
                 minutes=time_bin_size_in_minutes
             )
+        else:
+            raise ValueError("time_bin_size_in_minutes should be in required_hyperparams_all!")
 
         # set required hyperparams
         for hyperparam in required_hyperparams_all:
@@ -987,6 +1047,66 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
+            elif hyperparam == "seasonal_periods_BATS":
+                seasonal_periods = []
+                period_minutes = [
+                    # 1 day
+                    24 * 60,
+                    # 1 week
+                    7 * 24 * 60,
+                ]
+                for _period_minutes in period_minutes:
+                    seasonal_periods.append(
+                        math.ceil(
+                            _period_minutes * 60 / self.chosen_hyperparams["time_bin_size"].seconds
+                        )
+                    )
+
+                hyperparam_value = seasonal_periods
+            elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 0:
+                    # 1 day
+                    hyperparam_value = math.ceil(
+                        24 * 60 * 60 / self.chosen_hyperparams["time_bin_size"].seconds
+                    )
+                elif hyperparam_value == 1:
+                    # default
+                    continue
+                else:
+                    raise ValueError(
+                        f"Invalid season_length_StatsForecastAutoTheta or m_AutoARIMA = {hyperparam_value}!"
+                    )
+            elif hyperparam == "model_mode_FourTheta":
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 0:
+                    hyperparam_value = ModelMode.NONE
+                elif hyperparam_value == 1:
+                    hyperparam_value = ModelMode.MULTIPLICATIVE
+                elif hyperparam_value == 2:
+                    hyperparam_value = ModelMode.ADDITIVE
+                else:
+                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "season_mode_FourTheta":
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 0:
+                    hyperparam_value = SeasonalityMode.NONE
+                elif hyperparam_value == 1:
+                    hyperparam_value = SeasonalityMode.MULTIPLICATIVE
+                elif hyperparam_value == 2:
+                    hyperparam_value = SeasonalityMode.ADDITIVE
+                else:
+                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 1:
+                    hyperparam_value = "multiplicative"
+                elif hyperparam_value == 2:
+                    hyperparam_value = "additive"
+                else:
+                    raise ValueError(
+                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1034,6 +1154,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # Make sure int (bool) hyperparameters are int (bool), as Bayesian optimization will always give floats
         # and check chosen hyperparams are in the allowed ranges / sets
         for _k, _v in self.chosen_hyperparams.items():
+            if _k in [
+                "model_mode_FourTheta",
+                "season_mode_FourTheta",
+                "season_length_StatsForecastAutoTheta",
+                "decomposition_type_StatsForecastAutoTheta",
+                "m_AutoARIMA",
+            ]:
+                continue
             if _k in boolean_hyperparams:
                 self.chosen_hyperparams[_k] = bool(_v)
             elif _k in integer_hyperparams:
@@ -1077,7 +1205,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
-    def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
+    def train_model(  # pylint: disable=too-many-locals
+        self: "TSModelWrapper", **kwargs: float
+    ) -> float:
         """Train the model and return loss.
 
         Args:
@@ -1103,6 +1233,18 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         chosen_hyperparams_model = {
             k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
         }
+
+        hyperparams_to_rename = {
+            "seasonal_periods_BATS": "seasonal_periods",
+            "model_mode_FourTheta": "model_mode",
+            "season_mode_FourTheta": "season_mode",
+            "season_length_StatsForecastAutoTheta": "season_length",
+            "decomposition_type_StatsForecastAutoTheta": "decomposition_type",
+            "m_AutoARIMA": "m",
+        }
+        for k, v in hyperparams_to_rename.items():
+            if k in chosen_hyperparams_model:
+                chosen_hyperparams_model[v] = chosen_hyperparams_model.pop(k)
 
         self.model = self.model_class(**chosen_hyperparams_model)
         if TYPE_CHECKING:

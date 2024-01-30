@@ -1,10 +1,11 @@
 [tool.poetry]
-name = "chance-of-showers"
+name = "chance_of_showers"
 version = "0.0.0"
 description = "DAQ and analysis code for chance_of_showers water metrics project"
 authors = ["Matthew Epland"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/mepland/chance_of_showers"
 
 [tool.poetry.dependencies]
 python = "~=3.11.4"
