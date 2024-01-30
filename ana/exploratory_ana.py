@@ -63,6 +63,7 @@ from utils.FFTWrapper import FFTWrapper
 from utils.CrostonWrapper import CrostonWrapper
 from utils.FourThetaWrapper import FourThetaWrapper
 from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
+from utils.AutoARIMAWrapper import AutoARIMAWrapper
 
 from utils.plotting import (
     C_GREEN,
@@ -1219,7 +1220,11 @@ print(model_wrapper_FourTheta)
 # %%
 model_wrapper_StatsForecastAutoTheta = StatsForecastAutoThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={
+        "input_chunk_length_in_minutes": 10,
+        "rebin_y": True,
+        "season_length_StatsForecastAutoTheta": 0,
+    },
 )
 model_wrapper_StatsForecastAutoTheta.set_work_dir(
     work_dir_relative_to_base=pathlib.Path("local_dev")
@@ -1241,44 +1246,36 @@ print(f"{val_loss = }")
 print(model_wrapper_StatsForecastAutoTheta)
 
 # %% [markdown]
-# ## AutoARIMA
+# ### AutoARIMA
 
 # %%
 # raise UserWarning("Stopping Here")
 
-# %% [raw]
-# hyperpar_fixed_AutoARIMA = {
-#     "start_p": 2,
-#     "d": None,
-#     "start_q": 2,
-#     "max_p": 10,
-#     "max_d": 2,
-#     "max_q": 10,
-#     "start_P": 1,
-#     "D": None,
-#     "start_Q": 1,
-#     "max_P": 2,
-#     "max_D": 1,
-#     "max_Q": 2,
-#     "max_order": None,
-#     "m": 1,
-#     "seasonal": True,
-#     "stationary": False,
-#     "information_criterion": "aic",
-#     "alpha": 0.05,
-#     "test": "kpss",
-#     "seasonal_test": "ocsb",
-#     "stepwise": True,
-#     "n_jobs": -1,
-#     "trend": None,
-#     "method": "lbfgs",
-#     "maxiter": 100,
-#     "error_action": "trace",
-#     "trace": False,
-#     "out_of_sample_size": 0,
-#     "scoring": "mse",
-#     "with_intercept": "auto",
-# }
+# %%
+model_wrapper_AutoARIMA = AutoARIMAWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={
+        "input_chunk_length_in_minutes": 10,
+        "rebin_y": True,
+        # "m_AutoARIMA": 0,  # Runs extremely slow...
+    },
+)
+model_wrapper_AutoARIMA.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_AutoARIMA)
+
+# %%
+configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_AutoARIMA.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_AutoARIMA.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_AutoARIMA)
 
 # %% [markdown]
 # ***

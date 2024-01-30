@@ -527,10 +527,23 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     # StatsForecastAutoTheta
+    "season_length_StatsForecastAutoTheta": {
+        "min": 0,  # 24 hours, set in _assemble_hyperparams()
+        "max": 1,  # Default
+        "default": 1,
+        "type": int,
+    },
     "decomposition_type_StatsForecastAutoTheta": {
         "min": 1,
         "max": 2,
         "default": 1,  # Multiplicative
+        "type": int,
+    },
+    # AutoARIMA
+    "m_AutoARIMA": {
+        "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+        "max": 1,  # Default
+        "default": 1,
         "type": int,
     },
 }
@@ -1050,11 +1063,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     )
 
                 hyperparam_value = seasonal_periods
-            elif hyperparam == "season_length_StatsForecastAutoTheta":
-                # 1 day
-                hyperparam_value = math.ceil(
-                    24 * 60 * 60 / self.chosen_hyperparams["time_bin_size"].seconds
-                )
+            elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if hyperparam_value == 0:
+                    # 1 day
+                    hyperparam_value = math.ceil(
+                        24 * 60 * 60 / self.chosen_hyperparams["time_bin_size"].seconds
+                    )
+                elif hyperparam_value == 1:
+                    # default
+                    continue
+                else:
+                    raise ValueError(
+                        f"Invalid season_length_StatsForecastAutoTheta or m_AutoARIMA = {hyperparam_value}!"
+                    )
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if hyperparam_value == 0:
@@ -1135,7 +1157,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if _k in [
                 "model_mode_FourTheta",
                 "season_mode_FourTheta",
+                "season_length_StatsForecastAutoTheta",
                 "decomposition_type_StatsForecastAutoTheta",
+                "m_AutoARIMA",
             ]:
                 continue
             if _k in boolean_hyperparams:
@@ -1216,6 +1240,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             "season_mode_FourTheta": "season_mode",
             "season_length_StatsForecastAutoTheta": "season_length",
             "decomposition_type_StatsForecastAutoTheta": "decomposition_type",
+            "m_AutoARIMA": "m",
         }
         for k, v in hyperparams_to_rename.items():
             if k in chosen_hyperparams_model:
