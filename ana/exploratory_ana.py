@@ -64,6 +64,11 @@ from utils.CrostonWrapper import CrostonWrapper
 from utils.FourThetaWrapper import FourThetaWrapper
 from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
 from utils.AutoARIMAWrapper import AutoARIMAWrapper
+from utils.NaiveMeanWrapper import NaiveMeanWrapper
+from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper
+from utils.NaiveDriftWrapper import NaiveDriftWrapper
+from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
+
 
 from utils.plotting import (
     C_GREEN,
@@ -1276,6 +1281,73 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_AutoARIMA)
+
+# %% [markdown]
+# ## Naive Models
+
+# %% [markdown]
+# ### NaiveMean
+
+# %%
+model_wrapper_NaiveMean = NaiveMeanWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NaiveMean.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+
+val_loss = -model_wrapper_NaiveMean.train_model()
+print(f"{val_loss = }")
+
+# %%
+# print(model_wrapper_NaiveMean)
+
+# %% [markdown]
+# ### NaiveSeasonal
+
+# %%
+model_wrapper_NaiveSeasonal = NaiveSeasonalWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NaiveSeasonal.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+
+val_loss = -model_wrapper_NaiveSeasonal.train_model()
+print(f"{val_loss = }")
+
+# %%
+# print(model_wrapper_NaiveSeasonal)
+
+# %% [markdown]
+# ### NaiveDrift
+
+# %%
+model_wrapper_NaiveDrift = NaiveDriftWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NaiveDrift.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+
+val_loss = -model_wrapper_NaiveDrift.train_model()
+print(f"{val_loss = }")
+
+# %%
+# print(model_wrapper_NaiveDrift)
+
+# %% [markdown]
+# ### NaiveMovingAverage
+
+# %%
+model_wrapper_NaiveMovingAverage = NaiveMovingAverageWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_NaiveMovingAverage.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+
+val_loss = -model_wrapper_NaiveMovingAverage.train_model()
+print(f"{val_loss = }")
+
+# %%
+# print(model_wrapper_NaiveMovingAverage)
 
 # %% [markdown]
 # ***
