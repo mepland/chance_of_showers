@@ -3,8 +3,11 @@
 import datetime
 import gc
 import pathlib
+import platform
+import signal
 import traceback
-from typing import Final
+from types import FrameType  # noqa: TC003
+from typing import TYPE_CHECKING, Final
 
 import bayes_opt
 import humanize
@@ -46,10 +49,10 @@ def print_memory_usage(*, header: str | None = None) -> None:
 
     if torch.cuda.is_available():
         gpu_memory_stats = torch.cuda.memory_stats()
-    memory_usage_str += (
-        f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
-        + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
-    )
+        memory_usage_str += (
+            f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
+            + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
+        )
     print(memory_usage_str)
 
 
@@ -70,7 +73,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     verbose: int = 2,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
-    max_time_per_model: str | datetime.timedelta | dict[str, int] | None = None,
+    max_time_per_model: datetime.timedelta | None = None,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -99,7 +102,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
-        max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
+        max_time_per_model: Set the maximum amount of time for each iteration, with 1 minute of grace. NN training will be interrupted mid-epoch prior to the 1 minute grace period.
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
@@ -207,7 +210,32 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # clean up _model_wrapper
     del _model_wrapper
 
-    # run Bayesian optimization iterations
+    # Setup signal_handler to kill iteration if it runs too long
+    def signal_handler(
+        dummy_signal: int,  # noqa: U100
+        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=used-before-assignment
+    ) -> None:
+        """Stop iteration gracefuly.
+
+        https://medium.com/@chamilad/timing-out-of-long-running-methods-in-python-818b3582eed6
+
+        Args:
+            dummy_signal: signal number.
+            dummy_frame: Frame object.
+
+        Raises:
+            Exception: Out of Time!
+        """
+        raise Exception("Out of Time!")  # pylint: disable=broad-exception-raised
+
+    max_time_per_model_flag = max_time_per_model is not None and platform.system() in [
+        "Linux",
+        "Darwin",
+    ]
+    if max_time_per_model_flag:
+        signal.signal(signal.SIGALRM, signal_handler)
+
+    # Run Bayesian optimization iterations
     try:
         for i_iter in range(n_iter):
             if i_iter == 0:
@@ -247,9 +275,22 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # set model_name_tag for this iteration
             model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
 
+            # Setup iteration kill timer
+            if max_time_per_model_flag:
+                if TYPE_CHECKING:
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        max_time_per_model, datetime.timedelta
+                    )
+                signal.alarm((max_time_per_model + datetime.timedelta(minutes=1)).seconds)
+
             # train the model
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt: Returning with current objects.")
+                optimizer.dispatch(Events.OPTIMIZATION_END)
+
+                return optimizer.max, optimizer
             except RuntimeError as error:
                 if "out of memory" in str(error):
                     print("Ran out of memory, returning -inf as loss")
@@ -262,6 +303,21 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     )
                     continue
                 raise error
+            except Exception as error:
+                if "Out of Time!" in str(error):
+                    print("Ran out of time, returning -inf as loss")
+                    complete_iter(
+                        i_iter,
+                        model_wrapper,
+                        -float("inf"),
+                        next_point_to_probe,
+                        probed_point=next_point_to_probe_cleaned,
+                    )
+                    continue
+                raise error
+            finally:
+                if max_time_per_model_flag:
+                    signal.alarm(0)
 
             if enable_model_saves:
                 fname_model = (
@@ -278,6 +334,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 probed_point=next_point_to_probe_cleaned,
             )
 
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt: Returning with current objects.")
     except bayes_opt.util.NotUniqueError as error:
         print(
             str(error).replace(
@@ -289,6 +347,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         print(
             f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
         )
+
     optimizer.dispatch(Events.OPTIMIZATION_END)
 
     return optimizer.max, optimizer
