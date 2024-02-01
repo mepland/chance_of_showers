@@ -283,8 +283,8 @@ exclude = [
 
 [tool.deptry]
 ignore = [
-	"DEP003",
-	"DEP004",
+	"DEP003", # transitive dependencies
+	"DEP004", # false positives from optional poetry groups
 ]
 
 [tool.deptry.per_rule_ignores]
