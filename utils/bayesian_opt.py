@@ -21,9 +21,43 @@ from bayes_opt.util import load_logs
 # isort: off
 from utils.TSModelWrapper import TSModelWrapper  # noqa: TC001
 
+# Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
+
+# PyTorch NN Models
 from utils.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: TC001
 from utils.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: TC001
+from utils.TCNModelWrapper import TCNModelWrapper  # noqa: TC001
+from utils.TransformerModelWrapper import TransformerModelWrapper  # noqa: TC001
+from utils.TFTModelWrapper import TFTModelWrapper  # noqa: TC001
+from utils.DLinearModelWrapper import DLinearModelWrapper  # noqa: TC001
+from utils.NLinearModelWrapper import NLinearModelWrapper  # noqa: TC001
+from utils.TiDEModelWrapper import TiDEModelWrapper  # noqa: TC001
+from utils.RNNModelWrapper import RNNModelWrapper  # noqa: TC001
+from utils.BlockRNNModelWrapper import BlockRNNModelWrapper  # noqa: TC001
+
+# Statistical Models
+from utils.AutoARIMAWrapper import AutoARIMAWrapper  # noqa: TC001
+from utils.BATSWrapper import BATSWrapper  # noqa: TC001
+from utils.TBATSWrapper import TBATSWrapper  # noqa: TC001
+from utils.FourThetaWrapper import FourThetaWrapper  # noqa: TC001
+from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper  # noqa: TC001
+from utils.FFTWrapper import FFTWrapper  # noqa: TC001
+from utils.KalmanForecasterWrapper import KalmanForecasterWrapper  # noqa: TC001
+from utils.CrostonWrapper import CrostonWrapper  # noqa: TC001
+
+# Regression Models
+from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper  # noqa: TC001
+from utils.RandomForestWrapper import RandomForestWrapper  # noqa: TC001
+from utils.LightGBMModelWrapper import LightGBMModelWrapper  # noqa: TC001
+from utils.XGBModelWrapper import XGBModelWrapper  # noqa: TC001
+from utils.CatBoostModelWrapper import CatBoostModelWrapper  # noqa: TC001
+
+# Naive Models
+from utils.NaiveMeanWrapper import NaiveMeanWrapper  # noqa: TC001
+from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper  # noqa: TC001
+from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
+from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 # isort: on
 
@@ -62,8 +96,40 @@ n_points = 0  # # pylint: disable=invalid-name
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: type[
-        ProphetWrapper | NBEATSModelWrapper | NHiTSModelWrapper
-    ],  # expand with more classes
+        # Prophet
+        ProphetWrapper
+        # PyTorch NN Models
+        | NBEATSModelWrapper
+        | NHiTSModelWrapper
+        | TCNModelWrapper
+        | TransformerModelWrapper
+        | TFTModelWrapper
+        | DLinearModelWrapper
+        | NLinearModelWrapper
+        | TiDEModelWrapper
+        | RNNModelWrapper
+        | BlockRNNModelWrapper
+        # Statistical Models
+        | AutoARIMAWrapper
+        | BATSWrapper
+        | TBATSWrapper
+        | FourThetaWrapper
+        | StatsForecastAutoThetaWrapper
+        | FFTWrapper
+        | KalmanForecasterWrapper
+        | CrostonWrapper
+        # Regression Models
+        | LinearRegressionModelWrapper
+        | RandomForestWrapper
+        | LightGBMModelWrapper
+        | XGBModelWrapper
+        | CatBoostModelWrapper
+        # Naive Models
+        | NaiveMeanWrapper
+        | NaiveSeasonalWrapper
+        | NaiveDriftWrapper
+        | NaiveMovingAverageWrapper
+    ],
     *,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
