@@ -69,6 +69,10 @@ vulture-update_ignore:
 pyupgrade:
 	@poetry run pyupgrade $(shell git ls-files '*.py')
 
+.PHONY: deptry
+deptry:
+	@poetry run deptry .
+
 .PHONY: detect-secrets
 detect-secrets:
 	@poetry run detect-secrets-hook --exclude-lines 'integrity='

@@ -83,6 +83,9 @@ jobs:
       - name: pyupgrade
         run: poetry run pyupgrade
 
+      - name: deptry
+        run: poetry run deptry .
+
       - name: detect-secrets
         run: poetry run detect-secrets-hook --exclude-lines 'integrity='
 

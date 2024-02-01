@@ -31,6 +31,7 @@ vulture = "^2.7"
 yamllint = "^1.32.0"
 blocklint = "^0.2.4"
 pyupgrade = "^3.9.0"
+deptry = "^0.12.0"
 html5validator = "^0.4.2"
 pandas-stubs = "^2.0.2.230605"
 types-pillow = "^9.5.0.5"
@@ -278,4 +279,16 @@ exclude = [
     ".ipynb_checkpoints",
     ".venv",
     "__pycache__"
+]
+
+[tool.deptry]
+ignore = [
+	"DEP003",
+	"DEP004",
+]
+
+[tool.deptry.per_rule_ignores]
+DEP001 = [
+	"board", "busio", "digitalio", # adafruit-circuitpython-mcp3xxx
+	"PIL", # luma-core
 ]
