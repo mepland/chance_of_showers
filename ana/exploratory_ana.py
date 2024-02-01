@@ -1362,11 +1362,12 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # print(tensorboard_logs)
 
 # %%
-# %tensorboard --logdir $tensorboard_logs
+# # %tensorboard --logdir $tensorboard_logs
 
+# %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NBEATSModelWrapper,
+    model_wrapper_class=AutoARIMAWrapper,
     n_iter=200,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=20),
