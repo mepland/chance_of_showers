@@ -19,13 +19,13 @@ psutil = "^5.9.5"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
-black = {extras = ["jupyter"], version = "^23.7.0"}
+black = {extras = ["jupyter"], version = "^24.1.1"}
 blacken-docs = "^1.14.0"
-flake8 = "^6.0.0"
+flake8 = "^7.0.0"
 mypy = "^1.4.1"
 isort = "^5.12.0"
 pylint = "^2.17.4"
-bandit = "^1.7.5"
+bandit = "^1.7.7"
 detect-secrets = "^1.4.0"
 vulture = "^2.7"
 yamllint = "^1.32.0"
