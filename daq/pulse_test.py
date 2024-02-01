@@ -1,4 +1,5 @@
 """Quick script to test reading pulses via GPIO."""
+
 import time
 
 # pylint: disable=no-member
