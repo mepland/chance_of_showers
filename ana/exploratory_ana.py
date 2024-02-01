@@ -40,7 +40,10 @@ from utils.shared_functions import (
 from utils.TSModelWrapper import TSModelWrapper
 from utils.bayesian_opt import run_bayesian_opt
 
+# Prophet
 from utils.ProphetWrapper import ProphetWrapper
+
+# PyTorch NN Models
 from utils.NBEATSModelWrapper import NBEATSModelWrapper
 from utils.NHiTSModelWrapper import NHiTSModelWrapper
 from utils.TCNModelWrapper import TCNModelWrapper
@@ -51,24 +54,29 @@ from utils.NLinearModelWrapper import NLinearModelWrapper
 from utils.TiDEModelWrapper import TiDEModelWrapper
 from utils.RNNModelWrapper import RNNModelWrapper
 from utils.BlockRNNModelWrapper import BlockRNNModelWrapper
-from utils.RandomForestWrapper import RandomForestWrapper
-from utils.XGBModelWrapper import XGBModelWrapper
-from utils.LightGBMModelWrapper import LightGBMModelWrapper
-from utils.CatBoostModelWrapper import CatBoostModelWrapper
-from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
+
+# Statistical Models
+from utils.AutoARIMAWrapper import AutoARIMAWrapper
 from utils.BATSWrapper import BATSWrapper
 from utils.TBATSWrapper import TBATSWrapper
-from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
-from utils.FFTWrapper import FFTWrapper
-from utils.CrostonWrapper import CrostonWrapper
 from utils.FourThetaWrapper import FourThetaWrapper
 from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
-from utils.AutoARIMAWrapper import AutoARIMAWrapper
+from utils.FFTWrapper import FFTWrapper
+from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
+from utils.CrostonWrapper import CrostonWrapper
+
+# Regression Models
+from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
+from utils.RandomForestWrapper import RandomForestWrapper
+from utils.LightGBMModelWrapper import LightGBMModelWrapper
+from utils.XGBModelWrapper import XGBModelWrapper
+from utils.CatBoostModelWrapper import CatBoostModelWrapper
+
+# Naive Models
 from utils.NaiveMeanWrapper import NaiveMeanWrapper
 from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper
 from utils.NaiveDriftWrapper import NaiveDriftWrapper
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
-
 
 from utils.plotting import (
     C_GREEN,
@@ -326,15 +334,6 @@ dfp_val = dfp_trainable_evergreen.loc[
 # # Darts Modeling
 
 # %%
-import torch
-
-if torch.cuda.is_available():
-    print("CUDA is available")
-    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
-else:
-    raise UserWarning("CUDA IS NOT AVAILABLE!")
-
-# %%
 PARENT_WRAPPER: Final = TSModelWrapper(
     dfp_trainable_evergreen=dfp_trainable_evergreen,
     dt_val_start_datetime_local=DT_VAL_START_DATETIME_LOCAL,
@@ -346,6 +345,16 @@ PARENT_WRAPPER: Final = TSModelWrapper(
     local_timezone=LOCAL_TIMEZONE,
 )
 # print(PARENT_WRAPPER)
+
+
+# %%
+import torch
+
+if torch.cuda.is_available():
+    print("CUDA is available")
+    print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+else:
+    raise UserWarning("CUDA IS NOT AVAILABLE!")
 
 # %% [markdown]
 # ## Prophet
@@ -547,7 +556,7 @@ plot_prophet(
 display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 
 # %% [markdown]
-# ## NN Models
+# ## PyTorch NN Models
 
 # %% [markdown]
 # ### N-BEATS
@@ -906,151 +915,39 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ## Tree-based Models
+# ## Statistical Models
 
 # %% [markdown]
-# ### RandomForest
+# ### AutoARIMA
 
 # %%
 # raise UserWarning("Stopping Here")
 
 # %%
-model_wrapper_RandomForest = RandomForestWrapper(
+model_wrapper_AutoARIMA = AutoARIMAWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={
+        "input_chunk_length_in_minutes": 10,
+        "rebin_y": True,
+        # "m_AutoARIMA": 0,  # Runs extremely slow...
+    },
 )
-model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_RandomForest)
+model_wrapper_AutoARIMA.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_AutoARIMA)
 
 # %%
-configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperparams()
+configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RandomForest.set_enable_progress_bar_and_max_time(
+model_wrapper_AutoARIMA.set_enable_progress_bar_and_max_time(
     enable_progress_bar=True, max_time=None
 )
-val_loss = -model_wrapper_RandomForest.train_model()
+val_loss = -model_wrapper_AutoARIMA.train_model()
 print(f"{val_loss = }")
 
 # %%
-print(model_wrapper_RandomForest)
-
-# %% [markdown]
-# ### XGBModel
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_XGBModel = XGBModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_XGBModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_XGBModel)
-
-# %%
-configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_XGBModel.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
-val_loss = -model_wrapper_XGBModel.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_XGBModel)
-
-# %% [markdown]
-# ### LightGBMModel
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_LightGBMModel = LightGBMModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_LightGBMModel.verbose = -1  # Silence [LightGBM] [Info] messages
-model_wrapper_LightGBMModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_LightGBMModel)
-
-# %%
-configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_LightGBMModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
-val_loss = -model_wrapper_LightGBMModel.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_LightGBMModel)
-
-# %% [markdown]
-# ### CatBoostModel
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_CatBoostModel = CatBoostModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_CatBoostModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_CatBoostModel)
-
-# %%
-configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_CatBoostModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
-val_loss = -model_wrapper_CatBoostModel.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_CatBoostModel)
-
-# %% [markdown]
-# ## Other Models
-
-# %% [markdown]
-# ### LinearRegressionModel
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_LinearRegressionModel.set_work_dir(
-    work_dir_relative_to_base=pathlib.Path("local_dev")
-)
-# print(model_wrapper_LinearRegressionModel)
-
-# %%
-configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_LinearRegressionModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
-val_loss = -model_wrapper_LinearRegressionModel.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_LinearRegressionModel)
+print(model_wrapper_AutoARIMA)
 
 # %% [markdown]
 # ### BATS
@@ -1103,90 +1000,6 @@ print(f"{val_loss = }")
 
 # %%
 print(model_wrapper_TBATS)
-
-# %% [markdown]
-# ### KalmanForecaster
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_KalmanForecaster.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_KalmanForecaster)
-
-# %%
-configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_KalmanForecaster.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
-val_loss = -model_wrapper_KalmanForecaster.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_KalmanForecaster)
-
-# %% [markdown]
-# ### FFT
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_FFT = FFTWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-)
-model_wrapper_FFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_FFT)
-
-# %%
-configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_FFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
-val_loss = -model_wrapper_FFT.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_FFT)
-
-# %% [markdown]
-# ### Croston
-# `versions = ["classic", "optimized", "sba"]`
-#
-# Do not use `"tsb"` as `alpha_d` and `alpha_p` must be set
-
-# %%
-# raise UserWarning("Stopping Here")
-
-# %%
-model_wrapper_Croston = CrostonWrapper(
-    TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
-    version="optimized",
-)
-model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_Croston)
-
-# %%
-configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
-pprint.pprint(configurable_hyperparams)
-
-# %%
-model_wrapper_Croston.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
-val_loss = -model_wrapper_Croston.train_model()
-print(f"{val_loss = }")
-
-# %%
-print(model_wrapper_Croston)
 
 # %% [markdown]
 # ### FourTheta
@@ -1251,36 +1064,232 @@ print(f"{val_loss = }")
 print(model_wrapper_StatsForecastAutoTheta)
 
 # %% [markdown]
-# ### AutoARIMA
+# ### FFT
 
 # %%
 # raise UserWarning("Stopping Here")
 
 # %%
-model_wrapper_AutoARIMA = AutoARIMAWrapper(
+model_wrapper_FFT = FFTWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={
-        "input_chunk_length_in_minutes": 10,
-        "rebin_y": True,
-        # "m_AutoARIMA": 0,  # Runs extremely slow...
-    },
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
 )
-model_wrapper_AutoARIMA.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
-# print(model_wrapper_AutoARIMA)
+model_wrapper_FFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_FFT)
 
 # %%
-configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams()
+configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_AutoARIMA.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
-val_loss = -model_wrapper_AutoARIMA.train_model()
+model_wrapper_FFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_FFT.train_model()
 print(f"{val_loss = }")
 
 # %%
-print(model_wrapper_AutoARIMA)
+print(model_wrapper_FFT)
+
+# %% [markdown]
+# ### KalmanForecaster
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_KalmanForecaster.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_KalmanForecaster)
+
+# %%
+configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_KalmanForecaster.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_KalmanForecaster.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_KalmanForecaster)
+
+# %% [markdown]
+# ### Croston
+# `versions = ["classic", "optimized", "sba"]`
+#
+# Do not use `"tsb"` as `alpha_d` and `alpha_p` must be set
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_Croston = CrostonWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    version="optimized",
+)
+model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_Croston)
+
+# %%
+configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_Croston.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_Croston.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_Croston)
+
+# %% [markdown]
+# ## Regression Models
+
+# %% [markdown]
+# ### LinearRegressionModel
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_LinearRegressionModel.set_work_dir(
+    work_dir_relative_to_base=pathlib.Path("local_dev")
+)
+# print(model_wrapper_LinearRegressionModel)
+
+# %%
+configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_LinearRegressionModel.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_LinearRegressionModel.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_LinearRegressionModel)
+
+# %% [markdown]
+# ### RandomForest
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_RandomForest = RandomForestWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_RandomForest)
+
+# %%
+configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_RandomForest.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_RandomForest.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_RandomForest)
+
+# %% [markdown]
+# ### LightGBMModel
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_LightGBMModel = LightGBMModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_LightGBMModel.verbose = -1  # Silence [LightGBM] [Info] messages
+model_wrapper_LightGBMModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_LightGBMModel)
+
+# %%
+configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_LightGBMModel.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_LightGBMModel.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_LightGBMModel)
+
+# %% [markdown]
+# ### XGBModel
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_XGBModel = XGBModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_XGBModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_XGBModel)
+
+# %%
+configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_XGBModel.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+val_loss = -model_wrapper_XGBModel.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_XGBModel)
+
+# %% [markdown]
+# ### CatBoostModel
+
+# %%
+# raise UserWarning("Stopping Here")
+
+# %%
+model_wrapper_CatBoostModel = CatBoostModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+)
+model_wrapper_CatBoostModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_CatBoostModel)
+
+# %%
+configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+model_wrapper_CatBoostModel.set_enable_progress_bar_and_max_time(
+    enable_progress_bar=True, max_time=None
+)
+val_loss = -model_wrapper_CatBoostModel.train_model()
+print(f"{val_loss = }")
+
+# %%
+print(model_wrapper_CatBoostModel)
 
 # %% [markdown]
 # ## Naive Models
