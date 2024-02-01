@@ -1,4 +1,5 @@
 """Run DAQ script."""
+
 from __future__ import annotations
 
 ################################################################################
@@ -671,9 +672,9 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                         if i_polling == 0 or new_connection:
                             new_connection = False
                             _data["tLocalStrNLast"] = t_local_str_n_last
-                            _data[
-                                "meanPressureValueNormalizedNLast"
-                            ] = mean_pressure_value_normalized_n_last
+                            _data["meanPressureValueNormalizedNLast"] = (
+                                mean_pressure_value_normalized_n_last
+                            )
                             _data["pastHadFlowNLast"] = past_had_flow_n_last
 
                         sio.emit("emitData", json.dumps(_data))

@@ -1,4 +1,5 @@
 """This module contains common plotting code."""
+
 import datetime
 import pathlib
 from typing import TYPE_CHECKING, Final

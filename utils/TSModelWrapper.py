@@ -1345,12 +1345,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             )
             model_covariates_kwargs[f"{covariates_type}_covariates"] = dart_series_covariates_train
             if self.is_nn:
-                model_covariates_kwargs[
-                    f"val_{covariates_type}_covariates"
-                ] = dart_series_covariates_val
-            prediction_covariates_kwargs[
-                f"{covariates_type}_covariates"
-            ] = dart_series_covariates_train.append(dart_series_covariates_val)
+                model_covariates_kwargs[f"val_{covariates_type}_covariates"] = (
+                    dart_series_covariates_val
+                )
+            prediction_covariates_kwargs[f"{covariates_type}_covariates"] = (
+                dart_series_covariates_train.append(dart_series_covariates_val)
+            )
 
         # train
         train_kwargs = {}
