@@ -94,7 +94,7 @@ def get_pl_trainer_kwargs(
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
         enable_progress_bar: Enable torch progress bar during training.
-        max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
+        max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         log_every_n_steps: How often to log within steps.
 
     Returns:
@@ -537,13 +537,6 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 2,
         "default": 1,  # Multiplicative
-        "type": int,
-    },
-    # AutoARIMA
-    "m_AutoARIMA": {
-        "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-        "max": 1,  # Default
-        "default": 1,
         "type": int,
     },
 }
@@ -1074,9 +1067,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     # default
                     continue
                 else:
-                    raise ValueError(
-                        f"Invalid season_length_StatsForecastAutoTheta or m_AutoARIMA = {hyperparam_value}!"
-                    )
+                    raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if hyperparam_value == 0:

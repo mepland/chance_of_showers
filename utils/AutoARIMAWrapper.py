@@ -10,7 +10,6 @@ from utils.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     TSModelWrapper,
 )
 
@@ -37,12 +36,24 @@ class AutoARIMAWrapper(TSModelWrapper):
         "random_state",
     ]
 
+    # Set m_AutoARIMA as either a variable or fixed hyperparameter
+    _variable_hyperparams_AutoARIMA = {
+        "m_AutoARIMA": {
+            "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+            "max": 1,  # Default
+            "default": 1,
+            "type": int,
+        },
+    }
+
     _allowed_variable_hyperparams = {
         **DATA_VARIABLE_HYPERPARAMS,
-        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+        # **_variable_hyperparams_AutoARIMA,
     }
 
     _fixed_hyperparams_AutoARIMA = {
+        "m_AutoARIMA": 0,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+        # "m_AutoARIMA": 1,  # Default
         "stationary": True,
         # Increase max values
         "max_p": 15,
