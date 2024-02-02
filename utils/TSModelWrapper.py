@@ -13,7 +13,7 @@ import pprint
 import sys
 import warnings
 import zoneinfo
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, SupportsInt
 
 import pandas as pd
 import sympy
@@ -981,7 +981,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "work_dir":
                 hyperparam_value = self.work_dir
             elif hyperparam == "rebin_y":
-                hyperparam_value = int(get_hyperparam_value(hyperparam))
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        hyperparam_value, SupportsInt
+                    )
+                hyperparam_value = int(hyperparam_value)
                 if hyperparam_value:
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
