@@ -981,7 +981,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "work_dir":
                 hyperparam_value = self.work_dir
             elif hyperparam == "rebin_y":
-                hyperparam_value = get_hyperparam_value(hyperparam)
+                hyperparam_value = int(get_hyperparam_value(hyperparam))
                 if hyperparam_value:
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
