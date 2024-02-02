@@ -184,6 +184,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     """
     global n_points
 
+    # Set a finite, but horrible, loss for when the training fails to complete.
+    bad_target = np.finfo(np.float128).min + 1
+
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
     _model_wrapper.verbose = verbose
@@ -371,7 +374,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        -float("inf"),
+                        bad_target,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
@@ -383,7 +386,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        -float("inf"),
+                        bad_target,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
