@@ -358,7 +358,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     assert isinstance(  # noqa: SCS108 # nosec assert_used
                         max_time_per_model, datetime.timedelta
                     )
-                signal.alarm((max_time_per_model + datetime.timedelta(minutes=1)).seconds)
+                signal.alarm((max_time_per_model + datetime.timedelta(seconds=10)).seconds)
 
             # train the model
             try:
