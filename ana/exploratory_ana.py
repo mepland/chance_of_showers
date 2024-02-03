@@ -38,7 +38,7 @@ from utils.shared_functions import (
 
 # isort: off
 from utils.TSModelWrapper import TSModelWrapper
-from utils.bayesian_opt import run_bayesian_opt
+from utils.bayesian_opt import run_bayesian_opt, load_json_log_to_dfp
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper
@@ -331,7 +331,7 @@ dfp_val = dfp_trainable_evergreen.loc[
 
 # %% [markdown]
 # ***
-# # Darts Modeling
+# # Setup Darts Wrapper
 
 # %%
 PARENT_WRAPPER: Final = TSModelWrapper(
@@ -356,11 +356,15 @@ if torch.cuda.is_available():
 else:
     raise UserWarning("CUDA IS NOT AVAILABLE!")
 
+# %%
+raise UserWarning("Stopping Here")
+
+# %% [markdown]
+# ***
+# # Darts Modeling
+
 # %% [markdown]
 # ## Prophet
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 import prophet
@@ -1362,9 +1366,7 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # TCNModelWrapper
 # TransformerModelWrapper
 # TFTModelWrapper
-# DLinearModelWrapper
 # NLinearModelWrapper
-# TiDEModelWrapper
 
 # # Statistical Models
 # FourThetaWrapper
@@ -1384,18 +1386,54 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=StatsForecastAutoThetaWrapper,
-    n_iter=2,
+    model_wrapper_class=NHiTSModelWrapper,
+    n_iter=10,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=40),
-    accelerator = "auto",
-    display_memory_usage=False,
+    accelerator="gpu",
+    display_memory_usage=True,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
 
 # %%
 pprint.pprint(optimal_values)
+
+# %% [markdown]
+# ## DEV: Compare Run Times
+
+# %%
+model_name = "DLinearModel"  # pylint: disable=invalid-name
+
+dfp_cpu = load_json_log_to_dfp(
+    pathlib.Path(
+        PARENT_WRAPPER.work_dir_base,
+        BAYESIAN_OPT_WORK_DIR_NAME,
+        f"{model_name}_cpu",
+        f"bayesian_opt_{model_name}.json",
+    )
+)
+
+dfp_gpu = load_json_log_to_dfp(
+    pathlib.Path(
+        PARENT_WRAPPER.work_dir_base,
+        BAYESIAN_OPT_WORK_DIR_NAME,
+        f"{model_name}_gpu",
+        f"bayesian_opt_{model_name}.json",
+    )
+)
+
+
+# %%
+display(dfp_cpu)
+
+# %%
+display(dfp_gpu)
+
+# %%
+dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=("_cpu", "_gpu"))
+display(dfp_merged)
+
 
 # %% [markdown]
 # ***

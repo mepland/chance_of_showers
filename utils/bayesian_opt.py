@@ -2,6 +2,7 @@
 
 import datetime
 import gc
+import json
 import pathlib
 import platform
 import signal
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING, Final
 import bayes_opt
 import humanize
 import numpy as np
+import pandas as pd
 import psutil
 import torch
 from bayes_opt.event import DEFAULT_EVENTS, Events
@@ -60,6 +62,44 @@ from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 # isort: on
+
+
+def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
+    """Load prior bayes_opt log from json file as a pandas dataframe.
+
+    Args:
+        f_path: Full path to json log file.
+
+    Returns:
+        Log as pandas dataframe.
+    """
+    # Adapted from:
+    # https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/util.py#L214-L241
+    with open(str(f_path), encoding="utf-8") as f_json:
+        rows = []
+        while True:
+            try:
+                iteration = next(f_json)
+            except StopIteration:
+                break
+
+            row = {}
+            for _k0, _v0 in dict(sorted(json.loads(iteration).items())).items():
+                if isinstance(_v0, dict):
+                    for _k1, _v1 in dict(sorted(_v0.items())).items():
+                        row[f"{_k0}_{_k1}"] = _v1
+                else:
+                    row[_k0] = _v0
+            rows.append(row)
+        f_json.close()
+
+        if rows:
+            dfp = pd.DataFrame(rows)
+            dfp["i_point"] = dfp.index
+
+            cols_fixed = ["i_point", "datetime_datetime"]
+            return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
+        return None
 
 
 def print_memory_usage(*, header: str | None = None) -> None:
