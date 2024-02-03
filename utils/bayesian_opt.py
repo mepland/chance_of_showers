@@ -140,6 +140,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
+    accelerator: str | None = "auto",
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -169,6 +170,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of time for each iteration, with 1 minute of grace. NN training will be interrupted mid-epoch prior to the 1 minute grace period.
+        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
@@ -326,9 +328,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # This may not be necessary, but as it is already coded, just be safe and leave it
             model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
-            model_wrapper.set_enable_progress_bar_and_max_time(
-                enable_progress_bar=enable_progress_bar, max_time=max_time_per_model
-            )
+            model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+            model_wrapper.set_max_time(max_time=max_time_per_model)
+            model_wrapper.set_accelerator(accelerator=accelerator)
 
             # Check if we already tested this chosen_hyperparams point
             # If it has been tested, save the raw next_point_to_probe with the same target and continue

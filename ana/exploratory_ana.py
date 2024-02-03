@@ -577,7 +577,7 @@ configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NBEATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_NBEATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NBEATS.train_model()
 print(f"{val_loss = }")
 
@@ -612,7 +612,7 @@ configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NHiTS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_NHiTS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NHiTS.train_model()
 print(f"{val_loss = }")
 
@@ -647,7 +647,7 @@ configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TCN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_TCN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TCN.train_model()
 print(f"{val_loss = }")
 
@@ -682,9 +682,7 @@ configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparam
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Transformer.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_Transformer.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Transformer.train_model()
 print(f"{val_loss = }")
 
@@ -719,7 +717,7 @@ configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_TFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TFT.train_model()
 print(f"{val_loss = }")
 
@@ -754,7 +752,7 @@ configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_DLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_DLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_DLinear.train_model()
 print(f"{val_loss = }")
 
@@ -789,7 +787,7 @@ configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NLinear.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_NLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NLinear.train_model()
 print(f"{val_loss = }")
 
@@ -824,7 +822,7 @@ configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TiDE.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_TiDE.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TiDE.train_model()
 print(f"{val_loss = }")
 
@@ -861,7 +859,7 @@ configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_RNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RNN.train_model()
 print(f"{val_loss = }")
 
@@ -898,7 +896,7 @@ configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BlockRNN.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_BlockRNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BlockRNN.train_model()
 print(f"{val_loss = }")
 
@@ -940,9 +938,7 @@ configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_AutoARIMA.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_AutoARIMA.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_AutoARIMA.train_model()
 print(f"{val_loss = }")
 
@@ -968,7 +964,7 @@ configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_BATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BATS.train_model()
 print(f"{val_loss = }")
 
@@ -994,7 +990,7 @@ configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TBATS.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_TBATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TBATS.train_model()
 print(f"{val_loss = }")
 
@@ -1020,9 +1016,7 @@ configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FourTheta.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_FourTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FourTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1054,9 +1048,7 @@ configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_StatsForecastAutoTheta.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_StatsForecastAutoTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1082,7 +1074,7 @@ configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FFT.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_FFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FFT.train_model()
 print(f"{val_loss = }")
 
@@ -1108,9 +1100,7 @@ configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyper
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_KalmanForecaster.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_KalmanForecaster.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_KalmanForecaster.train_model()
 print(f"{val_loss = }")
 
@@ -1140,7 +1130,7 @@ configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Croston.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_Croston.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Croston.train_model()
 print(f"{val_loss = }")
 
@@ -1171,9 +1161,7 @@ configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LinearRegressionModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_LinearRegressionModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LinearRegressionModel.train_model()
 print(f"{val_loss = }")
 
@@ -1199,9 +1187,7 @@ configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperpara
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RandomForest.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_RandomForest.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RandomForest.train_model()
 print(f"{val_loss = }")
 
@@ -1228,9 +1214,7 @@ configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LightGBMModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_LightGBMModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LightGBMModel.train_model()
 print(f"{val_loss = }")
 
@@ -1256,7 +1240,7 @@ configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_XGBModel.set_enable_progress_bar_and_max_time(enable_progress_bar=True, max_time=None)
+model_wrapper_XGBModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_XGBModel.train_model()
 print(f"{val_loss = }")
 
@@ -1282,9 +1266,7 @@ configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_CatBoostModel.set_enable_progress_bar_and_max_time(
-    enable_progress_bar=True, max_time=None
-)
+model_wrapper_CatBoostModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_CatBoostModel.train_model()
 print(f"{val_loss = }")
 
@@ -1373,14 +1355,41 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 # # %tensorboard --logdir $tensorboard_logs
 
+
+# %%
+# # PyTorch NN Models
+# NHiTSModelWrapper
+# TCNModelWrapper
+# TransformerModelWrapper
+# TFTModelWrapper
+# DLinearModelWrapper
+# NLinearModelWrapper
+# TiDEModelWrapper
+
+# # Statistical Models
+# FourThetaWrapper
+# StatsForecastAutoThetaWrapper
+
+# # Regression Models
+# LightGBMModelWrapper
+
+
+# TODO fix
+# CrostonWrapper
+# KalmanForecasterWrapper
+# RNNModelWrapper
+# BlockRNNModelWrapper
+# AutoARIMAWrapper
+
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=AutoARIMAWrapper,
-    n_iter=200,
+    model_wrapper_class=StatsForecastAutoThetaWrapper,
+    n_iter=2,
     enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=20),
-    display_memory_usage=True,
+    max_time_per_model=datetime.timedelta(minutes=40),
+    display_memory_usage=False,
+    enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
 

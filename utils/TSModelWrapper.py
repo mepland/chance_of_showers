@@ -77,6 +77,7 @@ def get_pl_trainer_kwargs(
     *,
     enable_progress_bar: bool,
     max_time: str | datetime.timedelta | dict[str, int] | None,
+    accelerator: str | None = None,
     log_every_n_steps: int | None = None,
 ) -> dict:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
@@ -95,14 +96,18 @@ def get_pl_trainer_kwargs(
                 epochs before being stopped.
         enable_progress_bar: Enable torch progress bar during training.
         max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
+        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         log_every_n_steps: How often to log within steps.
 
     Returns:
         pl_trainer_kwargs.
     """
+    if accelerator is None:
+        accelerator = "auto"
     return {
         "enable_progress_bar": enable_progress_bar,
         "max_time": max_time,
+        "accelerator": accelerator,
         "log_every_n_steps": log_every_n_steps,
         "callbacks": [
             EarlyStopping(
@@ -447,6 +452,7 @@ NN_FIXED_HYPERPARAMS: Final = {
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
     "enable_progress_bar": True,
     "max_time": None,
+    "accelerator": None,
 }
 
 TREE_REQUIRED_HYPERPARAMS: Final = [
@@ -747,23 +753,54 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return n_prediction_steps, time_bin_size
 
-    def set_enable_progress_bar_and_max_time(
+    def set_max_time(
         self: "TSModelWrapper",
         *,
-        enable_progress_bar: bool,
         max_time: str | datetime.timedelta | dict[str, int] | None,
     ) -> None:
-        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+        """Set the max_time for this model wrapper.
 
         Args:
-            enable_progress_bar: Enable torch progress bar during training.
             max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
-        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
         _fixed_hyperparams["max_time"] = max_time
+
+        self.fixed_hyperparams = _fixed_hyperparams
+
+    def set_accelerator(
+        self: "TSModelWrapper",
+        *,
+        accelerator: str | datetime.timedelta | dict[str, int] | None,
+    ) -> None:
+        """Set the accelerator for this model wrapper.
+
+        Args:
+            accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+        """
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+        _fixed_hyperparams["accelerator"] = accelerator
+
+        self.fixed_hyperparams = _fixed_hyperparams
+
+    def set_enable_progress_bar(
+        self: "TSModelWrapper",
+        *,
+        enable_progress_bar: bool,
+    ) -> None:
+        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+
+        Args:
+            enable_progress_bar: Enable torch progress bar during training.
+        """
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
 
         self.fixed_hyperparams = _fixed_hyperparams
 
@@ -1001,6 +1038,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "es_patience",
                 "enable_progress_bar",
                 "max_time",
+                "accelerator",
                 "lr_factor",
                 "lr_patience",
             ]:
@@ -1026,11 +1064,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["max_time"] = get_hyperparam_value(
                     "max_time", return_none_if_not_found=True
                 )
+                self.chosen_hyperparams["accelerator"] = get_hyperparam_value(
+                    "accelerator", return_none_if_not_found=True
+                )
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
                     enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
                     max_time=self.chosen_hyperparams["max_time"],
+                    accelerator=self.chosen_hyperparams["accelerator"],
                     # Could set log_every_n_steps = 1 to avoid a warning, but that would make large logs, so just use filterwarnings instead
                     # https://github.com/Lightning-AI/lightning/issues/10644
                     # https://github.com/Lightning-AI/lightning/blob/c68ff6482f97f388d6b0c37151fafc0fae789094/src/lightning/pytorch/loops/fit_loop.py#L292-L298
