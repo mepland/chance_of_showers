@@ -185,7 +185,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     global n_points
 
     # Set a finite, but horrible, loss for when the training fails to complete.
-    bad_target = np.finfo(np.float128).min + 1
+    # np.finfo(np.float64).min + 1 does not work, sklearn errors
+    bad_target = -999
 
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
@@ -305,10 +306,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         """
         raise Exception("Out of Time!")  # pylint: disable=broad-exception-raised
 
-    max_time_per_model_flag = max_time_per_model is not None and platform.system() in [
-        "Linux",
-        "Darwin",
-    ]
+    max_time_per_model_flag = (
+        max_time_per_model is not None
+        and not parent_wrapper.is_nn
+        and platform.system() in ["Linux", "Darwin"]
+    )
     if max_time_per_model_flag:
         signal.signal(signal.SIGALRM, signal_handler)
 
@@ -363,6 +365,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # train the model
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
+                # Put a lower bound on target at bad_target.
+                # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
+                target = max(target, bad_target)
             except KeyboardInterrupt:
                 print("KeyboardInterrupt: Returning with current objects.")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
@@ -370,7 +375,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 return optimizer.max, optimizer
             except RuntimeError as error:
                 if "out of memory" in str(error):
-                    print("Ran out of memory, returning -inf as loss")
+                    print(f"Ran out of memory, returning {bad_target:.0g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
@@ -382,7 +387,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
             except Exception as error:
                 if "Out of Time!" in str(error):
-                    print("Ran out of time, returning -inf as loss")
+                    print(f"Ran out of time, returning {bad_target:.0g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
