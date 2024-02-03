@@ -52,8 +52,8 @@ class AutoARIMAWrapper(TSModelWrapper):
     }
 
     _fixed_hyperparams_AutoARIMA = {
-        "m_AutoARIMA": 0,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-        # "m_AutoARIMA": 1,  # Default
+        # "m_AutoARIMA": 0,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+        "m_AutoARIMA": 1,  # Default
         "stationary": True,
         # Increase max values
         "max_p": 15,
