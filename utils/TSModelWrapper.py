@@ -16,6 +16,10 @@ import zoneinfo
 from typing import TYPE_CHECKING, Any, Final, SupportsInt
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    import pytorch_lightning
+
 import sympy
 import torch
 import torchmetrics
@@ -23,6 +27,7 @@ from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.utilities.warnings import PossibleUserWarning
 
@@ -104,6 +109,24 @@ def get_pl_trainer_kwargs(
     """
     if accelerator is None:
         accelerator = "auto"
+
+    class MyExceptionCallback(Callback):
+        """Callback which passes on any exceptions.
+
+        See the following for context:
+            https://github.com/Lightning-AI/pytorch-lightning/issues/11924
+            https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/callback.html#Callback.on_exception
+        """
+
+        def on_exception(
+            self: "MyExceptionCallback",
+            trainer: "pytorch_lightning.Trainer",  # noqa: U100
+            pl_module: "pytorch_lightning.LightningModule",  # noqa: U100
+            exception: BaseException,
+        ) -> None:
+            print(f"Caught {exception = } in lightning trainer, passing it on!")
+            raise exception
+
     return {
         "enable_progress_bar": enable_progress_bar,
         "max_time": max_time,
@@ -115,7 +138,8 @@ def get_pl_trainer_kwargs(
                 patience=es_patience,
                 monitor="val_loss",
                 mode="min",
-            )
+            ),
+            MyExceptionCallback(),
         ],
     }
 

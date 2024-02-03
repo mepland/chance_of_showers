@@ -1431,7 +1431,17 @@ display(dfp_cpu)
 display(dfp_gpu)
 
 # %%
-dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=("_cpu", "_gpu"))
+suffixes = ("_cpu", "_gpu")
+dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=suffixes)
+paired_cols = ["datetime_elapsed", "datetime_delta"]
+ordered_cols = ["i_point"]
+for _0 in paired_cols:
+    for _1 in suffixes:
+        ordered_cols.append(f"{_0}_{_1}")
+dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not in ordered_cols]]
+dfp_merged = dfp_merged.loc[
+    (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])
+]
 display(dfp_merged)
 
 
