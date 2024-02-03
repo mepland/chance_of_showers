@@ -1388,6 +1388,7 @@ optimal_values, optimizer = run_bayesian_opt(
     n_iter=2,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=40),
+    accelerator = "auto",
     display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
