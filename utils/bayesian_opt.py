@@ -169,7 +169,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
-        max_time_per_model: Set the maximum amount of time for each iteration, with 1 minute of grace. NN training will be interrupted mid-epoch prior to the 1 minute grace period.
+        max_time_per_model: Set the maximum amount of training time for each iteration.
+            Torch models will use max_time_per_model as the max time per epoch,
+            while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
@@ -362,7 +364,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     assert isinstance(  # noqa: SCS108 # nosec assert_used
                         max_time_per_model, datetime.timedelta
                     )
-                signal.alarm((max_time_per_model + datetime.timedelta(seconds=10)).seconds)
+                signal.alarm(max_time_per_model.seconds)
 
             # train the model
             try:
