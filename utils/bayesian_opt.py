@@ -493,7 +493,9 @@ Unexpected error in run_bayesian_opt():
 {error = }
 {type(error) = }
 {traceback.format_exc()}
+
 next_point_to_probe = {pprint.pformat(next_point_to_probe)}
+
 next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}
 
 Returning with current objects."""
