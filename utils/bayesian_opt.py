@@ -5,6 +5,7 @@ import gc
 import json
 import pathlib
 import platform
+import pprint
 import signal
 import traceback
 from types import FrameType  # noqa: TC003
@@ -245,7 +246,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper, **model_wrapper_kwargs)
-    _model_wrapper.alter_fixed_hyperparams(fixed_hyperparams_to_alter=fixed_hyperparams_to_alter)
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -488,7 +488,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         )
     except Exception as error:
         print(
-            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
+            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nnext_point_to_probe = {pprint.pformat(next_point_to_probe)}\n\nReturning with current objects."
         )
 
     optimizer.dispatch(Events.OPTIMIZATION_END)
