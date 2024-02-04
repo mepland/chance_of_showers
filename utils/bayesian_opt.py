@@ -488,7 +488,15 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         )
     except Exception as error:
         print(
-            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nnext_point_to_probe = {pprint.pformat(next_point_to_probe)}\n\nReturning with current objects."
+            f"""
+Unexpected error in run_bayesian_opt():
+{error = }
+{type(error) = }
+{traceback.format_exc()}
+next_point_to_probe = {pprint.pformat(next_point_to_probe)}
+next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}
+
+Returning with current objects."""
         )
 
     optimizer.dispatch(Events.OPTIMIZATION_END)
