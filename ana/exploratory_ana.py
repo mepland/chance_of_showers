@@ -1403,7 +1403,8 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=LightGBMModelWrapper,
+    model_wrapper_class=CrostonWrapper,
+    model_wrapper_kwargs={"version": "optimized"},
     n_iter=5,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=10),

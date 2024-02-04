@@ -8,7 +8,7 @@ import platform
 import signal
 import traceback
 from types import FrameType  # noqa: TC003
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import bayes_opt
 import humanize
@@ -62,6 +62,42 @@ from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 # isort: on
+
+WrapperTypes: TypeAlias = type[
+    # Prophet
+    ProphetWrapper
+    # PyTorch NN Models
+    | NBEATSModelWrapper
+    | NHiTSModelWrapper
+    | TCNModelWrapper
+    | TransformerModelWrapper
+    | TFTModelWrapper
+    | DLinearModelWrapper
+    | NLinearModelWrapper
+    | TiDEModelWrapper
+    | RNNModelWrapper
+    | BlockRNNModelWrapper
+    # Statistical Models
+    | AutoARIMAWrapper
+    | BATSWrapper
+    | TBATSWrapper
+    | FourThetaWrapper
+    | StatsForecastAutoThetaWrapper
+    | FFTWrapper
+    | KalmanForecasterWrapper
+    | CrostonWrapper
+    # Regression Models
+    | LinearRegressionModelWrapper
+    | RandomForestWrapper
+    | LightGBMModelWrapper
+    | XGBModelWrapper
+    | CatBoostModelWrapper
+    # Naive Models
+    | NaiveMeanWrapper
+    | NaiveSeasonalWrapper
+    | NaiveDriftWrapper
+    | NaiveMovingAverageWrapper
+]
 
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
@@ -135,42 +171,9 @@ n_points = 0  # # pylint: disable=invalid-name
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     parent_wrapper: TSModelWrapper,
-    model_wrapper_class: type[
-        # Prophet
-        ProphetWrapper
-        # PyTorch NN Models
-        | NBEATSModelWrapper
-        | NHiTSModelWrapper
-        | TCNModelWrapper
-        | TransformerModelWrapper
-        | TFTModelWrapper
-        | DLinearModelWrapper
-        | NLinearModelWrapper
-        | TiDEModelWrapper
-        | RNNModelWrapper
-        | BlockRNNModelWrapper
-        # Statistical Models
-        | AutoARIMAWrapper
-        | BATSWrapper
-        | TBATSWrapper
-        | FourThetaWrapper
-        | StatsForecastAutoThetaWrapper
-        | FFTWrapper
-        | KalmanForecasterWrapper
-        | CrostonWrapper
-        # Regression Models
-        | LinearRegressionModelWrapper
-        | RandomForestWrapper
-        | LightGBMModelWrapper
-        | XGBModelWrapper
-        | CatBoostModelWrapper
-        # Naive Models
-        | NaiveMeanWrapper
-        | NaiveSeasonalWrapper
-        | NaiveDriftWrapper
-        | NaiveMovingAverageWrapper
-    ],
+    model_wrapper_class: WrapperTypes,
     *,
+    model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
     allow_duplicate_points: bool = False,
@@ -182,6 +185,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     enable_progress_bar: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
+    fixed_hyperparams_to_alter: dict | None = None,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -192,6 +196,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     Args:
         parent_wrapper: TSModelWrapper object containing all parent configs.
         model_wrapper_class: TSModelWrapper class to optimize.
+        model_wrapper_kwargs: kwargs to passs to model_wrapper.
         hyperparams_to_opt: List of hyperparameters to optimize.
             If None, use all configurable hyperparameters.
         n_iter: How many iterations of Bayesian optimization to perform.
@@ -215,6 +220,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+        fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter, but not optimize.
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
@@ -234,8 +240,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # np.finfo(np.float64).min + 1 does not work, sklearn errors
     bad_target = -999
 
+    if model_wrapper_kwargs is None:
+        model_wrapper_kwargs = {}
+
     # Setup hyperparameters
-    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper, **model_wrapper_kwargs)
+    _model_wrapper.alter_fixed_hyperparams(fixed_hyperparams_to_alter=fixed_hyperparams_to_alter)
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -369,7 +379,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
             # Create a fresh model_wrapper object to try to avoid GPU memory leaks
             # This may not be necessary, but as it is already coded, just be safe and leave it
-            model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+            model_wrapper = model_wrapper_class(
+                TSModelWrapper=parent_wrapper, **model_wrapper_kwargs
+            )
+            model_wrapper.alter_fixed_hyperparams(
+                fixed_hyperparams_to_alter=fixed_hyperparams_to_alter
+            )
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
             model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
             model_wrapper.set_max_time(max_time=max_time_per_model)

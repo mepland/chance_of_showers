@@ -781,6 +781,26 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return n_prediction_steps, time_bin_size
 
+    def alter_fixed_hyperparams(
+        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: dict | None
+    ) -> None:
+        """Alter fixed_hyperparams for this model wrapper.
+
+        Args:
+            fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter.
+        """
+        if fixed_hyperparams_to_alter is None:
+            fixed_hyperparams_to_alter = {}
+
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+
+        _fixed_hyperparams.update(fixed_hyperparams_to_alter)
+
+        if _fixed_hyperparams != {}:
+            self.fixed_hyperparams = _fixed_hyperparams
+
     def set_max_time(
         self: "TSModelWrapper",
         *,
