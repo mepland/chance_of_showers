@@ -419,7 +419,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 return optimizer.max, optimizer
             except RuntimeError as error:
                 if "out of memory" in str(error):
-                    print(f"Ran out of memory, returning {bad_target:.0g} as loss")
+                    print(f"Ran out of memory, returning {bad_target:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
@@ -431,7 +431,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
             except Exception as error:
                 if "Out of Time!" in str(error):
-                    print(f"Ran out of time, returning {bad_target:.0g} as loss")
+                    print(f"Ran out of time, returning {bad_target:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
