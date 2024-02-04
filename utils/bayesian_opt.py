@@ -346,7 +346,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # Setup signal_handler to kill iteration if it runs too long
     def signal_handler(
         dummy_signal: int,  # noqa: U100
-        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=used-before-assignment
+        dummy_frame: FrameType | None,  # noqa: U100
     ) -> None:
         """Stop iteration gracefuly.
 

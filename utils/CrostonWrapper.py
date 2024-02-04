@@ -17,7 +17,7 @@ from utils.TSModelWrapper import (
 )
 
 
-class CrostonWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attributes
+class CrostonWrapper(TSModelWrapper):
     """Croston wrapper.
 
     https://unit8co.github.io/darts/generated_api/darts.models.forecasting.croston.html

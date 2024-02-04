@@ -19,7 +19,7 @@ from utils.TSModelWrapper import (
 )
 
 
-class RNNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attributes
+class RNNModelWrapper(TSModelWrapper):
     """RNNModel wrapper.
 
     https://unit8co.github.io/darts/generated_api/darts.models.forecasting.rnn_model.html

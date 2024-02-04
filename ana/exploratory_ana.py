@@ -30,7 +30,6 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-# pylint: disable=import-error
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -94,9 +93,7 @@ from utils.plotting import (
     plot_hists,
 )
 
-# pylint: enable=import-error
 # isort: on
-# pylint: disable=unreachable
 
 # %%
 initialize(version_base=None, config_path="..")

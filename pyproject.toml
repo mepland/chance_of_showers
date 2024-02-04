@@ -249,6 +249,9 @@ disable = [
     "logging-fstring-interpolation",
     "logging-not-lazy"
 ]
+enable = [
+    "useless-suppression"
+]
 
 [tool.pylint.design]
 max-args = 15

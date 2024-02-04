@@ -884,7 +884,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.work_dir_base is None:
                 raise ValueError("Must have a valid work_dir_base!")
             self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
-        elif work_dir_absolute is not None:  # pylint: disable=no-else-raise
+        elif work_dir_absolute is not None:
             self.work_dir = work_dir_absolute
         else:
             raise ValueError("Must use at least one parameter!")
@@ -1289,9 +1289,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
-    def train_model(  # pylint: disable=too-many-locals,too-many-statements
-        self: "TSModelWrapper", **kwargs: float
-    ) -> float:
+    def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
         """Train the model and return loss.
 
         Args:

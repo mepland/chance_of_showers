@@ -18,7 +18,7 @@ from utils.TSModelWrapper import (
 )
 
 
-class TCNModelWrapper(TSModelWrapper):  # pylint: disable=too-many-instance-attributes
+class TCNModelWrapper(TSModelWrapper):
     """TCNModel wrapper.
 
     https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tcn_model.html
