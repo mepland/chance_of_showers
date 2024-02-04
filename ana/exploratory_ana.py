@@ -1131,7 +1131,7 @@ print(model_wrapper_KalmanForecaster)
 model_wrapper_Croston = CrostonWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     # variable_hyperparams={"input_chunk_length_in_minutes": 10},
-    variable_hyperparams={'time_bin_size_in_minutes': 1, 'y_presentation': 0},
+    variable_hyperparams={"time_bin_size_in_minutes": 1, "y_presentation": 0},
     version="optimized",
 )
 model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
