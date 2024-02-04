@@ -607,7 +607,6 @@ configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NBEATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NBEATS.train_model()
 print(f"{val_loss = }")
 
@@ -642,7 +641,6 @@ configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NHiTS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NHiTS.train_model()
 print(f"{val_loss = }")
 
@@ -677,7 +675,6 @@ configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TCN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TCN.train_model()
 print(f"{val_loss = }")
 
@@ -712,7 +709,6 @@ configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparam
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Transformer.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Transformer.train_model()
 print(f"{val_loss = }")
 
@@ -747,7 +743,6 @@ configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TFT.train_model()
 print(f"{val_loss = }")
 
@@ -782,7 +777,6 @@ configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_DLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_DLinear.train_model()
 print(f"{val_loss = }")
 
@@ -817,7 +811,6 @@ configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NLinear.train_model()
 print(f"{val_loss = }")
 
@@ -852,7 +845,6 @@ configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TiDE.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TiDE.train_model()
 print(f"{val_loss = }")
 
@@ -889,7 +881,6 @@ configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RNN.train_model()
 print(f"{val_loss = }")
 
@@ -926,7 +917,6 @@ configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BlockRNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BlockRNN.train_model()
 print(f"{val_loss = }")
 
@@ -967,7 +957,6 @@ configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_AutoARIMA.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_AutoARIMA.train_model()
 print(f"{val_loss = }")
 
@@ -993,7 +982,6 @@ configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BATS.train_model()
 print(f"{val_loss = }")
 
@@ -1019,7 +1007,6 @@ configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TBATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TBATS.train_model()
 print(f"{val_loss = }")
 
@@ -1045,7 +1032,6 @@ configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FourTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FourTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1076,7 +1062,6 @@ configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_StatsForecastAutoTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1102,7 +1087,6 @@ configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FFT.train_model()
 print(f"{val_loss = }")
 
@@ -1128,7 +1112,6 @@ configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyper
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_KalmanForecaster.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_KalmanForecaster.train_model()
 print(f"{val_loss = }")
 
@@ -1147,7 +1130,8 @@ print(model_wrapper_KalmanForecaster)
 # %%
 model_wrapper_Croston = CrostonWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10},
+    # variable_hyperparams={"input_chunk_length_in_minutes": 10},
+    variable_hyperparams={'time_bin_size_in_minutes': 1, 'y_presentation': 0},
     version="optimized",
 )
 model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1158,7 +1142,6 @@ configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Croston.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Croston.train_model()
 print(f"{val_loss = }")
 
@@ -1189,7 +1172,6 @@ configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LinearRegressionModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LinearRegressionModel.train_model()
 print(f"{val_loss = }")
 
@@ -1215,7 +1197,6 @@ configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperpara
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RandomForest.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RandomForest.train_model()
 print(f"{val_loss = }")
 
@@ -1242,7 +1223,6 @@ configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LightGBMModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LightGBMModel.train_model()
 print(f"{val_loss = }")
 
@@ -1268,7 +1248,6 @@ configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_XGBModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_XGBModel.train_model()
 print(f"{val_loss = }")
 
@@ -1294,7 +1273,6 @@ configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_CatBoostModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_CatBoostModel.train_model()
 print(f"{val_loss = }")
 
