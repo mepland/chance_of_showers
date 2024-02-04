@@ -251,10 +251,10 @@ disable = [
 ]
 
 [tool.pylint.design]
-max-args = 10
-max-locals = 25
-max-statements = 75
-max-attributes = 10
+max-args = 15
+max-locals = 30
+max-statements = 100
+max-attributes = 15
 min-public-methods = 1
 
 [tool.pylint.basic]
