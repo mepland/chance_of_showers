@@ -61,14 +61,17 @@ if not logger_ts_wrapper.handlers:
     logger_ts_wrapper.addHandler(logging.StreamHandler(sys.stdout))
 
 # loss function
-LOSS_FN: Final = torchmetrics.MeanSquaredError()
+LOSS_FN: Final = torchmetrics.MeanSquaredError(squared=True)
 
 # metrics to log at each epoch
 METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
-    [
-        torchmetrics.MeanSquaredError(),
-        torchmetrics.MeanAbsolutePercentageError(),
-    ]
+    {
+        "MSE": torchmetrics.MeanSquaredError(squared=True),
+        "MSLE": torchmetrics.MeanSquaredLogError(),
+        "MAE": torchmetrics.MeanAbsoluteError(),
+        "MAPE": torchmetrics.MeanAbsolutePercentageError(),
+        "sMAPE": torchmetrics.SymmetricMeanAbsolutePercentageError(),
+    }
 )
 
 
