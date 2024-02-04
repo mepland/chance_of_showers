@@ -357,7 +357,7 @@ else:
     raise UserWarning("CUDA IS NOT AVAILABLE!")
 
 # %%
-raise UserWarning("Stopping Here")
+# raise UserWarning("Stopping Here")
 
 # %% [markdown]
 # ***
@@ -1361,22 +1361,18 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 
 
 # %%
-# # PyTorch NN Models
-# NHiTSModelWrapper
-# TCNModelWrapper
+# TEST
 # TransformerModelWrapper
 # TFTModelWrapper
 # NLinearModelWrapper
 
-# # Statistical Models
-# FourThetaWrapper
-# StatsForecastAutoThetaWrapper
-
 # # Regression Models
 # LightGBMModelWrapper
 
-
-# TODO fix
+# FIX
+# TCNModelWrapper
+# FourThetaWrapper
+# StatsForecastAutoThetaWrapper
 # CrostonWrapper
 # KalmanForecasterWrapper
 # RNNModelWrapper
@@ -1386,12 +1382,12 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NHiTSModelWrapper,
-    n_iter=10,
+    model_wrapper_class=LightGBMModelWrapper,
+    n_iter=5,
     enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=40),
-    accelerator="gpu",
-    display_memory_usage=True,
+    max_time_per_model=datetime.timedelta(minutes=10),
+    accelerator="auto",
+    display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
@@ -1403,7 +1399,7 @@ pprint.pprint(optimal_values)
 # ## DEV: Compare Run Times
 
 # %%
-model_name = "DLinearModel"  # pylint: disable=invalid-name
+model_name = "NHiTSModel"  # pylint: disable=invalid-name
 
 dfp_cpu = load_json_log_to_dfp(
     pathlib.Path(
@@ -1429,7 +1425,9 @@ suffixes = ("_cpu", "_gpu")
 dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=suffixes)
 
 ordered_cols = ["datetime_elapsed", "datetime_delta"]
-paired_cols = ordered_cols + [_.replace("_cpu", "") for _ in dfp_gpu.columns if _ not in ["i_point"] + ordered_cols]
+paired_cols = ordered_cols + [
+    _.replace("_cpu", "") for _ in dfp_gpu.columns if _ not in ["i_point"] + ordered_cols
+]
 ordered_cols = ["i_point"]
 for _0 in paired_cols:
     for _1 in suffixes:
@@ -1438,7 +1436,7 @@ dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not i
 dfp_merged = dfp_merged.loc[
     (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])
 ]
-with pd.option_context('display.max_rows', 10, 'display.max_columns', None):
+with pd.option_context("display.max_rows", 10, "display.max_columns", None):
     display(dfp_merged)
 
 
