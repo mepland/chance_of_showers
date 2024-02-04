@@ -1366,9 +1366,6 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # TFTModelWrapper
 # NLinearModelWrapper
 
-# # Regression Models
-# LightGBMModelWrapper
-
 # FIX
 # TCNModelWrapper
 # FourThetaWrapper
