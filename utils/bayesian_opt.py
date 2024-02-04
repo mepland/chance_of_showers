@@ -177,6 +177,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
     verbose: int = 2,
+    model_verbose: int = -1,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
@@ -206,7 +207,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         utility_kappa: Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
+        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of training time for each iteration.
@@ -234,7 +236,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-    _model_wrapper.verbose = verbose
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -373,6 +374,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
             model_wrapper.set_max_time(max_time=max_time_per_model)
             model_wrapper.set_accelerator(accelerator=accelerator)
+            model_wrapper.verbose = model_verbose
 
             # Check if we already tested this chosen_hyperparams point
             # If it has been tested, save the raw next_point_to_probe with the same target and continue
