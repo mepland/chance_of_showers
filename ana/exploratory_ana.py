@@ -1421,6 +1421,14 @@ dfp_gpu = load_json_log_to_dfp(
 
 
 # %%
+if dfp_cpu is None:
+    raise ValueError("Could not load dfp_cpu")
+if dfp_gpu is None:
+    raise ValueError("Could not load dfp_gpu")
+if TYPE_CHECKING:
+    assert isinstance(dfp_cpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
+    assert isinstance(dfp_gpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
+
 suffixes = ("_cpu", "_gpu")
 dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=suffixes)
 
