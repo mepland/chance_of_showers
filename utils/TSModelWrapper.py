@@ -1362,7 +1362,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.chosen_hyperparams.get("rebin_y", 0):
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
-            logger_ts_wrapper.debug(
+            logger_ts_wrapper.info(
                 "Missing %.1g%% of values, filling via %s interpolation.",
                 100.0 * frac_missing,
                 interpolate_method,
