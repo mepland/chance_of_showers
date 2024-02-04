@@ -1067,6 +1067,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = self.work_dir
             elif hyperparam == "y_presentation":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 1:  # y is binned
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
@@ -1336,15 +1339,17 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         freq_str = f'{self.chosen_hyperparams["time_bin_size_in_minutes"]}min'
         y_presentation = self.chosen_hyperparams["y_presentation"]
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
+        y_col = "y_unclipped" if y_presentation == 2 else "y"
 
         dfp_trainable = rebin_chance_of_showers_time_series(
             self.dfp_trainable_evergreen,
             "ds",
-            "y_unclipped" if y_presentation == 2 else "y",
+            y_col,
             time_bin_size=time_bin_size,
             other_cols_to_agg_dict={"had_flow": "max"},
             y_bin_edges=y_bin_edges,
         )
+        dfp_trainable = dfp_trainable.rename(columns={y_col: "y"})
 
         dfp_trainable = create_datetime_component_cols(
             dfp_trainable, datetime_col="ds", date_fmt=self.date_fmt, time_fmt=self.time_fmt
