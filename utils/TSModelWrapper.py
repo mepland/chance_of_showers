@@ -13,7 +13,7 @@ import pprint
 import sys
 import warnings
 import zoneinfo
-from typing import TYPE_CHECKING, Any, Final, SupportsInt
+from typing import TYPE_CHECKING, Any, Final
 
 import pandas as pd
 
@@ -185,7 +185,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
 DATA_REQUIRED_HYPERPARAMS: Final = [
     "time_bin_size_in_minutes",
     "prediction_length_in_minutes",
-    "rebin_y",
+    "y_presentation",
     "y_bin_edges",
     # not required by all models, but we'll check
     # supports_future_covariates and supports_past_covariates for each model later and configure appropriately
@@ -200,11 +200,12 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "max": 20,
         "default": 10,
     },
-    "rebin_y": {
+    # 0 = normalized and clipped, 1 = normalized and clipped and binned, 2 = normalized and unclipped
+    "y_presentation": {
         "min": 0,
-        "max": 1,
+        "max": 2,
         "default": 0,
-        "type": bool,
+        "type": int,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
     # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
@@ -1044,14 +1045,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = self.random_state
             elif hyperparam == "work_dir":
                 hyperparam_value = self.work_dir
-            elif hyperparam == "rebin_y":
+            elif hyperparam == "y_presentation":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(  # noqa: SCS108 # nosec assert_used
-                        hyperparam_value, SupportsInt
-                    )
-                hyperparam_value = int(hyperparam_value)
-                if hyperparam_value:
+                if hyperparam_value == 1:  # y is binned
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
@@ -1270,7 +1266,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
-    def train_model(  # pylint: disable=too-many-locals
+    def train_model(  # pylint: disable=too-many-locals,too-many-statements
         self: "TSModelWrapper", **kwargs: float
     ) -> float:
         """Train the model and return loss.
@@ -1318,12 +1314,13 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # data prep
         time_bin_size = self.chosen_hyperparams["time_bin_size"]
         freq_str = f'{self.chosen_hyperparams["time_bin_size_in_minutes"]}min'
+        y_presentation = self.chosen_hyperparams["y_presentation"]
         y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
 
         dfp_trainable = rebin_chance_of_showers_time_series(
             self.dfp_trainable_evergreen,
             "ds",
-            "y",
+            "y_unclipped" if y_presentation == 2 else "y",
             time_bin_size=time_bin_size,
             other_cols_to_agg_dict={"had_flow": "max"},
             y_bin_edges=y_bin_edges,
@@ -1362,7 +1359,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if 0 < frac_missing:
             interpolate_method = "linear"
             interpolate_limit_direction = "both"
-            if self.chosen_hyperparams.get("rebin_y", 0):
+            if y_presentation == 1:  # y is binned
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
             logger_ts_wrapper.info(

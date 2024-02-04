@@ -198,6 +198,14 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     clip=True,
 )
 
+# unclipped
+dfp_data["mean_pressure_value_normalized_unclipped"] = dfp_data["mean_pressure_value"].apply(
+    normalize_pressure_value,
+    observed_pressure_min=OBSERVED_PRESSURE_MIN,
+    observed_pressure_max=OBSERVED_PRESSURE_MAX,
+    clip=False,
+)
+
 # create local datetime columns
 dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE)
 
@@ -233,6 +241,7 @@ dfp_data = dfp_data[
         "datetime_local",
         "mean_pressure_value",
         "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
         "had_flow",
         "datetime_local_same_day",
         "datetime_local_same_week",
@@ -255,7 +264,13 @@ with pd.option_context("display.max_rows", 5, "display.max_columns", None):
     display(dfp_data)
 
 # %%
-dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
+dfp_data[
+    [
+        "mean_pressure_value",
+        "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
+    ]
+].describe()
 
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
@@ -297,13 +312,24 @@ Actual Min Mean Pressure with Flow = {actual_min_mean_pressure_value_with_flow}
 # ## Evergreen Training Data Prep
 
 # %%
-dfp_trainable_evergreen = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
+dfp_trainable_evergreen = dfp_data[
+    [
+        "datetime_local",
+        "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
+        "had_flow",
+    ]
+]
 dfp_trainable_evergreen = dfp_trainable_evergreen.loc[
     (TRAINABLE_START_DATETIME_LOCAL <= dfp_trainable_evergreen["datetime_local"])
     & (dfp_trainable_evergreen["datetime_local"] < TRAINABLE_END_DATETIME_LOCAL)
 ]
 dfp_trainable_evergreen = dfp_trainable_evergreen.rename(
-    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
+    columns={
+        "datetime_local": "ds",
+        "mean_pressure_value_normalized": "y",
+        "mean_pressure_value_normalized_unclipped": "y_unclipped",
+    }
 )
 dfp_trainable_evergreen["ds"] = dfp_trainable_evergreen["ds"].dt.tz_localize(None)
 
@@ -373,7 +399,7 @@ from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 20, "rebin_y": False},
+    variable_hyperparams={"time_bin_size_in_minutes": 20},
 )
 model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Prophet)
@@ -571,7 +597,7 @@ display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 # %%
 model_wrapper_NBEATS = NBEATSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NBEATS)
@@ -606,7 +632,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_NHiTS = NHiTSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NHiTS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NHiTS)
@@ -641,7 +667,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_TCN = TCNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_TCN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TCN)
@@ -676,7 +702,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_Transformer = TransformerModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_Transformer.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Transformer)
@@ -711,7 +737,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_TFT = TFTModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TFT)
@@ -746,7 +772,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_DLinear = DLinearModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_DLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_DLinear)
@@ -781,7 +807,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_NLinear = NLinearModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NLinear)
@@ -816,7 +842,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_TiDE = TiDEModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_TiDE.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TiDE)
@@ -852,7 +878,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_RNN = RNNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
     model="RNN",
 )
 model_wrapper_RNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -889,7 +915,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_BlockRNN = BlockRNNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
     model="RNN",
 )
 model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -930,7 +956,6 @@ model_wrapper_AutoARIMA = AutoARIMAWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={
         "input_chunk_length_in_minutes": 10,
-        "rebin_y": True,
         # "m_AutoARIMA": 0,  # Runs extremely slow...
     },
 )
@@ -958,7 +983,7 @@ print(model_wrapper_AutoARIMA)
 # %%
 model_wrapper_BATS = BATSWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_BATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_BATS)
@@ -984,7 +1009,7 @@ print(model_wrapper_BATS)
 # %%
 model_wrapper_TBATS = TBATSWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_TBATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TBATS)
@@ -1010,7 +1035,7 @@ print(model_wrapper_TBATS)
 # %%
 model_wrapper_FourTheta = FourThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_FourTheta.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_FourTheta)
@@ -1038,7 +1063,6 @@ model_wrapper_StatsForecastAutoTheta = StatsForecastAutoThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={
         "input_chunk_length_in_minutes": 10,
-        "rebin_y": True,
         "season_length_StatsForecastAutoTheta": 0,
     },
 )
@@ -1068,7 +1092,7 @@ print(model_wrapper_StatsForecastAutoTheta)
 # %%
 model_wrapper_FFT = FFTWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_FFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_FFT)
@@ -1094,7 +1118,7 @@ print(model_wrapper_FFT)
 # %%
 model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_KalmanForecaster.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_KalmanForecaster)
@@ -1123,7 +1147,7 @@ print(model_wrapper_KalmanForecaster)
 # %%
 model_wrapper_Croston = CrostonWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
     version="optimized",
 )
 model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1153,7 +1177,7 @@ print(model_wrapper_Croston)
 # %%
 model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_LinearRegressionModel.set_work_dir(
     work_dir_relative_to_base=pathlib.Path("local_dev")
@@ -1181,7 +1205,7 @@ print(model_wrapper_LinearRegressionModel)
 # %%
 model_wrapper_RandomForest = RandomForestWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_RandomForest)
@@ -1207,7 +1231,7 @@ print(model_wrapper_RandomForest)
 # %%
 model_wrapper_LightGBMModel = LightGBMModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_LightGBMModel.verbose = -1  # Silence [LightGBM] [Info] messages
 model_wrapper_LightGBMModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1234,7 +1258,7 @@ print(model_wrapper_LightGBMModel)
 # %%
 model_wrapper_XGBModel = XGBModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_XGBModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_XGBModel)
@@ -1260,7 +1284,7 @@ print(model_wrapper_XGBModel)
 # %%
 model_wrapper_CatBoostModel = CatBoostModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_CatBoostModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_CatBoostModel)
@@ -1286,7 +1310,7 @@ print(model_wrapper_CatBoostModel)
 # %%
 model_wrapper_NaiveMean = NaiveMeanWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NaiveMean.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1302,7 +1326,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveSeasonal = NaiveSeasonalWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NaiveSeasonal.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1318,7 +1342,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveDrift = NaiveDriftWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NaiveDrift.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1334,7 +1358,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveMovingAverage = NaiveMovingAverageWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"input_chunk_length_in_minutes": 10},
 )
 model_wrapper_NaiveMovingAverage.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
