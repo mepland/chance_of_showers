@@ -84,7 +84,7 @@ class FFTWrapper(TSModelWrapper):
                 local_timezone=kwargs["local_timezone"],
                 model_class=self._model_class,
                 is_nn=self._is_nn,
-                verbose = kwargs.get("verbose", 1),
+                verbose=kwargs.get("verbose", 1),
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
