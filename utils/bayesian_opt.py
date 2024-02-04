@@ -2,13 +2,18 @@
 
 import datetime
 import gc
+import json
 import pathlib
+import platform
+import signal
 import traceback
-from typing import Final
+from types import FrameType  # noqa: TC003
+from typing import TYPE_CHECKING, Final
 
 import bayes_opt
 import humanize
 import numpy as np
+import pandas as pd
 import psutil
 import torch
 from bayes_opt.event import DEFAULT_EVENTS, Events
@@ -18,11 +23,83 @@ from bayes_opt.util import load_logs
 # isort: off
 from utils.TSModelWrapper import TSModelWrapper  # noqa: TC001
 
+# Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
+
+# PyTorch NN Models
 from utils.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: TC001
 from utils.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: TC001
+from utils.TCNModelWrapper import TCNModelWrapper  # noqa: TC001
+from utils.TransformerModelWrapper import TransformerModelWrapper  # noqa: TC001
+from utils.TFTModelWrapper import TFTModelWrapper  # noqa: TC001
+from utils.DLinearModelWrapper import DLinearModelWrapper  # noqa: TC001
+from utils.NLinearModelWrapper import NLinearModelWrapper  # noqa: TC001
+from utils.TiDEModelWrapper import TiDEModelWrapper  # noqa: TC001
+from utils.RNNModelWrapper import RNNModelWrapper  # noqa: TC001
+from utils.BlockRNNModelWrapper import BlockRNNModelWrapper  # noqa: TC001
+
+# Statistical Models
+from utils.AutoARIMAWrapper import AutoARIMAWrapper  # noqa: TC001
+from utils.BATSWrapper import BATSWrapper  # noqa: TC001
+from utils.TBATSWrapper import TBATSWrapper  # noqa: TC001
+from utils.FourThetaWrapper import FourThetaWrapper  # noqa: TC001
+from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper  # noqa: TC001
+from utils.FFTWrapper import FFTWrapper  # noqa: TC001
+from utils.KalmanForecasterWrapper import KalmanForecasterWrapper  # noqa: TC001
+from utils.CrostonWrapper import CrostonWrapper  # noqa: TC001
+
+# Regression Models
+from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper  # noqa: TC001
+from utils.RandomForestWrapper import RandomForestWrapper  # noqa: TC001
+from utils.LightGBMModelWrapper import LightGBMModelWrapper  # noqa: TC001
+from utils.XGBModelWrapper import XGBModelWrapper  # noqa: TC001
+from utils.CatBoostModelWrapper import CatBoostModelWrapper  # noqa: TC001
+
+# Naive Models
+from utils.NaiveMeanWrapper import NaiveMeanWrapper  # noqa: TC001
+from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper  # noqa: TC001
+from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
+from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 # isort: on
+
+
+def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
+    """Load prior bayes_opt log from json file as a pandas dataframe.
+
+    Args:
+        f_path: Full path to json log file.
+
+    Returns:
+        Log as pandas dataframe.
+    """
+    # Adapted from:
+    # https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/util.py#L214-L241
+    with open(str(f_path), encoding="utf-8") as f_json:
+        rows = []
+        while True:
+            try:
+                iteration = next(f_json)
+            except StopIteration:
+                break
+
+            row = {}
+            for _k0, _v0 in dict(sorted(json.loads(iteration).items())).items():
+                if isinstance(_v0, dict):
+                    for _k1, _v1 in dict(sorted(_v0.items())).items():
+                        row[f"{_k0}_{_k1}"] = _v1
+                else:
+                    row[_k0] = _v0
+            rows.append(row)
+        f_json.close()
+
+        if rows:
+            dfp = pd.DataFrame(rows)
+            dfp["i_point"] = dfp.index
+
+            cols_fixed = ["i_point", "datetime_datetime"]
+            return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
+        return None
 
 
 def print_memory_usage(*, header: str | None = None) -> None:
@@ -46,10 +123,10 @@ def print_memory_usage(*, header: str | None = None) -> None:
 
     if torch.cuda.is_available():
         gpu_memory_stats = torch.cuda.memory_stats()
-    memory_usage_str += (
-        f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
-        + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
-    )
+        memory_usage_str += (
+            f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
+            + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
+        )
     print(memory_usage_str)
 
 
@@ -59,8 +136,40 @@ n_points = 0  # # pylint: disable=invalid-name
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: type[
-        ProphetWrapper | NBEATSModelWrapper | NHiTSModelWrapper
-    ],  # expand with more classes
+        # Prophet
+        ProphetWrapper
+        # PyTorch NN Models
+        | NBEATSModelWrapper
+        | NHiTSModelWrapper
+        | TCNModelWrapper
+        | TransformerModelWrapper
+        | TFTModelWrapper
+        | DLinearModelWrapper
+        | NLinearModelWrapper
+        | TiDEModelWrapper
+        | RNNModelWrapper
+        | BlockRNNModelWrapper
+        # Statistical Models
+        | AutoARIMAWrapper
+        | BATSWrapper
+        | TBATSWrapper
+        | FourThetaWrapper
+        | StatsForecastAutoThetaWrapper
+        | FFTWrapper
+        | KalmanForecasterWrapper
+        | CrostonWrapper
+        # Regression Models
+        | LinearRegressionModelWrapper
+        | RandomForestWrapper
+        | LightGBMModelWrapper
+        | XGBModelWrapper
+        | CatBoostModelWrapper
+        # Naive Models
+        | NaiveMeanWrapper
+        | NaiveSeasonalWrapper
+        | NaiveDriftWrapper
+        | NaiveMovingAverageWrapper
+    ],
     *,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
@@ -68,9 +177,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
     verbose: int = 2,
+    model_verbose: int = -1,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
-    max_time_per_model: str | datetime.timedelta | dict[str, int] | None = None,
+    max_time_per_model: datetime.timedelta | None = None,
+    accelerator: str | None = "auto",
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -96,10 +207,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         utility_kappa: Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent. Also sets model_wrapper's verbose level.
+        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
-        max_time_per_model: Set the maximum amount of time for NN training. Training will get interrupted mid-epoch.
+        max_time_per_model: Set the maximum amount of training time for each iteration.
+            Torch models will use max_time_per_model as the max time per epoch,
+            while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
+        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
@@ -115,9 +230,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     """
     global n_points
 
+    # Set a finite, but horrible, loss for when the training fails to complete.
+    # np.finfo(np.float64).min + 1 does not work, sklearn errors
+    bad_target = -999
+
     # Setup hyperparameters
     _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-    _model_wrapper.verbose = verbose
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -191,7 +309,15 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         global n_points
         optimizer.register(params=point_to_probe, target=target)
         n_points += 1
-        if probed_point:
+        if probed_point and not (
+            # point_to_probe is exactly the same as probed_point on this iter,
+            # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
+            # Do not register the probed_point.
+            np.array_equiv(
+                optimizer.space.params_to_array(point_to_probe),
+                optimizer.space.params_to_array(probed_point),
+            )
+        ):
             optimizer.register(params=probed_point, target=target)
             n_points += 1
 
@@ -207,7 +333,33 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # clean up _model_wrapper
     del _model_wrapper
 
-    # run Bayesian optimization iterations
+    # Setup signal_handler to kill iteration if it runs too long
+    def signal_handler(
+        dummy_signal: int,  # noqa: U100
+        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=used-before-assignment
+    ) -> None:
+        """Stop iteration gracefuly.
+
+        https://medium.com/@chamilad/timing-out-of-long-running-methods-in-python-818b3582eed6
+
+        Args:
+            dummy_signal: signal number.
+            dummy_frame: Frame object.
+
+        Raises:
+            Exception: Out of Time!
+        """
+        raise Exception("Out of Time!")  # pylint: disable=broad-exception-raised
+
+    max_time_per_model_flag = (
+        max_time_per_model is not None
+        and not parent_wrapper.is_nn
+        and platform.system() in ["Linux", "Darwin"]
+    )
+    if max_time_per_model_flag:
+        signal.signal(signal.SIGALRM, signal_handler)
+
+    # Run Bayesian optimization iterations
     try:
         for i_iter in range(n_iter):
             if i_iter == 0:
@@ -219,9 +371,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # This may not be necessary, but as it is already coded, just be safe and leave it
             model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
-            model_wrapper.set_enable_progress_bar_and_max_time(
-                enable_progress_bar=enable_progress_bar, max_time=max_time_per_model
-            )
+            model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+            model_wrapper.set_max_time(max_time=max_time_per_model)
+            model_wrapper.set_accelerator(accelerator=accelerator)
+            model_wrapper.verbose = model_verbose
 
             # Check if we already tested this chosen_hyperparams point
             # If it has been tested, save the raw next_point_to_probe with the same target and continue
@@ -247,21 +400,52 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # set model_name_tag for this iteration
             model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
 
+            # Setup iteration kill timer
+            if max_time_per_model_flag:
+                if TYPE_CHECKING:
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        max_time_per_model, datetime.timedelta
+                    )
+                signal.alarm(max_time_per_model.seconds)
+
             # train the model
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
+                # Put a lower bound on target at bad_target.
+                # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
+                target = max(target, bad_target)
+            except KeyboardInterrupt:
+                print("KeyboardInterrupt: Returning with current objects.")
+                optimizer.dispatch(Events.OPTIMIZATION_END)
+
+                return optimizer.max, optimizer
             except RuntimeError as error:
                 if "out of memory" in str(error):
-                    print("Ran out of memory, returning -inf as loss")
+                    print(f"Ran out of memory, returning {bad_target:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        -float("inf"),
+                        bad_target,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
                     continue
                 raise error
+            except Exception as error:
+                if "Out of Time!" in str(error):
+                    print(f"Ran out of time, returning {bad_target:.3g} as loss")
+                    complete_iter(
+                        i_iter,
+                        model_wrapper,
+                        bad_target,
+                        next_point_to_probe,
+                        probed_point=next_point_to_probe_cleaned,
+                    )
+                    continue
+                raise error
+            finally:
+                if max_time_per_model_flag:
+                    signal.alarm(0)
 
             if enable_model_saves:
                 fname_model = (
@@ -278,6 +462,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 probed_point=next_point_to_probe_cleaned,
             )
 
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt: Returning with current objects.")
     except bayes_opt.util.NotUniqueError as error:
         print(
             str(error).replace(
@@ -289,6 +475,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         print(
             f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
         )
+
     optimizer.dispatch(Events.OPTIMIZATION_END)
 
     return optimizer.max, optimizer

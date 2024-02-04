@@ -13,9 +13,13 @@ import pprint
 import sys
 import warnings
 import zoneinfo
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, SupportsInt
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    import pytorch_lightning
+
 import sympy
 import torch
 import torchmetrics
@@ -23,6 +27,7 @@ from darts import TimeSeries
 from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
+from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.utilities.warnings import PossibleUserWarning
 
@@ -77,6 +82,7 @@ def get_pl_trainer_kwargs(
     *,
     enable_progress_bar: bool,
     max_time: str | datetime.timedelta | dict[str, int] | None,
+    accelerator: str | None = None,
     log_every_n_steps: int | None = None,
 ) -> dict:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
@@ -94,15 +100,37 @@ def get_pl_trainer_kwargs(
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
         enable_progress_bar: Enable torch progress bar during training.
-        max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
+        max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
+        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         log_every_n_steps: How often to log within steps.
 
     Returns:
         pl_trainer_kwargs.
     """
+    if accelerator is None:
+        accelerator = "auto"
+
+    class MyExceptionCallback(Callback):
+        """Callback which passes on any exceptions.
+
+        See the following for context:
+            https://github.com/Lightning-AI/pytorch-lightning/issues/11924
+            https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/callback.html#Callback.on_exception
+        """
+
+        def on_exception(
+            self: "MyExceptionCallback",
+            trainer: "pytorch_lightning.Trainer",  # noqa: U100
+            pl_module: "pytorch_lightning.LightningModule",  # noqa: U100
+            exception: BaseException,
+        ) -> None:
+            print(f"Caught {exception = } in lightning trainer, passing it on!")
+            raise exception
+
     return {
         "enable_progress_bar": enable_progress_bar,
         "max_time": max_time,
+        "accelerator": accelerator,
         "log_every_n_steps": log_every_n_steps,
         "callbacks": [
             EarlyStopping(
@@ -110,7 +138,8 @@ def get_pl_trainer_kwargs(
                 patience=es_patience,
                 monitor="val_loss",
                 mode="min",
-            )
+            ),
+            MyExceptionCallback(),
         ],
     }
 
@@ -447,6 +476,7 @@ NN_FIXED_HYPERPARAMS: Final = {
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
     "enable_progress_bar": True,
     "max_time": None,
+    "accelerator": None,
 }
 
 TREE_REQUIRED_HYPERPARAMS: Final = [
@@ -537,13 +567,6 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "min": 1,
         "max": 2,
         "default": 1,  # Multiplicative
-        "type": int,
-    },
-    # AutoARIMA
-    "m_AutoARIMA": {
-        "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-        "max": 1,  # Default
-        "default": 1,
         "type": int,
     },
 }
@@ -754,23 +777,54 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return n_prediction_steps, time_bin_size
 
-    def set_enable_progress_bar_and_max_time(
+    def set_max_time(
         self: "TSModelWrapper",
         *,
-        enable_progress_bar: bool,
         max_time: str | datetime.timedelta | dict[str, int] | None,
     ) -> None:
-        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+        """Set the max_time for this model wrapper.
 
         Args:
-            enable_progress_bar: Enable torch progress bar during training.
             max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
-        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
         _fixed_hyperparams["max_time"] = max_time
+
+        self.fixed_hyperparams = _fixed_hyperparams
+
+    def set_accelerator(
+        self: "TSModelWrapper",
+        *,
+        accelerator: str | datetime.timedelta | dict[str, int] | None,
+    ) -> None:
+        """Set the accelerator for this model wrapper.
+
+        Args:
+            accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+        """
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+        _fixed_hyperparams["accelerator"] = accelerator
+
+        self.fixed_hyperparams = _fixed_hyperparams
+
+    def set_enable_progress_bar(
+        self: "TSModelWrapper",
+        *,
+        enable_progress_bar: bool,
+    ) -> None:
+        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+
+        Args:
+            enable_progress_bar: Enable torch progress bar during training.
+        """
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
 
         self.fixed_hyperparams = _fixed_hyperparams
 
@@ -989,6 +1043,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = self.work_dir
             elif hyperparam == "rebin_y":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        hyperparam_value, SupportsInt
+                    )
+                hyperparam_value = int(hyperparam_value)
                 if hyperparam_value:
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
@@ -1003,6 +1062,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "es_patience",
                 "enable_progress_bar",
                 "max_time",
+                "accelerator",
                 "lr_factor",
                 "lr_patience",
             ]:
@@ -1028,11 +1088,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 self.chosen_hyperparams["max_time"] = get_hyperparam_value(
                     "max_time", return_none_if_not_found=True
                 )
+                self.chosen_hyperparams["accelerator"] = get_hyperparam_value(
+                    "accelerator", return_none_if_not_found=True
+                )
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
                     enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
                     max_time=self.chosen_hyperparams["max_time"],
+                    accelerator=self.chosen_hyperparams["accelerator"],
                     # Could set log_every_n_steps = 1 to avoid a warning, but that would make large logs, so just use filterwarnings instead
                     # https://github.com/Lightning-AI/lightning/issues/10644
                     # https://github.com/Lightning-AI/lightning/blob/c68ff6482f97f388d6b0c37151fafc0fae789094/src/lightning/pytorch/loops/fit_loop.py#L292-L298
@@ -1074,9 +1138,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     # default
                     continue
                 else:
-                    raise ValueError(
-                        f"Invalid season_length_StatsForecastAutoTheta or m_AutoARIMA = {hyperparam_value}!"
-                    )
+                    raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if hyperparam_value == 0:
@@ -1300,7 +1362,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.chosen_hyperparams.get("rebin_y", 0):
                 interpolate_method = "pad"
                 interpolate_limit_direction = "forward"
-            logger_ts_wrapper.debug(
+            logger_ts_wrapper.info(
                 "Missing %.1g%% of values, filling via %s interpolation.",
                 100.0 * frac_missing,
                 interpolate_method,
