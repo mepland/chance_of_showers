@@ -396,7 +396,7 @@ from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 20},
+    variable_hyperparams={"time_bin_size_in_minutes": 20, "y_presentation": 2},
 )
 model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Prophet)
@@ -1103,8 +1103,7 @@ print(model_wrapper_Croston)
 # %%
 model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    # variable_hyperparams={"time_bin_size_in_minutes": 10},
-    variable_hyperparams={"time_bin_size_in_minutes": 1, "y_presentation": 0},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_LinearRegressionModel.set_work_dir(
     work_dir_relative_to_base=pathlib.Path("local_dev")
@@ -1293,7 +1292,6 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 # # %tensorboard --logdir $tensorboard_logs
 
-
 # %%
 # TEST
 # TransformerModelWrapper
@@ -1301,13 +1299,12 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # NLinearModelWrapper
 
 # FIX
+# CrostonWrapper
+# BlockRNNModelWrapper
 # TCNModelWrapper
 # FourThetaWrapper
 # StatsForecastAutoThetaWrapper
-# CrostonWrapper
 # KalmanForecasterWrapper
-# RNNModelWrapper
-# BlockRNNModelWrapper
 # AutoARIMAWrapper
 
 # %%
@@ -1315,6 +1312,8 @@ optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
     model_wrapper_class=CrostonWrapper,
     model_wrapper_kwargs={"version": "optimized"},
+    # model_wrapper_class=BlockRNNModelWrapper,
+    # model_wrapper_kwargs={"model": "GRU"},
     n_iter=5,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=10),
