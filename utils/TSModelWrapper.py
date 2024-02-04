@@ -682,9 +682,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.model = None
         self.is_trained = False
 
-        if 0 < self.verbose:
-            logger_ts_wrapper.setLevel(logging.DEBUG)
-
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
 
@@ -967,6 +964,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Raises:
             ValueError: Bad configuration.
         """
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
+
         self.chosen_hyperparams = {}
         required_hyperparams_all = []
         if isinstance(self.required_hyperparams_data, list):
@@ -1298,6 +1298,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Returns:
             Loss.
         """
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
         # setup hyperparams
         self._name_model()
         _ = self.preview_hyperparameters(**kwargs)
