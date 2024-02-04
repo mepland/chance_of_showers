@@ -1300,6 +1300,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         if 0 < self.verbose:
             logger_ts_wrapper.setLevel(logging.DEBUG)
+
         # setup hyperparams
         self._name_model()
         _ = self.preview_hyperparameters(**kwargs)
