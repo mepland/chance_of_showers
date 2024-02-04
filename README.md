@@ -36,8 +36,8 @@ logs the data, and creates time series forecasts of future water pressure.
 [![linting: shfmt](https://img.shields.io/badge/linting-shfmt-blue?style=flat)](https://github.com/mvdan/sh)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
-[![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
-[![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg)](https://healthchecks.io)
+[![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg?style=flat)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
+[![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg?style=flat)](https://healthchecks.io)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat)](LICENSE.md)
 
