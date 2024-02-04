@@ -220,6 +220,7 @@ treat_comments_as_code = ["# %%"]
 
 [tool.pylint.main]
 fail-under = 10
+fail-on = "I"
 jobs = 0
 py-version = "3.11"
 suggestion-mode = true
