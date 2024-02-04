@@ -592,9 +592,6 @@ display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 # ### N-BEATS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_NBEATS = NBEATSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -624,9 +621,6 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ###  N-HiTS
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_NHiTS = NHiTSModelWrapper(
@@ -660,9 +654,6 @@ print(tensorboard_logs)
 # ### TCN
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TCN = TCNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -692,9 +683,6 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ### Transformer
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_Transformer = TransformerModelWrapper(
@@ -728,9 +716,6 @@ print(tensorboard_logs)
 # ### TFT
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TFT = TFTModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -760,9 +745,6 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ### D-Linear
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_DLinear = DLinearModelWrapper(
@@ -796,9 +778,6 @@ print(tensorboard_logs)
 # ### N-Linear
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_NLinear = NLinearModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -828,9 +807,6 @@ print(tensorboard_logs)
 
 # %% [markdown]
 # ### TiDE
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_TiDE = TiDEModelWrapper(
@@ -865,9 +841,6 @@ print(tensorboard_logs)
 # `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_RNN = RNNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -899,9 +872,6 @@ print(tensorboard_logs)
 # %% [markdown]
 # ### BlockRNN
 # `models = ["RNN", "LSTM", "GRU"]`
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_BlockRNN = BlockRNNModelWrapper(
@@ -939,9 +909,6 @@ print(tensorboard_logs)
 # ### AutoARIMA
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_AutoARIMA = AutoARIMAWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={
@@ -967,9 +934,6 @@ print(model_wrapper_AutoARIMA)
 # ### BATS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_BATS = BATSWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -990,9 +954,6 @@ print(model_wrapper_BATS)
 
 # %% [markdown]
 # ### TBATS
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_TBATS = TBATSWrapper(
@@ -1017,9 +978,6 @@ print(model_wrapper_TBATS)
 # ### FourTheta
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_FourTheta = FourThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -1040,9 +998,6 @@ print(model_wrapper_FourTheta)
 
 # %% [markdown]
 # ### StatsForecastAutoTheta
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_StatsForecastAutoTheta = StatsForecastAutoThetaWrapper(
@@ -1072,9 +1027,6 @@ print(model_wrapper_StatsForecastAutoTheta)
 # ### FFT
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_FFT = FFTWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -1095,9 +1047,6 @@ print(model_wrapper_FFT)
 
 # %% [markdown]
 # ### KalmanForecaster
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
@@ -1123,9 +1072,6 @@ print(model_wrapper_KalmanForecaster)
 # `versions = ["classic", "optimized", "sba"]`
 #
 # Do not use `"tsb"` as `alpha_d` and `alpha_p` must be set
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_Croston = CrostonWrapper(
@@ -1158,9 +1104,6 @@ print(model_wrapper_Croston)
 # ### LinearRegressionModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -1185,9 +1128,6 @@ print(model_wrapper_LinearRegressionModel)
 # ### RandomForest
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_RandomForest = RandomForestWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -1208,9 +1148,6 @@ print(model_wrapper_RandomForest)
 
 # %% [markdown]
 # ### LightGBMModel
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_LightGBMModel = LightGBMModelWrapper(
@@ -1236,9 +1173,6 @@ print(model_wrapper_LightGBMModel)
 # ### XGBModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_XGBModel = XGBModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={"input_chunk_length_in_minutes": 10},
@@ -1259,9 +1193,6 @@ print(model_wrapper_XGBModel)
 
 # %% [markdown]
 # ### CatBoostModel
-
-# %%
-# raise UserWarning("Stopping Here")
 
 # %%
 model_wrapper_CatBoostModel = CatBoostModelWrapper(
