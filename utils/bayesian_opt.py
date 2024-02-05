@@ -22,7 +22,7 @@ from bayes_opt.logger import JSONLogger, ScreenLogger
 from bayes_opt.util import load_logs
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper  # noqa: TC001
+from utils.TSModelWrapper import TSModelWrapper, BAD_LOSS
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
@@ -237,10 +237,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     """
     global n_points
 
-    # Set a finite, but horrible, loss for when the training fails to complete.
-    # np.finfo(np.float64).min + 1 does not work, sklearn errors
-    bad_target = -999
-
     if model_wrapper_kwargs is None:
         model_wrapper_kwargs = {}
 
@@ -370,6 +366,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         signal.signal(signal.SIGALRM, signal_handler)
 
     # Run Bayesian optimization iterations
+    next_point_to_probe = None
+    next_point_to_probe_cleaned = None
     try:
         for i_iter in range(n_iter):
             if i_iter == 0:
@@ -426,9 +424,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # train the model
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
-                # Put a lower bound on target at bad_target.
+                # Put a lower bound on target at BAD_LOSS.
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
-                target = max(target, bad_target)
+                target = max(target, BAD_LOSS)
             except KeyboardInterrupt:
                 print("KeyboardInterrupt: Returning with current objects.")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
@@ -436,11 +434,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 return optimizer.max, optimizer
             except RuntimeError as error:
                 if "out of memory" in str(error):
-                    print(f"Ran out of memory, returning {bad_target:.3g} as loss")
+                    print(f"Ran out of memory, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        bad_target,
+                        BAD_LOSS,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
@@ -448,11 +446,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 raise error
             except Exception as error:
                 if "Out of Time!" in str(error):
-                    print(f"Ran out of time, returning {bad_target:.3g} as loss")
+                    print(f"Ran out of time, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        bad_target,
+                        BAD_LOSS,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
@@ -487,19 +485,24 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             + ", stopping optimization here."
         )
     except Exception as error:
-        print(
-            f"""
+        error_msg = f"""
 Unexpected error in run_bayesian_opt():
 {error = }
 {type(error) = }
-{traceback.format_exc()}
+{traceback.format_exc()}"""
 
-next_point_to_probe = {pprint.pformat(next_point_to_probe)}
+        if next_point_to_probe is not None:
+            error_msg = f"""{error_msg}
+next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
 
-next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}
+        if next_point_to_probe is not None:
+            error_msg = f"""{error_msg}
+next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
 
+        error_msg = f"""{error_msg}
 Returning with current objects."""
-        )
+
+        print(error_msg)
 
     optimizer.dispatch(Events.OPTIMIZATION_END)
 
