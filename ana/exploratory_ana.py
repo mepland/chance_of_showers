@@ -30,6 +30,7 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
+# pylint: disable=import-error
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -94,6 +95,7 @@ from utils.plotting import (
 )
 
 # isort: on
+# pylint: enable=import-error
 
 # %%
 initialize(version_base=None, config_path="..")
@@ -715,7 +717,19 @@ print(tensorboard_logs)
 # %%
 model_wrapper_TFT = TFTModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 10},
+    # variable_hyperparams={"time_bin_size_in_minutes": 10},
+    variable_hyperparams={
+        "batch_size": 650,
+        "dropout": 0.0,
+        # 'full_attention': True,
+        # 'hidden_continuous_size': 1,
+        # 'hidden_size': 256,
+        # 'input_chunk_length': 1,
+        # 'lstm_layers': 1,
+        # 'num_attention_heads': 1,
+        # 'time_bin_size_in_minutes': 1,
+        # 'y_presentation': 0
+    },
 )
 model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TFT)
@@ -1293,31 +1307,25 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # # %tensorboard --logdir $tensorboard_logs
 
 # %%
-# TEST
-# TransformerModelWrapper
-# TFTModelWrapper
-# NLinearModelWrapper
-
 # FIX
-# CrostonWrapper
-# BlockRNNModelWrapper
-# TCNModelWrapper
+# TransformerModelWrapper
 # FourThetaWrapper
 # StatsForecastAutoThetaWrapper
 # KalmanForecasterWrapper
 # AutoARIMAWrapper
+# CrostonWrapper
 
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=CrostonWrapper,
-    model_wrapper_kwargs={"version": "optimized"},
-    # model_wrapper_class=BlockRNNModelWrapper,
-    # model_wrapper_kwargs={"model": "GRU"},
+    model_wrapper_class=FourThetaWrapper,
+    # model_wrapper_class=CrostonWrapper,
+    # model_wrapper_kwargs={"version": "optimized"},
+    fixed_hyperparams_to_alter={"n_epochs": 10},
     n_iter=5,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=10),
-    accelerator="auto",
+    accelerator="gpu",
     display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
