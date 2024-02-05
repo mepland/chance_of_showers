@@ -30,7 +30,7 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-# pylint: disable=import-error
+# pylint: disable=import-error,useless-suppression
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -1325,7 +1325,7 @@ optimal_values, optimizer = run_bayesian_opt(
     n_iter=5,
     enable_progress_bar=True,
     max_time_per_model=datetime.timedelta(minutes=10),
-    accelerator="gpu",
+    accelerator="auto",
     display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
