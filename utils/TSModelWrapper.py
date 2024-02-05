@@ -1156,6 +1156,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = seasonal_periods
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     # 1 day
                     hyperparam_value = math.ceil(
@@ -1168,6 +1171,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     hyperparam_value = ModelMode.NONE
                 elif hyperparam_value == 1:
@@ -1178,6 +1184,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     hyperparam_value = SeasonalityMode.NONE
                 elif hyperparam_value == 1:
@@ -1188,6 +1197,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 1:
                     hyperparam_value = "multiplicative"
                 elif hyperparam_value == 2:
@@ -1294,7 +1306,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
-    def train_model(self: "TSModelWrapper", **kwargs: float) -> float:
+    def train_model(  # pylint: disable=too-many-locals,too-many-statements
+        self: "TSModelWrapper", **kwargs: float
+    ) -> float:
         """Train the model and return loss.
 
         Args:
