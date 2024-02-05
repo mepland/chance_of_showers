@@ -176,7 +176,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     *,
     model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
-    n_iter: int = 100,
+    n_iter: int = 50,
     allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
@@ -397,6 +397,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # If it has been tested, save the raw next_point_to_probe with the same target and continue
             chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
             next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
+            if 2 < verbose:
+                print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
+                print(
+                    f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
+                )
 
             is_duplicate_point = False
             for i_param in range(optimizer.space.params.shape[0]):
@@ -439,6 +444,21 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             except RuntimeError as error:
                 if "out of memory" in str(error):
                     print(f"Ran out of memory, returning {BAD_LOSS:.3g} as loss")
+                    complete_iter(
+                        i_iter,
+                        model_wrapper,
+                        BAD_LOSS,
+                        next_point_to_probe,
+                        probed_point=next_point_to_probe_cleaned,
+                    )
+                    continue
+                raise error
+            except ValueError as error:
+                if (
+                    "Multiplicative seasonality is not appropriate for zero and negative values"
+                    in str(error)
+                ):
+                    print(f"{error}, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,

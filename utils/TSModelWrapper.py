@@ -1166,7 +1166,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     )
                 elif hyperparam_value == 1:
                     # default
-                    continue
+                    pass
                 else:
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric

@@ -36,7 +36,7 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
     }
 
     # Overwrite time_bin_size_in_minutes as small values crash with too many rows
-    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5
+    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5  # type: index
 
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
