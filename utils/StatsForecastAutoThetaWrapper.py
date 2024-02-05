@@ -35,6 +35,9 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
         **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     }
 
+    # Overwrite time_bin_size_in_minutes as small values crash with too many rows
+    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5
+
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
     def __init__(self: "StatsForecastAutoThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
