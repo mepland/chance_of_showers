@@ -1328,7 +1328,7 @@ dev_kwargs = {
     "n_iter": 4,
     "max_time_per_model": datetime.timedelta(minutes=2),
     "fixed_hyperparams_to_alter": {"n_epochs": 4},
-    "accelerator": "auto",
+    "accelerator": "gpu",
 }
 
 # %%
@@ -1336,40 +1336,40 @@ model_kwarg_list = [
     # Prophet
     {"model_wrapper_class": ProphetWrapper},
     # PyTorch NN Models
-    # {"model_wrapper_class": NBEATSModelWrapper},
-    # {"model_wrapper_class": NHiTSModelWrapper},
-    # {"model_wrapper_class": TCNModelWrapper},
+    {"model_wrapper_class": NBEATSModelWrapper},
+    {"model_wrapper_class": NHiTSModelWrapper},
+    {"model_wrapper_class": TCNModelWrapper},
     # {"model_wrapper_class": TransformerModelWrapper},  # FIX
-    # {"model_wrapper_class": TFTModelWrapper},
-    # {"model_wrapper_class": DLinearModelWrapper},
-    # {"model_wrapper_class": NLinearModelWrapper},
-    # {"model_wrapper_class": TiDEModelWrapper},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    {"model_wrapper_class": TFTModelWrapper},
+    {"model_wrapper_class": DLinearModelWrapper},
+    {"model_wrapper_class": NLinearModelWrapper},
+    {"model_wrapper_class": TiDEModelWrapper},
+    {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
     # Statistical Models
     # {"model_wrapper_class": AutoARIMAWrapper},  # FIX
-    # {"model_wrapper_class": BATSWrapper},
-    # {"model_wrapper_class": TBATSWrapper},
-    # {"model_wrapper_class": FourThetaWrapper},
-    # {"model_wrapper_class": StatsForecastAutoThetaWrapper},
-    # {"model_wrapper_class": FFTWrapper},
+    {"model_wrapper_class": BATSWrapper},
+    {"model_wrapper_class": TBATSWrapper},
+    {"model_wrapper_class": FourThetaWrapper},
+    {"model_wrapper_class": StatsForecastAutoThetaWrapper},
+    {"model_wrapper_class": FFTWrapper},
     # {"model_wrapper_class": KalmanForecasterWrapper},  # FIX
     # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},  # FIX and add "optimized", "sba"
     # Regression Models
-    # {"model_wrapper_class": LinearRegressionModelWrapper},
-    # {"model_wrapper_class": RandomForestWrapper},
-    # {"model_wrapper_class": LightGBMModelWrapper},
-    # {"model_wrapper_class": XGBModelWrapper},
-    # {"model_wrapper_class": CatBoostModelWrapper},
+    {"model_wrapper_class": LinearRegressionModelWrapper},
+    {"model_wrapper_class": RandomForestWrapper},
+    {"model_wrapper_class": LightGBMModelWrapper},
+    {"model_wrapper_class": XGBModelWrapper},
+    {"model_wrapper_class": CatBoostModelWrapper},
     # Naive Models
-    # {"model_wrapper_class": NaiveMeanWrapper},
-    # {"model_wrapper_class": NaiveSeasonalWrapper},
-    # {"model_wrapper_class": NaiveDriftWrapper},
-    # {"model_wrapper_class": NaiveMovingAverageWrapper},
+    {"model_wrapper_class": NaiveMeanWrapper},
+    {"model_wrapper_class": NaiveSeasonalWrapper},
+    {"model_wrapper_class": NaiveDriftWrapper},
+    {"model_wrapper_class": NaiveMovingAverageWrapper},
 ]
 
 # %% [markdown]
@@ -1379,8 +1379,9 @@ model_kwarg_list = [
 # ### All Models!
 
 # %%
-for model_kwarg in (pbar := tqdm.tqdm(model_kwarg_list)):
-    pbar.set_description(f'Running {model_kwarg["model_wrapper_class"]}')
+for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
+    _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
+    pbar.set_postfix_str(f"Optimizing {_model_name}")
 
     if TYPE_CHECKING:
         assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
