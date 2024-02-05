@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import tqdm
 from hydra import compose, initialize
 from IPython.display import Image, display
 
@@ -1298,6 +1299,9 @@ print(f"{val_loss = }")
 # %%
 # raise UserWarning("Stopping Here")
 
+# %% [markdown]
+# ## Setup
+
 # %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
@@ -1307,36 +1311,111 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # # %tensorboard --logdir $tensorboard_logs
 
 # %%
-# FIX
-# TransformerModelWrapper
-# KalmanForecasterWrapper
-# AutoARIMAWrapper
-# CrostonWrapper
+prod_kwargs = {
+    "parent_wrapper": PARENT_WRAPPER,
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+    "verbose": 2,
+    "n_iter": 50,
+    "max_time_per_model": datetime.timedelta(minutes=30),
+}
+
+# %%
+dev_kwargs = {
+    "parent_wrapper": PARENT_WRAPPER,
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+    "verbose": 2,
+    "enable_reloading": False,
+    "n_iter": 4,
+    "max_time_per_model": datetime.timedelta(minutes=2),
+    "fixed_hyperparams_to_alter": {"n_epochs": 4},
+    "accelerator": "auto",
+}
+
+# %%
+model_kwarg_list = [
+    # Prophet
+    {"model_wrapper_class": ProphetWrapper},
+    # PyTorch NN Models
+    # {"model_wrapper_class": NBEATSModelWrapper},
+    # {"model_wrapper_class": NHiTSModelWrapper},
+    # {"model_wrapper_class": TCNModelWrapper},
+    # {"model_wrapper_class": TransformerModelWrapper},  # FIX
+    # {"model_wrapper_class": TFTModelWrapper},
+    # {"model_wrapper_class": DLinearModelWrapper},
+    # {"model_wrapper_class": NLinearModelWrapper},
+    # {"model_wrapper_class": TiDEModelWrapper},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    # Statistical Models
+    # {"model_wrapper_class": AutoARIMAWrapper},  # FIX
+    # {"model_wrapper_class": BATSWrapper},
+    # {"model_wrapper_class": TBATSWrapper},
+    # {"model_wrapper_class": FourThetaWrapper},
+    # {"model_wrapper_class": StatsForecastAutoThetaWrapper},
+    # {"model_wrapper_class": FFTWrapper},
+    # {"model_wrapper_class": KalmanForecasterWrapper},  # FIX
+    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},  # FIX and add "optimized", "sba"
+    # Regression Models
+    # {"model_wrapper_class": LinearRegressionModelWrapper},
+    # {"model_wrapper_class": RandomForestWrapper},
+    # {"model_wrapper_class": LightGBMModelWrapper},
+    # {"model_wrapper_class": XGBModelWrapper},
+    # {"model_wrapper_class": CatBoostModelWrapper},
+    # Naive Models
+    # {"model_wrapper_class": NaiveMeanWrapper},
+    # {"model_wrapper_class": NaiveSeasonalWrapper},
+    # {"model_wrapper_class": NaiveDriftWrapper},
+    # {"model_wrapper_class": NaiveMovingAverageWrapper},
+]
+
+# %% [markdown]
+# ## Run Bayesian Optimization
+
+# %% [markdown]
+# ### All Models!
+
+# %%
+for model_kwarg in (pbar := tqdm.tqdm(model_kwarg_list)):
+    pbar.set_description(f'Running {model_kwarg["model_wrapper_class"]}')
+
+    if TYPE_CHECKING:
+        assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+        assert isinstance(dev_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+        assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
+
+    _ = run_bayesian_opt(
+        # **prod_kwargs,  # type: ignore[arg-type]
+        **dev_kwargs,  # type: ignore[arg-type]
+        **model_kwarg,  # type: ignore[arg-type]
+    )
+
+# %% [markdown]
+# ### Single Model
 
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=TransformerModelWrapper,
-    # model_wrapper_class=CrostonWrapper,
-    # model_wrapper_kwargs={"version": "optimized"},
-    fixed_hyperparams_to_alter={"n_epochs": 5},
+    model_wrapper_class=NBEATSModelWrapper,
+    fixed_hyperparams_to_alter={"n_epochs": 20},
     n_iter=5,
     enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=10),
+    max_time_per_model=datetime.timedelta(minutes=15),
     accelerator="auto",
     display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
-
-# %%
 pprint.pprint(optimal_values)
 
 # %% [markdown]
-# ## DEV: Compare Run Times
+# ### DEV: Compare Run Times
 
 # %%
-model_name = "NHiTSModel"  # pylint: disable=invalid-name
+model_name = "NBEATSModel"  # pylint: disable=invalid-name
 
 dfp_cpu = load_json_log_to_dfp(
     pathlib.Path(
@@ -1355,7 +1434,6 @@ dfp_gpu = load_json_log_to_dfp(
         f"bayesian_opt_{model_name}.json",
     )
 )
-
 
 # %%
 if dfp_cpu is None:

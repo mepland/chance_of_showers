@@ -1,8 +1,7 @@
 # flake8: noqa
 # pylint: skip-file
 # mypy: disable-error-code="name-defined"
-dfp_val  # unused variable (ana/exploratory_ana.py:347)
-prod_kwargs  # unused variable (ana/exploratory_ana.py:1313)
+dfp_val  # unused variable (ana/exploratory_ana.py:348)
 _.converter  # unused attribute (daq/daq.py:148)
 dummy_signal  # unused variable (daq/daq.py:250)
 dummy_frame  # unused variable (daq/daq.py:251)

@@ -171,9 +171,9 @@ n_points = 0  # # pylint: disable=invalid-name
 
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
+    *,
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: WrapperTypes,
-    *,
     model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 50,
@@ -436,11 +436,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 # Put a lower bound on target at BAD_LOSS.
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
                 target = max(target, BAD_LOSS)
-            except KeyboardInterrupt:
-                print("KeyboardInterrupt: Returning with current objects.")
+            except KeyboardInterrupt as error:
+                print("KeyboardInterrupt: Ending now!")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
 
-                return optimizer.max, optimizer
+                raise error
             except RuntimeError as error:
                 if "out of memory" in str(error):
                     print(f"Ran out of memory, returning {BAD_LOSS:.3g} as loss")
