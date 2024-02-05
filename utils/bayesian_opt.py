@@ -315,17 +315,21 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         global n_points
         optimizer.register(params=point_to_probe, target=target)
         n_points += 1
-        if probed_point and not (
-            # point_to_probe is exactly the same as probed_point on this iter,
-            # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
-            # Do not register the probed_point.
-            np.array_equiv(
-                optimizer.space.params_to_array(point_to_probe),
-                optimizer.space.params_to_array(probed_point),
-            )
-        ):
-            optimizer.register(params=probed_point, target=target)
-            n_points += 1
+        if probed_point:
+            # translate odd hyperparam_values back to original representation
+            probed_point = model_wrapper.translate_hyperparameters_to_numeric(probed_point)
+
+            if not (
+                # point_to_probe is exactly the same as probed_point on this iter,
+                # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
+                # Do not register the probed_point.
+                np.array_equiv(
+                    optimizer.space.params_to_array(point_to_probe),
+                    optimizer.space.params_to_array(probed_point),
+                )
+            ):
+                optimizer.register(params=probed_point, target=target)
+                n_points += 1
 
         model_wrapper.reset_wrapper()
         del model_wrapper

@@ -1169,6 +1169,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     continue
                 else:
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
+            # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
@@ -1305,6 +1306,52 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if TYPE_CHECKING:
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
+
+    def translate_hyperparameters_to_numeric(
+        self: "TSModelWrapper", hyperparams_dict: dict
+    ) -> dict:
+        """Translate odd hyperparam_values back to their original numeric representations, used in Bayesian optimization.
+
+        Args:
+            hyperparams_dict: Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
+
+        Returns:
+            Hyperparameters in their original representations.
+
+        Raises:
+            ValueError: Bad configuration.
+        """
+        for hyperparam, hyperparam_value in hyperparams_dict.items():
+            if hyperparam == "model_mode_FourTheta":
+                if hyperparam_value == ModelMode.NONE:
+                    hyperparam_value = 0
+                elif hyperparam_value == ModelMode.MULTIPLICATIVE:
+                    hyperparam_value = 1
+                elif hyperparam_value == ModelMode.ADDITIVE:
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "season_mode_FourTheta":
+                if hyperparam_value == SeasonalityMode.NONE:
+                    hyperparam_value = 0
+                elif hyperparam_value == SeasonalityMode.MULTIPLICATIVE:
+                    hyperparam_value = 1
+                elif hyperparam_value == SeasonalityMode.ADDITIVE:
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
+                if hyperparam_value == "multiplicative":
+                    hyperparam_value = 1
+                elif hyperparam_value == "additive":
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(
+                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    )
+            hyperparams_dict[hyperparam] = hyperparam_value
+
+        return hyperparams_dict
 
     def train_model(  # pylint: disable=too-many-locals,too-many-statements
         self: "TSModelWrapper", **kwargs: float
