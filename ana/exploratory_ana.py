@@ -1315,6 +1315,7 @@ prod_kwargs = {
     "parent_wrapper": PARENT_WRAPPER,
     "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
     "verbose": 2,
+    "disregard_training_exceptions": True,
     "n_iter": 50,
     "max_time_per_model": datetime.timedelta(minutes=30),
 }
@@ -1323,9 +1324,9 @@ prod_kwargs = {
 dev_kwargs = {
     "parent_wrapper": PARENT_WRAPPER,
     "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-    "verbose": 2,
+    "verbose": 3,
     "enable_reloading": False,
-    "n_iter": 4,
+    "n_iter": 10,
     "max_time_per_model": datetime.timedelta(minutes=2),
     "fixed_hyperparams_to_alter": {"n_epochs": 4},
     "accelerator": "gpu",
@@ -1339,7 +1340,7 @@ model_kwarg_list = [
     {"model_wrapper_class": NBEATSModelWrapper},
     {"model_wrapper_class": NHiTSModelWrapper},
     {"model_wrapper_class": TCNModelWrapper},
-    # {"model_wrapper_class": TransformerModelWrapper},  # FIX
+    {"model_wrapper_class": TransformerModelWrapper},
     {"model_wrapper_class": TFTModelWrapper},
     {"model_wrapper_class": DLinearModelWrapper},
     {"model_wrapper_class": NLinearModelWrapper},
@@ -1351,14 +1352,16 @@ model_kwarg_list = [
     {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
     {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
     # Statistical Models
-    # {"model_wrapper_class": AutoARIMAWrapper},  # FIX
+    {"model_wrapper_class": AutoARIMAWrapper},
     {"model_wrapper_class": BATSWrapper},
     {"model_wrapper_class": TBATSWrapper},
     {"model_wrapper_class": FourThetaWrapper},
     {"model_wrapper_class": StatsForecastAutoThetaWrapper},
     {"model_wrapper_class": FFTWrapper},
-    # {"model_wrapper_class": KalmanForecasterWrapper},  # FIX
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},  # FIX and add "optimized", "sba"
+    {"model_wrapper_class": KalmanForecasterWrapper},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
     # Regression Models
     {"model_wrapper_class": LinearRegressionModelWrapper},
     {"model_wrapper_class": RandomForestWrapper},

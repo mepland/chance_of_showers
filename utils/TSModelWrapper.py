@@ -355,7 +355,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "nhead": {
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 4,
         "type": int,

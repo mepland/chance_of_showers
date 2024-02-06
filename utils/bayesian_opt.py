@@ -6,6 +6,7 @@ import json
 import pathlib
 import platform
 import pprint
+import re
 import signal
 import traceback
 from types import FrameType  # noqa: TC003
@@ -182,6 +183,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     utility_kappa: float = 2.576,
     verbose: int = 2,
     model_verbose: int = -1,
+    disregard_training_exceptions: bool = False,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
@@ -215,6 +217,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             Lower value = favors spaces where the regression function is the highest.
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
         model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
+        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of training time for each iteration.
@@ -233,7 +236,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     Raises:
         ValueError: Bad configuration.
-        RuntimeError: Run time error that is not "out of memory".
     """
     global n_points
 
@@ -357,9 +359,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             dummy_frame: Frame object.
 
         Raises:
-            Exception: Out of Time!
+            RuntimeError: Out of Time!
         """
-        raise Exception("Out of Time!")  # pylint: disable=broad-exception-raised
+        raise RuntimeError("Out of Time!")
 
     max_time_per_model_flag = (
         max_time_per_model is not None
@@ -439,26 +441,37 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             except KeyboardInterrupt as error:
                 print("KeyboardInterrupt: Ending now!")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
-
                 raise error
-            except RuntimeError as error:
-                if "out of memory" in str(error):
-                    print(f"Ran out of memory, returning {BAD_LOSS:.3g} as loss")
-                    complete_iter(
-                        i_iter,
-                        model_wrapper,
-                        BAD_LOSS,
-                        next_point_to_probe,
-                        probed_point=next_point_to_probe_cleaned,
-                    )
-                    continue
-                raise error
-            except ValueError as error:
-                if (
+            except Exception as error:
+                error_str = None
+                # Expected exceptions
+                if "Out of Time!" in str(error):
+                    error_str = "Ran out of time"
+                elif "out of memory" in str(error):
+                    error_str = "Ran out of memory"
+                elif (
                     "Multiplicative seasonality is not appropriate for zero and negative values"
                     in str(error)
                 ):
-                    print(f"{error}, returning {BAD_LOSS:.3g} as loss")
+                    error_str = (
+                        "Multiplicative seasonality is not appropriate for zero and negative values"
+                    )
+                elif re.match(
+                    r"^The expanded size of the tensor \(\d*?\) must match the existing size \(\d*?\) at non-singleton dimension",
+                    str(error),
+                ):
+                    error_str = "Bad value of d_model for this input_chunk_length"
+                elif "embed_dim must be divisible by num_heads" in str(error):
+                    error_str = "Bad value of d_model for this nheads"
+                elif "Dimension out of range" in str(error):
+                    error_str = str(error)
+                # Unexpected exceptions
+                elif disregard_training_exceptions:
+                    error_str = f"Unexpected error while training: {str(error)}\ndisregard_training_exceptions is set"
+
+                # use BAD_LOSS as loss and continue
+                if error_str is not None:
+                    print(f"{error_str}, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
@@ -467,18 +480,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                         probed_point=next_point_to_probe_cleaned,
                     )
                     continue
-                raise error
-            except Exception as error:
-                if "Out of Time!" in str(error):
-                    print(f"Ran out of time, returning {BAD_LOSS:.3g} as loss")
-                    complete_iter(
-                        i_iter,
-                        model_wrapper,
-                        BAD_LOSS,
-                        next_point_to_probe,
-                        probed_point=next_point_to_probe_cleaned,
-                    )
-                    continue
+
+                # Raise the exception, kill the iterations
                 raise error
             finally:
                 if max_time_per_model_flag:
