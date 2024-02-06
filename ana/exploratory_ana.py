@@ -718,19 +718,7 @@ print(tensorboard_logs)
 # %%
 model_wrapper_TFT = TFTModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    # variable_hyperparams={"time_bin_size_in_minutes": 10},
-    variable_hyperparams={
-        "batch_size": 650,
-        "dropout": 0.0,
-        # 'full_attention': True,
-        # 'hidden_continuous_size': 1,
-        # 'hidden_size': 256,
-        # 'input_chunk_length': 1,
-        # 'lstm_layers': 1,
-        # 'num_attention_heads': 1,
-        # 'time_bin_size_in_minutes': 1,
-        # 'y_presentation': 0
-    },
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TFT)
@@ -1088,8 +1076,7 @@ print(model_wrapper_KalmanForecaster)
 # %%
 model_wrapper_Croston = CrostonWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    # variable_hyperparams={"time_bin_size_in_minutes": 10},
-    variable_hyperparams={"time_bin_size_in_minutes": 1, "y_presentation": 0},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
     version="optimized",
 )
 model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1099,8 +1086,8 @@ model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local
 print(model_wrapper_Croston)
 
 # %%
-# configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
-# pprint.pprint(configurable_hyperparams)
+configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
 
 # %%
 val_loss = -model_wrapper_Croston.train_model()
