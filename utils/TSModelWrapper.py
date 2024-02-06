@@ -3,6 +3,7 @@
 # pylint: enable=invalid-name
 
 
+import copy
 import datetime
 import gc
 import logging
@@ -13,7 +14,7 @@ import pprint
 import sys
 import warnings
 import zoneinfo
-from typing import TYPE_CHECKING, Any, Final, SupportsInt
+from typing import TYPE_CHECKING, Any, Final
 
 import pandas as pd
 
@@ -61,15 +62,22 @@ if not logger_ts_wrapper.handlers:
     logger_ts_wrapper.addHandler(logging.StreamHandler(sys.stdout))
 
 # loss function
-LOSS_FN: Final = torchmetrics.MeanSquaredError()
+LOSS_FN: Final = torchmetrics.MeanSquaredError(squared=True)
 
 # metrics to log at each epoch
 METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
-    [
-        torchmetrics.MeanSquaredError(),
-        torchmetrics.MeanAbsolutePercentageError(),
-    ]
+    {
+        "MSE": torchmetrics.MeanSquaredError(squared=True),
+        "MSLE": torchmetrics.MeanSquaredLogError(),
+        "MAE": torchmetrics.MeanAbsoluteError(),
+        "MAPE": torchmetrics.MeanAbsolutePercentageError(),
+        "sMAPE": torchmetrics.SymmetricMeanAbsolutePercentageError(),
+    }
 )
+
+# Set a finite, but horrible, loss for when the training fails to complete.
+# np.finfo(np.float64).min + 1 does not work, sklearn errors in run_bayesian_opt()
+BAD_LOSS: Final = -999.0
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
@@ -182,7 +190,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
 DATA_REQUIRED_HYPERPARAMS: Final = [
     "time_bin_size_in_minutes",
     "prediction_length_in_minutes",
-    "rebin_y",
+    "y_presentation",
     "y_bin_edges",
     # not required by all models, but we'll check
     # supports_future_covariates and supports_past_covariates for each model later and configure appropriately
@@ -197,11 +205,12 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "max": 20,
         "default": 10,
     },
-    "rebin_y": {
+    # 0 = normalized and clipped, 1 = normalized and clipped and binned, 2 = normalized and unclipped
+    "y_presentation": {
         "min": 0,
-        "max": 1,
+        "max": 2,
         "default": 0,
-        "type": bool,
+        "type": int,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
     # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
@@ -346,7 +355,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "nhead": {
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 4,
         "type": int,
@@ -678,9 +687,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.model = None
         self.is_trained = False
 
-        if 0 < self.verbose:
-            logger_ts_wrapper.setLevel(logging.DEBUG)
-
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
 
@@ -777,6 +783,26 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return n_prediction_steps, time_bin_size
 
+    def alter_fixed_hyperparams(
+        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: dict | None
+    ) -> None:
+        """Alter fixed_hyperparams for this model wrapper.
+
+        Args:
+            fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter.
+        """
+        if fixed_hyperparams_to_alter is None:
+            fixed_hyperparams_to_alter = {}
+
+        _fixed_hyperparams = self.fixed_hyperparams
+        if not _fixed_hyperparams:
+            _fixed_hyperparams = {}
+
+        _fixed_hyperparams.update(fixed_hyperparams_to_alter)
+
+        if _fixed_hyperparams != {}:
+            self.fixed_hyperparams = _fixed_hyperparams
+
     def set_max_time(
         self: "TSModelWrapper",
         *,
@@ -860,7 +886,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if self.work_dir_base is None:
                 raise ValueError("Must have a valid work_dir_base!")
             self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
-        elif work_dir_absolute is not None:  # pylint: disable=no-else-raise
+        elif work_dir_absolute is not None:
             self.work_dir = work_dir_absolute
         else:
             raise ValueError("Must use at least one parameter!")
@@ -943,6 +969,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Raises:
             ValueError: Bad configuration.
         """
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
+
         self.chosen_hyperparams = {}
         required_hyperparams_all = []
         if isinstance(self.required_hyperparams_data, list):
@@ -1041,14 +1070,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = self.random_state
             elif hyperparam == "work_dir":
                 hyperparam_value = self.work_dir
-            elif hyperparam == "rebin_y":
+            elif hyperparam == "y_presentation":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(  # noqa: SCS108 # nosec assert_used
-                        hyperparam_value, SupportsInt
-                    )
-                hyperparam_value = int(hyperparam_value)
-                if hyperparam_value:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
+                if hyperparam_value == 1:  # y is binned
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
@@ -1129,6 +1156,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = seasonal_periods
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     # 1 day
                     hyperparam_value = math.ceil(
@@ -1136,11 +1166,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     )
                 elif hyperparam_value == 1:
                     # default
-                    continue
+                    pass
                 else:
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
+            # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     hyperparam_value = ModelMode.NONE
                 elif hyperparam_value == 1:
@@ -1151,6 +1185,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     hyperparam_value = SeasonalityMode.NONE
                 elif hyperparam_value == 1:
@@ -1161,6 +1198,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 1:
                     hyperparam_value = "multiplicative"
                 elif hyperparam_value == 2:
@@ -1195,7 +1235,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
                     if not op_func(hyperparam_value, rhs_value):
-                        logger_ts_wrapper.info(
+                        logger_ts_wrapper.debug(
                             "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
                             hyperparam,
                             new_value,
@@ -1267,7 +1307,53 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
         return self.chosen_hyperparams
 
-    def train_model(  # pylint: disable=too-many-locals
+    def translate_hyperparameters_to_numeric(
+        self: "TSModelWrapper", hyperparams_dict: dict
+    ) -> dict:
+        """Translate odd hyperparam_values back to their original numeric representations, used in Bayesian optimization.
+
+        Args:
+            hyperparams_dict: Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
+
+        Returns:
+            Hyperparameters in their original representations.
+
+        Raises:
+            ValueError: Bad configuration.
+        """
+        for hyperparam, hyperparam_value in hyperparams_dict.items():
+            if hyperparam == "model_mode_FourTheta":
+                if hyperparam_value == ModelMode.NONE:
+                    hyperparam_value = 0
+                elif hyperparam_value == ModelMode.MULTIPLICATIVE:
+                    hyperparam_value = 1
+                elif hyperparam_value == ModelMode.ADDITIVE:
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "season_mode_FourTheta":
+                if hyperparam_value == SeasonalityMode.NONE:
+                    hyperparam_value = 0
+                elif hyperparam_value == SeasonalityMode.MULTIPLICATIVE:
+                    hyperparam_value = 1
+                elif hyperparam_value == SeasonalityMode.ADDITIVE:
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+            elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
+                if hyperparam_value == "multiplicative":
+                    hyperparam_value = 1
+                elif hyperparam_value == "additive":
+                    hyperparam_value = 2
+                else:
+                    raise ValueError(
+                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    )
+            hyperparams_dict[hyperparam] = hyperparam_value
+
+        return hyperparams_dict
+
+    def train_model(  # pylint: disable=too-many-locals,too-many-statements
         self: "TSModelWrapper", **kwargs: float
     ) -> float:
         """Train the model and return loss.
@@ -1278,6 +1364,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Returns:
             Loss.
         """
+        if 0 < self.verbose:
+            logger_ts_wrapper.setLevel(logging.DEBUG)
+
         # setup hyperparams
         self._name_model()
         _ = self.preview_hyperparameters(**kwargs)
@@ -1308,164 +1397,195 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if k in chosen_hyperparams_model:
                 chosen_hyperparams_model[v] = chosen_hyperparams_model.pop(k)
 
-        self.model = self.model_class(**chosen_hyperparams_model)
-        if TYPE_CHECKING:
-            assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
+        loss = BAD_LOSS
 
-        # data prep
-        time_bin_size = self.chosen_hyperparams["time_bin_size"]
-        freq_str = f'{self.chosen_hyperparams["time_bin_size_in_minutes"]}min'
-        y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
+        try:
+            # Try to disconnect from prior runs
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+            gc.collect()
 
-        dfp_trainable = rebin_chance_of_showers_time_series(
-            self.dfp_trainable_evergreen,
-            "ds",
-            "y",
-            time_bin_size=time_bin_size,
-            other_cols_to_agg_dict={"had_flow": "max"},
-            y_bin_edges=y_bin_edges,
-        )
+            _model_class = copy.deepcopy(self.model_class)
+            _model = _model_class(**chosen_hyperparams_model)
+            _model = _model.untrained_model()
+            self.model = _model
 
-        dfp_trainable = create_datetime_component_cols(
-            dfp_trainable, datetime_col="ds", date_fmt=self.date_fmt, time_fmt=self.time_fmt
-        )
+            if TYPE_CHECKING:
+                assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
 
-        dart_series_y_trainable = TimeSeries.from_dataframe(
-            dfp_trainable,
-            "ds",
-            "y",
-            freq=freq_str,
-            fill_missing_dates=True,
-        )
+            # data prep
+            time_bin_size = self.chosen_hyperparams["time_bin_size"]
+            freq_str = f'{self.chosen_hyperparams["time_bin_size_in_minutes"]}min'
+            y_presentation = self.chosen_hyperparams["y_presentation"]
+            y_bin_edges = self.chosen_hyperparams["y_bin_edges"]
+            y_col = "y_unclipped" if y_presentation == 2 else "y"
 
-        # setup covariates
-        covariates_type = None
-        if not self.model.supports_future_covariates and self.model.supports_past_covariates:
-            covariates_type = "past"
-        elif self.model.supports_future_covariates:
-            covariates_type = "future"
+            dfp_trainable = rebin_chance_of_showers_time_series(
+                self.dfp_trainable_evergreen,
+                "ds",
+                y_col,
+                time_bin_size=time_bin_size,
+                other_cols_to_agg_dict={"had_flow": "max"},
+                y_bin_edges=y_bin_edges,
+            )
+            dfp_trainable = dfp_trainable.rename(columns={y_col: "y"})
 
-        if covariates_type is not None:
-            dart_series_covariates_trainable = TimeSeries.from_dataframe(
+            dfp_trainable = create_datetime_component_cols(
+                dfp_trainable, datetime_col="ds", date_fmt=self.date_fmt, time_fmt=self.time_fmt
+            )
+
+            dart_series_y_trainable = TimeSeries.from_dataframe(
                 dfp_trainable,
                 "ds",
-                self.chosen_hyperparams["covariates"],
+                "y",
                 freq=freq_str,
                 fill_missing_dates=True,
             )
 
-        # fill missing values
-        frac_missing = missing_values_ratio(dart_series_y_trainable)
-        if 0 < frac_missing:
-            interpolate_method = "linear"
-            interpolate_limit_direction = "both"
-            if self.chosen_hyperparams.get("rebin_y", 0):
-                interpolate_method = "pad"
-                interpolate_limit_direction = "forward"
-            logger_ts_wrapper.info(
-                "Missing %.1g%% of values, filling via %s interpolation.",
-                100.0 * frac_missing,
-                interpolate_method,
-            )
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "ignore",
-                    message="DataFrame.interpolate with method=pad is deprecated",
-                    category=FutureWarning,
-                )
-                # ignore this for now and just use pad, would require a rewrite of the following code in darts
-                # https://github.com/unit8co/darts/blob/4362df272c4a3e51ab33cf6596fb2d159be82b73/darts/utils/missing_values.py#L176
-                # See the following for context
-                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
-                # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.ffill.html
+            # setup covariates
+            covariates_type = None
+            if not self.model.supports_future_covariates and self.model.supports_past_covariates:
+                covariates_type = "past"
+            elif self.model.supports_future_covariates:
+                covariates_type = "future"
 
-                dart_series_y_trainable = fill_missing_values(
-                    dart_series_y_trainable,
-                    method=interpolate_method,
-                    limit_direction=interpolate_limit_direction,
+            if covariates_type is not None:
+                dart_series_covariates_trainable = TimeSeries.from_dataframe(
+                    dfp_trainable,
+                    "ds",
+                    self.chosen_hyperparams["covariates"],
+                    freq=freq_str,
+                    fill_missing_dates=True,
                 )
-                if covariates_type is not None:
-                    dart_series_covariates_trainable = fill_missing_values(
-                        dart_series_covariates_trainable,
+
+            # fill missing values
+            frac_missing = missing_values_ratio(dart_series_y_trainable)
+            if 0 < frac_missing:
+                interpolate_method = "linear"
+                interpolate_limit_direction = "both"
+                if y_presentation == 1:  # y is binned
+                    interpolate_method = "pad"
+                    interpolate_limit_direction = "forward"
+                logger_ts_wrapper.debug(
+                    "Missing %.1g%% of values, filling via %s interpolation.",
+                    100.0 * frac_missing,
+                    interpolate_method,
+                )
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="DataFrame.interpolate with method=pad is deprecated",
+                        category=FutureWarning,
+                    )
+                    # ignore this for now and just use pad, would require a rewrite of the following code in darts
+                    # https://github.com/unit8co/darts/blob/4362df272c4a3e51ab33cf6596fb2d159be82b73/darts/utils/missing_values.py#L176
+                    # See the following for context
+                    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.interpolate.html
+                    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.ffill.html
+
+                    dart_series_y_trainable = fill_missing_values(
+                        dart_series_y_trainable,
                         method=interpolate_method,
                         limit_direction=interpolate_limit_direction,
                     )
+                    if covariates_type is not None:
+                        dart_series_covariates_trainable = fill_missing_values(
+                            dart_series_covariates_trainable,
+                            method=interpolate_method,
+                            limit_direction=interpolate_limit_direction,
+                        )
 
-        # split train and validation sets
-        dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
-            pd.Timestamp(self.dt_val_start_datetime_local)
-        )
-
-        model_covariates_kwargs = {}
-        prediction_covariates_kwargs = {}
-        if covariates_type is not None:
-            (
-                dart_series_covariates_train,
-                dart_series_covariates_val,
-            ) = dart_series_covariates_trainable.split_before(
+            # split train and validation sets
+            dart_series_y_train, dart_series_y_val = dart_series_y_trainable.split_before(
                 pd.Timestamp(self.dt_val_start_datetime_local)
             )
-            model_covariates_kwargs[f"{covariates_type}_covariates"] = dart_series_covariates_train
-            if self.is_nn:
-                model_covariates_kwargs[f"val_{covariates_type}_covariates"] = (
-                    dart_series_covariates_val
+
+            model_covariates_kwargs = {}
+            prediction_covariates_kwargs = {}
+            if covariates_type is not None:
+                (
+                    dart_series_covariates_train,
+                    dart_series_covariates_val,
+                ) = dart_series_covariates_trainable.split_before(
+                    pd.Timestamp(self.dt_val_start_datetime_local)
                 )
-            prediction_covariates_kwargs[f"{covariates_type}_covariates"] = (
-                dart_series_covariates_train.append(dart_series_covariates_val)
+                model_covariates_kwargs[f"{covariates_type}_covariates"] = (
+                    dart_series_covariates_train
+                )
+                if self.is_nn:
+                    model_covariates_kwargs[f"val_{covariates_type}_covariates"] = (
+                        dart_series_covariates_val
+                    )
+                prediction_covariates_kwargs[f"{covariates_type}_covariates"] = (
+                    dart_series_covariates_train.append(dart_series_covariates_val)
+                )
+
+            # train
+            train_kwargs = {}
+            if self.is_nn:
+                train_kwargs["val_series"] = dart_series_y_val
+                train_kwargs["verbose"] = self.verbose
+
+            _ = self.model.fit(
+                dart_series_y_train,
+                **train_kwargs,
+                **model_covariates_kwargs,
             )
 
-        # train
-        train_kwargs = {}
-        if self.is_nn:
-            train_kwargs["val_series"] = dart_series_y_val
-            train_kwargs["verbose"] = self.verbose
+            with torch.no_grad():
+                # measure loss on validation
+                y_pred_val = self.model.predict(
+                    dart_series_y_val.n_timesteps,
+                    num_samples=1,
+                    verbose=self.verbose,
+                    **prediction_covariates_kwargs,
+                    # Do not show warnings like
+                    # https://github.com/unit8co/darts/blob/20ee5ece4e02ed7c1e84db07679c83ceeb1f8a13/darts/models/forecasting/forecasting_model.py#L2334-L2337
+                    show_warnings=False,
+                )
 
-        _ = self.model.fit(
-            dart_series_y_train,
-            **train_kwargs,
-            **model_covariates_kwargs,
-        )
+                y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
+                y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
-        # measure loss on validation
-        y_pred_val = self.model.predict(
-            dart_series_y_val.n_timesteps,
-            num_samples=1,
-            verbose=self.verbose,
-            **prediction_covariates_kwargs,
-            # Do not show warnings like
-            # https://github.com/unit8co/darts/blob/20ee5ece4e02ed7c1e84db07679c83ceeb1f8a13/darts/models/forecasting/forecasting_model.py#L2334-L2337
-            show_warnings=False,
-        )
+                # make loss negative as we want to maximize the target in run_bayesian_opt()
+                loss = -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
 
-        y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
-        y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
+            # set the is_trained flag
+            self.is_trained = True
 
-        loss = float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
+        finally:
+            # always clean up
+            # small objects, can ignore: loss, time_bin_size, freq_str, y_presentation, y_bin_edges, covariates_type
 
-        # clean up
-        # small objects, can ignore: time_bin_size, freq_str, y_bin_edges, covariates_type
-        del y_val_tensor
-        del y_pred_val_tensor
+            if "dart_series_y_trainable" in locals():
+                del dart_series_y_trainable
+            if "dart_series_y_train" in locals():
+                del dart_series_y_train
+            if "dart_series_y_val" in locals():
+                del dart_series_y_val
+            if "y_pred_val" in locals():
+                del y_pred_val
+            if "y_val_tensor" in locals():
+                del y_val_tensor
+            if "y_pred_val_tensor" in locals():
+                del y_pred_val_tensor
+            if "model_covariates_kwargs" in locals():
+                del model_covariates_kwargs
+            if "prediction_covariates_kwargs" in locals():
+                del prediction_covariates_kwargs
+            if "dart_series_covariates_trainable" in locals():
+                del dart_series_covariates_trainable
+            if "dart_series_covariates_train" in locals():
+                del dart_series_covariates_train
+            if "dart_series_covariates_val" in locals():
+                del dart_series_covariates_val
+            if "dfp_trainable" in locals():
+                del dfp_trainable
 
-        del y_pred_val
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+            gc.collect()
 
-        del dart_series_y_val
-        del dart_series_y_train
-        del dart_series_y_trainable
-
-        if covariates_type is not None:
-            del model_covariates_kwargs
-            del prediction_covariates_kwargs
-            del dart_series_covariates_val
-            del dart_series_covariates_train
-            del dart_series_covariates_trainable
-
-        del dfp_trainable
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-        gc.collect()
-
-        # return negative loss as we want to maximize the target, and set the is_trained flag
-        self.is_trained = True
-        return -loss
+        return loss

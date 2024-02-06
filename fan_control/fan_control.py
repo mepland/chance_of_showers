@@ -52,7 +52,7 @@ def fan_control(cfg: DictConfig) -> None:
 
     # Lock script, avoid launching duplicates
     sys.path.append(str(pathlib.Path.cwd().parent))
-    from utils.shared_functions import (  # pylint: disable=import-error, import-outside-toplevel
+    from utils.shared_functions import (  # pylint: disable=import-outside-toplevel
         get_lock,
         get_SoC_temp,
     )

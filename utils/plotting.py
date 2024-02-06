@@ -454,7 +454,7 @@ def _process_hist_binning(
 
 
 ########################################################
-def plot_hists(  # noqa: C901 pylint: disable=too-many-locals, too-many-function-args, too-many-statements
+def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
     hist_dicts: list[dict],
     *,
     m_path: pathlib.Path,

@@ -2,6 +2,7 @@
 """Wrapper for Transformer."""
 # pylint: enable=invalid-name
 
+import operator
 from typing import Any
 
 from darts.models import TransformerModel
@@ -37,6 +38,15 @@ class TransformerModelWrapper(TSModelWrapper):
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
+    _hyperparams_conditions = [
+        # embed_dim must be divisible by num_heads
+        {
+            "hyperparam": "d_model",
+            "condition": operator.ge,
+            "rhs": "nhead",
+        },
+    ]
+
     def __init__(self: "TransformerModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         """Int method.
@@ -61,6 +71,7 @@ class TransformerModelWrapper(TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
             self.is_nn = self._is_nn
+            self.verbose = kwargs.get("verbose", 1)
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
@@ -68,6 +79,7 @@ class TransformerModelWrapper(TSModelWrapper):
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
+            self.hyperparams_conditions = self._hyperparams_conditions
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -80,6 +92,7 @@ class TransformerModelWrapper(TSModelWrapper):
                 local_timezone=kwargs["local_timezone"],
                 model_class=self._model_class,
                 is_nn=self._is_nn,
+                verbose=kwargs.get("verbose", 1),
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
@@ -87,4 +100,5 @@ class TransformerModelWrapper(TSModelWrapper):
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
+                hyperparams_conditions=self._hyperparams_conditions,
             )

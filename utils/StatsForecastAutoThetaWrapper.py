@@ -35,6 +35,9 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
         **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     }
 
+    # Overwrite time_bin_size_in_minutes as small values crash with too many rows
+    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5  # type: ignore[index]
+
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
     def __init__(self: "StatsForecastAutoThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
@@ -61,6 +64,7 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
             self.is_nn = self._is_nn
+            self.verbose = kwargs.get("verbose", 1)
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
@@ -80,6 +84,7 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
                 local_timezone=kwargs["local_timezone"],
                 model_class=self._model_class,
                 is_nn=self._is_nn,
+                verbose=kwargs.get("verbose", 1),
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,

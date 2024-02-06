@@ -25,12 +25,13 @@ from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import tqdm
 from hydra import compose, initialize
 from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-# pylint: disable=import-error
+# pylint: disable=import-error,useless-suppression
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -94,9 +95,8 @@ from utils.plotting import (
     plot_hists,
 )
 
-# pylint: enable=import-error
 # isort: on
-# pylint: disable=unreachable
+# pylint: enable=import-error
 
 # %%
 initialize(version_base=None, config_path="..")
@@ -198,6 +198,14 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     clip=True,
 )
 
+# unclipped
+dfp_data["mean_pressure_value_normalized_unclipped"] = dfp_data["mean_pressure_value"].apply(
+    normalize_pressure_value,
+    observed_pressure_min=OBSERVED_PRESSURE_MIN,
+    observed_pressure_max=OBSERVED_PRESSURE_MAX,
+    clip=False,
+)
+
 # create local datetime columns
 dfp_data["datetime_local"] = dfp_data["datetime_utc"].dt.tz_convert(LOCAL_TIMEZONE)
 
@@ -233,6 +241,7 @@ dfp_data = dfp_data[
         "datetime_local",
         "mean_pressure_value",
         "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
         "had_flow",
         "datetime_local_same_day",
         "datetime_local_same_week",
@@ -255,7 +264,13 @@ with pd.option_context("display.max_rows", 5, "display.max_columns", None):
     display(dfp_data)
 
 # %%
-dfp_data[["mean_pressure_value", "mean_pressure_value_normalized"]].describe()
+dfp_data[
+    [
+        "mean_pressure_value",
+        "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
+    ]
+].describe()
 
 # %%
 dt_start_local = dfp_data["datetime_local"].min()
@@ -297,13 +312,24 @@ Actual Min Mean Pressure with Flow = {actual_min_mean_pressure_value_with_flow}
 # ## Evergreen Training Data Prep
 
 # %%
-dfp_trainable_evergreen = dfp_data[["datetime_local", "mean_pressure_value_normalized", "had_flow"]]
+dfp_trainable_evergreen = dfp_data[
+    [
+        "datetime_local",
+        "mean_pressure_value_normalized",
+        "mean_pressure_value_normalized_unclipped",
+        "had_flow",
+    ]
+]
 dfp_trainable_evergreen = dfp_trainable_evergreen.loc[
     (TRAINABLE_START_DATETIME_LOCAL <= dfp_trainable_evergreen["datetime_local"])
     & (dfp_trainable_evergreen["datetime_local"] < TRAINABLE_END_DATETIME_LOCAL)
 ]
 dfp_trainable_evergreen = dfp_trainable_evergreen.rename(
-    columns={"datetime_local": "ds", "mean_pressure_value_normalized": "y"}
+    columns={
+        "datetime_local": "ds",
+        "mean_pressure_value_normalized": "y",
+        "mean_pressure_value_normalized_unclipped": "y_unclipped",
+    }
 )
 dfp_trainable_evergreen["ds"] = dfp_trainable_evergreen["ds"].dt.tz_localize(None)
 
@@ -373,7 +399,7 @@ from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 20, "rebin_y": False},
+    variable_hyperparams={"time_bin_size_in_minutes": 20, "y_presentation": 2},
 )
 model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Prophet)
@@ -566,12 +592,9 @@ display_image(OUTPUTS_PATH / "prophet" / "prophet_component_daily.png")
 # ### N-BEATS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_NBEATS = NBEATSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NBEATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NBEATS)
@@ -581,7 +604,6 @@ configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NBEATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NBEATS.train_model()
 print(f"{val_loss = }")
 
@@ -601,12 +623,9 @@ print(tensorboard_logs)
 # ###  N-HiTS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_NHiTS = NHiTSModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NHiTS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NHiTS)
@@ -616,7 +635,6 @@ configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NHiTS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NHiTS.train_model()
 print(f"{val_loss = }")
 
@@ -636,12 +654,9 @@ print(tensorboard_logs)
 # ### TCN
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TCN = TCNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_TCN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TCN)
@@ -651,7 +666,6 @@ configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TCN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TCN.train_model()
 print(f"{val_loss = }")
 
@@ -671,12 +685,9 @@ print(tensorboard_logs)
 # ### Transformer
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_Transformer = TransformerModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_Transformer.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Transformer)
@@ -686,7 +697,6 @@ configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparam
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Transformer.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Transformer.train_model()
 print(f"{val_loss = }")
 
@@ -706,12 +716,9 @@ print(tensorboard_logs)
 # ### TFT
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TFT = TFTModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_TFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TFT)
@@ -721,7 +728,6 @@ configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TFT.train_model()
 print(f"{val_loss = }")
 
@@ -741,12 +747,9 @@ print(tensorboard_logs)
 # ### D-Linear
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_DLinear = DLinearModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_DLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_DLinear)
@@ -756,7 +759,6 @@ configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_DLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_DLinear.train_model()
 print(f"{val_loss = }")
 
@@ -776,12 +778,9 @@ print(tensorboard_logs)
 # ### N-Linear
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_NLinear = NLinearModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NLinear.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_NLinear)
@@ -791,7 +790,6 @@ configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_NLinear.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_NLinear.train_model()
 print(f"{val_loss = }")
 
@@ -811,12 +809,9 @@ print(tensorboard_logs)
 # ### TiDE
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TiDE = TiDEModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_TiDE.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TiDE)
@@ -826,7 +821,6 @@ configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TiDE.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TiDE.train_model()
 print(f"{val_loss = }")
 
@@ -847,12 +841,9 @@ print(tensorboard_logs)
 # `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_RNN = RNNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
     model="RNN",
 )
 model_wrapper_RNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -863,7 +854,6 @@ configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RNN.train_model()
 print(f"{val_loss = }")
 
@@ -884,12 +874,9 @@ print(tensorboard_logs)
 # `models = ["RNN", "LSTM", "GRU"]`
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_BlockRNN = BlockRNNModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
     model="RNN",
 )
 model_wrapper_BlockRNN.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -900,7 +887,6 @@ configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BlockRNN.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BlockRNN.train_model()
 print(f"{val_loss = }")
 
@@ -923,14 +909,10 @@ print(tensorboard_logs)
 # ### AutoARIMA
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_AutoARIMA = AutoARIMAWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={
-        "input_chunk_length_in_minutes": 10,
-        "rebin_y": True,
+        "time_bin_size_in_minutes": 10,
         # "m_AutoARIMA": 0,  # Runs extremely slow...
     },
 )
@@ -942,7 +924,6 @@ configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_AutoARIMA.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_AutoARIMA.train_model()
 print(f"{val_loss = }")
 
@@ -953,12 +934,9 @@ print(model_wrapper_AutoARIMA)
 # ### BATS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_BATS = BATSWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_BATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_BATS)
@@ -968,7 +946,6 @@ configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_BATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_BATS.train_model()
 print(f"{val_loss = }")
 
@@ -979,12 +956,9 @@ print(model_wrapper_BATS)
 # ### TBATS
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_TBATS = TBATSWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_TBATS.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_TBATS)
@@ -994,7 +968,6 @@ configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_TBATS.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_TBATS.train_model()
 print(f"{val_loss = }")
 
@@ -1005,12 +978,9 @@ print(model_wrapper_TBATS)
 # ### FourTheta
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_FourTheta = FourThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_FourTheta.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_FourTheta)
@@ -1020,7 +990,6 @@ configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FourTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FourTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1031,14 +1000,10 @@ print(model_wrapper_FourTheta)
 # ### StatsForecastAutoTheta
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_StatsForecastAutoTheta = StatsForecastAutoThetaWrapper(
     TSModelWrapper=PARENT_WRAPPER,
     variable_hyperparams={
-        "input_chunk_length_in_minutes": 10,
-        "rebin_y": True,
+        "time_bin_size_in_minutes": 10,
         "season_length_StatsForecastAutoTheta": 0,
     },
 )
@@ -1052,7 +1017,6 @@ configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_StatsForecastAutoTheta.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
 print(f"{val_loss = }")
 
@@ -1063,12 +1027,9 @@ print(model_wrapper_StatsForecastAutoTheta)
 # ### FFT
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_FFT = FFTWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_FFT.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_FFT)
@@ -1078,7 +1039,6 @@ configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_FFT.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_FFT.train_model()
 print(f"{val_loss = }")
 
@@ -1089,12 +1049,9 @@ print(model_wrapper_FFT)
 # ### KalmanForecaster
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_KalmanForecaster = KalmanForecasterWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_KalmanForecaster.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_KalmanForecaster)
@@ -1104,7 +1061,6 @@ configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyper
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_KalmanForecaster.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_KalmanForecaster.train_model()
 print(f"{val_loss = }")
 
@@ -1118,12 +1074,9 @@ print(model_wrapper_KalmanForecaster)
 # Do not use `"tsb"` as `alpha_d` and `alpha_p` must be set
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_Croston = CrostonWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
     version="optimized",
 )
 model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1134,7 +1087,6 @@ configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_Croston.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_Croston.train_model()
 print(f"{val_loss = }")
 
@@ -1148,12 +1100,9 @@ print(model_wrapper_Croston)
 # ### LinearRegressionModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_LinearRegressionModel = LinearRegressionModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_LinearRegressionModel.set_work_dir(
     work_dir_relative_to_base=pathlib.Path("local_dev")
@@ -1165,7 +1114,6 @@ configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LinearRegressionModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LinearRegressionModel.train_model()
 print(f"{val_loss = }")
 
@@ -1176,12 +1124,9 @@ print(model_wrapper_LinearRegressionModel)
 # ### RandomForest
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_RandomForest = RandomForestWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_RandomForest.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_RandomForest)
@@ -1191,7 +1136,6 @@ configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperpara
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_RandomForest.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_RandomForest.train_model()
 print(f"{val_loss = }")
 
@@ -1202,12 +1146,9 @@ print(model_wrapper_RandomForest)
 # ### LightGBMModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_LightGBMModel = LightGBMModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_LightGBMModel.verbose = -1  # Silence [LightGBM] [Info] messages
 model_wrapper_LightGBMModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
@@ -1218,7 +1159,6 @@ configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_LightGBMModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_LightGBMModel.train_model()
 print(f"{val_loss = }")
 
@@ -1229,12 +1169,9 @@ print(model_wrapper_LightGBMModel)
 # ### XGBModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_XGBModel = XGBModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_XGBModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_XGBModel)
@@ -1244,7 +1181,6 @@ configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_XGBModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_XGBModel.train_model()
 print(f"{val_loss = }")
 
@@ -1255,12 +1191,9 @@ print(model_wrapper_XGBModel)
 # ### CatBoostModel
 
 # %%
-# raise UserWarning("Stopping Here")
-
-# %%
 model_wrapper_CatBoostModel = CatBoostModelWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_CatBoostModel.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_CatBoostModel)
@@ -1270,7 +1203,6 @@ configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-model_wrapper_CatBoostModel.set_enable_progress_bar(enable_progress_bar=True)
 val_loss = -model_wrapper_CatBoostModel.train_model()
 print(f"{val_loss = }")
 
@@ -1286,7 +1218,7 @@ print(model_wrapper_CatBoostModel)
 # %%
 model_wrapper_NaiveMean = NaiveMeanWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NaiveMean.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1302,7 +1234,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveSeasonal = NaiveSeasonalWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NaiveSeasonal.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1318,7 +1250,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveDrift = NaiveDriftWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NaiveDrift.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1334,7 +1266,7 @@ print(f"{val_loss = }")
 # %%
 model_wrapper_NaiveMovingAverage = NaiveMovingAverageWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"input_chunk_length_in_minutes": 10, "rebin_y": True},
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
 )
 model_wrapper_NaiveMovingAverage.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
@@ -1351,6 +1283,9 @@ print(f"{val_loss = }")
 # %%
 # raise UserWarning("Stopping Here")
 
+# %% [markdown]
+# ## Setup
+
 # %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
@@ -1359,44 +1294,116 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 # # %tensorboard --logdir $tensorboard_logs
 
+# %%
+prod_kwargs = {
+    "parent_wrapper": PARENT_WRAPPER,
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+    "verbose": 2,
+    "disregard_training_exceptions": True,
+    "n_iter": 100,
+    "max_time_per_model": datetime.timedelta(minutes=30),
+}
 
 # %%
-# TEST
-# TransformerModelWrapper
-# TFTModelWrapper
-# NLinearModelWrapper
+dev_kwargs = {
+    "parent_wrapper": PARENT_WRAPPER,
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+    "verbose": 3,
+    "enable_reloading": False,
+    "n_iter": 10,
+    "max_time_per_model": datetime.timedelta(minutes=2),
+    "fixed_hyperparams_to_alter": {"n_epochs": 4},
+    "accelerator": "gpu",
+}
 
-# FIX
-# TCNModelWrapper
-# FourThetaWrapper
-# StatsForecastAutoThetaWrapper
-# CrostonWrapper
-# KalmanForecasterWrapper
-# RNNModelWrapper
-# BlockRNNModelWrapper
-# AutoARIMAWrapper
+# %%
+model_kwarg_list = [
+    # Prophet
+    {"model_wrapper_class": ProphetWrapper},
+    # PyTorch NN Models
+    # {"model_wrapper_class": NBEATSModelWrapper},
+    # {"model_wrapper_class": NHiTSModelWrapper},
+    # {"model_wrapper_class": TCNModelWrapper},
+    # {"model_wrapper_class": TransformerModelWrapper},
+    # {"model_wrapper_class": TFTModelWrapper},
+    # {"model_wrapper_class": DLinearModelWrapper},
+    # {"model_wrapper_class": NLinearModelWrapper},
+    # {"model_wrapper_class": TiDEModelWrapper},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
+    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
+    # Statistical Models
+    {"model_wrapper_class": AutoARIMAWrapper},
+    {"model_wrapper_class": BATSWrapper},
+    {"model_wrapper_class": TBATSWrapper},
+    {"model_wrapper_class": FourThetaWrapper},
+    {"model_wrapper_class": StatsForecastAutoThetaWrapper},
+    {"model_wrapper_class": FFTWrapper},
+    {"model_wrapper_class": KalmanForecasterWrapper},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
+    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
+    # Regression Models
+    {"model_wrapper_class": LinearRegressionModelWrapper},
+    {"model_wrapper_class": RandomForestWrapper},
+    {"model_wrapper_class": LightGBMModelWrapper},
+    {"model_wrapper_class": XGBModelWrapper},
+    {"model_wrapper_class": CatBoostModelWrapper},
+    # Naive Models
+    {"model_wrapper_class": NaiveMeanWrapper},
+    {"model_wrapper_class": NaiveSeasonalWrapper},
+    {"model_wrapper_class": NaiveDriftWrapper},
+    {"model_wrapper_class": NaiveMovingAverageWrapper},
+]
+
+# %% [markdown]
+# ## Run Bayesian Optimization
+
+# %% [markdown]
+# ### All Models!
+
+# %%
+for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
+    _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
+    pbar.set_postfix_str(f"Optimizing {_model_name}")
+
+    if TYPE_CHECKING:
+        assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+        assert isinstance(dev_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+        assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
+
+    _ = run_bayesian_opt(
+        # **prod_kwargs,  # type: ignore[arg-type]
+        **dev_kwargs,  # type: ignore[arg-type]
+        **model_kwarg,  # type: ignore[arg-type]
+    )
+
+# %% [markdown]
+# ### Single Model
 
 # %%
 optimal_values, optimizer = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=LightGBMModelWrapper,
+    model_wrapper_class=NBEATSModelWrapper,
+    fixed_hyperparams_to_alter={"n_epochs": 20},
     n_iter=5,
     enable_progress_bar=True,
-    max_time_per_model=datetime.timedelta(minutes=10),
+    max_time_per_model=datetime.timedelta(minutes=15),
     accelerator="auto",
     display_memory_usage=False,
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
-
-# %%
 pprint.pprint(optimal_values)
 
 # %% [markdown]
-# ## DEV: Compare Run Times
+# ### DEV: Compare Run Times
 
 # %%
-model_name = "NHiTSModel"  # pylint: disable=invalid-name
+model_name = "NBEATSModel"  # pylint: disable=invalid-name
 
 dfp_cpu = load_json_log_to_dfp(
     pathlib.Path(
@@ -1415,7 +1422,6 @@ dfp_gpu = load_json_log_to_dfp(
         f"bayesian_opt_{model_name}.json",
     )
 )
-
 
 # %%
 if dfp_cpu is None:

@@ -5,10 +5,12 @@ import gc
 import json
 import pathlib
 import platform
+import pprint
+import re
 import signal
 import traceback
 from types import FrameType  # noqa: TC003
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import bayes_opt
 import humanize
@@ -21,7 +23,7 @@ from bayes_opt.logger import JSONLogger, ScreenLogger
 from bayes_opt.util import load_logs
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper  # noqa: TC001
+from utils.TSModelWrapper import TSModelWrapper, BAD_LOSS
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
@@ -62,6 +64,42 @@ from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 # isort: on
+
+WrapperTypes: TypeAlias = type[
+    # Prophet
+    ProphetWrapper
+    # PyTorch NN Models
+    | NBEATSModelWrapper
+    | NHiTSModelWrapper
+    | TCNModelWrapper
+    | TransformerModelWrapper
+    | TFTModelWrapper
+    | DLinearModelWrapper
+    | NLinearModelWrapper
+    | TiDEModelWrapper
+    | RNNModelWrapper
+    | BlockRNNModelWrapper
+    # Statistical Models
+    | AutoARIMAWrapper
+    | BATSWrapper
+    | TBATSWrapper
+    | FourThetaWrapper
+    | StatsForecastAutoThetaWrapper
+    | FFTWrapper
+    | KalmanForecasterWrapper
+    | CrostonWrapper
+    # Regression Models
+    | LinearRegressionModelWrapper
+    | RandomForestWrapper
+    | LightGBMModelWrapper
+    | XGBModelWrapper
+    | CatBoostModelWrapper
+    # Naive Models
+    | NaiveMeanWrapper
+    | NaiveSeasonalWrapper
+    | NaiveDriftWrapper
+    | NaiveMovingAverageWrapper
+]
 
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
@@ -134,43 +172,10 @@ n_points = 0  # # pylint: disable=invalid-name
 
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
-    parent_wrapper: TSModelWrapper,
-    model_wrapper_class: type[
-        # Prophet
-        ProphetWrapper
-        # PyTorch NN Models
-        | NBEATSModelWrapper
-        | NHiTSModelWrapper
-        | TCNModelWrapper
-        | TransformerModelWrapper
-        | TFTModelWrapper
-        | DLinearModelWrapper
-        | NLinearModelWrapper
-        | TiDEModelWrapper
-        | RNNModelWrapper
-        | BlockRNNModelWrapper
-        # Statistical Models
-        | AutoARIMAWrapper
-        | BATSWrapper
-        | TBATSWrapper
-        | FourThetaWrapper
-        | StatsForecastAutoThetaWrapper
-        | FFTWrapper
-        | KalmanForecasterWrapper
-        | CrostonWrapper
-        # Regression Models
-        | LinearRegressionModelWrapper
-        | RandomForestWrapper
-        | LightGBMModelWrapper
-        | XGBModelWrapper
-        | CatBoostModelWrapper
-        # Naive Models
-        | NaiveMeanWrapper
-        | NaiveSeasonalWrapper
-        | NaiveDriftWrapper
-        | NaiveMovingAverageWrapper
-    ],
     *,
+    parent_wrapper: TSModelWrapper,
+    model_wrapper_class: WrapperTypes,
+    model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
     allow_duplicate_points: bool = False,
@@ -178,10 +183,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     utility_kappa: float = 2.576,
     verbose: int = 2,
     model_verbose: int = -1,
+    disregard_training_exceptions: bool = False,
     display_memory_usage: bool = False,
     enable_progress_bar: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
+    fixed_hyperparams_to_alter: dict | None = None,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
@@ -192,6 +199,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     Args:
         parent_wrapper: TSModelWrapper object containing all parent configs.
         model_wrapper_class: TSModelWrapper class to optimize.
+        model_wrapper_kwargs: kwargs to passs to model_wrapper.
         hyperparams_to_opt: List of hyperparameters to optimize.
             If None, use all configurable hyperparameters.
         n_iter: How many iterations of Bayesian optimization to perform.
@@ -209,12 +217,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             Lower value = favors spaces where the regression function is the highest.
         verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
         model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
+        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
         display_memory_usage: Print memory usage at each training iteration.
         enable_progress_bar: Enable torch progress bar during training.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+        fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter, but not optimize.
         enable_json_logging: Enable JSON logging of points.
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
@@ -226,16 +236,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     Raises:
         ValueError: Bad configuration.
-        RuntimeError: Run time error that is not "out of memory".
     """
     global n_points
 
-    # Set a finite, but horrible, loss for when the training fails to complete.
-    # np.finfo(np.float64).min + 1 does not work, sklearn errors
-    bad_target = -999
+    if model_wrapper_kwargs is None:
+        model_wrapper_kwargs = {}
 
     # Setup hyperparameters
-    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper, **model_wrapper_kwargs)
     configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
@@ -309,17 +317,21 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         global n_points
         optimizer.register(params=point_to_probe, target=target)
         n_points += 1
-        if probed_point and not (
-            # point_to_probe is exactly the same as probed_point on this iter,
-            # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
-            # Do not register the probed_point.
-            np.array_equiv(
-                optimizer.space.params_to_array(point_to_probe),
-                optimizer.space.params_to_array(probed_point),
-            )
-        ):
-            optimizer.register(params=probed_point, target=target)
-            n_points += 1
+        if probed_point:
+            # translate odd hyperparam_values back to original representation
+            probed_point = model_wrapper.translate_hyperparameters_to_numeric(probed_point)
+
+            if not (
+                # point_to_probe is exactly the same as probed_point on this iter,
+                # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
+                # Do not register the probed_point.
+                np.array_equiv(
+                    optimizer.space.params_to_array(point_to_probe),
+                    optimizer.space.params_to_array(probed_point),
+                )
+            ):
+                optimizer.register(params=probed_point, target=target)
+                n_points += 1
 
         model_wrapper.reset_wrapper()
         del model_wrapper
@@ -336,7 +348,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # Setup signal_handler to kill iteration if it runs too long
     def signal_handler(
         dummy_signal: int,  # noqa: U100
-        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=used-before-assignment
+        dummy_frame: FrameType | None,  # noqa: U100
     ) -> None:
         """Stop iteration gracefuly.
 
@@ -347,9 +359,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             dummy_frame: Frame object.
 
         Raises:
-            Exception: Out of Time!
+            RuntimeError: Out of Time!
         """
-        raise Exception("Out of Time!")  # pylint: disable=broad-exception-raised
+        raise RuntimeError("Out of Time!")
 
     max_time_per_model_flag = (
         max_time_per_model is not None
@@ -360,6 +372,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         signal.signal(signal.SIGALRM, signal_handler)
 
     # Run Bayesian optimization iterations
+    next_point_to_probe = None
+    next_point_to_probe_cleaned = None
     try:
         for i_iter in range(n_iter):
             if i_iter == 0:
@@ -369,7 +383,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
             # Create a fresh model_wrapper object to try to avoid GPU memory leaks
             # This may not be necessary, but as it is already coded, just be safe and leave it
-            model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+            model_wrapper = model_wrapper_class(
+                TSModelWrapper=parent_wrapper, **model_wrapper_kwargs
+            )
+            model_wrapper.alter_fixed_hyperparams(
+                fixed_hyperparams_to_alter=fixed_hyperparams_to_alter
+            )
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
             model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
             model_wrapper.set_max_time(max_time=max_time_per_model)
@@ -380,6 +399,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # If it has been tested, save the raw next_point_to_probe with the same target and continue
             chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
             next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
+            if 2 < verbose:
+                print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
+                print(
+                    f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
+                )
 
             is_duplicate_point = False
             for i_param in range(optimizer.space.params.shape[0]):
@@ -411,37 +435,53 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # train the model
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
-                # Put a lower bound on target at bad_target.
+                # Put a lower bound on target at BAD_LOSS.
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
-                target = max(target, bad_target)
-            except KeyboardInterrupt:
-                print("KeyboardInterrupt: Returning with current objects.")
+                target = max(target, BAD_LOSS)
+            except KeyboardInterrupt as error:
+                print("KeyboardInterrupt: Ending now!")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
-
-                return optimizer.max, optimizer
-            except RuntimeError as error:
-                if "out of memory" in str(error):
-                    print(f"Ran out of memory, returning {bad_target:.3g} as loss")
-                    complete_iter(
-                        i_iter,
-                        model_wrapper,
-                        bad_target,
-                        next_point_to_probe,
-                        probed_point=next_point_to_probe_cleaned,
-                    )
-                    continue
                 raise error
             except Exception as error:
+                error_str = None
+                # Expected exceptions
                 if "Out of Time!" in str(error):
-                    print(f"Ran out of time, returning {bad_target:.3g} as loss")
+                    error_str = "Ran out of time"
+                elif "out of memory" in str(error):
+                    error_str = "Ran out of memory"
+                elif (
+                    "Multiplicative seasonality is not appropriate for zero and negative values"
+                    in str(error)
+                ):
+                    error_str = (
+                        "Multiplicative seasonality is not appropriate for zero and negative values"
+                    )
+                elif re.match(
+                    r"^The expanded size of the tensor \(\d*?\) must match the existing size \(\d*?\) at non-singleton dimension",
+                    str(error),
+                ):
+                    error_str = "Bad value of d_model for this input_chunk_length"
+                elif "embed_dim must be divisible by num_heads" in str(error):
+                    error_str = "Bad value of d_model for this nheads"
+                elif "Dimension out of range" in str(error):
+                    error_str = str(error)
+                # Unexpected exceptions
+                elif disregard_training_exceptions:
+                    error_str = f"Unexpected error while training: {str(error)}\ndisregard_training_exceptions is set"
+
+                # use BAD_LOSS as loss and continue
+                if error_str is not None:
+                    print(f"{error_str}, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        bad_target,
+                        BAD_LOSS,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
                     continue
+
+                # Raise the exception, kill the iterations
                 raise error
             finally:
                 if max_time_per_model_flag:
@@ -472,9 +512,24 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             + ", stopping optimization here."
         )
     except Exception as error:
-        print(
-            f"Unexpected error in run_bayesian_opt():\n{error = }\n{type(error) = }\n{traceback.format_exc()}\nReturning with current objects."
-        )
+        error_msg = f"""
+Unexpected error in run_bayesian_opt():
+{error = }
+{type(error) = }
+{traceback.format_exc()}"""
+
+        if next_point_to_probe is not None:
+            error_msg = f"""{error_msg}
+next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
+
+        if next_point_to_probe is not None:
+            error_msg = f"""{error_msg}
+next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
+
+        error_msg = f"""{error_msg}
+Returning with current objects."""
+
+        print(error_msg)
 
     optimizer.dispatch(Events.OPTIMIZATION_END)
 

@@ -108,11 +108,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     ################################################################################
     # Lock script, avoid launching duplicates
     sys.path.append(str(pathlib.Path.cwd().parent))
-    from utils.shared_functions import (  # pylint: disable=import-error
-        get_lock,
-        get_SoC_temp,
-        normalize_pressure_value,
-    )
+    from utils.shared_functions import get_lock, get_SoC_temp, normalize_pressure_value
 
     get_lock("daq")
 
@@ -283,14 +279,11 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     # chan_0.voltage = Returns the voltage from the ADC pin as a floating point value. Due to the 10-bit accuracy of the chip, returned values range from 0 to (reference_voltage * 65472 / 65535)
     # DAQ max value is 65472
 
-    # pylint: disable=wrong-import-order
     import adafruit_mcp3xxx.mcp3008 as MCP
     import board
     import busio
     import digitalio
     from adafruit_mcp3xxx.analog_in import AnalogIn
-
-    # pylint: enable=wrong-import-order
 
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
     cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5  # pylint: disable=invalid-name
@@ -302,7 +295,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     # https://gpiozero.readthedocs.io/en/stable/api_input.html?highlight=Button#gpiozero.Button
     # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
     # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
-    from gpiozero import Button  # pylint: disable=wrong-import-order
+    from gpiozero import Button
 
     def rise() -> None:
         """Flow sensor rise action."""
@@ -599,7 +592,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     )
 
     ################################################################################
-    def daq_loop(t_utc_str: str, t_local_str: str) -> None:  # pylint: disable=too-many-statements
+    def daq_loop(t_utc_str: str, t_local_str: str) -> None:
         """DAQ loop.
 
         Args:
