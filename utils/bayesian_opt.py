@@ -177,7 +177,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     model_wrapper_class: WrapperTypes,
     model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
-    n_iter: int = 50,
+    n_iter: int = 100,
     allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
