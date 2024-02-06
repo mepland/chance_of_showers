@@ -1083,9 +1083,6 @@ model_wrapper_Croston.set_work_dir(work_dir_relative_to_base=pathlib.Path("local
 # print(model_wrapper_Croston)
 
 # %%
-print(model_wrapper_Croston)
-
-# %%
 configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
