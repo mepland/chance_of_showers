@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING, Final
 import matplotlib.pyplot as plt
 import pandas as pd
 import tqdm
-import xlsxwriter
 from hydra import compose, initialize
 from IPython.display import Image, display
 
