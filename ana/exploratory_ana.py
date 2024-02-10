@@ -1428,13 +1428,7 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
     dfp_best_points.to_excel(writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False)
     worksheet = writer.sheets["Best Points"]
     worksheet.set_column(1, 1, None, target_fmt)
-    worksheet.conditional_format(
-        1,
-        1,
-        dfp_best_points.shape[0],
-        1,
-        target_color_fmt,
-    )
+    worksheet.conditional_format(1, 1, dfp_best_points.shape[0], 1, target_color_fmt)
     worksheet.set_column(5, 5, None, elapsed_minutes_fmt)
     worksheet.autofilter(0, 0, dfp_best_points.shape[0], dfp_best_points.shape[1] - 1)
     worksheet.autofit()
@@ -1443,13 +1437,7 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
         dfp.to_excel(writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
         worksheet = writer.sheets[model_name]
         worksheet.set_column(1, 1, None, target_fmt)
-        worksheet.conditional_format(
-            1,
-            1,
-            dfp.shape[0],
-            1,
-            target_color_fmt,
-        )
+        worksheet.conditional_format(1, 1, dfp.shape[0], 1, target_color_fmt)
         worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
         worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
         worksheet.autofit()
