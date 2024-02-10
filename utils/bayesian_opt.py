@@ -137,25 +137,26 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
             dfp = pd.DataFrame(rows)
             dfp["i_point"] = dfp.index
 
-            cols_fixed = ["i_point", "datetime_datetime"]
+            cols_fixed = ["i_point", "target", "datetime_datetime"]
             return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
         return None
 
 
-def load_best_targets(dir_path: pathlib.Path) -> pd.DataFrame:
-    """Load best target iterations from all bayes_opt json files in the dir_path.
+def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """Load best points from all bayes_opt json files in the dir_path.
 
     Args:
-        dir_path: Path to search recursivly for json log files.
+        dir_path: Path to search recursively for json log files.
 
     Returns:
-        Best target iterations with metadata as pandas dataframe.
+        Best points with metadata as pandas dataframe, and dict of all logs as pandas dataframes.
 
     Raises:
-        ValueError: Could not load from disk.
+        ValueError: Could not load from disk, or found duplicate model_name.
     """
+    dfp_runs_dict = {}
     rows = []
-    for f_path in dir_path.glob("**/*.json"):
+    for f_path in sorted(dir_path.glob("**/*.json")):
         model_name = f_path.stem.replace(BAYESIAN_OPT_JSON_PREFIX, "")
 
         dfp = load_json_log_to_dfp(f_path)
@@ -164,11 +165,19 @@ def load_best_targets(dir_path: pathlib.Path) -> pd.DataFrame:
         if TYPE_CHECKING:
             assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
 
-        # Get the last point with the minimum target value, this should be the cleaned point of actually run hyperparams
+        if model_name in dfp_runs_dict:
+            raise ValueError(
+                f"Already loaded log for {model_name}! Please clean the dir structure of {dir_path} and try again."
+            )
+        dfp_runs_dict[model_name] = pd.DataFrame(dfp)
+
         dfp_best_points = dfp.loc[dfp["target"] == dfp["target"].max()]
         if not dfp_best_points.index.size:
             raise ValueError(f"Could not find a best point for {model_name} in {f_path}")
-        best_dict = dfp_best_points.iloc[-1].to_dict()
+
+        # Get the second point at the best target value, if possible.
+        # This should be the next_point_to_probe_cleaned version
+        best_dict = dfp_best_points.iloc[1 if 1 < dfp_best_points.index.size else 0].to_dict()
 
         params = []
         for k, v in best_dict.items():
@@ -182,15 +191,22 @@ def load_best_targets(dir_path: pathlib.Path) -> pd.DataFrame:
                 "i_point": best_dict["i_point"],
                 "n_points": dfp["i_point"].max(),
                 "datetime": best_dict["datetime_datetime"],
+                "elapsed_minutes": best_dict["datetime_elapsed"],
                 "params_str": ", ".join(params),
             }
         )
 
-    return (
-        pd.DataFrame(rows)
-        .sort_values(by=["best_target", "model_name", "datetime"], ascending=[False, True, False])
-        .reset_index(drop=True)
-    )
+    dfp_best_points = pd.DataFrame(rows)
+    dfp_best_points = dfp_best_points.sort_values(
+        by=["best_target", "model_name", "datetime"], ascending=[False, True, False]
+    ).reset_index(drop=True)
+
+    # Sort dfp_runs_dict in the same order as dfp_best_points
+    # https://stackoverflow.com/a/21773891
+    index_map = {v: i for i, v in enumerate(dfp_best_points["model_name"].to_list())}
+    dfp_runs_dict = dict(sorted(dfp_runs_dict.items(), key=lambda pair: index_map[pair[0]]))
+
+    return dfp_best_points, dfp_runs_dict
 
 
 def print_memory_usage(*, header: str | None = None) -> None:
