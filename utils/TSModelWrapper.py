@@ -647,7 +647,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
             verbose: Verbosity level.
-            work_dir: Full path to directory to save this model's files.
+            work_dir: Path to directory to save this model's files.
             model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
             required_hyperparams_model: List of required hyperparameters for this model's constructor.
