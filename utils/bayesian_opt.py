@@ -101,12 +101,14 @@ WrapperTypes: TypeAlias = type[
     | NaiveMovingAverageWrapper
 ]
 
+BAYESIAN_OPT_JSON_PREFIX: Final = "bayesian_opt_"
+
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from json file as a pandas dataframe.
 
     Args:
-        f_path: Full path to json log file.
+        f_path: Path to json log file.
 
     Returns:
         Log as pandas dataframe.
@@ -138,6 +140,57 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
             cols_fixed = ["i_point", "datetime_datetime"]
             return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
         return None
+
+
+def load_best_targets(dir_path: pathlib.Path) -> pd.DataFrame:
+    """Load best target iterations from all bayes_opt json files in the dir_path.
+
+    Args:
+        dir_path: Path to search recursivly for json log files.
+
+    Returns:
+        Best target iterations with metadata as pandas dataframe.
+
+    Raises:
+        ValueError: Could not load from disk.
+    """
+    rows = []
+    for f_path in dir_path.glob("**/*.json"):
+        model_name = f_path.stem.replace(BAYESIAN_OPT_JSON_PREFIX, "")
+
+        dfp = load_json_log_to_dfp(f_path)
+        if dfp is None:
+            raise ValueError(f"Could load {f_path}!")
+        if TYPE_CHECKING:
+            assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
+
+        # Get the last point with the minimum target value, this should be the cleaned point of actually run hyperparams
+        dfp_best_points = dfp.loc[dfp["target"] == dfp["target"].max()]
+        if not dfp_best_points.index.size:
+            raise ValueError(f"Could not find a best point for {model_name} in {f_path}")
+        best_dict = dfp_best_points.iloc[-1].to_dict()
+
+        params = []
+        for k, v in best_dict.items():
+            if k.startswith("params_"):
+                params.append(f'{k.replace("params_", "")}: {v}')
+
+        rows.append(
+            {
+                "model_name": model_name,
+                "best_target": best_dict["target"],
+                "i_point": best_dict["i_point"],
+                "n_points": dfp["i_point"].max(),
+                "datetime": best_dict["datetime_datetime"],
+                "params_str": ", ".join(params),
+            }
+        )
+
+    return (
+        pd.DataFrame(rows)
+        .sort_values(by=["best_target", "model_name", "datetime"], ascending=[False, True, False])
+        .reset_index(drop=True)
+    )
 
 
 def print_memory_usage(*, header: str | None = None) -> None:
@@ -274,7 +327,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     bayesian_opt_work_dir: Final = pathlib.Path(
         _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
     ).expanduser()
-    fname_json_log: Final = bayesian_opt_work_dir / f"bayesian_opt_{generic_model_name}.json"
+    fname_json_log: Final = (
+        bayesian_opt_work_dir / f"{BAYESIAN_OPT_JSON_PREFIX}{generic_model_name}.json"
+    )
 
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
