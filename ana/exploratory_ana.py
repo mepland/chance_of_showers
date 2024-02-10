@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Final
 import matplotlib.pyplot as plt
 import pandas as pd
 import tqdm
+import xlsxwriter
 from hydra import compose, initialize
 from IPython.display import Image, display
 
@@ -39,7 +40,12 @@ from utils.shared_functions import (
 
 # isort: off
 from utils.TSModelWrapper import TSModelWrapper
-from utils.bayesian_opt import run_bayesian_opt, load_json_log_to_dfp
+from utils.bayesian_opt import (
+    run_bayesian_opt,
+    load_json_log_to_dfp,
+    BAYESIAN_OPT_JSON_PREFIX,
+    load_best_points,
+)
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper
@@ -171,7 +177,7 @@ def display_image(fname: pathlib.Path, *, plot_inline: bool = PLOT_INLINE) -> No
     """Show image from local file in jupyter.
 
     Args:
-        fname: Full path to image file.
+        fname: Path to image file.
         plot_inline: Display plot, or not.
     """
     if plot_inline:
@@ -1376,10 +1382,78 @@ for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
         assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
 
     _ = run_bayesian_opt(
-        # **prod_kwargs,  # type: ignore[arg-type]
-        **dev_kwargs,  # type: ignore[arg-type]
+        **prod_kwargs,  # type: ignore[arg-type]
+        # **dev_kwargs,  # type: ignore[arg-type]
         **model_kwarg,  # type: ignore[arg-type]
     )
+
+# %% [markdown]
+# ### Compare Results
+
+# %%
+dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
+
+# %%
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_best_points)
+
+# %%
+# best_model = dfp_best_points["model_name"].iloc[0]
+# print(f"{best_model = }")
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_runs_dict[best_model])
+
+# %% [markdown]
+# #### Write results to xlsx
+
+# %%
+f_excel = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "search_results.xlsx"
+with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
+    workbook = writer.book
+
+    elapsed_minutes_fmt = workbook.add_format({"num_format": "0.00"})
+    target_fmt = workbook.add_format({"num_format": "0.000000"})
+    target_color_fmt = {
+        "type": "3_color_scale",
+        "min_type": "num",
+        "min_value": -0.05,
+        "min_color": "#e67c73",
+        "mid_type": "num",
+        "mid_value": -0.01,
+        "mid_color": "#ffffff",
+        "max_type": "num",
+        "max_value": -0.005,
+        "max_color": "#57bb8a",
+    }
+
+    dfp_best_points.to_excel(writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False)
+    worksheet = writer.sheets["Best Points"]
+    worksheet.set_column(1, 1, None, target_fmt)
+    worksheet.conditional_format(
+        1,
+        1,
+        dfp_best_points.shape[0],
+        1,
+        target_color_fmt,
+    )
+    worksheet.set_column(5, 5, None, elapsed_minutes_fmt)
+    worksheet.autofilter(0, 0, dfp_best_points.shape[0], dfp_best_points.shape[1] - 1)
+    worksheet.autofit()
+
+    for model_name, dfp in dfp_runs_dict.items():
+        dfp.to_excel(writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
+        worksheet = writer.sheets[model_name]
+        worksheet.set_column(1, 1, None, target_fmt)
+        worksheet.conditional_format(
+            1,
+            1,
+            dfp.shape[0],
+            1,
+            target_color_fmt,
+        )
+        worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
+        worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
+        worksheet.autofit()
 
 # %% [markdown]
 # ### Single Model
@@ -1410,7 +1484,7 @@ dfp_cpu = load_json_log_to_dfp(
         PARENT_WRAPPER.work_dir_base,
         BAYESIAN_OPT_WORK_DIR_NAME,
         f"{model_name}_cpu",
-        f"bayesian_opt_{model_name}.json",
+        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
     )
 )
 
@@ -1419,7 +1493,7 @@ dfp_gpu = load_json_log_to_dfp(
         PARENT_WRAPPER.work_dir_base,
         BAYESIAN_OPT_WORK_DIR_NAME,
         f"{model_name}_gpu",
-        f"bayesian_opt_{model_name}.json",
+        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
     )
 )
 
