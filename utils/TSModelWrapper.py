@@ -25,7 +25,11 @@ import sympy
 import torch
 import torchmetrics
 from darts import TimeSeries
-from darts.models.forecasting.forecasting_model import ForecastingModel
+
+with warnings.catch_warnings():
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+    from darts.models.forecasting.forecasting_model import ForecastingModel
+
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
 from pytorch_lightning.callbacks import Callback
