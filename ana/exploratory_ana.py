@@ -16,6 +16,7 @@
 
 import datetime
 import pathlib
+import pickle  # nosec B403
 import pprint
 import shutil
 import sys
@@ -1363,6 +1364,16 @@ model_kwarg_list = [
     {"model_wrapper_class": NaiveDriftWrapper},
     {"model_wrapper_class": NaiveMovingAverageWrapper},
 ]
+
+# %% [markdown]
+# ### Create inputs for `bayesian_opt_runner.py`
+PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
+with open(PARENT_WRAPPER_PATH, "wb") as f_pickle:
+    pickle.dump(PARENT_WRAPPER, f_pickle)
+
+# %%
+print("PARENT_WRAPPER =")
+print(PARENT_WRAPPER)
 
 # %% [markdown]
 # ## Run Bayesian Optimization
