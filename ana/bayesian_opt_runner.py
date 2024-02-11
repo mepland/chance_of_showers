@@ -96,9 +96,13 @@ prod_kwargs = {
     "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
     "verbose": 2,
     "disregard_training_exceptions": True,
-    "n_iter": 100,
+    "n_iter": 1,
     "max_time_per_model": datetime.timedelta(minutes=30),
 }
+
+
+if prod_kwargs["n_iter"] != 1:
+    raise ValueError(f"Require 1 = n_iter = {prod_kwargs['n_iter'] } to run this script!")
 
 if TYPE_CHECKING:
     assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
