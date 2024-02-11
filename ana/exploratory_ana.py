@@ -1367,6 +1367,8 @@ model_kwarg_list = [
 
 # %% [markdown]
 # ### Create inputs for `bayesian_opt_runner.py`
+
+# %%
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
 with open(PARENT_WRAPPER_PATH, "wb") as f_pickle:
     pickle.dump(PARENT_WRAPPER, f_pickle)
