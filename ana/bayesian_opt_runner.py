@@ -77,11 +77,11 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 
 prod_kwargs = {
     "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-    "verbose": 2,
+    "verbose": 1,
     "enable_progress_bar": False,
     "disregard_training_exceptions": True,
     "n_iter": 1,
-    "max_time_per_model": datetime.timedelta(minutes=30),
+    "max_time_per_model": datetime.timedelta(minutes=45),
 }
 
 model_kwarg_list = [
