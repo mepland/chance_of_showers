@@ -54,6 +54,13 @@ warnings.filterwarnings(
     category=PossibleUserWarning,
 )
 
+# We'll handle our own KeyboardInterrupt
+# https://github.com/Lightning-AI/pytorch-lightning/blob/47c8f4cba089a78fa3fe31dcac6a43416bc13820/src/lightning/pytorch/trainer/call.py#L54
+warnings.filterwarnings(
+    "ignore",
+    message="Detected KeyboardInterrupt, attempting graceful shutdown...",
+)
+
 # prophet / cmdstanpy
 logger_cmdstanpy = logging.getLogger("cmdstanpy")
 logger_cmdstanpy.addHandler(logging.NullHandler())
