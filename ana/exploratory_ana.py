@@ -30,7 +30,7 @@ import tqdm
 from hydra import compose, initialize
 from IPython.display import Image, display
 
-sys.path.append(str(pathlib.Path.cwd().parent))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 # pylint: disable=import-error,useless-suppression
 from utils.shared_functions import (
@@ -1459,12 +1459,12 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
 # ### Single Model
 
 # %%
-optimal_values, optimizer = run_bayesian_opt(
+optimal_values, optimizer, _exception_status = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
     model_wrapper_class=NBEATSModelWrapper,
     fixed_hyperparams_to_alter={"n_epochs": 20},
     n_iter=5,
-    enable_progress_bar=True,
+    enable_torch_messages=True,
     max_time_per_model=datetime.timedelta(minutes=15),
     accelerator="auto",
     display_memory_usage=False,

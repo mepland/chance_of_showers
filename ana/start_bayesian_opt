@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
+pkg_path="/home/mepland/chance_of_showers"
+
 # n_iter: How many iterations of Bayesian optimization to perform.
 # This is the number of new models to train, in addition to any duplicated or reloaded points.
-n_iter=100
+n_iter=1
 
 # Maximum number of points to generate
 # Will stop script early if reached before n_iter, for example when resuming a run.
 max_points=200
 
 # Check for running bayesian_opt_runner.py
-if pgrep -fc "python. bayesian_opt_runner.py" > /dev/null 2>&1; then
+if pgrep -fc "python.*?bayesian_opt_runner.py" > /dev/null 2>&1; then
 	echo "Found python bayesian_opt_runner.py running, doing nothing"
 	exit
 fi
@@ -20,11 +22,14 @@ for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
 	# Add \r to start to backup one line, if bayesian_opt_runner.py is printing nothing out
 	printf "Starting bayesian_opt_runner.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
 
-	poetry run python -u bayesian_opt_runner.py
+	poetry run python -u $pkg_path/ana/bayesian_opt_runner.py
 	status=$?
 
-	if [[ $status -ge $max_points ]]; then
-		echo "On i_iter = $i_iter, found $status >= $max_points points, halting"
+	if [[ (0 -lt $status) && ($status -lt 10) ]]; then
+		echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
+		exit $status
+	elif [[ $max_points -le $status-10 ]]; then
+		echo "On i_iter = $i_iter, found $status >= $max_points points, finished"
 		exit
 	fi
 

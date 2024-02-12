@@ -254,7 +254,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     model_verbose: int = -1,
     disregard_training_exceptions: bool = False,
     display_memory_usage: bool = False,
-    enable_progress_bar: bool = False,
+    enable_torch_messages: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
     fixed_hyperparams_to_alter: dict | None = None,
@@ -262,7 +262,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
     bayesian_opt_work_dir_name: str = "bayesian_optimization",
-) -> tuple[dict, bayes_opt.BayesianOptimization]:
+) -> tuple[dict, bayes_opt.BayesianOptimization, int]:
     """Run Bayesian optimization for this model wrapper.
 
     Args:
@@ -288,7 +288,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
         disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
         display_memory_usage: Print memory usage at each training iteration.
-        enable_progress_bar: Enable torch progress bar during training.
+        enable_torch_messages: Enable torch model summary and progress bar.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
@@ -302,11 +302,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     Returns:
         optimal_values: Optimal hyperparameter values.
         optimizer: bayes_opt.BayesianOptimization object for further details.
+        exception_status: Int exception status, to pass on to bash scripts.
 
     Raises:
         ValueError: Bad configuration.
     """
     global n_points
+
+    exception_status = 0
 
     if model_wrapper_kwargs is None:
         model_wrapper_kwargs = {}
@@ -364,7 +367,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         json_logger = JSONLogger(path=str(fname_json_log), reset=False)
         optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
 
-    if 0 < verbose:
+    if verbose:
         screen_logger = ScreenLogger(verbose=verbose)
         for event in DEFAULT_EVENTS:
             optimizer.subscribe(event, screen_logger)
@@ -465,7 +468,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 fixed_hyperparams_to_alter=fixed_hyperparams_to_alter
             )
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
-            model_wrapper.set_enable_progress_bar(enable_progress_bar=enable_progress_bar)
+            model_wrapper.set_enable_torch_messages(enable_torch_messages=enable_torch_messages)
             model_wrapper.set_max_time(max_time=max_time_per_model)
             model_wrapper.set_accelerator(accelerator=accelerator)
             model_wrapper.verbose = model_verbose
@@ -489,8 +492,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     target = optimizer.space.target[i_param]
                     if verbose:
                         print(
-                        f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
-                    )
+                            f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
+                        )
                     complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
                     is_duplicate_point = True
                     break
@@ -512,42 +515,43 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             try:
                 target = model_wrapper.train_model(**next_point_to_probe)
                 # Put a lower bound on target at BAD_LOSS.
-                # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf").
-                target = max(target, BAD_LOSS)
+                # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf") or is np.nan.
+                if np.isnan(target) or target < BAD_LOSS:
+                    target = BAD_LOSS
             except KeyboardInterrupt as error:
                 print("KeyboardInterrupt: Ending now!")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
                 raise error
             except Exception as error:
-                error_str = None
+                error_msg = None
                 # Expected exceptions
                 if "Out of Time!" in str(error):
-                    error_str = "Ran out of time"
+                    error_msg = "Ran out of time"
                 elif "out of memory" in str(error):
-                    error_str = "Ran out of memory"
+                    error_msg = "Ran out of memory"
                 elif (
                     "Multiplicative seasonality is not appropriate for zero and negative values"
                     in str(error)
                 ):
-                    error_str = (
+                    error_msg = (
                         "Multiplicative seasonality is not appropriate for zero and negative values"
                     )
                 elif re.match(
                     r"^The expanded size of the tensor \(\d*?\) must match the existing size \(\d*?\) at non-singleton dimension",
                     str(error),
                 ):
-                    error_str = "Bad value of d_model for this input_chunk_length"
+                    error_msg = "Bad value of d_model for this input_chunk_length"
                 elif "embed_dim must be divisible by num_heads" in str(error):
-                    error_str = "Bad value of d_model for this nheads"
+                    error_msg = "Bad value of d_model for this nheads"
                 elif "Dimension out of range" in str(error):
-                    error_str = str(error)
+                    error_msg = str(error)
                 # Unexpected exceptions
                 elif disregard_training_exceptions:
-                    error_str = f"Unexpected error while training: {str(error)}\ndisregard_training_exceptions is set"
+                    error_msg = f"Unexpected error while training: {str(error)}\ndisregard_training_exceptions is set"
 
                 # use BAD_LOSS as loss and continue
-                if error_str is not None:
-                    print(f"{error_str}, returning {BAD_LOSS:.3g} as loss")
+                if error_msg is not None:
+                    print(f"{error_msg}, returning {BAD_LOSS:.3g} as loss")
                     complete_iter(
                         i_iter,
                         model_wrapper,
@@ -579,15 +583,19 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             )
 
     except KeyboardInterrupt:
-        print("KeyboardInterrupt: Returning with current objects.")
+        exception_status = 1
+        print(f"KeyboardInterrupt: Returning with current objects and {exception_status = }.")
     except bayes_opt.util.NotUniqueError as error:
+        exception_status = 2
         print(
             str(error).replace(
                 '. You can set "allow_duplicate_points=True" to avoid this error', ""
             )
             + ", stopping optimization here."
         )
+        print(f"Returning with current objects and {exception_status = }.")
     except Exception as error:
+        exception_status = 3
         error_msg = f"""
 Unexpected error in run_bayesian_opt():
 {error = }
@@ -603,10 +611,10 @@ next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
 next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
 
         error_msg = f"""{error_msg}
-Returning with current objects."""
+Returning with current objects and {exception_status = }."""
 
         print(error_msg)
 
     optimizer.dispatch(Events.OPTIMIZATION_END)
 
-    return optimizer.max, optimizer
+    return optimizer.max, optimizer, exception_status

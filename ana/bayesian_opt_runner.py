@@ -2,7 +2,7 @@
 
 Used to brute force GPU memory resets between runs.
 
-Returns the number of completed points as the exit code.
+Returns 10 + the number of completed points as the exit code, or a integer 0 < status < 10 for exceptions.
 """
 
 ################################################################################
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Final
 import tqdm
 from hydra import compose, initialize
 
-sys.path.append(str(pathlib.Path.cwd().parent))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 # pylint: disable=unused-import,import-error,useless-suppression
 # isort: off
@@ -77,8 +77,8 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 
 prod_kwargs = {
     "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-    "verbose": 1,
-    "enable_progress_bar": False,
+    "verbose": 0,
+    "enable_torch_messages": False,
     "disregard_training_exceptions": True,
     "n_iter": 1,
     "max_time_per_model": datetime.timedelta(minutes=45),
@@ -152,6 +152,7 @@ if not SINGLE_ITER_FLAG:
     if response.lower() not in ["y", "yes"]:
         sys.exit()
 
+# pylint: disable=duplicate-code
 for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
     _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
     pbar.set_postfix_str(f"Optimizing {_model_name}")
@@ -160,13 +161,16 @@ for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
         assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
         assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
 
-    _, optimizer = run_bayesian_opt(
+    _, optimizer, exception_status = run_bayesian_opt(
         **prod_kwargs,  # type: ignore[arg-type]
         **model_kwarg,  # type: ignore[arg-type]
     )
+    # pylint: enable=duplicate-code
 
     n_points = len(optimizer.space)
     print(f"Completed {n_points = }")
 
-    if SINGLE_ITER_FLAG:
-        sys.exit(n_points)
+    if exception_status:
+        sys.exit(exception_status)
+    elif SINGLE_ITER_FLAG:
+        sys.exit(10 + n_points)
