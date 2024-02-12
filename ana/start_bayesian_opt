@@ -15,8 +15,10 @@ if pgrep -fc "python. bayesian_opt_runner.py" > /dev/null 2>&1; then
 fi
 
 # Run bayesian_opt_runner.py n_iter times, or until max_points is reached
+status=0
 for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
-	echo "Starting bayesian_opt_runner.py $i_iter of $n_iter"
+	# Add \r to start to backup one line, if bayesian_opt_runner.py is printing nothing out
+	printf "Starting bayesian_opt_runner.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
 
 	poetry run python -u bayesian_opt_runner.py
 	status=$?
