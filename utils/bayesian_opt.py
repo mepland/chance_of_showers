@@ -350,11 +350,13 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
     if enable_reloading and fname_json_log.is_file():
-        print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
+        if verbose:
+            print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
         optimizer.dispatch(Events.OPTIMIZATION_START)
         load_logs(optimizer, logs=str(fname_json_log))
         n_points = len(optimizer.space)
-        print(f"Loaded {n_points} existing points.\n")
+        if verbose:
+            print(f"Loaded {n_points} existing points.\n")
 
     # Continue to setup logging
     if enable_json_logging:
@@ -409,9 +411,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
-        if display_memory_usage:
-            print_memory_usage()
-        print(f"Completed {i_iter = }, with {n_points = }")
+        if verbose:
+            if display_memory_usage:
+                print_memory_usage()
+            print(f"Completed {i_iter = }, with {n_points = }")
 
     # clean up _model_wrapper
     del _model_wrapper
@@ -449,7 +452,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         for i_iter in range(n_iter):
             if i_iter == 0:
                 optimizer.dispatch(Events.OPTIMIZATION_START)
-            print(f"\nStarting {i_iter = }, with {n_points = }")
+            if verbose:
+                print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
 
             # Create a fresh model_wrapper object to try to avoid GPU memory leaks
@@ -483,7 +487,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     optimizer.space.params[i_param],
                 ):
                     target = optimizer.space.target[i_param]
-                    print(
+                    if verbose:
+                        print(
                         f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
                     )
                     complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
