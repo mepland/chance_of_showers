@@ -4,7 +4,7 @@ pkg_path="/home/mepland/chance_of_showers"
 
 # n_iter: How many iterations of Bayesian optimization to perform.
 # This is the number of new models to train, in addition to any duplicated or reloaded points.
-n_iter=1
+n_iter=100
 
 # Maximum number of points to generate
 # Will stop script early if reached before n_iter, for example when resuming a run.
