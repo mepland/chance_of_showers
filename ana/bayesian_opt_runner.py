@@ -147,7 +147,7 @@ SINGLE_ITER_FLAG: Final = len(model_kwarg_list) == 1 and prod_kwargs["n_iter"] =
 
 if not SINGLE_ITER_FLAG:
     response = input(
-        f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {prod_kwargs['n_iter']} iterations each, in one script?"
+        f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {prod_kwargs['n_iter']} iterations each, in one script? "
     )
     if response.lower() not in ["y", "yes"]:
         sys.exit()
