@@ -9,7 +9,6 @@ Returns 10 + the number of completed points as the exit code, or a integer 0 < s
 # python imports
 import datetime
 import pathlib
-import pickle  # nosec B403
 import sys
 from typing import TYPE_CHECKING, Final
 
@@ -19,6 +18,8 @@ from hydra import compose, initialize
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 # pylint: disable=unused-import,import-error,useless-suppression
+from utils.shared_functions import read_secure_pickle
+
 # isort: off
 from utils.bayesian_opt import run_bayesian_opt
 
@@ -129,10 +130,9 @@ model_kwarg_list = [
 ################################################################################
 # Load PARENT_WRAPPER from pickle
 
-PARENT_WRAPPER = None
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
-with open(PARENT_WRAPPER_PATH, "rb") as f_pickle:
-    PARENT_WRAPPER = pickle.load(f_pickle)  # nosec B301
+
+PARENT_WRAPPER: Final = read_secure_pickle(PARENT_WRAPPER_PATH)
 
 if PARENT_WRAPPER is None:
     raise ValueError(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")

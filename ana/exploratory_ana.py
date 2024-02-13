@@ -16,7 +16,6 @@
 
 import datetime
 import pathlib
-import pickle  # nosec B403
 import pprint
 import shutil
 import sys
@@ -30,22 +29,24 @@ import tqdm
 from hydra import compose, initialize
 from IPython.display import Image, display
 
-sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.append(str(pathlib.Path.cwd().parent))
+
+from utils.bayesian_opt import (
+    BAYESIAN_OPT_JSON_PREFIX,
+    load_best_points,
+    load_json_log_to_dfp,
+    run_bayesian_opt,
+)
 
 # pylint: disable=import-error,useless-suppression
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
+    write_secure_pickle,
 )
 
 # isort: off
 from utils.TSModelWrapper import TSModelWrapper
-from utils.bayesian_opt import (
-    run_bayesian_opt,
-    load_json_log_to_dfp,
-    BAYESIAN_OPT_JSON_PREFIX,
-    load_best_points,
-)
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper
@@ -1292,8 +1293,19 @@ print(f"{val_loss = }")
 # %% [markdown]
 # ## Setup
 
+# %% [markdown]
+# ### Create inputs for `bayesian_opt_runner.py`
+
 # %%
 BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+
+PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
+write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
+
+# %% [markdown]
+# ### Set kwargs
+
+# %%
 tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
 # print(tensorboard_logs)
 
@@ -1364,18 +1376,6 @@ model_kwarg_list = [
     {"model_wrapper_class": NaiveDriftWrapper},
     {"model_wrapper_class": NaiveMovingAverageWrapper},
 ]
-
-# %% [markdown]
-# ### Create inputs for `bayesian_opt_runner.py`
-
-# %%
-PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
-with open(PARENT_WRAPPER_PATH, "wb") as f_pickle:
-    pickle.dump(PARENT_WRAPPER, f_pickle)
-
-# %%
-print("PARENT_WRAPPER =")
-print(PARENT_WRAPPER)
 
 # %% [markdown]
 # ## Run Bayesian Optimization
