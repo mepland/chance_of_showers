@@ -10,22 +10,22 @@ n_iter=100
 # Will stop script early if reached before n_iter, for example when resuming a run.
 max_points=200
 
-# Turn off tqdm in bayesian_opt_runner.py
+# Turn off tqdm in drive_bayesian_opt.py
 # export TQDM_DISABLE=1
 
-# Check for running bayesian_opt_runner.py
-if pgrep -fc "python.*?bayesian_opt_runner.py" > /dev/null 2>&1; then
-	echo "Found python bayesian_opt_runner.py running, doing nothing"
+# Check for running drive_bayesian_opt.py
+if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
+	echo "Found python drive_bayesian_opt.py running, doing nothing"
 	exit
 fi
 
-# Run bayesian_opt_runner.py n_iter times, or until max_points is reached
+# Run drive_bayesian_opt.py n_iter times, or until max_points is reached
 status=0
 for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
-	# Add \r to start to backup one line, if bayesian_opt_runner.py is printing nothing out
-	printf "Starting bayesian_opt_runner.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
+	# Add \r to start to backup one line, if drive_bayesian_opt.py is printing nothing out
+	printf "Starting drive_bayesian_opt.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
 
-	poetry run python -u $pkg_path/ana/bayesian_opt_runner.py
+	poetry run python -u $pkg_path/ana/drive_bayesian_opt.py
 	status=$?
 
 	if [[ (0 -lt $status) && ($status -lt 10) ]]; then
