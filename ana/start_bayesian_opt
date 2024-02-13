@@ -11,7 +11,7 @@ n_iter=100
 max_points=200
 
 # Turn off tqdm in bayesian_opt_runner.py
-export TQDM_DISABLE=1
+# export TQDM_DISABLE=1
 
 # Check for running bayesian_opt_runner.py
 if pgrep -fc "python.*?bayesian_opt_runner.py" > /dev/null 2>&1; then
@@ -23,7 +23,7 @@ fi
 status=0
 for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
 	# Add \r to start to backup one line, if bayesian_opt_runner.py is printing nothing out
-	printf "\rStarting bayesian_opt_runner.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
+	printf "Starting bayesian_opt_runner.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
 
 	poetry run python -u $pkg_path/ana/bayesian_opt_runner.py
 	status=$?
