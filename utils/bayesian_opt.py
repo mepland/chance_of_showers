@@ -250,11 +250,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
-    verbose: int = 2,
+    verbose: int = 3,
     model_verbose: int = -1,
-    disregard_training_exceptions: bool = False,
-    display_memory_usage: bool = False,
     enable_torch_messages: bool = False,
+    disregard_training_exceptions: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
     fixed_hyperparams_to_alter: dict | None = None,
@@ -284,11 +283,18 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         utility_kappa: Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
             Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity, 2 prints all iterations, 1 prints only when a maximum is observed, and 0 is silent.
+        verbose: Optimizer verbosity
+            7 prints memory usage
+            6 prints points before training
+            5 prints point count at each iteration
+            4 prints full stack traces
+            3 prints basic workflow messages
+            2 prints all iterations
+            1 prints only when a maximum is observed
+            0 is silent
         model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
-        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
-        display_memory_usage: Print memory usage at each training iteration.
         enable_torch_messages: Enable torch model summary and progress bar.
+        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
@@ -353,12 +359,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
     if enable_reloading and fname_json_log.is_file():
-        if verbose:
+        if 3 <= verbose:
             print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
         optimizer.dispatch(Events.OPTIMIZATION_START)
         load_logs(optimizer, logs=str(fname_json_log))
         n_points = len(optimizer.space)
-        if verbose:
+        if 3 <= verbose:
             print(f"Loaded {n_points} existing points.\n")
 
     # Continue to setup logging
@@ -414,9 +420,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
-        if verbose:
-            if display_memory_usage:
-                print_memory_usage()
+        if 7 <= verbose:
+            print_memory_usage()
+        if 3 <= verbose:
             print(f"Completed {i_iter = }, with {n_points = }")
 
     # clean up _model_wrapper
@@ -448,14 +454,34 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     if max_time_per_model_flag:
         signal.signal(signal.SIGALRM, signal_handler)
 
-    # Run Bayesian optimization iterations
     next_point_to_probe = None
     next_point_to_probe_cleaned = None
+
+    def _build_error_msg(error_msg: str, error: Exception) -> str:
+        if 3 <= verbose:
+            error_msg = f"""{error_msg}
+{error = }"""
+        if 4 <= verbose:
+            error_msg = f"""{error_msg}
+{type(error) = }
+{traceback.format_exc()}"""
+
+            if next_point_to_probe is not None:
+                error_msg = f"""{error_msg}
+next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
+
+            if next_point_to_probe is not None:
+                error_msg = f"""{error_msg}
+next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
+
+        return error_msg  # noqa: R504
+
+    # Run Bayesian optimization iterations
     try:
         for i_iter in range(n_iter):
             if i_iter == 0:
                 optimizer.dispatch(Events.OPTIMIZATION_START)
-            if verbose:
+            if 3 <= verbose:
                 print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
 
@@ -477,7 +503,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             # If it has been tested, save the raw next_point_to_probe with the same target and continue
             chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
             next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
-            if 2 < verbose:
+            if 6 <= verbose:
                 print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
                 print(
                     f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
@@ -490,7 +516,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     optimizer.space.params[i_param],
                 ):
                     target = optimizer.space.target[i_param]
-                    if verbose:
+                    if 3 <= verbose:
                         print(
                             f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
                         )
@@ -547,11 +573,17 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     error_msg = str(error)
                 # Unexpected exceptions
                 elif disregard_training_exceptions:
-                    error_msg = f"Unexpected error while training: {str(error)}\ndisregard_training_exceptions is set"
+                    error_msg = (
+                        "Unexpected error while training, disregard_training_exceptions is set"
+                    )
 
                 # use BAD_LOSS as loss and continue
                 if error_msg is not None:
-                    print(f"{error_msg}, returning {BAD_LOSS:.3g} as loss")
+                    error_msg = _build_error_msg(error_msg, error)
+                    print(
+                        f"""{error_msg}
+Returning {BAD_LOSS:.3g} as loss and continuing"""
+                    )
                     complete_iter(
                         i_iter,
                         model_wrapper,
@@ -596,23 +628,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         print(f"Returning with current objects and {exception_status = }.")
     except Exception as error:
         exception_status = 3
-        error_msg = f"""
-Unexpected error in run_bayesian_opt():
-{error = }
-{type(error) = }
-{traceback.format_exc()}"""
-
-        if next_point_to_probe is not None:
-            error_msg = f"""{error_msg}
-next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
-
-        if next_point_to_probe is not None:
-            error_msg = f"""{error_msg}
-next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
-
+        error_msg = _build_error_msg("Unexpected error in run_bayesian_opt():", error)
         error_msg = f"""{error_msg}
 Returning with current objects and {exception_status = }."""
-
         print(error_msg)
 
     optimizer.dispatch(Events.OPTIMIZATION_END)

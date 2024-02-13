@@ -1315,23 +1315,23 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 prod_kwargs = {
     "parent_wrapper": PARENT_WRAPPER,
-    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-    "verbose": 2,
-    "disregard_training_exceptions": True,
     "n_iter": 100,
-    "max_time_per_model": datetime.timedelta(minutes=30),
+    "verbose": 3,
+    "disregard_training_exceptions": True,
+    "max_time_per_model": datetime.timedelta(minutes=45),
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
 }
 
 # %%
 dev_kwargs = {
     "parent_wrapper": PARENT_WRAPPER,
-    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-    "verbose": 3,
-    "enable_reloading": False,
     "n_iter": 10,
+    "verbose": 9,
     "max_time_per_model": datetime.timedelta(minutes=2),
     "fixed_hyperparams_to_alter": {"n_epochs": 4},
     "accelerator": "gpu",
+    "enable_reloading": False,
+    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
 }
 
 # %%
@@ -1354,27 +1354,27 @@ model_kwarg_list = [
     # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
     # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
     # Statistical Models
-    {"model_wrapper_class": AutoARIMAWrapper},
-    {"model_wrapper_class": BATSWrapper},
-    {"model_wrapper_class": TBATSWrapper},
-    {"model_wrapper_class": FourThetaWrapper},
-    {"model_wrapper_class": StatsForecastAutoThetaWrapper},
-    {"model_wrapper_class": FFTWrapper},
-    {"model_wrapper_class": KalmanForecasterWrapper},
-    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
-    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
-    {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
+    # {"model_wrapper_class": AutoARIMAWrapper},
+    # {"model_wrapper_class": BATSWrapper},
+    # {"model_wrapper_class": TBATSWrapper},
+    # {"model_wrapper_class": FourThetaWrapper},
+    # {"model_wrapper_class": StatsForecastAutoThetaWrapper},
+    # {"model_wrapper_class": FFTWrapper},
+    # {"model_wrapper_class": KalmanForecasterWrapper},
+    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
+    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
+    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
     # Regression Models
-    {"model_wrapper_class": LinearRegressionModelWrapper},
-    {"model_wrapper_class": RandomForestWrapper},
-    {"model_wrapper_class": LightGBMModelWrapper},
-    {"model_wrapper_class": XGBModelWrapper},
-    {"model_wrapper_class": CatBoostModelWrapper},
+    # {"model_wrapper_class": LinearRegressionModelWrapper},
+    # {"model_wrapper_class": RandomForestWrapper},
+    # {"model_wrapper_class": LightGBMModelWrapper},
+    # {"model_wrapper_class": XGBModelWrapper},
+    # {"model_wrapper_class": CatBoostModelWrapper},
     # Naive Models
-    {"model_wrapper_class": NaiveMeanWrapper},
-    {"model_wrapper_class": NaiveSeasonalWrapper},
-    {"model_wrapper_class": NaiveDriftWrapper},
-    {"model_wrapper_class": NaiveMovingAverageWrapper},
+    # {"model_wrapper_class": NaiveMeanWrapper},
+    # {"model_wrapper_class": NaiveSeasonalWrapper},
+    # {"model_wrapper_class": NaiveDriftWrapper},
+    # {"model_wrapper_class": NaiveMovingAverageWrapper},
 ]
 
 # %% [markdown]
@@ -1462,12 +1462,12 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
 optimal_values, optimizer, _exception_status = run_bayesian_opt(
     parent_wrapper=PARENT_WRAPPER,
     model_wrapper_class=NBEATSModelWrapper,
-    fixed_hyperparams_to_alter={"n_epochs": 20},
     n_iter=5,
+    verbose=4,
     enable_torch_messages=True,
     max_time_per_model=datetime.timedelta(minutes=15),
     accelerator="auto",
-    display_memory_usage=False,
+    fixed_hyperparams_to_alter={"n_epochs": 20},
     enable_reloading=False,
     bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
 )
