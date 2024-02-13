@@ -173,7 +173,7 @@ extend-select = [
 ]
 per-file-ignores = [
     "ana/exploratory_ana.py:E402,E800",
-    "ana/bayesian_opt_runner.py:F401,E402,E800",
+    "ana/drive_bayesian_opt.py:F401,E402,E800",
 ]
 
 exclude = [
