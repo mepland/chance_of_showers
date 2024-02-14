@@ -1161,6 +1161,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
+            elif hyperparam == "show_warnings":
+                hyperparam_value = bool(self.verbose)
             elif hyperparam == "seasonal_periods_BATS":
                 seasonal_periods = []
                 period_minutes = [
