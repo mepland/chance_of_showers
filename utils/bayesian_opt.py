@@ -190,6 +190,7 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
                 "best_target": best_dict["target"],
                 "i_point": best_dict["i_point"],
                 "n_points": dfp["i_point"].max(),
+                "n_points_bad_loss": dfp.loc[dfp["target"] == BAD_LOSS].index.size,
                 "datetime": best_dict["datetime_datetime"],
                 "elapsed_minutes": best_dict["datetime_elapsed"],
                 "params_str": ", ".join(params),
