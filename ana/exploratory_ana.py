@@ -31,14 +31,13 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
+# pylint: disable=import-error,useless-suppression
 from utils.bayesian_opt import (
     BAYESIAN_OPT_JSON_PREFIX,
     load_best_points,
     load_json_log_to_dfp,
     run_bayesian_opt,
 )
-
-# pylint: disable=import-error,useless-suppression
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -406,7 +405,7 @@ from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
-    variable_hyperparams={"time_bin_size_in_minutes": 20, "y_presentation": 2},
+    variable_hyperparams={"time_bin_size_in_minutes": 20},
 )
 model_wrapper_Prophet.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 # print(model_wrapper_Prophet)
@@ -1293,12 +1292,13 @@ print(f"{val_loss = }")
 # %% [markdown]
 # ## Setup
 
+# %%
+BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+
 # %% [markdown]
 # ### Create inputs for `bayesian_opt_runner.py`
 
 # %%
-BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
 write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
 
