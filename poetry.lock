@@ -1905,6 +1905,19 @@ files = [
 flake8 = ">3.0.0"
 
 [[package]]
+name = "flake8-functions-names"
+version = "0.4.0"
+description = "An extension for flake8 that validates functions names, decomposition and conformity with annotations."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_functions_names-0.4.0.tar.gz", hash = "sha256:27aeb881636680a130f609482c1d0f37d1b2e84a76b20b813d079c888ee0a13e"},
+]
+
+[package.dependencies]
+setuptools = "*"
+
+[[package]]
 name = "flake8-future-annotations"
 version = "1.1.0"
 description = "Verifies python 3.7+ files use from __future__ import annotations"
@@ -7136,4 +7149,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "6651c29d0ac79060977205da174f3a813bbd67b2743af2296fa68a57e7113934"
+content-hash = "c44972c739713eb2aed9d7e946a8c2d643769289f9a3bd06e3dd0bcf18f937f8"
