@@ -78,6 +78,7 @@ repos:
           flake8-broken-line,
           flake8-class-attributes-order,
           flake8-clean-block,
+          flake8-comments,
         ]
 
   # mypy
