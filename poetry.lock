@@ -4219,6 +4219,24 @@ numpy = {version = ">=1.26.0", markers = "python_version < \"3.13\""}
 types-pytz = ">=2022.1.1"
 
 [[package]]
+name = "pandas-vet"
+version = "2023.8.2"
+description = "A flake8 plugin to lint pandas in an opinionated way."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pandas_vet-2023.8.2-py3-none-any.whl", hash = "sha256:761c07b4479f24fc507465047111c7d21374ec678b7aba58e454fd5d3f8055fe"},
+    {file = "pandas_vet-2023.8.2.tar.gz", hash = "sha256:ee6b80b40f5a74de41c29393e4dce373447b363faaa3e0677e4f36799ea865c3"},
+]
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=6.0.0"
+
+[package.extras]
+docs = ["jupyter-book", "sphinx"]
+
+[[package]]
 name = "pandocfilters"
 version = "1.5.1"
 description = "Utilities for writing pandoc filters in python"
@@ -6872,4 +6890,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "775bb8141e3b526520e65536a70b5b159f15c39f92616ee4d561c510e0d5bace"
+content-hash = "d48e166feab4512c46877433ade698c46411343f171e81762dfc3ea5598eb07b"

@@ -79,6 +79,7 @@ flake8-type-checking = "^2.4.0"
 flake8-typing-as-t = "^0.0.3"
 flake8-unused-arguments = "^0.0.13"
 darglint = "^1.8.1"
+pandas-vet = "^2023.8.2"
 
 [tool.poetry.group.daq]
 optional = true
