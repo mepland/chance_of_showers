@@ -165,11 +165,12 @@ docstring-convention = "google"
 docstring_style = "google" # darglint
 ignore = [
 "E501",
-"W503",
 "ESC102",
-"TYT03",
-"SCS109",
+"PD005",
 "PIE786",
+"SCS109",
+"TYT03",
+"W503",
 ]
 extend-select = [
 "B901",
