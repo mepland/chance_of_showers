@@ -2294,21 +2294,6 @@ astor = ">=0.1"
 flake8 = ">=3.7"
 
 [[package]]
-name = "flake8-slots"
-version = "0.1.6"
-description = "A Flake8 plugin to require __slots__ to be defined for subclasses of immutable types."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "flake8_slots-0.1.6-py3-none-any.whl", hash = "sha256:8ee9b7c5e88d356f90d67e761e42fccef8928f4b0123705f6ef508acb2aa7e39"},
-    {file = "flake8_slots-0.1.6.tar.gz", hash = "sha256:31b0ee99b65ebb8b2eeb42c2a8abb3637abe7b79a352a0e3e7fca4fd9340ee85"},
-]
-
-[package.dependencies]
-flake8 = ">=3.8.4"
-flake8-helper = ">=0.1.1"
-
-[[package]]
 name = "flake8-strftime"
 version = "0.3.4"
 description = "A flake8 plugin which checks for use of platform specific strftime codes."
@@ -7225,4 +7210,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "44db3e51878564967ae88556707b304fffa6d618f0cca9be7a4c3f3d0bc0b454"
+content-hash = "b43330b0522e54117c4ebc6ad0b97b79cfccb4a59906a7193e399c7ac0b36294"
