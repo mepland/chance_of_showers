@@ -73,6 +73,7 @@ repos:
           darglint,
           pandas-vet,
           flake8-all-not-strings,
+          flake8-absolute-import,
         ]
 
   # mypy

@@ -1517,6 +1517,20 @@ pycodestyle = ">=2.11.0,<2.12.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
+name = "flake8-absolute-import"
+version = "1.0.0.2"
+description = "flake8 plugin to require absolute imports"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8-absolute-import-1.0.0.2.tar.gz", hash = "sha256:fcb734ac5a9639fa4ffbc6242ae9d6e9d8063f9cd078d6d218597ee883a99d48"},
+    {file = "flake8_absolute_import-1.0.0.2-py3-none-any.whl", hash = "sha256:b72142db999ec5e0ac4f4ac57fb8776a2959d07346c4d3742c446f206d45fcef"},
+]
+
+[package.dependencies]
+flake8 = ">=5.0"
+
+[[package]]
 name = "flake8-all-not-strings"
 version = "0.0.1"
 description = "flake8 plugin which checks that modules under `__all__` are defined as strings"
@@ -6904,4 +6918,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "4fe321501a4063f6080b76d018bc9879bdcf2c1ec7e9804fb4d14fe0e670a629"
+content-hash = "91d7391265210df1423fbff4e3dd7803ddee484287fddefe49125ec055f44c44"
