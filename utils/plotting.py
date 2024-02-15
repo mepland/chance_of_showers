@@ -86,6 +86,7 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
     """
     if value > 1000:
         return f"{value:.{e_precision}e}"
+
     return f"{value:.0f}"
 
 
@@ -130,7 +131,9 @@ def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> s
         # interval is a whole number of years
         if dt_start.year == dt_stop.year:
             return str(dt_start.year)
+
         return f"{dt_start.year} - {dt_stop.year}"
+
     return f"{dt_start.strftime('%Y-%m-%d')} - {dt_stop.strftime('%Y-%m-%d')}"
 
 
@@ -198,10 +201,13 @@ def _setup_vars(
     ann_texts = []
     if ann_texts_in is not None:
         ann_texts = list(ann_texts_in)
+
     if not isinstance(x_axis_params, dict):
         x_axis_params = {}
+
     if not isinstance(y_axis_params, dict):
         y_axis_params = {}
+
     return ann_texts, x_axis_params, y_axis_params
 
 
@@ -220,6 +226,7 @@ def set_ax_limits(
     x_min_auto, x_max_auto = _ax.get_xlim()
     if (x_min := x_axis_params.get("min")) is None:
         x_min = x_min_auto
+
     if (x_max := x_axis_params.get("max")) is None:
         x_max = x_max_auto
 
@@ -227,6 +234,7 @@ def set_ax_limits(
     y_max_mult = None
     if allow_max_mult:
         y_max_mult = y_axis_params.get("max_mult")
+
     if (y_min := y_axis_params.get("min")) is None:
         y_min = y_min_auto
 
@@ -240,6 +248,7 @@ def set_ax_limits(
 
     if (x_ticks := x_axis_params.get("ticks")) is not None:
         _ax.set_xticks(x_ticks)
+
     if (y_ticks := y_axis_params.get("ticks")) is not None:
         _ax.set_yticks(y_ticks)
 
@@ -262,10 +271,12 @@ def clean_ax(
         x_label = x_axis_params.get("axis_label", "")
         if x_label != "" and x_axis_params.get("units") is not None:
             x_label = f"{x_label} [{x_axis_params['units']}]"
+
         _ax.set_xlabel(x_label)
         y_label = y_axis_params.get("axis_label", "")
         if y_label != "" and y_axis_params.get("units") is not None:
             y_label = f"{y_label} [{y_axis_params['units']}]"
+
         _ax.set_ylabel(y_label)
         _ax.xaxis.label.set_fontsize(20)
         _ax.yaxis.label.set_fontsize(20)
@@ -297,6 +308,7 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
     if len(leg_objects) > 0:
         if not isinstance(legend_params, dict):
             legend_params = {}
+
         leg = fig.legend(
             leg_objects,
             [ob.get_label() for ob in leg_objects],
@@ -360,6 +372,7 @@ def ann_and_save(
         m_path.mkdir(parents=True, exist_ok=True)
         if PLOT_PNG:
             _fig.savefig(m_path / f"{fname}{tag}.png", dpi=PNG_DPI)
+
         _fig.savefig(m_path / f"{fname}{tag}.pdf")
         plt.close("all")
 
@@ -509,6 +522,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
 
     if binning is None:
         binning = {"nbins": 10}
+
     x_bin_edges = binning.get("bin_edges", [])
 
     for i_hist_dict, hist_dict in enumerate(hist_dicts):
@@ -598,6 +612,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
                 upper_inequality = "$<$"
                 if i == x_nbins - 1:
                     upper_inequality = r"$\leq$"
+
                 x_axis_labels.append(
                     r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # pylint: disable=consider-using-f-string
                         low=my_large_num_formatter(_bins[i], e_precision=0),
@@ -757,11 +772,13 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
 
     if x_axis_params.get("is_datetime", False):
         x_values = from_datetime_to_epoch(np.array(x_values))
+
     if y_axis_params.get("is_datetime", False):
         y_values = from_datetime_to_epoch(np.array(y_values))
 
     if binning is None:
         binning = {"x": {"nbins": 10}, "y": {"nbins": 10}}
+
     x_bin_edges, _, x_bin_size_str = _process_hist_binning(binning["x"], x_values)
     y_bin_edges, _, y_bin_size_str = _process_hist_binning(binning["y"], y_values)
 
@@ -787,9 +804,11 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
         x_unit_part = ""
         if x_units is not None:
             x_unit_part = f" [{x_units}]"
+
         y_unit_part = ""
         if y_units is not None:
             y_unit_part = f" [{y_units}]"
+
         z_label = f"{z_label} / {x_bin_size_str}{x_unit_part} x {y_bin_size_str}{y_unit_part}"
 
     fig.colorbar(_plotted_image, ax=ax, label=z_label, cmap=STD_CMAP)
@@ -823,6 +842,7 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
         datetime_xticks = from_epoch_to_datetime(epoch_xticks)
         if x_axis_params.get("tick_format", False):
             datetime_xticks = [_.strftime(x_axis_params["tick_format"]) for _ in datetime_xticks]
+
         ax.set_xticks(epoch_xticks, datetime_xticks)
         fig.autofmt_xdate()
 
@@ -831,6 +851,7 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
         datetime_yticks = from_epoch_to_datetime(epoch_yticks)
         if y_axis_params.get("tick_format", False):
             datetime_yticks = [_.strftime(y_axis_params["tick_format"]) for _ in datetime_yticks]
+
         ax.set_yticks(epoch_yticks, datetime_yticks)
 
     draw_legend(fig, leg_objects, legend_params)
@@ -888,6 +909,7 @@ def plot_prophet(
 
     if x_axis_params_list is None:
         x_axis_params_list = [None for _ in fig.axes]
+
     if y_axis_params_list is None:
         y_axis_params_list = [None for _ in fig.axes]
 
@@ -1213,6 +1235,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
     if save_html:
         if TYPE_CHECKING:
             assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec assert_used
+
         save_ploty_to_html(fig, m_path, fname, tag)
+
     if plot_inline:
         fig.show()
