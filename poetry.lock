@@ -1666,6 +1666,20 @@ flake8 = "*"
 typing-extensions = "*"
 
 [[package]]
+name = "flake8-clean-block"
+version = "0.1.2"
+description = "A flake8 plugin that enforces a blank line after if/for/while/with/try blocks"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_clean_block-0.1.2-py2.py3-none-any.whl", hash = "sha256:9684c26a6b087e25f73966fe8f4a38f6abb3e9737a9f781140115e0e2c14a93c"},
+    {file = "flake8_clean_block-0.1.2.tar.gz", hash = "sha256:0a1f8a58be210a013715810a78dda029a65660373f585b7e14e36c3b85c7791d"},
+]
+
+[package.dependencies]
+flake8 = ">=4"
+
+[[package]]
 name = "flake8-comprehensions"
 version = "3.14.0"
 description = "A flake8 plugin to help you write better list/set/dict comprehensions."
@@ -6961,4 +6975,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "ec6ee0a42453f4c56d02213f077cdc3ff202debe3d573cb8204efd049af13098"
+content-hash = "ea7ec552a447e9b1667d4ee37864a1543de1cff0c9024f2b6cf39d638ad44820"
