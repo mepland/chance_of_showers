@@ -22,19 +22,19 @@ if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
 fi
 
 # Run drive_bayesian_opt.py n_iter times, or until max_points is reached
-status=0
+n_points=0
 for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
 	# Add \r to start to backup one line, if drive_bayesian_opt.py is printing nothing out
-	printf "Starting drive_bayesian_opt.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$status"
+	printf "Starting drive_bayesian_opt.py %d of %d, currently have %d points\n" "$i_iter" "$n_iter" "$n_points"
 
 	poetry run python -u $pkg_path/ana/drive_bayesian_opt.py
 	status=$?
+	n_points=$((status - 10))
 
-	if [[ (0 -lt $status) && ($status -lt 10) ]]; then
+	if [[ $status -lt 10 ]]; then
 		echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
 		exit $status
-	elif [[ $max_points -le $status-10 ]]; then
-		n_points=$((status - 10))
+	elif [[ $max_points -le $n_points ]]; then
 		echo "On i_iter = $i_iter, found $n_points >= $max_points points, finished"
 		exit
 	fi
