@@ -1400,7 +1400,25 @@ for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
     )
 
 # %% [markdown]
-# ### Compare Results
+# ### Single Model
+
+# %%
+optimal_values, optimizer, _exception_status = run_bayesian_opt(
+    parent_wrapper=PARENT_WRAPPER,
+    model_wrapper_class=NBEATSModelWrapper,
+    n_iter=5,
+    verbose=4,
+    enable_torch_messages=True,
+    max_time_per_model=datetime.timedelta(minutes=15),
+    accelerator="auto",
+    fixed_hyperparams_to_alter={"n_epochs": 20},
+    enable_reloading=False,
+    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
+)
+pprint.pprint(optimal_values)
+
+# %% [markdown]
+# ## Review Results
 
 # %%
 dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
@@ -1454,24 +1472,6 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
         worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
         worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
         worksheet.autofit()
-
-# %% [markdown]
-# ### Single Model
-
-# %%
-optimal_values, optimizer, _exception_status = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NBEATSModelWrapper,
-    n_iter=5,
-    verbose=4,
-    enable_torch_messages=True,
-    max_time_per_model=datetime.timedelta(minutes=15),
-    accelerator="auto",
-    fixed_hyperparams_to_alter={"n_epochs": 20},
-    enable_reloading=False,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
-)
-pprint.pprint(optimal_values)
 
 # %% [markdown]
 # ### DEV: Compare Run Times
