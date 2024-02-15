@@ -84,12 +84,12 @@ flake8-all-not-strings = "^0.0.1"
 flake8-absolute-import = "^1.0.0.2"
 flake8-assertive = "^2.1.0"
 flake8-broken-line = "^1.0.0"
+flake8-class-attributes-order = "^0.1.3"
 
 # TODO
 # cohesion
 # dlint
 # flake8-breakpoint
-# flake8-class-attributes-order
 # flake8-clean-block
 # flake8-codes
 # flake8-coding

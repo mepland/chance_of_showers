@@ -1651,6 +1651,21 @@ flake8 = "*"
 test = ["pytest"]
 
 [[package]]
+name = "flake8-class-attributes-order"
+version = "0.1.3"
+description = "A flake8 extension that checks classes attributes order"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8_class_attributes_order-0.1.3-py3-none-any.whl", hash = "sha256:6398368da4511cdda1a7c0e25934bcaac49d9df89aa2842729353b4a20f7ed13"},
+    {file = "flake8_class_attributes_order-0.1.3.tar.gz", hash = "sha256:9dde5581832d278ce247d4c47777f980cd86df2232bc0c50275144857d56e91d"},
+]
+
+[package.dependencies]
+flake8 = "*"
+typing-extensions = "*"
+
+[[package]]
 name = "flake8-comprehensions"
 version = "3.14.0"
 description = "A flake8 plugin to help you write better list/set/dict comprehensions."
@@ -6946,4 +6961,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "f71c29b26b331bc76cd3d69455006929382bf8859aab1a2687e072f9c6a2c8ae"
+content-hash = "ec6ee0a42453f4c56d02213f077cdc3ff202debe3d573cb8204efd049af13098"
