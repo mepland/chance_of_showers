@@ -79,6 +79,7 @@ repos:
           flake8-class-attributes-order,
           flake8-clean-block,
           flake8-comments,
+          flake8-coding,
         ]
 
   # mypy

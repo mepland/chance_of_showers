@@ -87,15 +87,13 @@ flake8-broken-line = "^1.0.0"
 flake8-class-attributes-order = "^0.1.3"
 flake8-clean-block = "^0.1.2"
 flake8-comments = "^0.1.2"
+flake8-coding = "^1.3.2"
 
 # TODO
 # cohesion
 # dlint
 # flake8-breakpoint
 # flake8-codes
-# flake8-coding
-# flake8-cognitive-complexity
-# flake8-copyright
 # flake8-datetime-import
 # flake8-datetime-utcnow-plugin
 # flake8-datetimez
@@ -266,7 +264,6 @@ extend-select = [
 per-file-ignores = [
     "ana/exploratory_ana.py:E402,E800",
 ]
-
 exclude = [
     ".cache",
     ".direnv",
@@ -279,6 +276,7 @@ exclude = [
 ]
 literal-inline-quotes="double"
 literal-multiline-quotes="double"
+no-accept-encodings = true
 
 [tool.mypy]
 python_version = "3.11"
