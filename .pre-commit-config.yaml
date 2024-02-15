@@ -82,6 +82,8 @@ repos:
           flake8-coding,
           flake8-dunder-all,
           flake8-functions-names,
+          flake8-use-fstring,
+          flake8-use-pathlib,
         ]
 
   # mypy

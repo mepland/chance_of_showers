@@ -2334,6 +2334,38 @@ files = [
 flake8 = ">3.0.0"
 
 [[package]]
+name = "flake8-use-fstring"
+version = "1.4"
+description = "Flake8 plugin for string formatting style."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8-use-fstring-1.4.tar.gz", hash = "sha256:6550bf722585eb97dffa8343b0f1c372101f5c4ab5b07ebf0edd1c79880cdd39"},
+]
+
+[package.dependencies]
+flake8 = ">=3"
+
+[package.extras]
+ci = ["coverage (==4.*)", "coveralls", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+dev = ["coverage (==4.*)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+test = ["coverage (==4.*)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+
+[[package]]
+name = "flake8-use-pathlib"
+version = "0.3.0"
+description = "A plugin for flake8 finding use of functions that can be replaced by pathlib module."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-use-pathlib-0.3.0.tar.gz", hash = "sha256:0ef19f255a51601bcf04ff54f25ef8a466dff68210cd95b4f1db36a78ace5223"},
+    {file = "flake8_use_pathlib-0.3.0-py3-none-any.whl", hash = "sha256:c7b6d71575b575f7d70ebf3f1d7f2dd6685e401d3280208f1db9dbb6bfa32608"},
+]
+
+[package.dependencies]
+flake8 = ">=3.6"
+
+[[package]]
 name = "flask"
 version = "2.3.3"
 description = "A simple framework for building complex web applications."
@@ -7149,4 +7181,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "c44972c739713eb2aed9d7e946a8c2d643769289f9a3bd06e3dd0bcf18f937f8"
+content-hash = "0071048ed57a608ef14aea7ecaf220d3676580f609e0cf1a9c005b2d760026c8"
