@@ -1560,6 +1560,20 @@ attrs = ">=21.4"
 flake8 = ">=5.0"
 
 [[package]]
+name = "flake8-assertive"
+version = "2.1.0"
+description = "Flake8 unittest assert method checker"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-assertive-2.1.0.tar.gz", hash = "sha256:72a333fefe1af1f8d46359f4d083f8a8d42d7edb9db84406ce8de17bcffbbd10"},
+    {file = "flake8_assertive-2.1.0-py3-none-any.whl", hash = "sha256:dc0c561010b2c00f7314f7fbf3b3de302efb24154316deb338d07e083fa30b26"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0.0"
+
+[[package]]
 name = "flake8-async"
 version = "22.11.14"
 description = "A flake8 plugin that checks bad async / asyncio practices"
@@ -6918,4 +6932,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "91d7391265210df1423fbff4e3dd7803ddee484287fddefe49125ec055f44c44"
+content-hash = "6d503932ac4bd47c64bda4d5f92543dd8be6dfba83c89687002088b93267c4e3"
