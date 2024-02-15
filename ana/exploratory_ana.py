@@ -430,9 +430,7 @@ model_prophet = model_wrapper_Prophet.model.model
 dfp_prophet_future = model_prophet.make_future_dataframe(
     periods=n_prediction_steps, freq=time_bin_size
 )
-dfp_prophet_future = pd.merge(
-    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
-)
+dfp_prophet_future = dfp_prophet_future.merge(dfp_train[["ds", "had_flow"]], on="ds", how="left")
 dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
 
 dfp_predict = model_prophet.predict(dfp_prophet_future)
@@ -1577,13 +1575,13 @@ plot_chance_of_showers_time_series(
 # %%
 hist_dicts = [
     {
-        "values": dfp_data.loc[dfp_data["had_flow"] != 1, "mean_pressure_value"].values,
+        "values": dfp_data.loc[dfp_data["had_flow"] != 1, "mean_pressure_value"].to_numpy(),
         "label": "No Flow",
         "density": True,
         "c": MC_FLOW_0,
     },
     {
-        "values": dfp_data.loc[dfp_data["had_flow"] == 1, "mean_pressure_value"].values,
+        "values": dfp_data.loc[dfp_data["had_flow"] == 1, "mean_pressure_value"].to_numpy(),
         "label": "Had Flow",
         "density": True,
         "c": MC_FLOW_1,
