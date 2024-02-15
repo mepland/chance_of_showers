@@ -1517,6 +1517,20 @@ pycodestyle = ">=2.11.0,<2.12.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
+name = "flake8-all-not-strings"
+version = "0.0.1"
+description = "flake8 plugin which checks that modules under `__all__` are defined as strings"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flake8_all_not_strings-0.0.1-py2.py3-none-any.whl", hash = "sha256:f5181c135daf4711b122556ed0161e760065aae390b9f7a4713cdbf6b0748236"},
+    {file = "flake8_all_not_strings-0.0.1.tar.gz", hash = "sha256:e7f1903e501d507560dfa7ff9379a9d6a283195880bafe3bf74eb1f5cd836e40"},
+]
+
+[package.dependencies]
+flake8 = ">=3"
+
+[[package]]
 name = "flake8-annotations"
 version = "3.0.1"
 description = "Flake8 Type Annotation Checks"
@@ -6890,4 +6904,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "d48e166feab4512c46877433ade698c46411343f171e81762dfc3ea5598eb07b"
+content-hash = "4fe321501a4063f6080b76d018bc9879bdcf2c1ec7e9804fb4d14fe0e670a629"

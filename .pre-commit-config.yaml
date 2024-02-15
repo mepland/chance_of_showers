@@ -71,7 +71,8 @@ repos:
           flake8-literal,
           flake8-logging,
           darglint,
-          pandas-vet
+          pandas-vet,
+          flake8-all-not-strings,
         ]
 
   # mypy

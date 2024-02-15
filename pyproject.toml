@@ -80,6 +80,93 @@ flake8-typing-as-t = "^0.0.3"
 flake8-unused-arguments = "^0.0.13"
 darglint = "^1.8.1"
 pandas-vet = "^2023.8.2"
+flake8-all-not-strings = "^0.0.1"
+
+# TODO
+# cohesion
+# dlint
+# flake8-aaa
+# flake8-absolute-import
+# flake8-ado
+# flake8-annotations-complexity
+# flake8-annotations-coverage
+# flake8-assertive
+# flake8-author
+# flake8-breakpoint
+# flake8-broken-line
+# flake8-class-attributes-order
+# flake8-clean-block
+# flake8-codes
+# flake8-coding
+# flake8-cognitive-complexity
+# flake8-commas
+# flake8-comments
+# flake8-copyright
+# flake8-datetime-import
+# flake8-datetime-utcnow-plugin
+# flake8-datetimez
+# flake8-debugger
+# flake8-docstring-checker
+# flake8-dunder-all
+# flake8-encodings
+# flake8-executable
+# flake8-expression-complexity
+# flake8-fixme
+# flake8-forbidden-func
+# flake8-functions
+# flake8-functions-names
+# flake8-future-import
+# flake8-if-expr
+# flake8-implicit-str-concat
+# flake8-import-style
+# flake8-in-file-ignores
+# flake8-indent-in-def
+# flake8-internal-name-import
+# flake8-logging-format
+# flake8-match
+# flake8-mock
+# flake8-mock-spec
+# flake8-multiline-containers
+# flake8-new-union-types
+# flake8-newspaper-style
+# flake8-no-pep420
+# flake8-obey-import-goat
+# flake8-ownership
+# flake8-pep604
+# flake8-print
+# flake8-pytest
+# flake8-pytestrail
+# flake8-qt-tr
+# flake8-quotes
+# flake8-requirements
+# flake8-rst-docstrings
+# flake8-ruler
+# flake8-scream
+# flake8-slots
+# flake8-sphinx-links
+# flake8-sql
+# flake8-strftime
+# flake8-strict
+# flake8-string-format
+# flake8-test-name
+# flake8-tidy-imports
+# flake8-todo
+# flake8-too-many
+# flake8-typing-imports
+# flake8-use-fstring
+# flake8-use-pathlib
+# flake8-useless-assert
+# flake8-variables-names
+# flake8-warnings
+# flakehell
+# flakes
+# hacking
+# nitpick
+# pep8-naming
+# pydoclint
+# tryceratops
+# wps-playground
+# yesqa
 
 [tool.poetry.group.daq]
 optional = true
