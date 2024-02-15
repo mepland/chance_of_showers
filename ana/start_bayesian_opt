@@ -10,7 +10,9 @@ n_iter=100
 # Will stop script early if reached before n_iter, for example when resuming a run.
 max_points=200
 
-# Turn off tqdm in drive_bayesian_opt.py
+# Turn on tdqm
+export TQDM_DISABLE=0
+# Turn off tqdm
 # export TQDM_DISABLE=1
 
 # Check for running drive_bayesian_opt.py
@@ -32,7 +34,8 @@ for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
 		echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
 		exit $status
 	elif [[ $max_points -le $status-10 ]]; then
-		echo "On i_iter = $i_iter, found $status >= $max_points points, finished"
+		n_points=$((status - 10))
+		echo "On i_iter = $i_iter, found $n_points >= $max_points points, finished"
 		exit
 	fi
 
