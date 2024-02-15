@@ -149,7 +149,6 @@ def get_pl_trainer_kwargs(
 
     return {
         "enable_model_summary": enable_torch_messages,
-        "deterministic": "warn",
         "max_time": max_time,
         "accelerator": accelerator,
         "log_every_n_steps": log_every_n_steps,
