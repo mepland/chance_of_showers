@@ -78,7 +78,7 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 
 prod_kwargs = {
     "n_iter": 1,
-    "verbose": 3,
+    "verbose": 9,
     "enable_torch_messages": True,
     "disregard_training_exceptions": True,
     "max_time_per_model": datetime.timedelta(minutes=45),
@@ -91,8 +91,8 @@ model_kwarg_list = [
     # {"model_wrapper_class": ProphetWrapper},
     # PyTorch NN Models
     # {"model_wrapper_class": NBEATSModelWrapper},
-    {"model_wrapper_class": NHiTSModelWrapper},
-    # {"model_wrapper_class": TCNModelWrapper},
+    # {"model_wrapper_class": NHiTSModelWrapper},
+    {"model_wrapper_class": TCNModelWrapper},
     # {"model_wrapper_class": TransformerModelWrapper},
     # {"model_wrapper_class": TFTModelWrapper},
     # {"model_wrapper_class": DLinearModelWrapper},
