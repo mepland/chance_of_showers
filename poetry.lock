@@ -1964,20 +1964,6 @@ files = [
 flake8 = ">=4.0.0"
 
 [[package]]
-name = "flake8-helper"
-version = "0.2.2"
-description = "A helper library for Flake8 plugins."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "flake8_helper-0.2.2-py3-none-any.whl", hash = "sha256:75033d6704f7f5701b04085627b66da252ac82894d50bdf1127e7b11444f1025"},
-    {file = "flake8_helper-0.2.2.tar.gz", hash = "sha256:02e33eb8014c9accd802ef4a7a266e2ec8d7b9225ce94d19bd537d4631bb4f87"},
-]
-
-[package.dependencies]
-flake8 = ">=3.8.4"
-
-[[package]]
 name = "flake8-import-conventions"
 version = "0.1.0"
 description = "An opinionated plugin for Flake8 on how certain packages should be imported or aliased."
@@ -2292,21 +2278,6 @@ files = [
 [package.dependencies]
 astor = ">=0.1"
 flake8 = ">=3.7"
-
-[[package]]
-name = "flake8-strftime"
-version = "0.3.4"
-description = "A flake8 plugin which checks for use of platform specific strftime codes."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "flake8_strftime-0.3.4-py3-none-any.whl", hash = "sha256:b0019af14eafc113e2b3452b52bccc7f604ad3cfd37551bf5fe268dfeb928bd3"},
-    {file = "flake8_strftime-0.3.4.tar.gz", hash = "sha256:db6b641a6c4562285d879d595481c612893bb8729d96ef4da356583c38a1013f"},
-]
-
-[package.dependencies]
-flake8 = ">=3.7"
-flake8-helper = ">=0.1.1"
 
 [[package]]
 name = "flake8-string-format"
@@ -7210,4 +7181,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "b43330b0522e54117c4ebc6ad0b97b79cfccb4a59906a7193e399c7ac0b36294"
+content-hash = "0071048ed57a608ef14aea7ecaf220d3676580f609e0cf1a9c005b2d760026c8"

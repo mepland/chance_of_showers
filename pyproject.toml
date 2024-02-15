@@ -92,7 +92,6 @@ flake8-dunder-all = "^0.3.1"
 flake8-functions-names = "^0.4.0"
 flake8-use-fstring = "^1.4"
 flake8-use-pathlib = "^0.3.0"
-flake8-strftime = "^0.3.4"
 
 # TODO
 # replace darglint with pydoclint

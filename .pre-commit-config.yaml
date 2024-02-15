@@ -84,7 +84,6 @@ repos:
           flake8-functions-names,
           flake8-use-fstring,
           flake8-use-pathlib,
-          flake8-strftime,
         ]
 
   # mypy
