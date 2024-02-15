@@ -1602,6 +1602,20 @@ files = [
 flake8 = "*"
 
 [[package]]
+name = "flake8-broken-line"
+version = "1.0.0"
+description = "Flake8 plugin to forbid backslashes for line breaks"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "flake8_broken_line-1.0.0-py3-none-any.whl", hash = "sha256:96c964336024a5030dc536a9f6fb02aa679e2d2a6b35b80a558b5136c35832a9"},
+    {file = "flake8_broken_line-1.0.0.tar.gz", hash = "sha256:e2c6a17f8d9a129e99c1320fce89b33843e2963871025c4c2bb7b8b8d8732a85"},
+]
+
+[package.dependencies]
+flake8 = ">5"
+
+[[package]]
 name = "flake8-bugbear"
 version = "23.12.2"
 description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
@@ -6932,4 +6946,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "6d503932ac4bd47c64bda4d5f92543dd8be6dfba83c89687002088b93267c4e3"
+content-hash = "f71c29b26b331bc76cd3d69455006929382bf8859aab1a2687e072f9c6a2c8ae"

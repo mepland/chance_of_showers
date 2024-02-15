@@ -75,6 +75,7 @@ repos:
           flake8-all-not-strings,
           flake8-absolute-import,
           flake8-assertive,
+          flake8-broken-line,
         ]
 
   # mypy

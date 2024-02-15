@@ -83,13 +83,12 @@ pandas-vet = "^2023.8.2"
 flake8-all-not-strings = "^0.0.1"
 flake8-absolute-import = "^1.0.0.2"
 flake8-assertive = "^2.1.0"
+flake8-broken-line = "^1.0.0"
 
 # TODO
 # cohesion
 # dlint
-# flake8-author
 # flake8-breakpoint
-# flake8-broken-line
 # flake8-class-attributes-order
 # flake8-clean-block
 # flake8-codes
