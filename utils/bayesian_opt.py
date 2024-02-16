@@ -558,7 +558,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 elif "out of memory" in str(error):
                     error_msg = "Ran out of memory"
                 elif re.match(
-                    r"^Hyperparameter \(.*?\) with value \(.*?\) is not allowed",
+                    r"^Hyperparameter .*? with value .*? is not allowed",
                     str(error),
                 ):
                     error_msg = "Bad hyperparameter value, likely caused by additional conditions adjusting the value beyond its limits"
