@@ -1259,7 +1259,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
                     if not op_func(hyperparam_value, rhs_value):
-                        logger_ts_wrapper.debug(
+                        logger_ts_wrapper.warning(
                             "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
                             hyperparam,
                             new_value,
