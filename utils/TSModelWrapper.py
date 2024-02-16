@@ -1289,7 +1289,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             ]:
                 continue
             if _k in boolean_hyperparams:
-                self.chosen_hyperparams[_k] = bool(_v)
+                self.chosen_hyperparams[_k] = 0 < _v
             elif _k in integer_hyperparams:
                 self.chosen_hyperparams[_k] = int(_v)
             if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
