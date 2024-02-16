@@ -169,7 +169,6 @@ for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
     # pylint: enable=duplicate-code
 
     n_points = len(optimizer.space)
-    print(f"Completed {n_points = }")
 
     if exception_status:
         sys.exit(exception_status)
