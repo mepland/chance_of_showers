@@ -500,46 +500,47 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
             model_wrapper.set_accelerator(accelerator=accelerator)
             model_wrapper.verbose = model_verbose
 
-            # Check if we already tested this chosen_hyperparams point
-            # If it has been tested, save the raw next_point_to_probe with the same target and continue
-            chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
-            next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
-            if 6 <= verbose:
-                print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
-                print(
-                    f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
-                )
-
-            is_duplicate_point = False
-            for i_param in range(optimizer.space.params.shape[0]):
-                if np.array_equiv(
-                    optimizer.space.params_to_array(next_point_to_probe_cleaned),
-                    optimizer.space.params[i_param],
-                ):
-                    target = optimizer.space.target[i_param]
-                    if 3 <= verbose:
-                        print(
-                            f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
-                        )
-                    complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
-                    is_duplicate_point = True
-                    break
-            if is_duplicate_point:
-                continue
-
-            # set model_name_tag for this iteration
-            model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
-
-            # Setup iteration kill timer
-            if max_time_per_model_flag:
-                if TYPE_CHECKING:
-                    assert isinstance(  # noqa: SCS108 # nosec assert_used
-                        max_time_per_model, datetime.timedelta
-                    )
-                signal.alarm(max_time_per_model.seconds)
-
-            # train the model
             try:
+                # Check if we already tested this chosen_hyperparams point
+                # If it has been tested, save the raw next_point_to_probe with the same target and continue
+                chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
+
+                next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
+                if 6 <= verbose:
+                    print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
+                    print(
+                        f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
+                    )
+
+                is_duplicate_point = False
+                for i_param in range(optimizer.space.params.shape[0]):
+                    if np.array_equiv(
+                        optimizer.space.params_to_array(next_point_to_probe_cleaned),
+                        optimizer.space.params[i_param],
+                    ):
+                        target = optimizer.space.target[i_param]
+                        if 3 <= verbose:
+                            print(
+                                f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
+                            )
+                        complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
+                        is_duplicate_point = True
+                        break
+                if is_duplicate_point:
+                    continue
+
+                # set model_name_tag for this iteration
+                model_wrapper.set_model_name_tag(model_name_tag=f"iteration_{n_points}")
+
+                # Setup iteration kill timer
+                if max_time_per_model_flag:
+                    if TYPE_CHECKING:
+                        assert isinstance(  # noqa: SCS108 # nosec assert_used
+                            max_time_per_model, datetime.timedelta
+                        )
+                    signal.alarm(max_time_per_model.seconds)
+
+                # train the model
                 target = model_wrapper.train_model(**next_point_to_probe)
                 # Put a lower bound on target at BAD_LOSS.
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf") or is np.nan.
@@ -556,6 +557,11 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                     error_msg = "Ran out of time"
                 elif "out of memory" in str(error):
                     error_msg = "Ran out of memory"
+                elif re.match(
+                    r"^Hyperparameter \(.*?\) with value \(.*?\) is not allowed",
+                    str(error),
+                ):
+                    error_msg = "Bad hyperparameter value, likely caused by additional conditions adjusting the value beyond its limits"
                 elif (
                     "Multiplicative seasonality is not appropriate for zero and negative values"
                     in str(error)

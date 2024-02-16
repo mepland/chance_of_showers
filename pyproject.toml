@@ -262,6 +262,7 @@ max-args = 15
 max-locals = 30
 max-statements = 100
 max-attributes = 15
+max-nested-blocks = 10
 min-public-methods = 1
 
 [tool.pylint.basic]
