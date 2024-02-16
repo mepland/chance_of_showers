@@ -9,6 +9,7 @@ import pprint
 import re
 import signal
 import traceback
+from contextlib import suppress
 from types import FrameType  # noqa: TC003
 from typing import TYPE_CHECKING, Final, TypeAlias
 
@@ -230,10 +231,28 @@ def print_memory_usage(*, header: str | None = None) -> None:
     )
 
     if torch.cuda.is_available():
-        gpu_memory_stats = torch.cuda.memory_stats()
+        gpu_memory_stats = {}
+        with suppress(Exception):
+            gpu_memory_stats = torch.cuda.memory_stats()
+
+        def get_gpu_mem_key(key: str) -> str:
+            """Print system memory usage statistics.
+
+            Args:
+                key: Key to get from gpu_memory_stats.
+
+            Returns:
+                Clean humanized string for printing.
+            """
+            _v = gpu_memory_stats.get(key)
+            if _v is not None:
+                return str(humanize.naturalsize(_v))
+
+            return "MISSING"
+
         memory_usage_str += (
-            f", GPU RAM Current: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.current'])}, "
-            + f"Peak: {humanize.naturalsize(gpu_memory_stats['allocated_bytes.all.peak'])}"
+            f", GPU RAM Current: {get_gpu_mem_key('allocated_bytes.all.current')}, "
+            + f"Peak: {get_gpu_mem_key('allocated_bytes.all.peak')}"
         )
     print(memory_usage_str)
 
