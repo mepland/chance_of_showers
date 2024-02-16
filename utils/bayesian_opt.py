@@ -541,7 +541,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                     signal.alarm(max_time_per_model.seconds)
 
                 # train the model
-                target = model_wrapper.train_model(**next_point_to_probe)
+                target = model_wrapper.train_model(**next_point_to_probe_cleaned)
                 # Put a lower bound on target at BAD_LOSS.
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf") or is np.nan.
                 if np.isnan(target) or target < BAD_LOSS:
