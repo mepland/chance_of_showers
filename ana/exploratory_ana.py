@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import tqdm
 from hydra import compose, initialize
 from IPython.display import Image, display
 
@@ -37,7 +36,6 @@ from utils.bayesian_opt import (
     BAYESIAN_OPT_JSON_PREFIX,
     load_best_points,
     load_json_log_to_dfp,
-    run_bayesian_opt,
 )
 from utils.shared_functions import (
     create_datetime_component_cols,
@@ -1301,10 +1299,11 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 
 # %%
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
-write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
+if not PARENT_WRAPPER_PATH.is_file():
+    write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
 
 # %% [markdown]
-# ### Set kwargs
+# ## Show TensorBoard Logs
 
 # %%
 tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
@@ -1313,136 +1312,24 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # %%
 # # %tensorboard --logdir $tensorboard_logs
 
-# %%
-prod_kwargs = {
-    "parent_wrapper": PARENT_WRAPPER,
-    "n_iter": 100,
-    "verbose": 3,
-    "enable_torch_model_summary": False,
-    "enable_torch_progress_bars": False,
-    "disregard_training_exceptions": True,
-    "max_time_per_model": datetime.timedelta(minutes=45),
-    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-}
-
-# %%
-dev_kwargs = {
-    "parent_wrapper": PARENT_WRAPPER,
-    "n_iter": 10,
-    "verbose": 9,
-    "enable_torch_warnings": True,
-    "enable_torch_model_summary": True,
-    "enable_torch_progress_bars": True,
-    "max_time_per_model": datetime.timedelta(minutes=2),
-    "fixed_hyperparams_to_alter": {"n_epochs": 4},
-    "accelerator": "gpu",
-    "enable_reloading": False,
-    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-}
-
-# %%
-model_kwarg_list = [
-    # Prophet
-    {"model_wrapper_class": ProphetWrapper},
-    # PyTorch NN Models
-    # {"model_wrapper_class": NBEATSModelWrapper},
-    # {"model_wrapper_class": NHiTSModelWrapper},
-    # {"model_wrapper_class": TCNModelWrapper},
-    # {"model_wrapper_class": TransformerModelWrapper},
-    # {"model_wrapper_class": TFTModelWrapper},
-    # {"model_wrapper_class": DLinearModelWrapper},
-    # {"model_wrapper_class": NLinearModelWrapper},
-    # {"model_wrapper_class": TiDEModelWrapper},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
-    # Statistical Models
-    # {"model_wrapper_class": AutoARIMAWrapper},
-    # {"model_wrapper_class": BATSWrapper},
-    # {"model_wrapper_class": TBATSWrapper},
-    # {"model_wrapper_class": FourThetaWrapper},
-    # {"model_wrapper_class": StatsForecastAutoThetaWrapper},
-    # {"model_wrapper_class": FFTWrapper},
-    # {"model_wrapper_class": KalmanForecasterWrapper},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
-    # Regression Models
-    # {"model_wrapper_class": LinearRegressionModelWrapper},
-    # {"model_wrapper_class": RandomForestWrapper},
-    # {"model_wrapper_class": LightGBMModelWrapper},
-    # {"model_wrapper_class": XGBModelWrapper},
-    # {"model_wrapper_class": CatBoostModelWrapper},
-    # Naive Models
-    # {"model_wrapper_class": NaiveMeanWrapper},
-    # {"model_wrapper_class": NaiveSeasonalWrapper},
-    # {"model_wrapper_class": NaiveDriftWrapper},
-    # {"model_wrapper_class": NaiveMovingAverageWrapper},
-]
-
 # %% [markdown]
-# ## Run Bayesian Optimization
-
-# %% [markdown]
-# ### All Models!
-
-# %%
-for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
-    _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
-    pbar.set_postfix_str(f"Optimizing {_model_name}")
-
-    if TYPE_CHECKING:
-        assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
-        assert isinstance(dev_kwargs, dict)  # noqa: SCS108 # nosec assert_used
-        assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
-
-    _ = run_bayesian_opt(
-        **prod_kwargs,  # type: ignore[arg-type]
-        # **dev_kwargs,  # type: ignore[arg-type]
-        **model_kwarg,  # type: ignore[arg-type]
-    )
-
-# %% [markdown]
-# ### Single Model
-
-# %%
-optimal_values, optimizer, _exception_status = run_bayesian_opt(
-    parent_wrapper=PARENT_WRAPPER,
-    model_wrapper_class=NBEATSModelWrapper,
-    n_iter=5,
-    verbose=4,
-    enable_torch_warnings=True,
-    enable_torch_model_summary=True,
-    enable_torch_progress_bars=True,
-    max_time_per_model=datetime.timedelta(minutes=15),
-    accelerator="auto",
-    fixed_hyperparams_to_alter={"n_epochs": 20},
-    enable_reloading=False,
-    bayesian_opt_work_dir_name=BAYESIAN_OPT_WORK_DIR_NAME,
-)
-pprint.pprint(optimal_values)
-
-# %% [markdown]
-# ## Review Results
+# ## Review Best Results
 
 # %%
 dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
 
 # %%
-# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-#     display(dfp_best_points)
+with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+    display(dfp_best_points)
 
 # %%
-# best_model = dfp_best_points["model_name"].iloc[0]
-# print(f"{best_model = }")
-# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-#     display(dfp_runs_dict[best_model])
+best_model = dfp_best_points["model_name"].iloc[0]
+print(f"{best_model = }")
+with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+    display(dfp_runs_dict[best_model])
 
 # %% [markdown]
-# #### Write results to xlsx
+# ### Write results to xlsx
 
 # %%
 f_excel = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "search_results.xlsx"
@@ -1531,7 +1418,6 @@ dfp_merged = dfp_merged.loc[
 ]
 with pd.option_context("display.max_rows", 10, "display.max_columns", None):
     display(dfp_merged)
-
 
 # %% [markdown]
 # ***
