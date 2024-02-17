@@ -4,7 +4,7 @@ import time
 
 from gpiozero import Button
 
-__all__ = []
+__all__: list[str] = []
 
 
 # Configuration

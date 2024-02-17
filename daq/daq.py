@@ -24,7 +24,7 @@ import pause
 import psutil
 from omegaconf import DictConfig  # noqa: TC002
 
-__all__ = []
+__all__: list[str] = []
 
 
 if TYPE_CHECKING:

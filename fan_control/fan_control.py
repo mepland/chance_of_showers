@@ -14,7 +14,7 @@ from omegaconf import DictConfig  # noqa: TC002
 # pylint: disable=no-member
 from RPi import GPIO
 
-__all__ = []
+__all__: list[str] = []
 
 
 # Setup global variables

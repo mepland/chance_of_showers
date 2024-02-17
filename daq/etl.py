@@ -16,7 +16,7 @@ import hydra
 import polars as pl
 from omegaconf import DictConfig  # noqa: TC002
 
-__all__ = []
+__all__: list[str] = []
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
