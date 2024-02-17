@@ -24,7 +24,10 @@ export TQDM_DISABLE=1
 
 # Maximum number of points to generate
 # Will stop script early if reached before n_iter, for example when resuming a run.
-max_points=$((2 * n_iter))
+# dev
+# max_points=999
+# prod
+max_points=$((2 * n_iter + 1))
 
 # Check for running drive_bayesian_opt.py
 if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
@@ -60,4 +63,6 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 
 done
 
+echo "Completed all runs"
 unset TQDM_DISABLE
+exit
