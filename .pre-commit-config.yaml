@@ -325,6 +325,8 @@ repos:
       - id: check-json
       # checks toml files for parseable syntax
       - id: check-toml
+      # ensures that links to vcs websites are permalinks.
+      - id: check-vcs-permalinks
       # checks xml files for parseable syntax
       - id: check-xml
       # checks yaml files for parseable syntax
