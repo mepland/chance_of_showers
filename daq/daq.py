@@ -24,6 +24,9 @@ import pause
 import psutil
 from omegaconf import DictConfig  # noqa: TC002
 
+__all__ = []
+
+
 if TYPE_CHECKING:
     from types import FrameType
 
@@ -224,6 +227,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
+
         return normalize_pressure_value_float
 
     def get_SoC_temp_safe() -> float:  # pylint: disable=invalid-name
@@ -361,6 +365,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 with canvas(i2c_device) as draw:
                     if bounding_box:
                         draw.rectangle(i2c_device.bounding_box, outline="white", fill="black")
+
                     for i_line, line in enumerate(lines):
                         draw.text(
                             (lpad, vpad + i_line * line_height),
@@ -410,6 +415,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         logger_sio.setLevel(logging.WARNING)
         if 1 < VERBOSITY:
             logger_sio.setLevel(logging.DEBUG)
+
         if LOG_TO_FILE:
             logger_sio.addHandler(logging_fh)
 
@@ -453,6 +459,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     if _.get("IP address") == ip_address:
                         mac_address = _.get("HW address", mac_address)
                         break
+
                 conn_details_str = (
                     f"sid: {request.sid}"  # type: ignore[attr-defined]
                     + f", IP address: {ip_address}"
@@ -517,6 +524,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         log_werkzeug.setLevel(logging.WARNING)
         if 0 < VERBOSITY:
             log_werkzeug.setLevel(logging.DEBUG)
+
         if LOG_TO_FILE:
             log_werkzeug.addHandler(logging_fh)
 
@@ -542,6 +550,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 ip_address = "127.0.0.1"
             finally:
                 m_socket.close()
+
             return ip_address
 
         PORT_NUMBER: Final = 5000  # pylint: disable=invalid-name
@@ -562,11 +571,13 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     if LOG_TO_FILE:
         my_print(f"Logging to {FNAME_LOG}", print_prefix="\n")
+
     if DISPLAY_WEB:
         my_print(
             f"Live dashboard hosted at: http://{host_ip_address}:{PORT_NUMBER}",
             print_prefix="\n",
         )
+
     my_print(
         f"Starting DAQ at {t_utc_str} UTC, {t_local_str} {LOCAL_TIMEZONE_STR}",
         print_prefix="\n       ",
@@ -695,19 +706,21 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 t_utc_str = t_stop.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
                 if DISPLAY_WEB:
                     t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
+
                 mean_pressure_value = int(np.nanmean(polling_pressure_samples))
                 mean_pressure_value_normalized = normalize_pressure_value_safe(mean_pressure_value)
                 past_had_flow = int(np.max(polling_flow_samples))
                 new_row = [t_utc_str, mean_pressure_value, past_had_flow]
 
                 fname_date_utc = t_stop.astimezone(UTC_TIMEZONE).strftime(DATE_FMT)
-                with open(
-                    RAW_DATA_FULL_PATH / f"date_{fname_date_utc}.csv", "a", encoding="utf-8"
+                with (RAW_DATA_FULL_PATH / f"date_{fname_date_utc}.csv").open(
+                    "a", encoding="utf-8"
                 ) as f_csv:
                     m_writer = writer(f_csv)
                     if f_csv.tell() == 0:
                         # empty file, create header
                         m_writer.writerow(["datetime_utc", "mean_pressure_value", "had_flow"])
+
                     m_writer.writerow(new_row)
                     f_csv.close()
 
@@ -722,6 +735,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             del t_local_str_n_last[0]
                             del mean_pressure_value_normalized_n_last[0]
                             del past_had_flow_n_last[0]
+
                     except Exception as error:
                         # don't want to kill the DAQ just because of a web problem
                         my_print(
@@ -742,6 +756,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                                 logger_level=logging.INFO,
                                 use_print=False,
                             )
+
                     except Exception as error:
                         # don't want to kill the DAQ just because of a memory logging problem
                         my_print(
@@ -773,6 +788,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
+
             my_print(
                 "Starting web server with sio.run()",
                 logger_level=logging.DEBUG,

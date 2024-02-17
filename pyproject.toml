@@ -185,6 +185,9 @@ docstring_style = "google" # darglint
 ignore = [
 "E501",
 "ESC102",
+"FNE003",
+"FNE004",
+"FNE008",
 "PD005",
 "PIE786",
 "SCS109",

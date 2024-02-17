@@ -5,6 +5,9 @@ import time
 # pylint: disable=no-member
 from RPi import GPIO
 
+__all__ = []
+
+
 # Configuration
 GPIO_PIN = 19
 WAIT_TIME = 5  # [s] Time to wait between each refresh
@@ -30,7 +33,6 @@ try:
 
     GPIO.setup(GPIO_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Pull up to 3.3V
 
-    # Add event to detect
     GPIO.add_event_detect(GPIO_PIN, GPIO.FALLING, fell)
 
     while True:

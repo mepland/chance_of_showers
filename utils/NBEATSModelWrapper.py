@@ -16,6 +16,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NBEATSModelWrapper"]
+
 
 class NBEATSModelWrapper(TSModelWrapper):
     """NBEATSModel wrapper.

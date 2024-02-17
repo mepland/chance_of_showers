@@ -10,6 +10,16 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+__all__ = [
+    "make_epoch_bins",
+    "plot_2d_hist",
+    "plot_chance_of_showers_time_series",
+    "plot_hists",
+    "plot_prophet",
+    "save_ploty_to_html",
+]
+
+
 mpl.rcParams["axes.labelsize"] = 16
 mpl.rcParams["xtick.top"] = True
 mpl.rcParams["xtick.bottom"] = True
@@ -325,7 +335,7 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
 
 
 ########################################################
-def ann_and_save(
+def ann_then_save(
     _fig: mpl.figure.Figure,
     ann_texts: list[dict],
     plot_inline: bool,  # noqa: FBT001
@@ -614,7 +624,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
                     upper_inequality = r"$\leq$"
 
                 x_axis_labels.append(
-                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # pylint: disable=consider-using-f-string
+                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # noqa: FS002 pylint: disable=consider-using-f-string
                         low=my_large_num_formatter(_bins[i], e_precision=0),
                         high=my_large_num_formatter(_bins[i + 1], e_precision=0),
                         var=x_axis_params.get("axis_label", "Binned Variable"),
@@ -700,7 +710,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
             "ha": "center",
         }
     )
-    ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+    ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
 ########################################################
@@ -816,7 +826,6 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
     clean_ax(ax, x_axis_params, y_axis_params)
     set_ax_limits(ax, x_axis_params, y_axis_params)
 
-    # plot reference lines
     if reference_lines is not None:
         for reference_line in reference_lines:
             _label = reference_line.get("label")
@@ -862,7 +871,7 @@ def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
             "ha": "center",
         }
     )
-    ann_and_save(
+    ann_then_save(
         fig, ann_texts, plot_inline, m_path, fname, tag, ann_text_origin_x=STD_ANN_X - 0.12
     )
 
@@ -952,7 +961,7 @@ def plot_prophet(
         }
     )
 
-    ann_and_save(fig, ann_texts, plot_inline, m_path, fname, tag)
+    ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
 ########################################################
