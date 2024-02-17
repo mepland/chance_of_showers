@@ -63,7 +63,7 @@ jobs:
         run: poetry run black --check --diff .
 
       - name: blacken-docs
-        run: poetry run blacken-docs --line-length=100 $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs --line-length=100 "$(git ls-files '*.py')" "$(git ls-files '*.md')" "$(git ls-files '*.rst')"  # yamllint disable-line rule:line-length
 
       - name: flake8
         run: poetry run flake8 --version && poetry run flake8
@@ -72,7 +72,7 @@ jobs:
         run: poetry run mypy .
 
       - name: pylint
-        run: poetry run pylint $(git ls-files '*.py')
+        run: poetry run pylint "$(git ls-files '*.py')"
 
       - name: bandit
         run: poetry run bandit -r .

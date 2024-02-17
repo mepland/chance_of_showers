@@ -197,6 +197,12 @@ repos:
       - id: shfmt
         args: ['-bn', '-ci', '-sr', '-s', '-w']
 
+  # github actions
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+
   # Clean carriage return and line feed
   # https://github.com/Lucas-C/pre-commit-hooks
   - repo: https://github.com/Lucas-C/pre-commit-hooks
