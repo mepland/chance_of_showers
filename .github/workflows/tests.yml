@@ -58,6 +58,9 @@ jobs:
         with:
           # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
           tool-cache: false
+          # does not break anything, and saves a lot of space, but runs slowly
+          # do not use unless necessary
+          large-packages: false
 
       - name: poetry
         run: poetry check && poetry lock --no-update
