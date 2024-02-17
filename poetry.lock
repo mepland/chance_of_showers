@@ -1513,6 +1513,19 @@ files = [
 ]
 
 [[package]]
+name = "dlint"
+version = "0.14.1"
+description = "Dlint is a tool for encouraging best coding practices and helping ensure Python code is secure."
+optional = false
+python-versions = "*"
+files = [
+    {file = "dlint-0.14.1-py3-none-any.whl", hash = "sha256:8caa4271ab6f69bba2785bb565b636eeb40baffd446c85380f848fb4abd6aa2d"},
+]
+
+[package.dependencies]
+flake8 = ">=3.6.0"
+
+[[package]]
 name = "domdf-python-tools"
 version = "3.8.0.post2"
 description = "Helpful functions for Python 🐍 🛠️"
@@ -7197,4 +7210,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "e32c80b62909045b9be040c65de40f7a432e070a424181045aca6afb3b0a4c4a"
+content-hash = "c2c9336c31f89ac8f2aa70058e559ee73f48c781f5afa74c8ce4093d6d4bdd28"
