@@ -53,9 +53,12 @@ jobs:
       - name: Install Node Dependencies
         run: sudo npm install --global standard prettier
 
-      # https://github.com/actions/runner-images/issues/2840#issuecomment-790492173
-      - name: Clean space
-        run: sudo rm -rf /usr/share/dotnet; sudo rm -rf /opt/ghc; sudo rm -rf "/usr/local/share/boost"; sudo rm -rf "$AGENT_TOOLSDIRECTORY";  # yamllint disable-line rule:line-length
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          tool-cache: false
+
       - name: poetry
         run: poetry check && poetry lock --no-update
 
