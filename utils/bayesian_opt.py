@@ -345,8 +345,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         model_wrapper_kwargs = {}
 
     # Setup hyperparameters
-    _model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper, **model_wrapper_kwargs)
-    configurable_hyperparams = _model_wrapper.get_configurable_hyperparams()
+    model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper, **model_wrapper_kwargs)
+    configurable_hyperparams = model_wrapper.get_configurable_hyperparams()
     if hyperparams_to_opt is None:
         hyperparams_to_opt = list(configurable_hyperparams.keys())
 
@@ -366,15 +366,15 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     optimizer = bayes_opt.BayesianOptimization(
         f=None,
         pbounds=hyperparam_bounds,
-        random_state=_model_wrapper.get_random_state(),
+        random_state=model_wrapper.get_random_state(),
         verbose=verbose,
         allow_duplicate_points=allow_duplicate_points,
     )
 
     # Setup Logging
-    generic_model_name: Final = _model_wrapper.get_generic_model_name()
+    generic_model_name: Final = model_wrapper.get_generic_model_name()
     bayesian_opt_work_dir: Final = pathlib.Path(
-        _model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
+        model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
     ).expanduser()
     fname_json_log: Final = (
         bayesian_opt_work_dir / f"{BAYESIAN_OPT_JSON_PREFIX}{generic_model_name}.json"
@@ -415,7 +415,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
         Args:
             i_iter: Index of this iteration.
-            model_wrapper: Model wrapper object to rest.
+            model_wrapper: Model wrapper object to reset.
             target: Target value to register.
             point_to_probe: Raw point to probe.
             probed_point: Point that was actually probed.
@@ -440,7 +440,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 n_points += 1
 
         model_wrapper.reset_wrapper()
-        del model_wrapper
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
@@ -448,9 +447,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             print_memory_usage()
         if 3 <= verbose:
             print(f"Completed {i_iter = }, with {n_points = }")
-
-    # clean up _model_wrapper
-    del _model_wrapper
 
     # Setup signal_handler to kill iteration if it runs too long
     def signal_handler(
@@ -472,7 +468,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     max_time_per_model_flag = (
         max_time_per_model is not None
-        and not parent_wrapper.is_nn
+        and not model_wrapper.is_nn
         and platform.system() in ["Linux", "Darwin"]
     )
     if max_time_per_model_flag:
@@ -509,11 +505,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 print(f"\nStarting {i_iter = }, with {n_points = }")
             next_point_to_probe = optimizer.suggest(utility)
 
-            # Create a fresh model_wrapper object to try to avoid GPU memory leaks
-            # This may not be necessary, but as it is already coded, just be safe and leave it
-            model_wrapper = model_wrapper_class(
-                TSModelWrapper=parent_wrapper, **model_wrapper_kwargs
-            )
+            # Setup model_wrapper
             model_wrapper.alter_fixed_hyperparams(
                 fixed_hyperparams_to_alter=fixed_hyperparams_to_alter
             )

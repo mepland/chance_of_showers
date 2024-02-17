@@ -1396,7 +1396,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return hyperparams_dict
 
-    def train_model(  # pylint: disable=too-many-locals,too-many-statements
+    def train_model(  # pylint: disable=too-many-locals
         self: "TSModelWrapper", **kwargs: float
     ) -> float:
         """Train the model and return loss.
@@ -1443,7 +1443,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         loss = BAD_LOSS
 
         try:
-            # Try to disconnect from prior runs
+            # clean up
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
@@ -1599,33 +1599,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         finally:
             # always clean up
-            # small objects, can ignore: loss, time_bin_size, freq_str, y_presentation, y_bin_edges, covariates_type
-
-            if "dart_series_y_trainable" in locals():
-                del dart_series_y_trainable
-            if "dart_series_y_train" in locals():
-                del dart_series_y_train
-            if "dart_series_y_val" in locals():
-                del dart_series_y_val
-            if "y_pred_val" in locals():
-                del y_pred_val
-            if "y_val_tensor" in locals():
-                del y_val_tensor
-            if "y_pred_val_tensor" in locals():
-                del y_pred_val_tensor
-            if "model_covariates_kwargs" in locals():
-                del model_covariates_kwargs
-            if "prediction_covariates_kwargs" in locals():
-                del prediction_covariates_kwargs
-            if "dart_series_covariates_trainable" in locals():
-                del dart_series_covariates_trainable
-            if "dart_series_covariates_train" in locals():
-                del dart_series_covariates_train
-            if "dart_series_covariates_val" in locals():
-                del dart_series_covariates_val
-            if "dfp_trainable" in locals():
-                del dfp_trainable
-
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
