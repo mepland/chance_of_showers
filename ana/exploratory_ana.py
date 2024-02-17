@@ -32,6 +32,7 @@ from IPython.display import Image, display
 sys.path.append(str(pathlib.Path.cwd().parent))
 
 # pylint: disable=import-error,useless-suppression
+# pylint: enable=useless-suppression
 from utils.bayesian_opt import (
     BAYESIAN_OPT_JSON_PREFIX,
     load_best_points,
