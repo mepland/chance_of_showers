@@ -91,7 +91,7 @@ def drive_bayesian_opt(
     prod_kwargs = {
         "n_iter": 1,
         "verbose": 9,
-        "enable_torch_warnings": False,
+        "enable_torch_warnings": True,
         "enable_torch_model_summary": True,
         "enable_torch_progress_bars": False,
         "disregard_training_exceptions": True,
