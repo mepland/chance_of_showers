@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+pkg_path="/home/mepland/chance_of_showers"
+
+# How many iterations of Bayesian optimization to perform.
+# This is the number of new models to train, in addition to any duplicated or reloaded points.
+# dev
+# n_iter=2
+# prod
+n_iter=100
+
+# range of models to run, see model_kwarg_list in drive_bayesian_opt.py
+# dev
+# i_model_min=30
+# i_model_max=$i_model_min
+# prod
+i_model_min=0
+i_model_max=33
+
+# Turn on tdqm
+# unset TQDM_DISABLE
+# Turn off tqdm
+export TQDM_DISABLE=1
+
+# Maximum number of points to generate
+# Will stop script early if reached before n_iter, for example when resuming a run.
+# dev
+# max_points=999
+# prod
+max_points=$((2 * n_iter + 1))
+
+# Check for running drive_bayesian_opt.py
+if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
+	echo "Found python drive_bayesian_opt.py running, doing nothing"
+	exit
+fi
+
+# Run over all models
+for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
+	printf "Starting i_model %d, running to %d\n\n" "$i_model" "$i_model_max"
+
+	# Run drive_bayesian_opt.py n_iter times, or until max_points is reached
+	n_points=-1
+	for ((i_iter = 1; i_iter <= n_iter; i_iter++)); do
+		# Can add \r to start to backup one line, if drive_bayesian_opt.py is printing nothing out
+		printf "Starting drive_bayesian_opt.py %d of %d for i_model %d, currently have %d points\n" "$i_iter" "$n_iter" "$i_model" "$n_points"
+
+		poetry run python -u $pkg_path/ana/drive_bayesian_opt.py +i_model=$i_model
+		status=$?
+		n_points=$((status - 10))
+
+		if [[ $status -lt 10 ]]; then
+			echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
+			unset TQDM_DISABLE
+			exit $status
+		elif [[ $max_points -le $n_points ]]; then
+			echo "On i_iter = $i_iter, found $n_points >= $max_points points, finished"
+			unset TQDM_DISABLE
+			exit
+		fi
+
+	done
+
+done
+
+echo "Completed all runs"
+unset TQDM_DISABLE
+exit

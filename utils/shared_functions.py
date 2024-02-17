@@ -3,10 +3,15 @@
 ################################################################################
 # python imports
 import datetime
+import hashlib
+import hmac
 import os
+import pathlib
+import pickle  # nosec B403
+import platform
 import socket
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import holidays
 import pandas as pd
@@ -217,3 +222,108 @@ def create_datetime_component_cols(
     ).astype(int)
 
     return dfp
+
+
+################################################################################
+def _get_key_from_platform() -> bytes:
+    """Create a key for pickles from platform properties.
+
+    You should really load a private key from somewhere on the system!
+    However, this code is only really going to be used to share a local file between programs on the same machine.
+    Including a signed header in pickle files is already a bit of security theater for this use case,
+    really being more of an exercise in how to do it, so just using the platform's properties as the key should be fine.
+
+    Returns:
+        Key made from the platform's properties.
+    """
+    return bytes(
+        hashlib.sha256(
+            "-".join(
+                [
+                    platform.node(),
+                    platform.platform(),
+                    *platform.python_build(),
+                    platform.version(),
+                ]
+            )
+            .replace(" ", "-")
+            .encode("utf-8")
+        ).hexdigest(),
+        sys.stdin.encoding,
+    )
+
+
+################################################################################
+def write_secure_pickle(
+    data: Any, f_path: pathlib.Path, *, shared_key: None | bytes = None  # noqa: ANN401
+) -> None:
+    """Write data to pickle file with signed header for security.
+
+    Adapted from:
+        https://pycharm-security.readthedocs.io/en/latest/checks/PIC100.html
+        https://stackoverflow.com/questions/74638045/getting-invalid-signature-for-hmac-authentication-of-python-pickle-file
+
+    Args:
+        data: The object to be pickled.
+        f_path: The full path for the output pickle file.
+        shared_key: The shared key to sign the file.
+
+    Raises:
+        ValueError: Bad configuration.
+    """
+    if shared_key is None:
+        shared_key = _get_key_from_platform()
+
+    pickle_data = pickle.dumps(data)
+    digest = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
+
+    if f_path.suffix != ".pickle":
+        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+
+    f_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(f_path, "wb") as f_pickle:
+        f_pickle.write(bytes(digest, sys.stdin.encoding) + b"\n" + pickle_data)
+
+
+################################################################################
+def read_secure_pickle(
+    f_path: pathlib.Path, *, shared_key: None | bytes = None
+) -> Any:  # noqa: ANN401
+    """Read data from pickle file with signed header for security.
+
+    Adapted from:
+        https://pycharm-security.readthedocs.io/en/latest/checks/PIC100.html
+        https://stackoverflow.com/questions/74638045/getting-invalid-signature-for-hmac-authentication-of-python-pickle-file
+
+    Args:
+        f_path: The full path for the output pickle file.
+        shared_key: The shared key to sign the file.
+
+    Returns:
+        Pickled data.
+
+    Raises:
+        OSError: Could not load file.
+        ValueError: Bad configuration.
+    """
+    if shared_key is None:
+        shared_key = _get_key_from_platform()
+
+    if f_path.suffix != ".pickle":
+        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+
+    digest = None
+    pickle_data = None
+    with open(f_path, "rb") as f_pickle:
+        digest = f_pickle.readline().rstrip()
+        pickle_data = f_pickle.read()
+
+    if digest is None or pickle_data is None:
+        raise OSError(filename=str(f_path))
+
+    recomputed = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
+    if not hmac.compare_digest(digest, bytes(recomputed, sys.stdin.encoding)):
+        raise ValueError("Invalid signature!!")
+
+    return pickle.loads(pickle_data)  # noqa: SCS113 # nosec B301

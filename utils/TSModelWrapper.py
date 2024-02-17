@@ -25,7 +25,12 @@ import sympy
 import torch
 import torchmetrics
 from darts import TimeSeries
-from darts.models.forecasting.forecasting_model import ForecastingModel
+
+with warnings.catch_warnings():
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+    from darts.models.forecasting.forecasting_model import ForecastingModel
+
+from darts.utils.callbacks import TFMProgressBar
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
 from pytorch_lightning.callbacks import Callback
@@ -47,6 +52,13 @@ warnings.filterwarnings(
     "ignore",
     message="The number of training batches",
     category=PossibleUserWarning,
+)
+
+# We'll handle our own KeyboardInterrupt
+# https://github.com/Lightning-AI/pytorch-lightning/blob/47c8f4cba089a78fa3fe31dcac6a43416bc13820/src/lightning/pytorch/trainer/call.py#L54
+warnings.filterwarnings(
+    "ignore",
+    message="Detected KeyboardInterrupt, attempting graceful shutdown...",
 )
 
 # prophet / cmdstanpy
@@ -88,7 +100,8 @@ def get_pl_trainer_kwargs(
     es_min_delta: float,
     es_patience: int,
     *,
-    enable_progress_bar: bool,
+    enable_torch_model_summary: bool,
+    enable_torch_progress_bars: bool,
     max_time: str | datetime.timedelta | dict[str, int] | None,
     accelerator: str | None = None,
     log_every_n_steps: int | None = None,
@@ -107,7 +120,8 @@ def get_pl_trainer_kwargs(
                 no improvement, and not the number of training epochs. Therefore, with parameters
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
-        enable_progress_bar: Enable torch progress bar during training.
+        enable_torch_model_summary: Enable torch model summary.
+        enable_torch_progress_bars: Enable torch progress bars.
         max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         log_every_n_steps: How often to log within steps.
@@ -136,7 +150,7 @@ def get_pl_trainer_kwargs(
             raise exception
 
     return {
-        "enable_progress_bar": enable_progress_bar,
+        "enable_model_summary": enable_torch_model_summary,
         "max_time": max_time,
         "accelerator": accelerator,
         "log_every_n_steps": log_every_n_steps,
@@ -146,8 +160,18 @@ def get_pl_trainer_kwargs(
                 patience=es_patience,
                 monitor="val_loss",
                 mode="min",
+                verbose=False,
+                strict=True,
+                check_finite=True,
             ),
             MyExceptionCallback(),
+            # https://unit8co.github.io/darts/generated_api/darts.utils.callbacks.html#darts.utils.callbacks.TFMProgressBar
+            TFMProgressBar(
+                enable_sanity_check_bar=False,
+                enable_train_bar=enable_torch_progress_bars,
+                enable_validation_bar=enable_torch_progress_bars,
+                enable_prediction_bar=enable_torch_progress_bars,
+            ),
         ],
     }
 
@@ -179,7 +203,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
         "cooldown": 0,
         "min_lr": 0.0,
         "eps": 1e-08,
-        "verbose": bool(verbose),
+        "verbose": 0 < verbose,
     }
 
 
@@ -483,7 +507,9 @@ NN_FIXED_HYPERPARAMS: Final = {
     "torch_metrics": METRIC_COLLECTION,
     "log_tensorboard": True,
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
-    "enable_progress_bar": True,
+    "enable_torch_warnings": False,
+    "enable_torch_model_summary": True,
+    "enable_torch_progress_bars": True,
     "max_time": None,
     "accelerator": None,
 }
@@ -647,7 +673,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             model_class: Dart model class.
             is_nn: Flag for if the model is a neural network (NN).
             verbose: Verbosity level.
-            work_dir: Full path to directory to save this model's files.
+            work_dir: Path to directory to save this model's files.
             model_name_tag: Descriptive tag to add to the model name, optional.
             required_hyperparams_data: List of required data hyperparameters for this model.
             required_hyperparams_model: List of required hyperparameters for this model's constructor.
@@ -837,20 +863,25 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         self.fixed_hyperparams = _fixed_hyperparams
 
-    def set_enable_progress_bar(
+    def set_enable_torch_messages(
         self: "TSModelWrapper",
         *,
-        enable_progress_bar: bool,
+        enable_torch_warnings: bool,
+        enable_torch_model_summary: bool,
+        enable_torch_progress_bars: bool,
     ) -> None:
-        """Set the enable_progress_bar flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+        """Set the enable_torch_warnings, enable_torch_model_summary, and enable_torch_progress_bars flags for this model wrapper.
 
         Args:
-            enable_progress_bar: Enable torch progress bar during training.
+            enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
+            enable_torch_model_summary: Enable torch model summary.
+            enable_torch_progress_bars: Enable torch progress bars.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
-        _fixed_hyperparams["enable_progress_bar"] = enable_progress_bar
+        _fixed_hyperparams["enable_torch_model_summary"] = enable_torch_model_summary
+        _fixed_hyperparams["enable_torch_progress_bars"] = enable_torch_progress_bars
 
         self.fixed_hyperparams = _fixed_hyperparams
 
@@ -860,7 +891,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # and
         # https://github.com/Lightning-AI/lightning/issues/3431#issuecomment-1527945684
         logger_level = logging.WARNING
-        if not enable_progress_bar:
+        if not enable_torch_warnings:
             logger_level = logging.ERROR
         logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
         logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
@@ -1087,7 +1118,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "prediction_length_in_minutes",
                 "es_min_delta",
                 "es_patience",
-                "enable_progress_bar",
+                "enable_torch_warnings",
+                "enable_torch_model_summary",
+                "enable_torch_progress_bars",
                 "max_time",
                 "accelerator",
                 "lr_factor",
@@ -1109,8 +1142,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
-                self.chosen_hyperparams["enable_progress_bar"] = get_hyperparam_value(
-                    "enable_progress_bar"
+                self.chosen_hyperparams["enable_torch_model_summary"] = get_hyperparam_value(
+                    "enable_torch_model_summary"
+                )
+                self.chosen_hyperparams["enable_torch_progress_bars"] = get_hyperparam_value(
+                    "enable_torch_progress_bars"
                 )
                 self.chosen_hyperparams["max_time"] = get_hyperparam_value(
                     "max_time", return_none_if_not_found=True
@@ -1121,7 +1157,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
-                    enable_progress_bar=self.chosen_hyperparams["enable_progress_bar"],
+                    enable_torch_model_summary=self.chosen_hyperparams[
+                        "enable_torch_model_summary"
+                    ],
+                    enable_torch_progress_bars=self.chosen_hyperparams[
+                        "enable_torch_progress_bars"
+                    ],
                     max_time=self.chosen_hyperparams["max_time"],
                     accelerator=self.chosen_hyperparams["accelerator"],
                     # Could set log_every_n_steps = 1 to avoid a warning, but that would make large logs, so just use filterwarnings instead
@@ -1138,6 +1179,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
+            elif hyperparam == "show_warnings":
+                hyperparam_value = 0 < self.verbose
             elif hyperparam == "seasonal_periods_BATS":
                 seasonal_periods = []
                 period_minutes = [
@@ -1172,43 +1215,40 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 0:
-                    hyperparam_value = ModelMode.NONE
-                elif hyperparam_value == 1:
-                    hyperparam_value = ModelMode.MULTIPLICATIVE
-                elif hyperparam_value == 2:
-                    hyperparam_value = ModelMode.ADDITIVE
-                else:
-                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 0:
+                        hyperparam_value = ModelMode.NONE
+                    elif hyperparam_value == 1:
+                        hyperparam_value = ModelMode.MULTIPLICATIVE
+                    elif hyperparam_value == 2:
+                        hyperparam_value = ModelMode.ADDITIVE
+                    else:
+                        raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 0:
-                    hyperparam_value = SeasonalityMode.NONE
-                elif hyperparam_value == 1:
-                    hyperparam_value = SeasonalityMode.MULTIPLICATIVE
-                elif hyperparam_value == 2:
-                    hyperparam_value = SeasonalityMode.ADDITIVE
-                else:
-                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 0:
+                        hyperparam_value = SeasonalityMode.NONE
+                    elif hyperparam_value == 1:
+                        hyperparam_value = SeasonalityMode.MULTIPLICATIVE
+                    elif hyperparam_value == 2:
+                        hyperparam_value = SeasonalityMode.ADDITIVE
+                    else:
+                        raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 1:
-                    hyperparam_value = "multiplicative"
-                elif hyperparam_value == 2:
-                    hyperparam_value = "additive"
-                else:
-                    raise ValueError(
-                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
-                    )
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 1:
+                        hyperparam_value = "multiplicative"
+                    elif hyperparam_value == 2:
+                        hyperparam_value = "additive"
+                    else:
+                        raise ValueError(
+                            f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                        )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1235,7 +1275,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
                     if not op_func(hyperparam_value, rhs_value):
-                        logger_ts_wrapper.debug(
+                        logger_ts_wrapper.warning(
                             "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
                             hyperparam,
                             new_value,
@@ -1265,7 +1305,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             ]:
                 continue
             if _k in boolean_hyperparams:
-                self.chosen_hyperparams[_k] = bool(_v)
+                self.chosen_hyperparams[_k] = 0 < _v
             elif _k in integer_hyperparams:
                 self.chosen_hyperparams[_k] = int(_v)
             if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
@@ -1353,7 +1393,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         return hyperparams_dict
 
-    def train_model(  # pylint: disable=too-many-locals,too-many-statements
+    def train_model(  # pylint: disable=too-many-locals
         self: "TSModelWrapper", **kwargs: float
     ) -> float:
         """Train the model and return loss.
@@ -1400,7 +1440,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         loss = BAD_LOSS
 
         try:
-            # Try to disconnect from prior runs
+            # clean up
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
@@ -1556,33 +1596,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         finally:
             # always clean up
-            # small objects, can ignore: loss, time_bin_size, freq_str, y_presentation, y_bin_edges, covariates_type
-
-            if "dart_series_y_trainable" in locals():
-                del dart_series_y_trainable
-            if "dart_series_y_train" in locals():
-                del dart_series_y_train
-            if "dart_series_y_val" in locals():
-                del dart_series_y_val
-            if "y_pred_val" in locals():
-                del y_pred_val
-            if "y_val_tensor" in locals():
-                del y_val_tensor
-            if "y_pred_val_tensor" in locals():
-                del y_pred_val_tensor
-            if "model_covariates_kwargs" in locals():
-                del model_covariates_kwargs
-            if "prediction_covariates_kwargs" in locals():
-                del prediction_covariates_kwargs
-            if "dart_series_covariates_trainable" in locals():
-                del dart_series_covariates_trainable
-            if "dart_series_covariates_train" in locals():
-                del dart_series_covariates_train
-            if "dart_series_covariates_val" in locals():
-                del dart_series_covariates_val
-            if "dfp_trainable" in locals():
-                del dfp_trainable
-
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
