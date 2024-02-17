@@ -122,6 +122,7 @@ lightgbm = "^4.0.0"
 darts = "^0.27.1"
 tensorboard = "^2.14.0"
 bayesian-optimization = "^1.4.3"
+xlsxwriter = "^3.1.9"
 
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"
@@ -172,6 +173,7 @@ extend-select = [
 ]
 per-file-ignores = [
     "ana/exploratory_ana.py:E402,E800",
+    "ana/drive_bayesian_opt.py:F401,E402,E800",
 ]
 
 exclude = [
@@ -260,6 +262,7 @@ max-args = 15
 max-locals = 30
 max-statements = 100
 max-attributes = 15
+max-nested-blocks = 10
 min-public-methods = 1
 
 [tool.pylint.basic]

@@ -27,6 +27,8 @@ class BATSWrapper(TSModelWrapper):
     _required_hyperparams_model = [
         # "seasonal_periods_BATS", # Warning, causes very long run times!
         "use_trend",
+        "multiprocessing_start_method",
+        "show_warnings",
         "random_state",
     ]
 
@@ -34,12 +36,11 @@ class BATSWrapper(TSModelWrapper):
     # use_box_cox ~ None
     # box_cox_bounds ~ (0, 1)
     # use_arma_errors ~ True
-    # show_warnings ~ False
     # n_jobs ~ None
-    # multiprocessing_start_method ~ 'spawn'
 
     _fixed_hyperparams_BATS = {
         "use_trend": False,
+        "multiprocessing_start_method": "fork",  # Runs in jupyter lab with "spawn", but crashes if run in normal env
     }
 
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
