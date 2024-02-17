@@ -306,6 +306,9 @@ repos:
         args: ['--fix=lf']
       # removes utf-8 byte order marker
       - id: fix-byte-order-marker
+      # removes coding pragma from python files (useful in a python3-only codebase)
+      - id: fix-encoding-pragma
+        args: ['--remove']
       # checks for files that would conflict in case-insensitive filesystems
       - id: check-case-conflict
       # checks for symlinks which do not point to anything
