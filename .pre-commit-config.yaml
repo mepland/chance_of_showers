@@ -320,6 +320,9 @@ repos:
       - id: check-executables-have-shebangs
       # ensures that (non-binary) files with a shebang are executable
       - id: check-shebang-scripts-are-executable
+      # sets a standard for formatting json files
+      - id: pretty-format-json
+        args: ['--autofix', '--no-sort-keys']
       #### parseable
       # checks json files for parseable syntax
       - id: check-json
