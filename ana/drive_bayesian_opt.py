@@ -8,6 +8,7 @@ Returns 10 + the number of completed points as the exit code, or a integer 0 < s
 ################################################################################
 # python imports
 import datetime
+import os
 import pathlib
 import sys
 from typing import TYPE_CHECKING, Final
@@ -75,10 +76,6 @@ def drive_bayesian_opt(
 
     Args:
         cfg: Hydra configuration.
-
-    Raises:
-        OSError: Bad configuration.
-        ValueError: Bad configuration.
     """
     ################################################################################
     # Setup variables
@@ -173,7 +170,8 @@ def drive_bayesian_opt(
     i_model = cfg.get("i_model")
     if i_model is not None:
         if i_model not in range(len(model_kwarg_list)):
-            raise ValueError(f"Received {i_model =} but {len(model_kwarg_list) =}!")
+            print(f"Received {i_model =} but {len(model_kwarg_list) =}!")
+            sys.exit(3)
 
         model_kwarg_list = [model_kwarg_list[i_model]]
 
@@ -186,7 +184,8 @@ def drive_bayesian_opt(
     # pylint: enable=invalid-name
 
     if PARENT_WRAPPER is None:
-        raise OSError(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")
+        print(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")
+        sys.exit(3)
 
     prod_kwargs["parent_wrapper"] = PARENT_WRAPPER
 
@@ -205,7 +204,10 @@ def drive_bayesian_opt(
     # pylint: disable=duplicate-code
     for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
         _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
-        pbar.set_postfix_str(f"Optimizing {_model_name}")
+        if not os.environ.get("TQDM_DISABLE", 0):
+            pbar.set_postfix_str(f"Optimizing {_model_name}")
+        else:
+            print(f"Optimizing {_model_name}")
 
         if TYPE_CHECKING:
             assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
