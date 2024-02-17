@@ -88,16 +88,27 @@ def drive_bayesian_opt(
     ################################################################################
     # Select settings and model(s) to run
 
-    prod_kwargs = {
+    dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
         "n_iter": 1,
         "verbose": 9,
         "enable_torch_warnings": True,
         "enable_torch_model_summary": True,
         "enable_torch_progress_bars": False,
         "disregard_training_exceptions": True,
-        "max_time_per_model": datetime.timedelta(minutes=45),
-        "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+        "max_time_per_model": datetime.timedelta(minutes=10),
+        "fixed_hyperparams_to_alter": {"n_epochs": 4},
+        "enable_reloading": False,
     }
+
+    prod_kwargs = {
+        "n_iter": 1,
+        "verbose": 1,
+        "disregard_training_exceptions": True,
+        "max_time_per_model": datetime.timedelta(minutes=45),
+    }
+
+    run_bayesian_opt_kwargs = dict(prod_kwargs)
+    run_bayesian_opt_kwargs["bayesian_opt_work_dir_name"] = BAYESIAN_OPT_WORK_DIR_NAME
 
     model_kwarg_list = [
         # Prophet
@@ -189,16 +200,16 @@ def drive_bayesian_opt(
         print(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")
         sys.exit(3)
 
-    prod_kwargs["parent_wrapper"] = PARENT_WRAPPER
+    run_bayesian_opt_kwargs["parent_wrapper"] = PARENT_WRAPPER
 
     ################################################################################
     # Run Bayesian Optimization
 
-    single_iter_flag = len(model_kwarg_list) == 1 and prod_kwargs["n_iter"] == 1
+    single_iter_flag = len(model_kwarg_list) == 1 and run_bayesian_opt_kwargs["n_iter"] == 1
 
     if not single_iter_flag:
         response = input(
-            f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {prod_kwargs['n_iter']} iterations each, in one script? "
+            f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {run_bayesian_opt_kwargs['n_iter']} iterations each, in one script? "
         )
         if response.lower() not in ["y", "yes"]:
             sys.exit()
@@ -212,11 +223,11 @@ def drive_bayesian_opt(
             print(f"Optimizing {_model_name}")
 
         if TYPE_CHECKING:
-            assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(run_bayesian_opt_kwargs, dict)  # noqa: SCS108 # nosec assert_used
             assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
 
         _, optimizer, exception_status = run_bayesian_opt(
-            **prod_kwargs,  # type: ignore[arg-type]
+            **run_bayesian_opt_kwargs,  # type: ignore[arg-type]
             **model_kwarg,  # type: ignore[arg-type]
         )
         # pylint: enable=duplicate-code

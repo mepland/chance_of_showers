@@ -2,17 +2,18 @@
 
 pkg_path="/home/mepland/chance_of_showers"
 
-# n_iter: How many iterations of Bayesian optimization to perform.
+# How many iterations of Bayesian optimization to perform.
 # This is the number of new models to train, in addition to any duplicated or reloaded points.
-n_iter=2
-
-# Maximum number of points to generate
-# Will stop script early if reached before n_iter, for example when resuming a run.
-max_points=10
+# dev
+# n_iter=2
+# prod
+n_iter=100
 
 # range of models to run, see model_kwarg_list in drive_bayesian_opt.py
+# dev
 # i_model_min=30
 # i_model_max=$i_model_min
+# prod
 i_model_min=0
 i_model_max=33
 
@@ -20,6 +21,10 @@ i_model_max=33
 # unset TQDM_DISABLE
 # Turn off tqdm
 export TQDM_DISABLE=1
+
+# Maximum number of points to generate
+# Will stop script early if reached before n_iter, for example when resuming a run.
+max_points=$((2 * n_iter))
 
 # Check for running drive_bayesian_opt.py
 if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
@@ -43,12 +48,16 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 
 		if [[ $status -lt 10 ]]; then
 			echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
+			unset TQDM_DISABLE
 			exit $status
 		elif [[ $max_points -le $n_points ]]; then
 			echo "On i_iter = $i_iter, found $n_points >= $max_points points, finished"
+			unset TQDM_DISABLE
 			exit
 		fi
 
 	done
 
 done
+
+unset TQDM_DISABLE
