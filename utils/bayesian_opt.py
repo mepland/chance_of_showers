@@ -272,7 +272,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     utility_kappa: float = 2.576,
     verbose: int = 3,
     model_verbose: int = -1,
-    enable_torch_messages: bool = False,
+    enable_torch_warnings: bool = False,
+    enable_torch_model_summary: bool = True,
+    enable_torch_progress_bars: bool = False,
     disregard_training_exceptions: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
@@ -313,7 +315,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             1 prints only when a maximum is observed
             0 is silent
         model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
-        enable_torch_messages: Enable torch model summary and progress bar.
+        enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
+        enable_torch_model_summary: Enable torch model summary.
+        enable_torch_progress_bars: Enable torch progress bars.
         disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
@@ -514,7 +518,11 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 fixed_hyperparams_to_alter=fixed_hyperparams_to_alter
             )
             model_wrapper.set_work_dir(work_dir_absolute=bayesian_opt_work_dir)
-            model_wrapper.set_enable_torch_messages(enable_torch_messages=enable_torch_messages)
+            model_wrapper.set_enable_torch_messages(
+                enable_torch_warnings=enable_torch_warnings,
+                enable_torch_model_summary=enable_torch_model_summary,
+                enable_torch_progress_bars=enable_torch_progress_bars,
+            )
             model_wrapper.set_max_time(max_time=max_time_per_model)
             model_wrapper.set_accelerator(accelerator=accelerator)
             model_wrapper.verbose = model_verbose

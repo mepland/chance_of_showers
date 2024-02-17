@@ -91,7 +91,9 @@ def drive_bayesian_opt(
     prod_kwargs = {
         "n_iter": 1,
         "verbose": 9,
-        "enable_torch_messages": False,
+        "enable_torch_warnings": False,
+        "enable_torch_model_summary": True,
+        "enable_torch_progress_bars": False,
         "disregard_training_exceptions": True,
         "max_time_per_model": datetime.timedelta(minutes=45),
         "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,

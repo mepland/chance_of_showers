@@ -100,7 +100,8 @@ def get_pl_trainer_kwargs(
     es_min_delta: float,
     es_patience: int,
     *,
-    enable_torch_messages: bool,
+    enable_torch_model_summary: bool,
+    enable_torch_progress_bars: bool,
     max_time: str | datetime.timedelta | dict[str, int] | None,
     accelerator: str | None = None,
     log_every_n_steps: int | None = None,
@@ -119,7 +120,8 @@ def get_pl_trainer_kwargs(
                 no improvement, and not the number of training epochs. Therefore, with parameters
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
-        enable_torch_messages: Enable torch model summary and progress bar.
+        enable_torch_model_summary: Enable torch model summary.
+        enable_torch_progress_bars: Enable torch progress bars.
         max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         log_every_n_steps: How often to log within steps.
@@ -148,7 +150,7 @@ def get_pl_trainer_kwargs(
             raise exception
 
     return {
-        "enable_model_summary": enable_torch_messages,
+        "enable_model_summary": enable_torch_model_summary,
         "max_time": max_time,
         "accelerator": accelerator,
         "log_every_n_steps": log_every_n_steps,
@@ -166,9 +168,9 @@ def get_pl_trainer_kwargs(
             # https://unit8co.github.io/darts/generated_api/darts.utils.callbacks.html#darts.utils.callbacks.TFMProgressBar
             TFMProgressBar(
                 enable_sanity_check_bar=False,
-                enable_train_bar=enable_torch_messages,
-                enable_validation_bar=enable_torch_messages,
-                enable_prediction_bar=enable_torch_messages,
+                enable_train_bar=enable_torch_progress_bars,
+                enable_validation_bar=enable_torch_progress_bars,
+                enable_prediction_bar=enable_torch_progress_bars,
             ),
         ],
     }
@@ -505,7 +507,9 @@ NN_FIXED_HYPERPARAMS: Final = {
     "torch_metrics": METRIC_COLLECTION,
     "log_tensorboard": True,
     "lr_scheduler_cls": torch.optim.lr_scheduler.ReduceLROnPlateau,
-    "enable_torch_messages": True,
+    "enable_torch_warnings": False,
+    "enable_torch_model_summary": True,
+    "enable_torch_progress_bars": True,
     "max_time": None,
     "accelerator": None,
 }
@@ -862,17 +866,22 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def set_enable_torch_messages(
         self: "TSModelWrapper",
         *,
-        enable_torch_messages: bool,
+        enable_torch_warnings: bool,
+        enable_torch_model_summary: bool,
+        enable_torch_progress_bars: bool,
     ) -> None:
-        """Set the enable_torch_messages flag for this model wrapper. Also configures torch warning messages about training devices and CUDA, globally, via the logging module.
+        """Set the enable_torch_warnings, enable_torch_model_summary, and enable_torch_progress_bars flags for this model wrapper.
 
         Args:
-            enable_torch_messages: Enable torch model summary and progress bar.
+            enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
+            enable_torch_model_summary: Enable torch model summary.
+            enable_torch_progress_bars: Enable torch progress bars.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
-        _fixed_hyperparams["enable_torch_messages"] = enable_torch_messages
+        _fixed_hyperparams["enable_torch_model_summary"] = enable_torch_model_summary
+        _fixed_hyperparams["enable_torch_progress_bars"] = enable_torch_progress_bars
 
         self.fixed_hyperparams = _fixed_hyperparams
 
@@ -882,7 +891,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         # and
         # https://github.com/Lightning-AI/lightning/issues/3431#issuecomment-1527945684
         logger_level = logging.WARNING
-        if not enable_torch_messages:
+        if not enable_torch_warnings:
             logger_level = logging.ERROR
         logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
         logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
@@ -1109,7 +1118,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "prediction_length_in_minutes",
                 "es_min_delta",
                 "es_patience",
-                "enable_torch_messages",
+                "enable_torch_warnings",
+                "enable_torch_model_summary",
+                "enable_torch_progress_bars",
                 "max_time",
                 "accelerator",
                 "lr_factor",
@@ -1131,8 +1142,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "pl_trainer_kwargs":
                 self.chosen_hyperparams["es_min_delta"] = get_hyperparam_value("es_min_delta")
                 self.chosen_hyperparams["es_patience"] = get_hyperparam_value("es_patience")
-                self.chosen_hyperparams["enable_torch_messages"] = get_hyperparam_value(
-                    "enable_torch_messages"
+                self.chosen_hyperparams["enable_torch_model_summary"] = get_hyperparam_value(
+                    "enable_torch_model_summary"
+                )
+                self.chosen_hyperparams["enable_torch_progress_bars"] = get_hyperparam_value(
+                    "enable_torch_progress_bars"
                 )
                 self.chosen_hyperparams["max_time"] = get_hyperparam_value(
                     "max_time", return_none_if_not_found=True
@@ -1143,7 +1157,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_pl_trainer_kwargs(
                     self.chosen_hyperparams["es_min_delta"],
                     self.chosen_hyperparams["es_patience"],
-                    enable_torch_messages=self.chosen_hyperparams["enable_torch_messages"],
+                    enable_torch_model_summary=self.chosen_hyperparams[
+                        "enable_torch_model_summary"
+                    ],
+                    enable_torch_progress_bars=self.chosen_hyperparams[
+                        "enable_torch_progress_bars"
+                    ],
                     max_time=self.chosen_hyperparams["max_time"],
                     accelerator=self.chosen_hyperparams["accelerator"],
                     # Could set log_every_n_steps = 1 to avoid a warning, but that would make large logs, so just use filterwarnings instead
