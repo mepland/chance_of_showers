@@ -12,12 +12,14 @@ import pathlib
 import sys
 from typing import TYPE_CHECKING, Final
 
+import hydra
 import tqdm
-from hydra import compose, initialize
+from omegaconf import DictConfig  # noqa: TC002
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# pylint: disable=unused-import,import-error,useless-suppression
+# pylint: disable=import-error,useless-suppression
+# pylint: enable=useless-suppression
 from utils.shared_functions import read_secure_pickle
 
 # isort: off
@@ -62,115 +64,166 @@ from utils.NaiveDriftWrapper import NaiveDriftWrapper
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
 
 # isort: on
-# pylint: enable=unused-import,import-error
-
-################################################################################
-# Setup variables
-
-initialize(version_base=None, config_path="..")
-cfg = compose(config_name="config")
-PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
-MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
-BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
-
-################################################################################
-# Select settings and model(s) to run
-
-prod_kwargs = {
-    "n_iter": 1,
-    "verbose": 9,
-    "enable_torch_messages": False,
-    "disregard_training_exceptions": True,
-    "max_time_per_model": datetime.timedelta(minutes=45),
-    "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
-}
+# pylint: enable=import-error
 
 
-model_kwarg_list = [
-    # Prophet
-    # {"model_wrapper_class": ProphetWrapper},
-    # PyTorch NN Models
-    # {"model_wrapper_class": NBEATSModelWrapper},
-    # {"model_wrapper_class": NHiTSModelWrapper},
-    {"model_wrapper_class": TCNModelWrapper},
-    # {"model_wrapper_class": TransformerModelWrapper},
-    # {"model_wrapper_class": TFTModelWrapper},
-    # {"model_wrapper_class": DLinearModelWrapper},
-    # {"model_wrapper_class": NLinearModelWrapper},
-    # {"model_wrapper_class": TiDEModelWrapper},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": RNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "RNN"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "LSTM"}},
-    # {"model_wrapper_class": BlockRNNModelWrapper, "model_wrapper_kwargs": {"model": "GRU"}},
-    # Statistical Models
-    # {"model_wrapper_class": AutoARIMAWrapper},
-    # {"model_wrapper_class": BATSWrapper},
-    # {"model_wrapper_class": TBATSWrapper},
-    # {"model_wrapper_class": FourThetaWrapper},
-    # {"model_wrapper_class": StatsForecastAutoThetaWrapper},
-    # {"model_wrapper_class": FFTWrapper},
-    # {"model_wrapper_class": KalmanForecasterWrapper},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "optimized"}},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "classic"}},
-    # {"model_wrapper_class": CrostonWrapper, "model_wrapper_kwargs": {"version": "sba"}},
-    # Regression Models
-    # {"model_wrapper_class": LinearRegressionModelWrapper},
-    # {"model_wrapper_class": RandomForestWrapper},
-    # {"model_wrapper_class": LightGBMModelWrapper},
-    # {"model_wrapper_class": XGBModelWrapper},
-    # {"model_wrapper_class": CatBoostModelWrapper},
-    # Naive Models
-    # {"model_wrapper_class": NaiveMeanWrapper},
-    # {"model_wrapper_class": NaiveSeasonalWrapper},
-    # {"model_wrapper_class": NaiveDriftWrapper},
-    # {"model_wrapper_class": NaiveMovingAverageWrapper},
-]
+@hydra.main(version_base=None, config_path="..", config_name="config")
+def drive_bayesian_opt(
+    cfg: DictConfig,
+) -> None:
+    """Run the drive_bayesian_opt script.
 
-################################################################################
-# Load PARENT_WRAPPER from pickle
+    Args:
+        cfg: Hydra configuration.
 
-PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
+    Raises:
+        OSError: Bad configuration.
+        ValueError: Bad configuration.
+    """
+    ################################################################################
+    # Setup variables
+    # pylint: disable=invalid-name
+    PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
+    MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
+    BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+    # pylint: enable=invalid-name
 
-PARENT_WRAPPER: Final = read_secure_pickle(PARENT_WRAPPER_PATH)
+    ################################################################################
+    # Select settings and model(s) to run
 
-if PARENT_WRAPPER is None:
-    raise ValueError(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")
+    prod_kwargs = {
+        "n_iter": 1,
+        "verbose": 9,
+        "enable_torch_messages": False,
+        "disregard_training_exceptions": True,
+        "max_time_per_model": datetime.timedelta(minutes=45),
+        "bayesian_opt_work_dir_name": BAYESIAN_OPT_WORK_DIR_NAME,
+    }
 
-prod_kwargs["parent_wrapper"] = PARENT_WRAPPER
+    model_kwarg_list = [
+        # Prophet
+        {"model_wrapper_class": ProphetWrapper},  # +imodel=0
+        # PyTorch NN Models
+        {"model_wrapper_class": NBEATSModelWrapper},  # +imodel=1
+        {"model_wrapper_class": NHiTSModelWrapper},  # +imodel=2
+        {"model_wrapper_class": TCNModelWrapper},  # +imodel=3
+        {"model_wrapper_class": TransformerModelWrapper},  # +imodel=4
+        {"model_wrapper_class": TFTModelWrapper},  # +imodel=5
+        {"model_wrapper_class": DLinearModelWrapper},  # +imodel=6
+        {"model_wrapper_class": NLinearModelWrapper},  # +imodel=7
+        {"model_wrapper_class": TiDEModelWrapper},  # +imodel=8
+        {
+            "model_wrapper_class": RNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "RNN"},
+        },  # +imodel=9
+        {
+            "model_wrapper_class": RNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "LSTM"},
+        },  # +imodel=10
+        {
+            "model_wrapper_class": RNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "GRU"},
+        },  # +imodel=11
+        {
+            "model_wrapper_class": BlockRNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "RNN"},
+        },  # +imodel=12
+        {
+            "model_wrapper_class": BlockRNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "LSTM"},
+        },  # +imodel=13
+        {
+            "model_wrapper_class": BlockRNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "GRU"},
+        },  # +imodel=14
+        # Statistical Models
+        {"model_wrapper_class": AutoARIMAWrapper},  # +imodel=15
+        {"model_wrapper_class": BATSWrapper},  # +imodel=16
+        {"model_wrapper_class": TBATSWrapper},  # +imodel=17
+        {"model_wrapper_class": FourThetaWrapper},  # +imodel=18
+        {"model_wrapper_class": StatsForecastAutoThetaWrapper},  # +imodel=19
+        {"model_wrapper_class": FFTWrapper},  # +imodel=20
+        {"model_wrapper_class": KalmanForecasterWrapper},  # +imodel=21
+        {
+            "model_wrapper_class": CrostonWrapper,
+            "model_wrapper_kwargs": {"version": "optimized"},
+        },  # +imodel=22
+        {
+            "model_wrapper_class": CrostonWrapper,
+            "model_wrapper_kwargs": {"version": "classic"},
+        },  # +imodel=23
+        {
+            "model_wrapper_class": CrostonWrapper,
+            "model_wrapper_kwargs": {"version": "sba"},
+        },  # +imodel=24
+        # Regression Models
+        {"model_wrapper_class": LinearRegressionModelWrapper},  # +imodel=25
+        {"model_wrapper_class": RandomForestWrapper},  # +imodel=26
+        {"model_wrapper_class": LightGBMModelWrapper},  # +imodel=27
+        {"model_wrapper_class": XGBModelWrapper},  # +imodel=28
+        {"model_wrapper_class": CatBoostModelWrapper},  # +imodel=29
+        # Naive Models
+        {"model_wrapper_class": NaiveMeanWrapper},  # +imodel=30
+        {"model_wrapper_class": NaiveSeasonalWrapper},  # +imodel=31
+        {"model_wrapper_class": NaiveDriftWrapper},  # +imodel=32
+        {"model_wrapper_class": NaiveMovingAverageWrapper},  # +imodel=33
+    ]
+
+    # accept imodel CLI argument to only run one model
+    imodel = cfg.get("imodel")
+    if imodel is not None:
+        if imodel not in range(len(model_kwarg_list)):
+            raise ValueError(f"Received {imodel =} but {len(model_kwarg_list) =}!")
+
+        model_kwarg_list = [model_kwarg_list[imodel]]
+
+    ################################################################################
+    # Load PARENT_WRAPPER from pickle
+
+    # pylint: disable=invalid-name
+    PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
+    PARENT_WRAPPER: Final = read_secure_pickle(PARENT_WRAPPER_PATH)
+    # pylint: enable=invalid-name
+
+    if PARENT_WRAPPER is None:
+        raise OSError(f"Failed to load PARENT_WRAPPER from {PARENT_WRAPPER_PATH}!")
+
+    prod_kwargs["parent_wrapper"] = PARENT_WRAPPER
+
+    ################################################################################
+    # Run Bayesian Optimization
+
+    single_iter_flag = len(model_kwarg_list) == 1 and prod_kwargs["n_iter"] == 1
+
+    if not single_iter_flag:
+        response = input(
+            f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {prod_kwargs['n_iter']} iterations each, in one script? "
+        )
+        if response.lower() not in ["y", "yes"]:
+            sys.exit()
+
+    # pylint: disable=duplicate-code
+    for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
+        _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
+        pbar.set_postfix_str(f"Optimizing {_model_name}")
+
+        if TYPE_CHECKING:
+            assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
+
+        _, optimizer, exception_status = run_bayesian_opt(
+            **prod_kwargs,  # type: ignore[arg-type]
+            **model_kwarg,  # type: ignore[arg-type]
+        )
+        # pylint: enable=duplicate-code
+
+        n_points = len(optimizer.space)
+
+        if exception_status:
+            sys.exit(exception_status)
+        elif single_iter_flag:
+            sys.exit(10 + n_points)
 
 
-################################################################################
-# Run Bayesian Optimization
-
-SINGLE_ITER_FLAG: Final = len(model_kwarg_list) == 1 and prod_kwargs["n_iter"] == 1
-
-if not SINGLE_ITER_FLAG:
-    response = input(
-        f"Are you sure you want to optimize {len(model_kwarg_list)} models, for {prod_kwargs['n_iter']} iterations each, in one script? "
-    )
-    if response.lower() not in ["y", "yes"]:
-        sys.exit()
-
-# pylint: disable=duplicate-code
-for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
-    _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
-    pbar.set_postfix_str(f"Optimizing {_model_name}")
-
-    if TYPE_CHECKING:
-        assert isinstance(prod_kwargs, dict)  # noqa: SCS108 # nosec assert_used
-        assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
-
-    _, optimizer, exception_status = run_bayesian_opt(
-        **prod_kwargs,  # type: ignore[arg-type]
-        **model_kwarg,  # type: ignore[arg-type]
-    )
-    # pylint: enable=duplicate-code
-
-    n_points = len(optimizer.space)
-
-    if exception_status:
-        sys.exit(exception_status)
-    elif SINGLE_ITER_FLAG:
-        sys.exit(10 + n_points)
+if __name__ == "__main__":
+    drive_bayesian_opt()  # pylint: disable=no-value-for-parameter
