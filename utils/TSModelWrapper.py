@@ -1215,43 +1215,40 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 0:
-                    hyperparam_value = ModelMode.NONE
-                elif hyperparam_value == 1:
-                    hyperparam_value = ModelMode.MULTIPLICATIVE
-                elif hyperparam_value == 2:
-                    hyperparam_value = ModelMode.ADDITIVE
-                else:
-                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 0:
+                        hyperparam_value = ModelMode.NONE
+                    elif hyperparam_value == 1:
+                        hyperparam_value = ModelMode.MULTIPLICATIVE
+                    elif hyperparam_value == 2:
+                        hyperparam_value = ModelMode.ADDITIVE
+                    else:
+                        raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 0:
-                    hyperparam_value = SeasonalityMode.NONE
-                elif hyperparam_value == 1:
-                    hyperparam_value = SeasonalityMode.MULTIPLICATIVE
-                elif hyperparam_value == 2:
-                    hyperparam_value = SeasonalityMode.ADDITIVE
-                else:
-                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 0:
+                        hyperparam_value = SeasonalityMode.NONE
+                    elif hyperparam_value == 1:
+                        hyperparam_value = SeasonalityMode.MULTIPLICATIVE
+                    elif hyperparam_value == 2:
+                        hyperparam_value = SeasonalityMode.ADDITIVE
+                    else:
+                        raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
-                hyperparam_value = int(round(hyperparam_value))
-                if hyperparam_value == 1:
-                    hyperparam_value = "multiplicative"
-                elif hyperparam_value == 2:
-                    hyperparam_value = "additive"
-                else:
-                    raise ValueError(
-                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
-                    )
+                if not isinstance(hyperparam_value, float):
+                    hyperparam_value = int(round(hyperparam_value))
+                    if hyperparam_value == 1:
+                        hyperparam_value = "multiplicative"
+                    elif hyperparam_value == 2:
+                        hyperparam_value = "additive"
+                    else:
+                        raise ValueError(
+                            f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                        )
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
