@@ -40,17 +40,26 @@ types-pygments = "^2.15.0.1"
 types-colorama = "^0.4.15.11"
 types-decorator = "^5.1.8.3"
 types-six = "^1.16.21.8"
+flake8-absolute-import = "^1.0.0.2"
+flake8-all-not-strings = "^0.0.1"
 flake8-annotations = "^3.0.1"
+flake8-assertive = "^2.1.0"
 flake8-async = "^22.11.14"
 flake8-boolean-trap = "^1.0.0"
+flake8-broken-line = "^1.0.0"
 flake8-bugbear = "^23.6.5"
 flake8-builtins = "^2.1.0"
+flake8-class-attributes-order = "^0.1.3"
+flake8-clean-block = "^0.1.2"
+flake8-coding = "^1.3.2"
+flake8-comments = "^0.1.2"
 flake8-comprehensions = "^3.13.0"
 flake8-datetimez = "^20.10.0"
-flake8-docstrings = "^1.7.0"
+flake8-dunder-all = "^0.3.1"
 flake8-dunder-class-obj = "^0.1.1"
 flake8-eradicate = "^1.5.0"
 flake8-escaping-style = "^0.1.2"
+flake8-functions-names = "^0.4.0"
 flake8-future-annotations = "^1.1.0"
 flake8-get-chaining = "^0.2.0"
 flake8-github-annotations = "^1.1.1"
@@ -78,25 +87,15 @@ flake8-string-format = "^0.3.0"
 flake8-type-checking = "^2.4.0"
 flake8-typing-as-t = "^0.0.3"
 flake8-unused-arguments = "^0.0.13"
-pandas-vet = "^2023.8.2"
-flake8-all-not-strings = "^0.0.1"
-flake8-absolute-import = "^1.0.0.2"
-flake8-assertive = "^2.1.0"
-flake8-broken-line = "^1.0.0"
-flake8-class-attributes-order = "^0.1.3"
-flake8-clean-block = "^0.1.2"
-flake8-comments = "^0.1.2"
-flake8-coding = "^1.3.2"
-flake8-dunder-all = "^0.3.1"
-flake8-functions-names = "^0.4.0"
 flake8-use-fstring = "^1.4"
 flake8-use-pathlib = "^0.3.0"
-tryceratops = "^2.3.2"
 dlint = "^0.14.1"
+pandas-vet = "^2023.8.2"
 pydoclint = {extras = ["flake8"], version = "^0.4.0"}
+tryceratops = "^2.3.2"
 
 # TODO
-# flake8-in-file-ignores and update settings
+# use flake8-in-file-ignores and update settings
 
 [tool.poetry.group.daq]
 optional = true
@@ -178,7 +177,6 @@ extend-exclude = '''
 
 [tool.flake8]
 max-complexity = 18
-docstring-convention = "google"
 ignore = [
 "E501",
 "ESC102",
