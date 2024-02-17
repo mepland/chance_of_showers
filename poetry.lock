@@ -6599,6 +6599,22 @@ tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)"]
 tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
+name = "tryceratops"
+version = "2.3.2"
+description = "Prevent Exception Handling AntiPatterns"
+optional = false
+python-versions = ">=3.8.1,<4.0"
+files = [
+    {file = "tryceratops-2.3.2-py3-none-any.whl", hash = "sha256:032fa3cf3659c9865a07b59057edf9efe9e38631e6b977fdae04064888cb62ba"},
+    {file = "tryceratops-2.3.2.tar.gz", hash = "sha256:e9d77811d8f7d886c4ceaeadccd2675c6f2d794344775463faf1cb969e49d865"},
+]
+
+[package.dependencies]
+click = ">=7"
+rich = ">=10.14.0"
+toml = ">=0.10.2"
+
+[[package]]
 name = "types-colorama"
 version = "0.4.15.20240106"
 description = "Typing stubs for colorama"
@@ -7181,4 +7197,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "0071048ed57a608ef14aea7ecaf220d3676580f609e0cf1a9c005b2d760026c8"
+content-hash = "e32c80b62909045b9be040c65de40f7a432e070a424181045aca6afb3b0a4c4a"

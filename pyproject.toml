@@ -92,13 +92,12 @@ flake8-dunder-all = "^0.3.1"
 flake8-functions-names = "^0.4.0"
 flake8-use-fstring = "^1.4"
 flake8-use-pathlib = "^0.3.0"
+tryceratops = "^2.3.2"
 
 # TODO
 # replace darglint with pydoclint
 # flake8-in-file-ignores and update settings
 # dlint
-# hacking
-# tryceratops
 
 [tool.poetry.group.daq]
 optional = true
@@ -191,6 +190,7 @@ ignore = [
 "PD005",
 "PIE786",
 "SCS109",
+"TRY003",
 "TYT03",
 "W503",
 ]
