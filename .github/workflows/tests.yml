@@ -44,6 +44,7 @@ jobs:
       - name: Install Python Dependencies
         run: poetry install --with daq,web,ana,dev
 
+      # TODO
       - name: Install Node
         uses: actions/setup-node@v4
         with:
@@ -136,7 +137,7 @@ jobs:
 
       - name: vulture
         if: steps.filter.outputs.python == 'true'
-        run: poetry run vulture ${{ steps.filter.outputs.python_files }}
+        run: poetry run vulture .  # Needs to run on whole package
 
       - name: pyupgrade
         if: steps.filter.outputs.python == 'true'
