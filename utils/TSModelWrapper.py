@@ -660,6 +660,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
         hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
     """
+
     def __init__(
         self: "TSModelWrapper",
         # required
