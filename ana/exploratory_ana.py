@@ -203,7 +203,7 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     clip=True,
 )
 
-# unclipped
+# normalize pressure, unclipped
 dfp_data["mean_pressure_value_normalized_unclipped"] = dfp_data["mean_pressure_value"].apply(
     normalize_pressure_value,
     observed_pressure_min=OBSERVED_PRESSURE_MIN,
@@ -1416,6 +1416,7 @@ ordered_cols = ["i_point"]
 for _0 in paired_cols:
     for _1 in suffixes:
         ordered_cols.append(f"{_0}{_1}")
+
 dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not in ordered_cols]]
 dfp_merged = dfp_merged.loc[
     (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])

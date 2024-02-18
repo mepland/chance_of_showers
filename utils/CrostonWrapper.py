@@ -72,6 +72,7 @@ class CrostonWrapper(TSModelWrapper):
                 raise ValueError(
                     f"{version = } must be in {valid_versions_str} or be a subclass of FutureCovariatesLocalForecastingModel"
                 )
+
             self._fixed_hyperparams["version"] = version
             # remove version from kwargs so it does not cause later complications
             del kwargs["version"]

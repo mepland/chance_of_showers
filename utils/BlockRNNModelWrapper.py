@@ -84,6 +84,7 @@ class BlockRNNModelWrapper(TSModelWrapper):
                 raise ValueError(
                     f"{model = } must be in {valid_models_str} or be a subclass of CustomBlockRNNModule"
                 )
+
             self._fixed_hyperparams["model"] = model
             # remove model from kwargs so it does not cause later complications
             del kwargs["model"]
