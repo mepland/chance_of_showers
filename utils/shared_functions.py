@@ -42,9 +42,7 @@ def get_lock(process_name: str) -> None:
     # See https://github.com/python/mypy/issues/2087 for ongoing mypy discussion on this attr-defined false positive
     try:
         # The null byte (\0) means the socket is created in the abstract namespace instead of being created on the file system itself.
-        get_lock._lock_socket.bind(  # type: ignore[attr-defined]
-            "\0" + process_name  # noqa: ESC101
-        )
+        get_lock._lock_socket.bind("\0" + process_name)  # type: ignore[attr-defined]
     # pylint: enable=protected-access
     except OSError:
         print(f"Lock for {process_name} exists, exiting!")
