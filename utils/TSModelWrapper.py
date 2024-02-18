@@ -272,7 +272,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # All NN
+    # All NN hyperparams
     "input_chunk_length": {
         "min": 1,
         "max": 60,
@@ -312,7 +312,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 5,
         "type": int,
     },
-    # NBEATSModel and NHiTSModel
+    # NBEATSModel and NHiTSModel hyperparams
     "num_stacks": {
         "min": 1,
         "max": 50,
@@ -349,7 +349,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # TCNModel
+    # TCNModel hyperparams
     "kernel_size": {  # and DLinearModel
         "min": 1,
         "max": 100,
@@ -374,7 +374,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # TransformerModel
+    # TransformerModel hyperparams
     "d_model": {
         "min": 0,
         "max": 128,
@@ -405,7 +405,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 512,
         "type": int,
     },
-    # TFTModel
+    # TFTModel hyperparams
     "hidden_size": {  # and TiDEModel
         "min": 1,
         "max": 256,
@@ -436,21 +436,21 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 8,
         "type": int,
     },
-    # DLinearModel and NLinearModel
+    # DLinearModel and NLinearModel hyperparams
     "const_init": {
         "min": 0,
         "max": 1,
         "default": 1,
         "type": bool,
     },
-    # NLinearModel
+    # NLinearModel hyperparams
     "normalize": {
         "min": 0,
         "max": 1,
         "default": 0,
         "type": bool,
     },
-    # TiDEModel
+    # TiDEModel hyperparams
     "decoder_output_dim": {
         "min": 1,
         "max": 50,
@@ -483,7 +483,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 0,
         "type": bool,
     },
-    # RNNModel and BlockRNNModel
+    # RNNModel and BlockRNNModel hyperparams
     "hidden_dim": {
         "min": 1,
         "max": 50,
@@ -526,7 +526,7 @@ TREE_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # All Trees
+    # All Trees hyperparams
     "lags": {
         "min": 1,
         "max": 100,
@@ -545,7 +545,7 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # RandomForest
+    # RandomForest hyperparams
     "n_estimators": {
         "min": 1,
         "max": 300,
@@ -561,21 +561,21 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
 }
 
 OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # KalmanForecaster
+    # KalmanForecaster hyperparams
     "dim_x": {
         "min": 1,
         "max": 10,
         "default": 1,
         "type": int,
     },
-    # FFT
+    # FFT hyperparams
     "nr_freqs_to_keep": {
         "min": 1,
         "max": 100,
         "default": 10,
         "type": int,
     },
-    # FourTheta
+    # FourTheta hyperparams
     "theta": {
         "min": 0,
         "max": 10,
@@ -594,7 +594,7 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,  # Multiplicative
         "type": int,
     },
-    # StatsForecastAutoTheta
+    # StatsForecastAutoTheta hyperparams
     "season_length_StatsForecastAutoTheta": {
         "min": 0,  # 24 hours, set in _assemble_hyperparams()
         "max": 1,  # Default
