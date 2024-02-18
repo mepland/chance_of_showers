@@ -41,14 +41,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
+      - name: Install Python Dependencies
+        run: poetry install --with daq,web,ana,dev
+
       - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
           check-latest: true
-
-      - name: Install Python Dependencies
-        run: poetry install --with daq,web,ana,dev
 
       - name: Install Node Dependencies
         run: sudo npm install --global standard prettier
@@ -68,6 +68,7 @@ jobs:
           # test if this gets the poetry cache back
           swap-storage: false
 
+          # these will be cleaned
           android: true
           dotnet: true
           haskell: true
@@ -77,52 +78,70 @@ jobs:
         id: filter
         with:
           filters: |
+            poetry:
+            - 'pyproject.toml'
+            - 'poetry.lock'
             python:
             - '**.py'
 
-      - name: poetry
-        if: steps.filter.outputs.python == 'true'
-        run: poetry check && poetry lock --no-update && echo ${{ steps.filter.outputs.python_files }}
-
-      - name: isort
-        run: poetry run isort .
-
-      - name: black
-        run: poetry run black --check --diff .
-
-      - name: blacken-docs
-        run: poetry run blacken-docs --line-length=100 $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  # yamllint disable-line rule:line-length
-
-      - name: flake8
-        run: poetry run flake8 --version && poetry run flake8
-
-      - name: mypy
-        run: poetry run mypy .
-
-      - name: pylint
-        run: poetry run pylint $(git ls-files '*.py')
-
-      - name: bandit
-        run: poetry run bandit -r .
-
-      - name: vulture
-        run: poetry run vulture
-
-      - name: pyupgrade
-        run: poetry run pyupgrade
-
-      - name: deptry
-        run: poetry run deptry .
-
+      # all files
       - name: detect-secrets
         run: poetry run detect-secrets-hook --exclude-lines 'integrity='
-
-      - name: yamllint
-        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
 
       - name: blocklint
         run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
+      - name: blacken-docs
+        # just run every time, it is fast
+        run: poetry run blacken-docs --line-length=100 $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  $(git ls-files '*.tex')  # yamllint disable-line rule:line-length
+
+      # poetry
+      - name: poetry
+        if: steps.filter.outputs.poetry == 'true'
+        run: poetry check && poetry lock --no-update
+
+      # python
+      - name: isort
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run isort .
+
+      - name: black
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run black --check --diff .
+
+      - name: flake8
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run flake8 --version && poetry run flake8
+
+      - name: mypy
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run mypy .
+
+      - name: pylint
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run pylint ${{ steps.filter.outputs.python_files }}
+
+      - name: bandit
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run bandit -r .
+
+      - name: vulture
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run vulture
+
+      - name: pyupgrade
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run pyupgrade
+
+      - name: deptry
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run deptry .
+
+      # yaml TODO
+      - name: yamllint
+        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
+
+      # markdown TODO
       - name: markdownlint-cli
         uses: nosborn/github-action-markdown-cli@v3.3.0
         with:
@@ -131,6 +150,7 @@ jobs:
           config_file: .dev_config/.markdownlint.yaml
           ignore_files: LICENSE.md
 
+      # web TODO
       - name: standard
         run: standard
 
@@ -143,9 +163,11 @@ jobs:
         id: prettier
         run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
 
+      # make files TODO
       - name: checkmake
         uses: Uno-Takashi/checkmake-action@main
 
+      # shell files TODO
       - name: shellcheck shfmt checkbashisms
         uses: luizm/action-sh-checker@master  # blocklint: pragma
         env:
