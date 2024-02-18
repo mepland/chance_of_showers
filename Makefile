@@ -114,6 +114,7 @@ shellcheck:
 shfmt:
 	@shfmt -bn -ci -sr -s -w $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
 
+# TEST diff TODO delete
 # isort ~ isort:
 # flake8 ~ noqa
 # mypy ~ type:
