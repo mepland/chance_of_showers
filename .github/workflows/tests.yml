@@ -134,7 +134,11 @@ jobs:
 
       - name: flake8
         if: steps.filter.outputs.python == 'true'
-        run: poetry run flake8 --version && poetry run flake8 ${{ steps.filter.outputs.python_files }}  # yamllint disable-line rule:line-length
+        run: |
+            echo "::group::flake8 version and plugins"
+            poetry run flake8 --version
+            echo "::endgroup::"
+            poetry run flake8 ${{ steps.filter.outputs.python_files }}
 
       - name: mypy
         if: steps.filter.outputs.python == 'true'
