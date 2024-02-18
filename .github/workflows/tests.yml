@@ -77,12 +77,13 @@ jobs:
         uses: dorny/paths-filter@v3
         id: filter
         with:
+          list-files: shell
           filters: |
             poetry:
-            - 'pyproject.toml'
-            - 'poetry.lock'
+            - added|modified: 'pyproject.toml'
+            - added|modified: 'poetry.lock'
             python:
-            - '**.py'
+            - added|modified: '**.py'
 
       # all files
       - name: detect-secrets
@@ -115,7 +116,7 @@ jobs:
 
       - name: mypy
         if: steps.filter.outputs.python == 'true'
-        run: poetry run mypy .
+        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
 
       - name: pylint
         if: steps.filter.outputs.python == 'true'
