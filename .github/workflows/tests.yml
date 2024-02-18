@@ -135,12 +135,12 @@ jobs:
       - name: flake8
         if: steps.filter.outputs.python == 'true'
         run: |
-            ::group::version and plugins
+            echo "::group::version and plugins"
             poetry run flake8 --version
-            ::endgroup::
-            ::group::flake8 linting
+            echo "::endgroup::"
+            echo "::group::flake8 linting"
             poetry run flake8 ${{ steps.filter.outputs.python_files }}
-            ::endgroup::
+            echo "::endgroup::"
 
       - name: mypy
         if: steps.filter.outputs.python == 'true'
