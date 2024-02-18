@@ -147,6 +147,19 @@ jobs:
         if: steps.filter.outputs.python == 'true'
         run: poetry run deptry .  # Runs on whole package
 
+      # web TODO
+      - name: standard
+        run: standard
+
+      - name: html5validator
+        uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
+        with:
+          config: .dev_config/.html5validator.yaml
+
+      - name: prettier
+        id: prettier
+        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
+
       # yaml
       - name: yamllint
         if: steps.filter.outputs.yaml == 'true'
@@ -162,25 +175,12 @@ jobs:
           config_file: .dev_config/.markdownlint.yaml
           ignore_files: LICENSE.md
 
-      # web TODO
-      - name: standard
-        run: standard
-
-      - name: html5validator
-        uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
-        with:
-          config: .dev_config/.html5validator.yaml
-
-      - name: prettier
-        id: prettier
-        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
-
       # makefile
       - name: checkmake
         if: steps.filter.outputs.makefile == 'true'
         uses: Uno-Takashi/checkmake-action@main  # Can not pass multiple files
 
-      # shell files TODO
+      # shell files - no extension to filter on, always run
       - name: shellcheck shfmt checkbashisms
         uses: luizm/action-sh-checker@master  # blocklint: pragma
         env:
