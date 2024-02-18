@@ -77,6 +77,10 @@ jobs:
             - added|modified: '**/poetry.lock'
             python:
             - added|modified: '**.py'
+            javascript:
+            - added|modified: '**.js'
+            html:
+            - added|modified: '**.html'
             prettier:
             - added|modified: '**.html'
             - added|modified: '**.css'
@@ -93,14 +97,14 @@ jobs:
 
       # Filtered setup
       - name: Install Node
-        if: steps.filter.outputs.prettier == 'true'
+        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
           check-latest: true
 
       - name: Install Node Dependencies
-        if: steps.filter.outputs.prettier == 'true'
+        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: sudo npm install --global standard prettier
 
       # All files
@@ -156,14 +160,18 @@ jobs:
         if: steps.filter.outputs.python == 'true'
         run: poetry run deptry .  # Runs on whole package
 
-      # web TODO
+      # javascript
       - name: standard
-        run: standard
+        if: steps.filter.outputs.javascript == 'true'
+        run: standard ${{ steps.filter.outputs.javascript_files }}
 
+      # html
       - name: html5validator
+        if: steps.filter.outputs.html == 'true'
         uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
         with:
           config: .dev_config/.html5validator.yaml
+          # only configurable to run on paths, so just run on whole package
 
       # prettier: html css scss json
       - name: prettier
