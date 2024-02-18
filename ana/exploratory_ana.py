@@ -401,6 +401,9 @@ else:
 import prophet
 from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
+__all__: list[str] = []
+
+
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
