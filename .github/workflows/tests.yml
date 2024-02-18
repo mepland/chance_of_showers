@@ -81,7 +81,7 @@ jobs:
         run: poetry run mypy .
 
       - name: pylint
-        run: poetry run pylint "$(git "ls-files" "'*.py'")"
+        run: poetry run pylint $(git ls-files '*.py')
 
       - name: bandit
         run: poetry run bandit -r .
