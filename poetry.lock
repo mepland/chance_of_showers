@@ -1750,21 +1750,6 @@ flake8 = "*"
 test = ["pytest"]
 
 [[package]]
-name = "flake8-class-attributes-order"
-version = "0.1.3"
-description = "A flake8 extension that checks classes attributes order"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "flake8_class_attributes_order-0.1.3-py3-none-any.whl", hash = "sha256:6398368da4511cdda1a7c0e25934bcaac49d9df89aa2842729353b4a20f7ed13"},
-    {file = "flake8_class_attributes_order-0.1.3.tar.gz", hash = "sha256:9dde5581832d278ce247d4c47777f980cd86df2232bc0c50275144857d56e91d"},
-]
-
-[package.dependencies]
-flake8 = "*"
-typing-extensions = "*"
-
-[[package]]
 name = "flake8-clean-block"
 version = "0.1.2"
 description = "A flake8 plugin that enforces a blank line after if/for/while/with/try blocks"
@@ -7197,4 +7182,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "ec1dcde28c57d9e8c40c0dd4b2c94174e321f561323b8f9482a112f658104e6b"
+content-hash = "5e8dcdb0cb994d760d2900e8b5caefc569b9dacc8ee475740b4a59fb53aae9d2"
