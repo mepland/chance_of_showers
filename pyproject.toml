@@ -93,9 +93,6 @@ pandas-vet = "^2023.8.2"
 pydoclint = {extras = ["flake8"], version = "^0.4.0"}
 tryceratops = "^2.3.2"
 
-# TODO
-# use flake8-in-file-ignores and update settings
-
 [tool.poetry.group.daq]
 optional = true
 
@@ -202,7 +199,7 @@ extend-select = [
 ]
 per-file-ignores = [
     "ana/exploratory_ana.py:E402,E800",
-    "ana/drive_bayesian_opt.py:F401,E402,E800",
+    "ana/drive_bayesian_opt.py:E402",
 ]
 exclude = [
     ".cache",
@@ -310,12 +307,12 @@ exclude = [
 
 [tool.deptry]
 ignore = [
-	"DEP003", # transitive dependencies
-	"DEP004", # false positives from optional poetry groups
+    "DEP003", # transitive dependencies
+    "DEP004", # false positives from optional poetry groups
 ]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = [
-	"board", "busio", "digitalio", # adafruit-circuitpython-mcp3xxx
-	"PIL", # luma-core
+    "board", "busio", "digitalio", # adafruit-circuitpython-mcp3xxx
+    "PIL", # luma-core
 ]
