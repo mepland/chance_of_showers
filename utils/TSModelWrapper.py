@@ -637,8 +637,29 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
 ################################################################################
 # parent class
 class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
-    """Parent class for all time series wrappers."""
+    """Parent class for all time series wrappers.
 
+    Args:
+        dfp_trainable_evergreen: Time series data.
+        dt_val_start_datetime_local: Date to cut the validation from the training set.
+        work_dir_base: Top level directory for saving model files.
+        random_state: Random seed.
+        date_fmt: String format of dates.
+        time_fmt: String format of times.
+        fname_datetime_fmt: String format of date times for file names.
+        local_timezone: Local timezone.
+        model_class: Dart model class.
+        is_nn: Flag for if the model is a neural network (NN).
+        verbose: Verbosity level.
+        work_dir: Path to directory to save this model's files.
+        model_name_tag: Descriptive tag to add to the model name, optional.
+        required_hyperparams_data: List of required data hyperparameters for this model.
+        required_hyperparams_model: List of required hyperparameters for this model's constructor.
+        allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
+        variable_hyperparams: Dictionary of variable hyperparameters for this model.
+        fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
+        hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
+    """
     def __init__(
         self: "TSModelWrapper",
         # required
@@ -664,29 +685,6 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         fixed_hyperparams: dict | None = None,
         hyperparams_conditions: list[dict] | None = None,
     ) -> None:
-        """Int method.
-
-        Args:
-            dfp_trainable_evergreen: Time series data.
-            dt_val_start_datetime_local: Date to cut the validation from the training set.
-            work_dir_base: Top level directory for saving model files.
-            random_state: Random seed.
-            date_fmt: String format of dates.
-            time_fmt: String format of times.
-            fname_datetime_fmt: String format of date times for file names.
-            local_timezone: Local timezone.
-            model_class: Dart model class.
-            is_nn: Flag for if the model is a neural network (NN).
-            verbose: Verbosity level.
-            work_dir: Path to directory to save this model's files.
-            model_name_tag: Descriptive tag to add to the model name, optional.
-            required_hyperparams_data: List of required data hyperparameters for this model.
-            required_hyperparams_model: List of required hyperparameters for this model's constructor.
-            allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
-            variable_hyperparams: Dictionary of variable hyperparameters for this model.
-            fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
-            hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
-        """
         if required_hyperparams_data is None:
             required_hyperparams_data = []
 

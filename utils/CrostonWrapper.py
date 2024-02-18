@@ -41,16 +41,6 @@ class CrostonWrapper(TSModelWrapper):
     ]
 
     def __init__(self: "CrostonWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-
-        Raises:
-            ValueError: Bad configuration.
-        """
         # setup the version parameter correctly
         if "version" in kwargs:
             version = kwargs["version"]

@@ -56,16 +56,6 @@ class RNNModelWrapper(TSModelWrapper):
     _valid_models = ["RNN", "LSTM", "GRU"]
 
     def __init__(self: "RNNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-
-        Raises:
-            ValueError: Bad configuration.
-        """
         # setup the model parameter correctly
         if "model" in kwargs:
             model = kwargs["model"]
