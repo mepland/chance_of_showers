@@ -72,8 +72,17 @@ jobs:
           dotnet: true
           haskell: true
 
+      - name: Paths Changes Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+            - '**.py'
+
       - name: poetry
-        run: poetry check && poetry lock --no-update
+        if: steps.filter.outputs.python == 'true'
+        run: poetry check && poetry lock --no-update && echo ${{ steps.filter.outputs.python_files }}
 
       - name: isort
         run: poetry run isort .
