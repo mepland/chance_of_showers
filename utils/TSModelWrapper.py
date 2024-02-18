@@ -42,6 +42,9 @@ from utils.shared_functions import (
     rebin_chance_of_showers_time_series,
 )
 
+__all__ = ["TSModelWrapper"]
+
+
 ################################################################################
 # Setup global parameters
 

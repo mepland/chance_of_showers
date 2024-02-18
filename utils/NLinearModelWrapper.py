@@ -16,6 +16,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NLinearModelWrapper"]
+
 
 class NLinearModelWrapper(TSModelWrapper):
     """NLinearModel wrapper.

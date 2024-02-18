@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["TBATSWrapper"]
+
 
 class TBATSWrapper(TSModelWrapper):
     """TBATS wrapper.

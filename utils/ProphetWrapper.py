@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["ProphetWrapper"]
+
 
 class ProphetWrapper(TSModelWrapper):
     """Prophet wrapper.

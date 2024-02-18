@@ -15,6 +15,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["LinearRegressionModelWrapper"]
+
 
 class LinearRegressionModelWrapper(TSModelWrapper):
     """LinearRegressionModel wrapper.

@@ -17,6 +17,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["TCNModelWrapper"]
+
 
 class TCNModelWrapper(TSModelWrapper):
     """TCNModel wrapper.

@@ -18,6 +18,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["BlockRNNModelWrapper"]
+
 
 class BlockRNNModelWrapper(TSModelWrapper):
     """BlockRNNModel wrapper.

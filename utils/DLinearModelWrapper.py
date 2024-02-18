@@ -16,6 +16,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["DLinearModelWrapper"]
+
 
 class DLinearModelWrapper(TSModelWrapper):
     """DLinearModel wrapper.

@@ -15,6 +15,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["RandomForestWrapper"]
+
 
 class RandomForestWrapper(TSModelWrapper):
     """RandomForest wrapper.

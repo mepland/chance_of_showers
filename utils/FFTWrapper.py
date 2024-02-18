@@ -14,6 +14,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["FFTWrapper"]
+
 
 class FFTWrapper(TSModelWrapper):
     """FFT wrapper.

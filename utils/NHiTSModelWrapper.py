@@ -16,6 +16,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NHiTSModelWrapper"]
+
 
 class NHiTSModelWrapper(TSModelWrapper):
     """NHiTSModel wrapper.

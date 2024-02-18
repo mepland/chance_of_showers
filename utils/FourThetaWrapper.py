@@ -14,6 +14,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["FourThetaWrapper"]
+
 
 class FourThetaWrapper(TSModelWrapper):
     """FourTheta wrapper.

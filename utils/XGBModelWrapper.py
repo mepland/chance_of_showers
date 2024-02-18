@@ -15,6 +15,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["XGBModelWrapper"]
+
 
 class XGBModelWrapper(TSModelWrapper):
     """XGBModel wrapper.

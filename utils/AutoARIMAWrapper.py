@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["AutoARIMAWrapper"]
+
 
 class AutoARIMAWrapper(TSModelWrapper):
     """AutoARIMA wrapper.

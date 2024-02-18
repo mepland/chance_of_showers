@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NaiveMovingAverageWrapper"]
+
 
 class NaiveMovingAverageWrapper(TSModelWrapper):
     """NaiveMovingAverage wrapper.

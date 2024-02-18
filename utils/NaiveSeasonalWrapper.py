@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NaiveSeasonalWrapper"]
+
 
 class NaiveSeasonalWrapper(TSModelWrapper):
     """NaiveSeasonal wrapper.

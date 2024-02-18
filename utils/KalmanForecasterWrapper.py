@@ -14,6 +14,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["KalmanForecasterWrapper"]
+
 
 class KalmanForecasterWrapper(TSModelWrapper):
     """KalmanForecaster wrapper.

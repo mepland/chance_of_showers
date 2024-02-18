@@ -18,6 +18,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["RNNModelWrapper"]
+
 
 class RNNModelWrapper(TSModelWrapper):
     """RNNModel wrapper.

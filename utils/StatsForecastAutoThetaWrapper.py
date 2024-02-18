@@ -14,6 +14,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["StatsForecastAutoThetaWrapper"]
+
 
 class StatsForecastAutoThetaWrapper(TSModelWrapper):
     """StatsForecastAutoTheta wrapper.

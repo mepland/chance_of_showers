@@ -13,6 +13,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["NaiveMeanWrapper"]
+
 
 class NaiveMeanWrapper(TSModelWrapper):
     """NaiveMean wrapper.

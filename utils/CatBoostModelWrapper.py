@@ -15,6 +15,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["CatBoostModelWrapper"]
+
 
 class CatBoostModelWrapper(TSModelWrapper):
     """CatBoostModel wrapper.
