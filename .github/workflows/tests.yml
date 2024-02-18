@@ -138,9 +138,7 @@ jobs:
             echo "::group::version and plugins"
             poetry run flake8 --version
             echo "::endgroup::"
-            echo "::group::flake8 linting"
             poetry run flake8 ${{ steps.filter.outputs.python_files }}
-            echo "::endgroup::"
 
       - name: mypy
         if: steps.filter.outputs.python == 'true'
