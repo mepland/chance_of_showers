@@ -27,6 +27,7 @@ jobs:
         node_version: ["lts/*"]
 
     steps:
+      # Setup
       - name: Check out source repository
         uses: actions/checkout@v3
 
@@ -43,16 +44,6 @@ jobs:
 
       - name: Install Python Dependencies
         run: poetry install --with daq,web,ana,dev
-
-      # TODO
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node_version }}
-          check-latest: true
-
-      - name: Install Node Dependencies
-        run: sudo npm install --global standard prettier
 
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
@@ -74,6 +65,7 @@ jobs:
           dotnet: true
           haskell: true
 
+      # File filters
       - name: Paths Changes Filter
         uses: dorny/paths-filter@v3
         id: filter
@@ -85,6 +77,11 @@ jobs:
             - added|modified: '**/poetry.lock'
             python:
             - added|modified: '**.py'
+            prettier:
+            - added|modified: '**.html'
+            - added|modified: '**.css'
+            - added|modified: '**.scss'
+            - added|modified: '**.json'
             yaml:
             - added|modified: '**.yaml'
             - added|modified: '**.yml'
@@ -94,7 +91,19 @@ jobs:
             - added|modified: '**/Makefile'
             - added|modified: '**/makefile'
 
-      # all files
+      # Filtered setup
+      - name: Install Node
+        if: steps.filter.outputs.prettier == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node_version }}
+          check-latest: true
+
+      - name: Install Node Dependencies
+        if: steps.filter.outputs.prettier == 'true'
+        run: sudo npm install --global standard prettier
+
+      # All files
       - name: detect-secrets
         run: poetry run detect-secrets-hook --exclude-lines 'integrity='
 
@@ -156,9 +165,11 @@ jobs:
         with:
           config: .dev_config/.html5validator.yaml
 
+      # prettier: html css scss json
       - name: prettier
+        if: steps.filter.outputs.prettier == 'true'
         id: prettier
-        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
+        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check ${{ steps.filter.outputs.prettier_files }}  # yamllint disable-line rule:line-length
 
       # yaml
       - name: yamllint
