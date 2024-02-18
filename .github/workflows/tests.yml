@@ -62,6 +62,16 @@ jobs:
           # do not use unless necessary
           large-packages: false
 
+          # needed for markdownlint-cli
+          docker-images: false
+
+          # test if this gets the poetry cache back
+          swap-storage: false
+
+          android: true
+          dotnet: true
+          haskell: true
+
       - name: poetry
         run: poetry check && poetry lock --no-update
 
