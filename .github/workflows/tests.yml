@@ -89,11 +89,15 @@ jobs:
             yaml:
             - added|modified: '**.yaml'
             - added|modified: '**.yml'
-            markdown:
-            - added|modified: '**.md'
             makefile:
             - added|modified: '**/Makefile'
             - added|modified: '**/makefile'
+            markdown:
+            - added|modified: '**.md'
+            tex:
+            - added|modified: '**.tex'
+            rst:
+            - added|modified: '**.rst'
 
       # Filtered setup
       - name: Install Node
@@ -113,10 +117,6 @@ jobs:
 
       - name: blocklint
         run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
-
-      - name: blacken-docs
-        # just run every time, it is fast
-        run: poetry run blacken-docs --line-length=100 $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  $(git ls-files '*.tex')  # yamllint disable-line rule:line-length
 
       # poetry
       - name: poetry
@@ -184,16 +184,6 @@ jobs:
         if: steps.filter.outputs.yaml == 'true'
         run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
 
-      # markdown
-      - name: markdownlint-cli
-        if: steps.filter.outputs.markdown == 'true'
-        uses: nosborn/github-action-markdown-cli@v3.3.0
-        with:
-          files: ${{ steps.filter.outputs.markdown_files }}
-          dot: true
-          config_file: .dev_config/.markdownlint.yaml
-          ignore_files: LICENSE.md
-
       # makefile
       - name: checkmake
         if: steps.filter.outputs.makefile == 'true'
@@ -206,3 +196,17 @@ jobs:
           SHFMT_OPTS: -bn -ci -sr -s -d
         with:
           sh_checker_checkbashisms_enable: true
+
+      # docs
+      - name: markdownlint-cli
+        if: steps.filter.outputs.markdown == 'true'
+        uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: ${{ steps.filter.outputs.markdown_files }}
+          dot: true
+          config_file: .dev_config/.markdownlint.yaml
+          ignore_files: LICENSE.md
+
+      - name: blacken-docs
+        if: steps.filter.outputs.python_files == 'true' || steps.filter.outputs.markdown_files== 'true' || steps.filter.outputs.rst_files== 'true' || steps.filter.outputs.tex_files== 'true'  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} $${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
