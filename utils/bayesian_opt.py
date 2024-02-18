@@ -116,7 +116,7 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """
     # Adapted from:
     # https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/util.py#L214-L241
-    with open(str(f_path), encoding="utf-8") as f_json:
+    with f_path.open("r", encoding="utf-8") as f_json:
         rows = []
         while True:
             try:
@@ -131,7 +131,9 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
                         row[f"{_k0}_{_k1}"] = _v1
                 else:
                     row[_k0] = _v0
+
             rows.append(row)
+
         f_json.close()
 
         if rows:
@@ -140,6 +142,7 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
 
             cols_fixed = ["i_point", "target", "datetime_datetime"]
             return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
+
         return None
 
 
@@ -163,6 +166,7 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
         dfp = load_json_log_to_dfp(f_path)
         if dfp is None:
             raise ValueError(f"Could load {f_path}!")
+
         if TYPE_CHECKING:
             assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
 
@@ -170,6 +174,7 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
             raise ValueError(
                 f"Already loaded log for {model_name}! Please clean the dir structure of {dir_path} and try again."
             )
+
         dfp_runs_dict[model_name] = pd.DataFrame(dfp)
 
         dfp_best_points = dfp.loc[dfp["target"] == dfp["target"].max()]
@@ -223,6 +228,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
         header = f"{header}\n"
     else:
         header = ""
+
     memory_usage_str = (
         header
         + f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
@@ -254,6 +260,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
             f", GPU RAM Current: {get_gpu_mem_key('allocated_bytes.all.current')}, "
             + f"Peak: {get_gpu_mem_key('allocated_bytes.all.peak')}"
         )
+
     print(memory_usage_str)
 
 
@@ -357,6 +364,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         hyperparam_max = configurable_hyperparams.get(hyperparam, {}).get("max")
         if hyperparam_min is None or hyperparam_max is None:
             raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
+
         hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
 
     # Setup Bayesian optimization objects
@@ -385,6 +393,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     if enable_reloading and fname_json_log.is_file():
         if 3 <= verbose:
             print(f"Resuming Bayesian optimization from:\n{fname_json_log}\n")
+
         optimizer.dispatch(Events.OPTIMIZATION_START)
         load_logs(optimizer, logs=str(fname_json_log))
         n_points = len(optimizer.space)
@@ -442,9 +451,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         model_wrapper.reset_wrapper()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
         gc.collect()
+
         if 7 <= verbose:
             print_memory_usage()
+
         if 3 <= verbose:
             print(f"Completed {i_iter = }, with {n_points = }")
 
@@ -481,6 +493,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         if 3 <= verbose:
             error_msg = f"""{error_msg}
 {error = }"""
+
         if 4 <= verbose:
             error_msg = f"""{error_msg}
 {type(error) = }
@@ -501,8 +514,10 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
         for i_iter in range(n_iter):
             if i_iter == 0:
                 optimizer.dispatch(Events.OPTIMIZATION_START)
+
             if 3 <= verbose:
                 print(f"\nStarting {i_iter = }, with {n_points = }")
+
             next_point_to_probe = optimizer.suggest(utility)
 
             # Setup model_wrapper
@@ -542,9 +557,11 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                             print(
                                 f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
                             )
+
                         complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
                         is_duplicate_point = True
                         break
+
                 if is_duplicate_point:
                     continue
 
@@ -557,6 +574,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                         assert isinstance(  # noqa: SCS108 # nosec assert_used
                             max_time_per_model, datetime.timedelta
                         )
+
                     signal.alarm(max_time_per_model.seconds)
 
                 # train the model
@@ -565,10 +583,11 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf") or is np.nan.
                 if np.isnan(target) or target < BAD_LOSS:
                     target = BAD_LOSS
-            except KeyboardInterrupt as error:
+
+            except KeyboardInterrupt:
                 print("KeyboardInterrupt: Ending now!")
                 optimizer.dispatch(Events.OPTIMIZATION_END)
-                raise error
+                raise
             except Exception as error:
                 error_msg = None
                 # Expected exceptions
@@ -620,7 +639,7 @@ Returning {BAD_LOSS:.3g} as loss and continuing"""
                     continue
 
                 # Raise the exception, kill the iterations
-                raise error
+                raise
             finally:
                 if max_time_per_model_flag:
                     signal.alarm(0)

@@ -48,7 +48,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     Returns:
         SoC temperature as a float.
     """
-    res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
+    res = os.popen("vcgencmd measure_temp").readline()  # noqa: DUO106, SCS110 # nosec: B605, B607
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
 
@@ -83,6 +83,7 @@ def normalize_pressure_value(
             return 0.0
         elif 1.0 < normalized_pressure_value:
             return 1.0
+
     return normalized_pressure_value
 
 
@@ -127,6 +128,7 @@ def rebin_chance_of_showers_time_series(
             raise ValueError(
                 f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
             )
+
         if 60 % time_bin_size_minutes != 0:
             raise ValueError(
                 f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
@@ -136,6 +138,7 @@ def rebin_chance_of_showers_time_series(
     if rebin_time:
         if other_cols_to_agg_dict is None:
             other_cols_to_agg_dict = {}
+
         cols += other_cols_to_agg_dict.keys()
 
         cols_to_agg_dict = {y_col: "mean", **other_cols_to_agg_dict}
@@ -282,7 +285,7 @@ def write_secure_pickle(
 
     f_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(f_path, "wb") as f_pickle:
+    with f_path.open("wb") as f_pickle:
         f_pickle.write(bytes(digest, sys.stdin.encoding) + b"\n" + pickle_data)
 
 
@@ -315,7 +318,7 @@ def read_secure_pickle(
 
     digest = None
     pickle_data = None
-    with open(f_path, "rb") as f_pickle:
+    with f_path.open("rb") as f_pickle:
         digest = f_pickle.readline().rstrip()
         pickle_data = f_pickle.read()
 
@@ -326,4 +329,4 @@ def read_secure_pickle(
     if not hmac.compare_digest(digest, bytes(recomputed, sys.stdin.encoding)):
         raise ValueError("Invalid signature!!")
 
-    return pickle.loads(pickle_data)  # noqa: SCS113 # nosec B301
+    return pickle.loads(pickle_data)  # noqa: DUO103, SCS113 # nosec B301

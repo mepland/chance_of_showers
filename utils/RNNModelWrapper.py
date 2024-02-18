@@ -73,11 +73,13 @@ class RNNModelWrapper(TSModelWrapper):
                     kwargs["model_name_tag"] = f'{model}_{kwargs["model_name_tag"]}'
                 else:
                     kwargs["model_name_tag"] = model
+
             elif isinstance(model, type) and issubclass(model, CustomRNNModule):  # type: ignore[arg-type]
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
                     )
+
             else:
                 valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
                 raise ValueError(

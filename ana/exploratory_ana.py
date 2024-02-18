@@ -430,6 +430,7 @@ if TYPE_CHECKING:
     assert isinstance(  # noqa: SCS108 # nosec assert_used
         model_wrapper_Prophet.model, darts_Prophet
     )
+
 model_prophet = model_wrapper_Prophet.model.model
 
 dfp_prophet_future = model_prophet.make_future_dataframe(
@@ -1393,8 +1394,10 @@ dfp_gpu = load_json_log_to_dfp(
 # %%
 if dfp_cpu is None:
     raise ValueError("Could not load dfp_cpu")
+
 if dfp_gpu is None:
     raise ValueError("Could not load dfp_gpu")
+
 if TYPE_CHECKING:
     assert isinstance(dfp_cpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
     assert isinstance(dfp_gpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
