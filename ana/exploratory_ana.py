@@ -33,7 +33,7 @@ sys.path.append(str(pathlib.Path.cwd().parent))
 # pylint: disable=import-error,useless-suppression
 # pylint: enable=useless-suppression
 from utils.bayesian_opt import (
-    BAYESIAN_OPT_JSON_PREFIX,
+    BAYESIAN_OPT_PREFIX,
     load_best_points,
     load_json_log_to_dfp,
 )
@@ -1378,7 +1378,7 @@ dfp_cpu = load_json_log_to_dfp(
         PARENT_WRAPPER.work_dir_base,
         BAYESIAN_OPT_WORK_DIR_NAME,
         f"{model_name}_cpu",
-        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
+        f"{BAYESIAN_OPT_PREFIX}{model_name}.json",
     )
 )
 
@@ -1387,7 +1387,7 @@ dfp_gpu = load_json_log_to_dfp(
         PARENT_WRAPPER.work_dir_base,
         BAYESIAN_OPT_WORK_DIR_NAME,
         f"{model_name}_gpu",
-        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
+        f"{BAYESIAN_OPT_PREFIX}{model_name}.json",
     )
 )
 

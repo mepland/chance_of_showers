@@ -3,6 +3,7 @@
 import datetime
 import gc
 import json
+import os
 import pathlib
 import platform
 import pprint
@@ -10,6 +11,7 @@ import re
 import signal
 import traceback
 from contextlib import suppress
+from csv import writer
 from types import FrameType  # noqa: TC003
 from typing import TYPE_CHECKING, Final, TypeAlias
 
@@ -24,7 +26,7 @@ from bayes_opt.logger import JSONLogger, ScreenLogger
 from bayes_opt.util import load_logs
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET
+from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET, METRICS_KEYS
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
@@ -105,7 +107,9 @@ WrapperTypes: TypeAlias = type[
     | NaiveMovingAverageWrapper
 ]
 
-BAYESIAN_OPT_JSON_PREFIX: Final = "bayesian_opt_"
+BAYESIAN_OPT_PREFIX: Final = "bayesian_opt_"
+
+BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
@@ -164,7 +168,7 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
     dfp_runs_dict = {}
     rows = []
     for f_path in sorted(dir_path.glob("**/*.json")):
-        model_name = f_path.stem.replace(BAYESIAN_OPT_JSON_PREFIX, "")
+        model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
 
         dfp = load_json_log_to_dfp(f_path)
         if dfp is None:
@@ -388,8 +392,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
     ).expanduser()
     fname_json_log: Final = (
-        bayesian_opt_work_dir / f"{BAYESIAN_OPT_JSON_PREFIX}{generic_model_name}.json"
+        bayesian_opt_work_dir / f"{BAYESIAN_OPT_PREFIX}{generic_model_name}.json"
     )
+    fname_csv_log: Final = bayesian_opt_work_dir / f"{BAYESIAN_OPT_PREFIX}{generic_model_name}.csv"
 
     # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
     n_points = 0
@@ -414,11 +419,87 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         for event in DEFAULT_EVENTS:
             optimizer.subscribe(event, screen_logger)
 
+    # Function to write additional metadata per point to a csv
+    # Easier than modifying the json_logger from bayes_opt
+    def _write_csv_row(
+        *,
+        datetime_str: str | None,
+        i_iter: int,
+        i_point: int,
+        is_cleaned: bool,
+        target: float,
+        metrics_val: dict[str, float],
+        point: dict,
+    ) -> None:
+        """Save validation metrics and other metadata for this iteration and point to csv.
+
+        Args:
+            datetime_str: Datetime string of this iteration, from json log.
+            i_iter: Index of this iteration.
+            i_point: Index of this point.
+            is_cleaned: Flag for if these are cleaned or raw hyperparameters.
+            target: Target value.
+            metrics_val: Metrics on the validation set.
+            point: Hyperparameter point.
+        """
+        if not enable_json_logging:
+            return
+
+        if datetime_str is None:
+            datetime_str = "NULL"
+
+        new_row = [datetime_str, i_iter, i_point, int(is_cleaned), target]
+        metrics_val_sorted = {k: metrics_val[k] for k in METRICS_KEYS}
+        new_row += list(metrics_val_sorted.values())
+        point = dict(sorted(point.items()))
+        new_row += list(point.values())
+
+        with fname_csv_log.open("a", encoding="utf-8") as f_csv:
+            m_writer = writer(f_csv)
+            if f_csv.tell() == 0:
+                # empty file, create header
+                m_writer.writerow(
+                    ["i_iter", "i_point", "is_cleaned", "target"]
+                    + [f"{_}_val" for _ in METRICS_KEYS]
+                    + list(point.keys())
+                )
+
+            m_writer.writerow(new_row)
+            f_csv.close()
+
+    def _get_datetime_str_from_json() -> str | None:
+        """Load datatime str from last row in json log.
+
+            The {"datetime: {"datetime": "..."}} timestamp in the json log created by the optimizer.register() call
+            is a good field to have, but is only created in in the json logger here:
+            https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/logger.py#L153C50-L158
+            We need to load last line of the json from disk and extract the datatime string.
+
+        Returns:
+            datetime_str: Datetime as str.
+        """
+        last_datetime_str = None
+        if enable_json_logging:
+            with fname_json_log.open("rb") as f_json:
+                # https://stackoverflow.com/a/54278929
+                try:  # catch OSError in case of a one line file
+                    f_json.seek(-2, os.SEEK_END)
+                    while f_json.read(1) != b"\n":
+                        f_json.seek(-2, os.SEEK_CUR)
+                except OSError:
+                    f_json.seek(0)
+
+                last_line = json.loads(f_json.readline().decode())
+                last_datetime_str = last_line.get("datetime", {}).get("datetime")
+
+        return last_datetime_str  # noqa: R504
+
     # Define function to complete an iteration
     def complete_iter(
         i_iter: int,
         model_wrapper: TSModelWrapper,
         target: float,
+        metrics_val: dict[str, float],
         point_to_probe: dict,
         *,
         probed_point: dict | None = None,
@@ -429,11 +510,22 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             i_iter: Index of this iteration.
             model_wrapper: Model wrapper object to reset.
             target: Target value to register.
+            metrics_val: Metrics on the validation set.
             point_to_probe: Raw point to probe.
             probed_point: Point that was actually probed.
         """
         global n_points
         optimizer.register(params=point_to_probe, target=target)
+        _write_csv_row(
+            datetime_str=_get_datetime_str_from_json(),
+            i_iter=i_iter,
+            i_point=n_points,
+            is_cleaned=False,
+            target=target,
+            metrics_val=metrics_val,
+            point=point_to_probe,
+        )
+
         n_points += 1
         if probed_point:
             # translate odd hyperparam_values back to original representation
@@ -449,6 +541,16 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 )
             ):
                 optimizer.register(params=probed_point, target=target)
+                _write_csv_row(
+                    datetime_str=_get_datetime_str_from_json(),
+                    i_iter=i_iter,
+                    i_point=n_points,
+                    is_cleaned=True,
+                    target=target,
+                    metrics_val=metrics_val,
+                    point=probed_point,
+                )
+
                 n_points += 1
 
         model_wrapper.reset_wrapper()
@@ -561,7 +663,9 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                                 f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
                             )
 
-                        complete_iter(i_iter, model_wrapper, target, next_point_to_probe)
+                        complete_iter(
+                            i_iter, model_wrapper, target, BAD_METRICS, next_point_to_probe
+                        )
                         is_duplicate_point = True
                         break
 
@@ -582,7 +686,6 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
 
                 # Actually train the model!
                 loss_val, metrics_val = model_wrapper.train_model(**next_point_to_probe_cleaned)
-                print(f"metrics_val = {pprint.pformat(metrics_val)}")  # TODO save to csv
 
                 # make the target the negative loss, as we want to maximize the target
                 target = -loss_val
@@ -591,6 +694,11 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 # This is in case a NN is interrupted mid-epoch and returns a target of -float("inf") or is np.nan.
                 if np.isnan(target) or target < BAD_TARGET:
                     target = BAD_TARGET
+
+                # clean any nan metrics
+                metrics_val = {
+                    k: v if not np.isnan(v) else -BAD_TARGET for k, v in metrics_val.items()
+                }
 
             except KeyboardInterrupt:
                 print("KeyboardInterrupt: Ending now!")
@@ -641,6 +749,7 @@ Returning {BAD_TARGET:.3g} as target and continuing"""
                         i_iter,
                         model_wrapper,
                         BAD_TARGET,
+                        BAD_METRICS,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
@@ -663,6 +772,7 @@ Returning {BAD_TARGET:.3g} as target and continuing"""
                 i_iter,
                 model_wrapper,
                 target,
+                metrics_val,
                 next_point_to_probe,
                 probed_point=next_point_to_probe_cleaned,
             )
