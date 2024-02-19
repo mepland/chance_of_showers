@@ -417,8 +417,8 @@ configurable_hyperparams = model_wrapper_Prophet.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Prophet.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Prophet.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Prophet)
@@ -611,8 +611,8 @@ configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NBEATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NBEATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NBEATS)
@@ -642,8 +642,8 @@ configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NHiTS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NHiTS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NHiTS)
@@ -673,8 +673,8 @@ configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TCN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TCN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TCN)
@@ -704,8 +704,8 @@ configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparam
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Transformer.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Transformer.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Transformer)
@@ -735,8 +735,8 @@ configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TFT.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TFT.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TFT)
@@ -766,8 +766,8 @@ configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_DLinear.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_DLinear.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_DLinear)
@@ -797,8 +797,8 @@ configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NLinear.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NLinear.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NLinear)
@@ -828,8 +828,8 @@ configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TiDE.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TiDE.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TiDE)
@@ -861,8 +861,8 @@ configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_RNN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_RNN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_RNN)
@@ -894,8 +894,8 @@ configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_BlockRNN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_BlockRNN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_BlockRNN)
@@ -931,8 +931,8 @@ configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_AutoARIMA.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_AutoARIMA.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_AutoARIMA)
@@ -953,8 +953,8 @@ configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_BATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_BATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_BATS)
@@ -975,8 +975,8 @@ configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TBATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TBATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TBATS)
@@ -997,8 +997,8 @@ configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_FourTheta.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_FourTheta.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_FourTheta)
@@ -1024,8 +1024,8 @@ configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_StatsForecastAutoTheta.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_StatsForecastAutoTheta)
@@ -1046,8 +1046,8 @@ configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_FFT.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_FFT.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_FFT)
@@ -1068,8 +1068,8 @@ configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyper
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_KalmanForecaster.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_KalmanForecaster.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_KalmanForecaster)
@@ -1094,8 +1094,8 @@ configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Croston.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Croston.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Croston)
@@ -1121,8 +1121,8 @@ configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_LinearRegressionModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_LinearRegressionModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_LinearRegressionModel)
@@ -1143,8 +1143,8 @@ configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperpara
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_RandomForest.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_RandomForest.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_RandomForest)
@@ -1166,8 +1166,8 @@ configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_LightGBMModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_LightGBMModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_LightGBMModel)
@@ -1188,8 +1188,8 @@ configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_XGBModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_XGBModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_XGBModel)
@@ -1210,8 +1210,8 @@ configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_CatBoostModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_CatBoostModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_CatBoostModel)
@@ -1229,8 +1229,8 @@ model_wrapper_NaiveMean = NaiveMeanWrapper(
 )
 model_wrapper_NaiveMean.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveMean.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveMean.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveMean)
@@ -1245,8 +1245,8 @@ model_wrapper_NaiveSeasonal = NaiveSeasonalWrapper(
 )
 model_wrapper_NaiveSeasonal.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveSeasonal.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveSeasonal.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveSeasonal)
@@ -1261,8 +1261,8 @@ model_wrapper_NaiveDrift = NaiveDriftWrapper(
 )
 model_wrapper_NaiveDrift.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveDrift.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveDrift.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveDrift)
@@ -1277,8 +1277,8 @@ model_wrapper_NaiveMovingAverage = NaiveMovingAverageWrapper(
 )
 model_wrapper_NaiveMovingAverage.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveMovingAverage.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveMovingAverage.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveMovingAverage)

@@ -24,7 +24,7 @@ from bayes_opt.logger import JSONLogger, ScreenLogger
 from bayes_opt.util import load_logs
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper, BAD_LOSS
+from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
@@ -199,7 +199,7 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
                 "best_target": best_dict["target"],
                 "i_point": best_dict["i_point"],
                 "n_points": dfp["i_point"].max(),
-                "n_points_bad_loss": dfp.loc[dfp["target"] == BAD_LOSS].index.size,
+                "n_points_bad_target": dfp.loc[dfp["target"] == BAD_TARGET].index.size,
                 "datetime": best_dict["datetime_datetime"],
                 "elapsed_minutes": best_dict["datetime_elapsed"],
                 "params_str": ", ".join(params),
@@ -328,7 +328,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
         enable_torch_model_summary: Enable torch model summary.
         enable_torch_progress_bars: Enable torch progress bars.
-        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_LOSS instead.
+        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_TARGET instead.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
@@ -581,11 +581,16 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                     signal.alarm(max_time_per_model.seconds)
 
                 # train the model
-                target = model_wrapper.train_model(**next_point_to_probe_cleaned)
-                # Put a lower bound on target at BAD_LOSS.
-                # This is in case a NN is interrupted mid-epoch and returns a loss of -float("inf") or is np.nan.
-                if np.isnan(target) or target < BAD_LOSS:
-                    target = BAD_LOSS
+                loss_val, metrics_val = model_wrapper.train_model(**next_point_to_probe_cleaned)
+                print(f"metrics_val = {pprint.pformat(metrics_val)}")  # TODO save to csv
+
+                # make the target the negative loss, as we want to maximize the target
+                target = -loss_val
+
+                # Put a lower bound on target at BAD_TARGET.
+                # This is in case a NN is interrupted mid-epoch and returns a target of -float("inf") or is np.nan.
+                if np.isnan(target) or target < BAD_TARGET:
+                    target = BAD_TARGET
 
             except KeyboardInterrupt:
                 print("KeyboardInterrupt: Ending now!")
@@ -625,17 +630,17 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                         "Unexpected error while training, disregard_training_exceptions is set"
                     )
 
-                # use BAD_LOSS as loss and continue
+                # use BAD_TARGET as target and continue
                 if error_msg is not None:
                     error_msg = _build_error_msg(error_msg, error)
                     print(
                         f"""{error_msg}
-Returning {BAD_LOSS:.3g} as loss and continuing"""
+Returning {BAD_TARGET:.3g} as target and continuing"""
                     )
                     complete_iter(
                         i_iter,
                         model_wrapper,
-                        BAD_LOSS,
+                        BAD_TARGET,
                         next_point_to_probe,
                         probed_point=next_point_to_probe_cleaned,
                     )
