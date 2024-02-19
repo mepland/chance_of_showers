@@ -714,7 +714,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals
 
 
 ########################################################
-def plot_2d_hist(  # noqa: C901 pylint: disable=too-many-locals
+def plot_2d_hist(  # pylint: disable=too-many-locals
     x_values: list[float] | np.ndarray | pd.Series,
     y_values: list[float] | np.ndarray | pd.Series,
     *,
