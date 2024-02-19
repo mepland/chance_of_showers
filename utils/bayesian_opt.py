@@ -580,7 +580,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
 
                     signal.alarm(max_time_per_model.seconds)
 
-                # train the model
+                # Actually train the model!
                 loss_val, metrics_val = model_wrapper.train_model(**next_point_to_probe_cleaned)
                 print(f"metrics_val = {pprint.pformat(metrics_val)}")  # TODO save to csv
 
