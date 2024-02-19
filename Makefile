@@ -114,6 +114,11 @@ shellcheck:
 shfmt:
 	@shfmt -bn -ci -sr -s -w $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
 
+.PHONY: clean
+clean:
+	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -f
+	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -rf
+
 # isort ~ isort:
 # flake8 ~ noqa
 # mypy ~ type:

@@ -64,6 +64,9 @@ from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper
 from utils.NaiveDriftWrapper import NaiveDriftWrapper
 from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
 
+__all__: list[str] = []
+
+
 # isort: on
 # pylint: enable=import-error
 

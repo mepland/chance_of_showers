@@ -18,6 +18,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["BlockRNNModelWrapper"]
+
 
 class BlockRNNModelWrapper(TSModelWrapper):
     """BlockRNNModel wrapper.
@@ -51,16 +53,6 @@ class BlockRNNModelWrapper(TSModelWrapper):
     _valid_models = ["RNN", "LSTM", "GRU"]
 
     def __init__(self: "BlockRNNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-
-        Raises:
-            ValueError: Bad configuration.
-        """
         # setup the model parameter correctly
         if "model" in kwargs:
             model = kwargs["model"]
@@ -70,16 +62,19 @@ class BlockRNNModelWrapper(TSModelWrapper):
                     kwargs["model_name_tag"] = f'{model}_{kwargs["model_name_tag"]}'
                 else:
                     kwargs["model_name_tag"] = model
+
             elif isinstance(model, type) and issubclass(model, CustomBlockRNNModule):  # type: ignore[arg-type]
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using CustomBlockRNNModule for model parameter!"
                     )
+
             else:
                 valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
                 raise ValueError(
                     f"{model = } must be in {valid_models_str} or be a subclass of CustomBlockRNNModule"
                 )
+
             self._fixed_hyperparams["model"] = model
             # remove model from kwargs so it does not cause later complications
             del kwargs["model"]

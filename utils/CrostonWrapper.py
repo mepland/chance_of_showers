@@ -16,6 +16,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["CrostonWrapper"]
+
 
 class CrostonWrapper(TSModelWrapper):
     """Croston wrapper.
@@ -39,16 +41,6 @@ class CrostonWrapper(TSModelWrapper):
     ]
 
     def __init__(self: "CrostonWrapper", **kwargs: Any) -> None:  # noqa: ANN401
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-
-        Raises:
-            ValueError: Bad configuration.
-        """
         # setup the version parameter correctly
         if "version" in kwargs:
             version = kwargs["version"]
@@ -58,16 +50,19 @@ class CrostonWrapper(TSModelWrapper):
                     kwargs["model_name_tag"] = f'{version}_{kwargs["model_name_tag"]}'
                 else:
                     kwargs["model_name_tag"] = version
+
             elif isinstance(version, type) and issubclass(version, FutureCovariatesLocalForecastingModel):  # type: ignore[arg-type]
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
                     )
+
             else:
                 valid_versions_str = ", ".join([f"{_!r}" for _ in self._valid_versions])
                 raise ValueError(
                     f"{version = } must be in {valid_versions_str} or be a subclass of FutureCovariatesLocalForecastingModel"
                 )
+
             self._fixed_hyperparams["version"] = version
             # remove version from kwargs so it does not cause later complications
             del kwargs["version"]

@@ -16,6 +16,8 @@ import hydra
 import polars as pl
 from omegaconf import DictConfig  # noqa: TC002
 
+__all__: list[str] = []
+
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
 def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals

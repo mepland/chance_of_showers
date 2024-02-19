@@ -378,6 +378,21 @@ doc = ["doc8", "sphinx (>=7.0.0)", "sphinx-autobuild", "sphinx-autodoc-typehints
 test = ["dateparser (==1.*)", "pre-commit", "pytest", "pytest-cov", "pytest-mock", "pytz (==2021.1)", "simplejson (==3.*)"]
 
 [[package]]
+name = "astatine"
+version = "0.3.3"
+description = "Some handy helper functions for Python's AST module."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "astatine-0.3.3-py3-none-any.whl", hash = "sha256:6d8c914f01fbea252cb8f31563f2e766a9ab03c02b9bcc37d18f7d9138828401"},
+    {file = "astatine-0.3.3.tar.gz", hash = "sha256:0c58a7844b5890ff16da07dbfeb187341d8324cb4378940f89d795cbebebce08"},
+]
+
+[package.dependencies]
+asttokens = ">=1.1"
+domdf-python-tools = ">=2.7.0"
+
+[[package]]
 name = "astor"
 version = "0.8.1"
 description = "Read/rewrite/write Python ASTs"
@@ -1078,6 +1093,29 @@ traitlets = ">=4"
 test = ["pytest"]
 
 [[package]]
+name = "consolekit"
+version = "1.6.0"
+description = "Additional utilities for click."
+optional = false
+python-versions = ">=3.6.1"
+files = [
+    {file = "consolekit-1.6.0-py3-none-any.whl", hash = "sha256:53d05dba2a38c28532f2b193a4e7b68054821e201d39d7ca818753d4add603c1"},
+    {file = "consolekit-1.6.0.tar.gz", hash = "sha256:1e7ece22b2fe4ae296d70e8be46ed37aa77950dfff2840e8b4792e45f0f96dd9"},
+]
+
+[package.dependencies]
+click = ">=7.1.2"
+deprecation-alias = ">=0.1.1"
+domdf-python-tools = ">=3.8.0"
+mistletoe = ">=0.7.2"
+typing-extensions = ">=3.10.0.0,<3.10.0.1 || >3.10.0.1"
+
+[package.extras]
+all = ["coincidence (>=0.1.0)", "psutil (>=5.8.0)", "pytest (>=6.0.0)", "pytest-regressions (>=2.0.2)"]
+terminals = ["psutil (>=5.8.0)"]
+testing = ["coincidence (>=0.1.0)", "pytest (>=6.0.0)", "pytest-regressions (>=2.0.2)"]
+
+[[package]]
 name = "contourpy"
 version = "1.2.0"
 description = "Python library for calculating contours of 2D quadrilateral grids"
@@ -1220,17 +1258,6 @@ files = [
     {file = "Cython-3.0.8-cp39-cp39-win_amd64.whl", hash = "sha256:16873d78be63bd38ffb759da7ab82814b36f56c769ee02b1d5859560e4c3ac3c"},
     {file = "Cython-3.0.8-py2.py3-none-any.whl", hash = "sha256:171b27051253d3f9108e9759e504ba59ff06e7f7ba944457f94deaf9c21bf0b6"},
     {file = "Cython-3.0.8.tar.gz", hash = "sha256:8333423d8fd5765e7cceea3a9985dd1e0a5dfeb2734629e1a2ed2d6233d39de6"},
-]
-
-[[package]]
-name = "darglint"
-version = "1.8.1"
-description = "A utility for ensuring Google-style docstrings stay up to date with the source code."
-optional = false
-python-versions = ">=3.6,<4.0"
-files = [
-    {file = "darglint-1.8.1-py3-none-any.whl", hash = "sha256:5ae11c259c17b0701618a20c3da343a3eb98b3bc4b5a83d31cdd94f5ebdced8d"},
-    {file = "darglint-1.8.1.tar.gz", hash = "sha256:080d5106df149b199822e7ee7deb9c012b49891538f14a11be681044f0bb20da"},
 ]
 
 [[package]]
@@ -1384,6 +1411,35 @@ files = [
 ]
 
 [[package]]
+name = "deprecation"
+version = "2.1.0"
+description = "A library to handle automated deprecations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
+    {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
+]
+
+[package.dependencies]
+packaging = "*"
+
+[[package]]
+name = "deprecation-alias"
+version = "0.3.2"
+description = "A wrapper around 'deprecation' providing support for deprecated aliases."
+optional = false
+python-versions = ">=3.6.1"
+files = [
+    {file = "deprecation-alias-0.3.2.tar.gz", hash = "sha256:1c9e1a5ddd0a276a1a18e7a4f9d56b53232217491c4549eaa45e51753013ce76"},
+    {file = "deprecation_alias-0.3.2-py3-none-any.whl", hash = "sha256:ed2e9dde582530e2a364cae4fa26077fda4adc9b28a44ce94a8ef0ee9271e312"},
+]
+
+[package.dependencies]
+deprecation = ">=2.1.0"
+packaging = ">=20.4"
+
+[[package]]
 name = "deptry"
 version = "0.12.0"
 description = "A command line utility to check for unused, missing and transitive dependencies in a Python project."
@@ -1444,6 +1500,49 @@ files = [
     {file = "distlib-0.3.8-py2.py3-none-any.whl", hash = "sha256:034db59a0b96f8ca18035f36290806a9a6e6bd9d1ff91e45a7f172eb17e51784"},
     {file = "distlib-0.3.8.tar.gz", hash = "sha256:1530ea13e350031b6312d8580ddb6b27a104275a31106523b8f123787f494f64"},
 ]
+
+[[package]]
+name = "dlint"
+version = "0.14.1"
+description = "Dlint is a tool for encouraging best coding practices and helping ensure Python code is secure."
+optional = false
+python-versions = "*"
+files = [
+    {file = "dlint-0.14.1-py3-none-any.whl", hash = "sha256:8caa4271ab6f69bba2785bb565b636eeb40baffd446c85380f848fb4abd6aa2d"},
+]
+
+[package.dependencies]
+flake8 = ">=3.6.0"
+
+[[package]]
+name = "docstring-parser-fork"
+version = "0.0.5"
+description = "Parse Python docstrings in reST, Google and Numpydoc format"
+optional = false
+python-versions = ">=3.6,<4.0"
+files = [
+    {file = "docstring_parser_fork-0.0.5-py3-none-any.whl", hash = "sha256:d521dea9b9cc6c60ab5569fa0c1115e3b84a83e6413266fb111a7c81cb935997"},
+    {file = "docstring_parser_fork-0.0.5.tar.gz", hash = "sha256:395ae8ee6a359e268670ebc4fe9a40dab917a94f6decd7cda8e86f9bea5c9456"},
+]
+
+[[package]]
+name = "domdf-python-tools"
+version = "3.8.0.post2"
+description = "Helpful functions for Python 🐍 🛠️"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "domdf_python_tools-3.8.0.post2-py3-none-any.whl", hash = "sha256:ad2c763c8d00850a7fa92ad95e9891a1918281ea25322c4dbb1734fd32f905dd"},
+    {file = "domdf_python_tools-3.8.0.post2.tar.gz", hash = "sha256:a1fd255ea29f767b08de462d2da39d360262304389227d980bc307ee8aa3366a"},
+]
+
+[package.dependencies]
+natsort = ">=7.0.1"
+typing-extensions = ">=3.7.4.1"
+
+[package.extras]
+all = ["pytz (>=2019.1)"]
+dates = ["pytz (>=2019.1)"]
 
 [[package]]
 name = "eradicate"
@@ -1517,6 +1616,34 @@ pycodestyle = ">=2.11.0,<2.12.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
+name = "flake8-absolute-import"
+version = "1.0.0.2"
+description = "flake8 plugin to require absolute imports"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8-absolute-import-1.0.0.2.tar.gz", hash = "sha256:fcb734ac5a9639fa4ffbc6242ae9d6e9d8063f9cd078d6d218597ee883a99d48"},
+    {file = "flake8_absolute_import-1.0.0.2-py3-none-any.whl", hash = "sha256:b72142db999ec5e0ac4f4ac57fb8776a2959d07346c4d3742c446f206d45fcef"},
+]
+
+[package.dependencies]
+flake8 = ">=5.0"
+
+[[package]]
+name = "flake8-all-not-strings"
+version = "0.0.1"
+description = "flake8 plugin which checks that modules under `__all__` are defined as strings"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flake8_all_not_strings-0.0.1-py2.py3-none-any.whl", hash = "sha256:f5181c135daf4711b122556ed0161e760065aae390b9f7a4713cdbf6b0748236"},
+    {file = "flake8_all_not_strings-0.0.1.tar.gz", hash = "sha256:e7f1903e501d507560dfa7ff9379a9d6a283195880bafe3bf74eb1f5cd836e40"},
+]
+
+[package.dependencies]
+flake8 = ">=3"
+
+[[package]]
 name = "flake8-annotations"
 version = "3.0.1"
 description = "Flake8 Type Annotation Checks"
@@ -1530,6 +1657,20 @@ files = [
 [package.dependencies]
 attrs = ">=21.4"
 flake8 = ">=5.0"
+
+[[package]]
+name = "flake8-assertive"
+version = "2.1.0"
+description = "Flake8 unittest assert method checker"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-assertive-2.1.0.tar.gz", hash = "sha256:72a333fefe1af1f8d46359f4d083f8a8d42d7edb9db84406ce8de17bcffbbd10"},
+    {file = "flake8_assertive-2.1.0-py3-none-any.whl", hash = "sha256:dc0c561010b2c00f7314f7fbf3b3de302efb24154316deb338d07e083fa30b26"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0.0"
 
 [[package]]
 name = "flake8-async"
@@ -1558,6 +1699,20 @@ files = [
 
 [package.dependencies]
 flake8 = "*"
+
+[[package]]
+name = "flake8-broken-line"
+version = "1.0.0"
+description = "Flake8 plugin to forbid backslashes for line breaks"
+optional = false
+python-versions = ">=3.8,<4.0"
+files = [
+    {file = "flake8_broken_line-1.0.0-py3-none-any.whl", hash = "sha256:96c964336024a5030dc536a9f6fb02aa679e2d2a6b35b80a558b5136c35832a9"},
+    {file = "flake8_broken_line-1.0.0.tar.gz", hash = "sha256:e2c6a17f8d9a129e99c1320fce89b33843e2963871025c4c2bb7b8b8d8732a85"},
+]
+
+[package.dependencies]
+flake8 = ">5"
 
 [[package]]
 name = "flake8-bugbear"
@@ -1595,6 +1750,51 @@ flake8 = "*"
 test = ["pytest"]
 
 [[package]]
+name = "flake8-clean-block"
+version = "0.1.2"
+description = "A flake8 plugin that enforces a blank line after if/for/while/with/try blocks"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_clean_block-0.1.2-py2.py3-none-any.whl", hash = "sha256:9684c26a6b087e25f73966fe8f4a38f6abb3e9737a9f781140115e0e2c14a93c"},
+    {file = "flake8_clean_block-0.1.2.tar.gz", hash = "sha256:0a1f8a58be210a013715810a78dda029a65660373f585b7e14e36c3b85c7791d"},
+]
+
+[package.dependencies]
+flake8 = ">=4"
+
+[[package]]
+name = "flake8-coding"
+version = "1.3.2"
+description = "Adds coding magic comment checks to flake8"
+optional = false
+python-versions = "*"
+files = [
+    {file = "flake8-coding-1.3.2.tar.gz", hash = "sha256:b8f4d5157a8f74670e6cfea732c3d9f4291a4e994c8701d2c55f787c6e6cb741"},
+    {file = "flake8_coding-1.3.2-py2.py3-none-any.whl", hash = "sha256:79704112c44d09d4ab6c8965e76a20c3f7073d52146db60303bce777d9612260"},
+]
+
+[package.dependencies]
+flake8 = "*"
+
+[[package]]
+name = "flake8-comments"
+version = "0.1.2"
+description = "Find redundant comments in Python code"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8-comments-0.1.2.tar.gz", hash = "sha256:780b4fc2820ed4ff8a0a98f3fc993f776ede1aecbe0c6cec64d93814b21c9234"},
+    {file = "flake8_comments-0.1.2-py3-none-any.whl", hash = "sha256:42250cb4a51dc59e6db25f1291cfb16b78ea233f72dac32a5bc7b09c691235ea"},
+]
+
+[package.dependencies]
+flake8 = "*"
+
+[package.extras]
+test = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "flake8-comprehensions"
 version = "3.14.0"
 description = "A flake8 plugin to help you write better list/set/dict comprehensions."
@@ -1623,19 +1823,22 @@ files = [
 flake8 = ">=3.0.0"
 
 [[package]]
-name = "flake8-docstrings"
-version = "1.7.0"
-description = "Extension for flake8 which uses pydocstyle to check docstrings"
+name = "flake8-dunder-all"
+version = "0.3.1"
+description = "A Flake8 plugin and pre-commit hook which checks to ensure modules have defined '__all__'."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.6"
 files = [
-    {file = "flake8_docstrings-1.7.0-py2.py3-none-any.whl", hash = "sha256:51f2344026da083fc084166a9353f5082b01f72901df422f74b4d953ae88ac75"},
-    {file = "flake8_docstrings-1.7.0.tar.gz", hash = "sha256:4c8cc748dc16e6869728699e5d0d685da9a10b0ea718e090b1ba088e67a941af"},
+    {file = "flake8_dunder_all-0.3.1-py3-none-any.whl", hash = "sha256:e852845a12a9b2cb0757f9a744c9552ec74e6d5b09ee157b663614cc5ed43a68"},
+    {file = "flake8_dunder_all-0.3.1.tar.gz", hash = "sha256:cf3c39198e6846e666ffd2afe97b94babbb2e2d44f3dcba131fa340c63d67280"},
 ]
 
 [package.dependencies]
-flake8 = ">=3"
-pydocstyle = ">=2.1"
+astatine = ">=0.3.1"
+click = ">=7.1.2"
+consolekit = ">=0.8.1"
+domdf-python-tools = ">=2.6.0"
+flake8 = ">=3.7"
 
 [[package]]
 name = "flake8-dunder-class-obj"
@@ -1683,6 +1886,19 @@ files = [
 
 [package.dependencies]
 flake8 = ">3.0.0"
+
+[[package]]
+name = "flake8-functions-names"
+version = "0.4.0"
+description = "An extension for flake8 that validates functions names, decomposition and conformity with annotations."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_functions_names-0.4.0.tar.gz", hash = "sha256:27aeb881636680a130f609482c1d0f37d1b2e84a76b20b813d079c888ee0a13e"},
+]
+
+[package.dependencies]
+setuptools = "*"
 
 [[package]]
 name = "flake8-future-annotations"
@@ -2099,6 +2315,38 @@ files = [
 
 [package.dependencies]
 flake8 = ">3.0.0"
+
+[[package]]
+name = "flake8-use-fstring"
+version = "1.4"
+description = "Flake8 plugin for string formatting style."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "flake8-use-fstring-1.4.tar.gz", hash = "sha256:6550bf722585eb97dffa8343b0f1c372101f5c4ab5b07ebf0edd1c79880cdd39"},
+]
+
+[package.dependencies]
+flake8 = ">=3"
+
+[package.extras]
+ci = ["coverage (==4.*)", "coveralls", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+dev = ["coverage (==4.*)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+test = ["coverage (==4.*)", "flake8-builtins", "flake8-commas", "flake8-fixme", "flake8-print", "flake8-quotes", "flake8-todo", "pytest (>=4)", "pytest-cov (>=2)"]
+
+[[package]]
+name = "flake8-use-pathlib"
+version = "0.3.0"
+description = "A plugin for flake8 finding use of functions that can be replaced by pathlib module."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-use-pathlib-0.3.0.tar.gz", hash = "sha256:0ef19f255a51601bcf04ff54f25ef8a466dff68210cd95b4f1db36a78ace5223"},
+    {file = "flake8_use_pathlib-0.3.0-py3-none-any.whl", hash = "sha256:c7b6d71575b575f7d70ebf3f1d7f2dd6685e401d3280208f1db9dbb6bfa32608"},
+]
+
+[package.dependencies]
+flake8 = ">=3.6"
 
 [[package]]
 name = "flask"
@@ -3680,6 +3928,17 @@ files = [
 ]
 
 [[package]]
+name = "mistletoe"
+version = "1.3.0"
+description = "A fast, extensible Markdown parser in pure Python."
+optional = false
+python-versions = "~=3.5"
+files = [
+    {file = "mistletoe-1.3.0-py3-none-any.whl", hash = "sha256:a0710d0cdb7d2458cef91cf6b9b897db442927f8778dae890cbbfb1853a51700"},
+    {file = "mistletoe-1.3.0.tar.gz", hash = "sha256:bd0e788add9b4478d19ec792f6d5fb908a20e70abfe61193f29178c55d3adbe9"},
+]
+
+[[package]]
 name = "mistune"
 version = "3.0.2"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
@@ -3846,6 +4105,21 @@ files = [
     {file = "mypy_extensions-1.0.0-py3-none-any.whl", hash = "sha256:4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d"},
     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
 ]
+
+[[package]]
+name = "natsort"
+version = "8.4.0"
+description = "Simple yet flexible natural sorting in Python."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "natsort-8.4.0-py3-none-any.whl", hash = "sha256:4732914fb471f56b5cce04d7bae6f164a592c7712e1c85f9ef585e197299521c"},
+    {file = "natsort-8.4.0.tar.gz", hash = "sha256:45312c4a0e5507593da193dedd04abb1469253b601ecaf63445ad80f0a1ea581"},
+]
+
+[package.extras]
+fast = ["fastnumbers (>=2.0.0)"]
+icu = ["PyICU (>=1.0.0)"]
 
 [[package]]
 name = "nbclient"
@@ -4217,6 +4491,24 @@ files = [
 [package.dependencies]
 numpy = {version = ">=1.26.0", markers = "python_version < \"3.13\""}
 types-pytz = ">=2022.1.1"
+
+[[package]]
+name = "pandas-vet"
+version = "2023.8.2"
+description = "A flake8 plugin to lint pandas in an opinionated way."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pandas_vet-2023.8.2-py3-none-any.whl", hash = "sha256:761c07b4479f24fc507465047111c7d21374ec678b7aba58e454fd5d3f8055fe"},
+    {file = "pandas_vet-2023.8.2.tar.gz", hash = "sha256:ee6b80b40f5a74de41c29393e4dce373447b363faaa3e0677e4f36799ea865c3"},
+]
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=6.0.0"
+
+[package.extras]
+docs = ["jupyter-book", "sphinx"]
 
 [[package]]
 name = "pandocfilters"
@@ -4751,21 +5043,23 @@ files = [
 ]
 
 [[package]]
-name = "pydocstyle"
-version = "6.3.0"
-description = "Python docstring style checker"
+name = "pydoclint"
+version = "0.4.0"
+description = "A Python docstring linter that checks arguments, returns, yields, and raises sections"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "pydocstyle-6.3.0-py3-none-any.whl", hash = "sha256:118762d452a49d6b05e194ef344a55822987a462831ade91ec5c06fd2169d019"},
-    {file = "pydocstyle-6.3.0.tar.gz", hash = "sha256:7ce43f0c0ac87b07494eb9c0b462c0b73e6ff276807f204d6b53edc72b7e44e1"},
+    {file = "pydoclint-0.4.0-py2.py3-none-any.whl", hash = "sha256:2b266a1332f7c8a1badea115b164a230908004b349750c8ede553a96c4d991b4"},
+    {file = "pydoclint-0.4.0.tar.gz", hash = "sha256:d645845e316463a151e0828013b4ea9cf4510626a6c4a5abbf7c0447ecafdd3b"},
 ]
 
 [package.dependencies]
-snowballstemmer = ">=2.2.0"
+click = ">=8.0.0"
+docstring-parser-fork = ">=0.0.5"
+flake8 = {version = ">=4", optional = true, markers = "extra == \"flake8\""}
 
 [package.extras]
-toml = ["tomli (>=1.2.3)"]
+flake8 = ["flake8 (>=4)"]
 
 [[package]]
 name = "pyflakes"
@@ -5712,17 +6006,6 @@ files = [
 ]
 
 [[package]]
-name = "snowballstemmer"
-version = "2.2.0"
-description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
-optional = false
-python-versions = "*"
-files = [
-    {file = "snowballstemmer-2.2.0-py2.py3-none-any.whl", hash = "sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a"},
-    {file = "snowballstemmer-2.2.0.tar.gz", hash = "sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1"},
-]
-
-[[package]]
 name = "soupsieve"
 version = "2.5"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -6288,6 +6571,22 @@ torch = "*"
 [package.extras]
 tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)"]
 tutorials = ["matplotlib", "pandas", "tabulate"]
+
+[[package]]
+name = "tryceratops"
+version = "2.3.2"
+description = "Prevent Exception Handling AntiPatterns"
+optional = false
+python-versions = ">=3.8.1,<4.0"
+files = [
+    {file = "tryceratops-2.3.2-py3-none-any.whl", hash = "sha256:032fa3cf3659c9865a07b59057edf9efe9e38631e6b977fdae04064888cb62ba"},
+    {file = "tryceratops-2.3.2.tar.gz", hash = "sha256:e9d77811d8f7d886c4ceaeadccd2675c6f2d794344775463faf1cb969e49d865"},
+]
+
+[package.dependencies]
+click = ">=7"
+rich = ">=10.14.0"
+toml = ">=0.10.2"
 
 [[package]]
 name = "types-colorama"
@@ -6883,4 +7182,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "3a7fb691de515e4a6fcf2f8f6d8446f7d7f82312c6a334684e305dd5a2be154a"
+content-hash = "5e8dcdb0cb994d760d2900e8b5caefc569b9dacc8ee475740b4a59fb53aae9d2"

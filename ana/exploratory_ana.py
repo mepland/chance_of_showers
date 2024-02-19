@@ -203,7 +203,7 @@ dfp_data["mean_pressure_value_normalized"] = dfp_data["mean_pressure_value"].app
     clip=True,
 )
 
-# unclipped
+# normalize pressure, unclipped
 dfp_data["mean_pressure_value_normalized_unclipped"] = dfp_data["mean_pressure_value"].apply(
     normalize_pressure_value,
     observed_pressure_min=OBSERVED_PRESSURE_MIN,
@@ -401,6 +401,9 @@ else:
 import prophet
 from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
+__all__: list[str] = []
+
+
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
@@ -430,14 +433,13 @@ if TYPE_CHECKING:
     assert isinstance(  # noqa: SCS108 # nosec assert_used
         model_wrapper_Prophet.model, darts_Prophet
     )
+
 model_prophet = model_wrapper_Prophet.model.model
 
 dfp_prophet_future = model_prophet.make_future_dataframe(
     periods=n_prediction_steps, freq=time_bin_size
 )
-dfp_prophet_future = pd.merge(
-    dfp_prophet_future, dfp_train[["ds", "had_flow"]], on="ds", how="left"
-)
+dfp_prophet_future = dfp_prophet_future.merge(dfp_train[["ds", "had_flow"]], on="ds", how="left")
 dfp_prophet_future["had_flow"] = dfp_prophet_future["had_flow"].fillna(0)
 
 dfp_predict = model_prophet.predict(dfp_prophet_future)
@@ -1395,8 +1397,10 @@ dfp_gpu = load_json_log_to_dfp(
 # %%
 if dfp_cpu is None:
     raise ValueError("Could not load dfp_cpu")
+
 if dfp_gpu is None:
     raise ValueError("Could not load dfp_gpu")
+
 if TYPE_CHECKING:
     assert isinstance(dfp_cpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
     assert isinstance(dfp_gpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
@@ -1412,6 +1416,7 @@ ordered_cols = ["i_point"]
 for _0 in paired_cols:
     for _1 in suffixes:
         ordered_cols.append(f"{_0}{_1}")
+
 dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not in ordered_cols]]
 dfp_merged = dfp_merged.loc[
     (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])
@@ -1545,13 +1550,13 @@ plot_chance_of_showers_time_series(
 # %%
 hist_dicts = [
     {
-        "values": dfp_data.loc[dfp_data["had_flow"] != 1, "mean_pressure_value"].values,
+        "values": dfp_data.loc[dfp_data["had_flow"] != 1, "mean_pressure_value"].to_numpy(),
         "label": "No Flow",
         "density": True,
         "c": MC_FLOW_0,
     },
     {
-        "values": dfp_data.loc[dfp_data["had_flow"] == 1, "mean_pressure_value"].values,
+        "values": dfp_data.loc[dfp_data["had_flow"] == 1, "mean_pressure_value"].to_numpy(),
         "label": "Had Flow",
         "density": True,
         "c": MC_FLOW_1,

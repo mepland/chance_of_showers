@@ -4,6 +4,9 @@ import time
 
 from gpiozero import Button
 
+__all__: list[str] = []
+
+
 # Configuration
 GPIO_PIN = 19
 WAIT_TIME = 5  # [s] Time to wait between each refresh

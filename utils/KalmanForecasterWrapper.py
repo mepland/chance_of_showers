@@ -14,6 +14,8 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
+__all__ = ["KalmanForecasterWrapper"]
+
 
 class KalmanForecasterWrapper(TSModelWrapper):
     """KalmanForecaster wrapper.
@@ -38,13 +40,6 @@ class KalmanForecasterWrapper(TSModelWrapper):
 
     def __init__(self: "KalmanForecasterWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
-        """Int method.
-
-        Args:
-            **kwargs: Keyword arguments.
-                Can be a parent TSModelWrapper instance plus the undefined parameters,
-                or all the necessary parameters.
-        """
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls

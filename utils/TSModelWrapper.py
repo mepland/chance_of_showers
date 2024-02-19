@@ -42,6 +42,9 @@ from utils.shared_functions import (
     rebin_chance_of_showers_time_series,
 )
 
+__all__ = ["TSModelWrapper"]
+
+
 ################################################################################
 # Setup global parameters
 
@@ -67,7 +70,7 @@ logger_cmdstanpy.addHandler(logging.NullHandler())
 logger_cmdstanpy.propagate = False
 logger_cmdstanpy.setLevel(logging.ERROR)
 
-# logging
+# stream logging
 logger_ts_wrapper = logging.getLogger(__name__)
 logger_ts_wrapper.setLevel(logging.INFO)
 if not logger_ts_wrapper.handlers:
@@ -269,7 +272,7 @@ NN_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # All NN
+    # All NN hyperparams
     "input_chunk_length": {
         "min": 1,
         "max": 60,
@@ -309,7 +312,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 5,
         "type": int,
     },
-    # NBEATSModel and NHiTSModel
+    # NBEATSModel and NHiTSModel hyperparams
     "num_stacks": {
         "min": 1,
         "max": 50,
@@ -346,7 +349,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # TCNModel
+    # TCNModel hyperparams
     "kernel_size": {  # and DLinearModel
         "min": 1,
         "max": 100,
@@ -371,7 +374,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # TransformerModel
+    # TransformerModel hyperparams
     "d_model": {
         "min": 0,
         "max": 128,
@@ -402,7 +405,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 512,
         "type": int,
     },
-    # TFTModel
+    # TFTModel hyperparams
     "hidden_size": {  # and TiDEModel
         "min": 1,
         "max": 256,
@@ -433,21 +436,21 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 8,
         "type": int,
     },
-    # DLinearModel and NLinearModel
+    # DLinearModel and NLinearModel hyperparams
     "const_init": {
         "min": 0,
         "max": 1,
         "default": 1,
         "type": bool,
     },
-    # NLinearModel
+    # NLinearModel hyperparams
     "normalize": {
         "min": 0,
         "max": 1,
         "default": 0,
         "type": bool,
     },
-    # TiDEModel
+    # TiDEModel hyperparams
     "decoder_output_dim": {
         "min": 1,
         "max": 50,
@@ -480,7 +483,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 0,
         "type": bool,
     },
-    # RNNModel and BlockRNNModel
+    # RNNModel and BlockRNNModel hyperparams
     "hidden_dim": {
         "min": 1,
         "max": 50,
@@ -523,7 +526,7 @@ TREE_REQUIRED_HYPERPARAMS: Final = [
 ]
 
 TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # All Trees
+    # All Trees hyperparams
     "lags": {
         "min": 1,
         "max": 100,
@@ -542,7 +545,7 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,
         "type": bool,
     },
-    # RandomForest
+    # RandomForest hyperparams
     "n_estimators": {
         "min": 1,
         "max": 300,
@@ -558,21 +561,21 @@ TREE_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
 }
 
 OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
-    # KalmanForecaster
+    # KalmanForecaster hyperparams
     "dim_x": {
         "min": 1,
         "max": 10,
         "default": 1,
         "type": int,
     },
-    # FFT
+    # FFT hyperparams
     "nr_freqs_to_keep": {
         "min": 1,
         "max": 100,
         "default": 10,
         "type": int,
     },
-    # FourTheta
+    # FourTheta hyperparams
     "theta": {
         "min": 0,
         "max": 10,
@@ -591,7 +594,7 @@ OTHER_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 1,  # Multiplicative
         "type": int,
     },
-    # StatsForecastAutoTheta
+    # StatsForecastAutoTheta hyperparams
     "season_length_StatsForecastAutoTheta": {
         "min": 0,  # 24 hours, set in _assemble_hyperparams()
         "max": 1,  # Default
@@ -621,8 +624,10 @@ integer_hyperparams = [
 for _k, _v in VARIABLE_HYPERPARAMS.items():
     if _k == "y_bin_edges":
         continue
+
     if TYPE_CHECKING:
         assert isinstance(_v, dict)  # noqa: SCS108 # nosec assert_used
+
     if _v.get("type") == bool:
         boolean_hyperparams.append(_k)
     elif _v.get("type") == int:
@@ -632,7 +637,29 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
 ################################################################################
 # parent class
 class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
-    """Parent class for all time series wrappers."""
+    """Parent class for all time series wrappers.
+
+    Args:
+        dfp_trainable_evergreen: Time series data.
+        dt_val_start_datetime_local: Date to cut the validation from the training set.
+        work_dir_base: Top level directory for saving model files.
+        random_state: Random seed.
+        date_fmt: String format of dates.
+        time_fmt: String format of times.
+        fname_datetime_fmt: String format of date times for file names.
+        local_timezone: Local timezone.
+        model_class: Dart model class.
+        is_nn: Flag for if the model is a neural network (NN).
+        verbose: Verbosity level.
+        work_dir: Path to directory to save this model's files.
+        model_name_tag: Descriptive tag to add to the model name, optional.
+        required_hyperparams_data: List of required data hyperparameters for this model.
+        required_hyperparams_model: List of required hyperparameters for this model's constructor.
+        allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
+        variable_hyperparams: Dictionary of variable hyperparameters for this model.
+        fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
+        hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
+    """
 
     def __init__(
         self: "TSModelWrapper",
@@ -659,31 +686,9 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         fixed_hyperparams: dict | None = None,
         hyperparams_conditions: list[dict] | None = None,
     ) -> None:
-        """Int method.
-
-        Args:
-            dfp_trainable_evergreen: Time series data.
-            dt_val_start_datetime_local: Date to cut the validation from the training set.
-            work_dir_base: Top level directory for saving model files.
-            random_state: Random seed.
-            date_fmt: String format of dates.
-            time_fmt: String format of times.
-            fname_datetime_fmt: String format of date times for file names.
-            local_timezone: Local timezone.
-            model_class: Dart model class.
-            is_nn: Flag for if the model is a neural network (NN).
-            verbose: Verbosity level.
-            work_dir: Path to directory to save this model's files.
-            model_name_tag: Descriptive tag to add to the model name, optional.
-            required_hyperparams_data: List of required data hyperparameters for this model.
-            required_hyperparams_model: List of required hyperparameters for this model's constructor.
-            allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
-            variable_hyperparams: Dictionary of variable hyperparameters for this model.
-            fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
-            hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
-        """
         if required_hyperparams_data is None:
             required_hyperparams_data = []
+
         if required_hyperparams_model is None:
             required_hyperparams_model = []
 
@@ -780,13 +785,13 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
-    def get_n_prediction_steps_and_time_bin_size(
+    def get_n_prediction_steps_and_time_bin_size(  # noqa: FNE007
         self: "TSModelWrapper",
     ) -> tuple[int, datetime.timedelta]:
         """Get number of prediction steps from prediction_length_in_minutes and time_bin_size, used for Prophet predictions.
 
         Raises:
-            ValueError: Bad configuration.
+            TypeError: Bad configuration.
 
         Returns:
             Number of prediction steps and time bin size.
@@ -794,15 +799,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if not (
             isinstance(self.fixed_hyperparams, dict) and isinstance(self.chosen_hyperparams, dict)
         ):
-            raise ValueError("Need to assemble the hyperparams first!")
+            raise TypeError("Need to assemble the hyperparams first!")
 
         prediction_length_in_minutes = self.fixed_hyperparams.get("prediction_length_in_minutes")
         if not isinstance(prediction_length_in_minutes, (int, float)):
-            raise ValueError("Could not load prediction_length_in_minutes from fixed_hyperparams!")
+            raise TypeError("Could not load prediction_length_in_minutes from fixed_hyperparams!")
 
         time_bin_size = self.chosen_hyperparams.get("time_bin_size")
         if not isinstance(time_bin_size, datetime.timedelta):
-            raise ValueError("Could not load time_bin_size from chosen_hyperparams!")
+            raise TypeError("Could not load time_bin_size from chosen_hyperparams!")
 
         prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
         n_prediction_steps = math.ceil(prediction_length.seconds / time_bin_size.seconds)
@@ -842,6 +847,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
+
         _fixed_hyperparams["max_time"] = max_time
 
         self.fixed_hyperparams = _fixed_hyperparams
@@ -859,6 +865,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
+
         _fixed_hyperparams["accelerator"] = accelerator
 
         self.fixed_hyperparams = _fixed_hyperparams
@@ -880,6 +887,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
             _fixed_hyperparams = {}
+
         _fixed_hyperparams["enable_torch_model_summary"] = enable_torch_model_summary
         _fixed_hyperparams["enable_torch_progress_bars"] = enable_torch_progress_bars
 
@@ -893,6 +901,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         logger_level = logging.WARNING
         if not enable_torch_warnings:
             logger_level = logging.ERROR
+
         logging.getLogger("pytorch_lightning.utilities.rank_zero").setLevel(logger_level)
         logging.getLogger("pytorch_lightning.accelerators.cuda").setLevel(logger_level)
 
@@ -913,9 +922,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         if work_dir_relative_to_base is not None and work_dir_absolute is not None:
             raise ValueError("Can not use both parameters, choose one!")
+
         if work_dir_relative_to_base is not None:
             if self.work_dir_base is None:
                 raise ValueError("Must have a valid work_dir_base!")
+
             self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
         elif work_dir_absolute is not None:
             self.work_dir = work_dir_absolute
@@ -937,13 +948,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the generic name for this model, without a time stamp.
 
         Raises:
-            ValueError: Bad configuration.
+            TypeError: Bad configuration.
 
         Returns:
             The generic name for this model, without a time stamp.
         """
         if not issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
-            raise ValueError("Unknown model name, should not happen!")
+            raise TypeError(
+                "self.model_class is not ForecastingModel, can not get model name, should not happen!"
+            )
 
         if TYPE_CHECKING:
             assert isinstance(  # noqa: SCS108 # nosec assert_used
@@ -1007,6 +1020,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         required_hyperparams_all = []
         if isinstance(self.required_hyperparams_data, list):
             required_hyperparams_all += self.required_hyperparams_data
+
         if isinstance(self.required_hyperparams_model, list):
             required_hyperparams_all += self.required_hyperparams_model
 
@@ -1080,6 +1094,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 """
                 if n % input_divisor == 0:  # noqa: S001
                     return int(input_divisor)
+
                 divisors = sympy.divisors(n)
                 delta = [abs(input_divisor - _) for _ in divisors]
                 return divisors[delta.index(min(delta))]
@@ -1105,6 +1120,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
                     assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 1:  # y is binned
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
@@ -1133,6 +1149,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     assert isinstance(  # noqa: SCS108 # nosec assert_used
                         prediction_length_in_minutes, float
                     )
+
                 prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
                 hyperparam_value = math.ceil(
                     prediction_length.seconds / self.chosen_hyperparams["time_bin_size"].seconds
@@ -1201,6 +1218,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
                     assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
                     # 1 day
@@ -1212,6 +1230,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     pass
                 else:
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
+
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -1225,6 +1244,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         hyperparam_value = ModelMode.ADDITIVE
                     else:
                         raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if not isinstance(hyperparam_value, float):
@@ -1237,6 +1257,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         hyperparam_value = SeasonalityMode.ADDITIVE
                     else:
                         raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if not isinstance(hyperparam_value, float):
@@ -1249,6 +1270,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         raise ValueError(
                             f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
                         )
+
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
 
@@ -1257,6 +1279,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 for condition_dict in self.hyperparams_conditions:
                     if condition_dict["hyperparam"] != hyperparam:
                         continue
+
                     # This hyperparam has conditions set on other hyperparams, we will ensure they is satisfied
                     rhs_value = self.chosen_hyperparams.get(
                         condition_dict["rhs"], get_hyperparam_value(condition_dict["rhs"])
@@ -1270,10 +1293,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                                 hyperparam,
                             )
                             new_value = 0
+
                     elif op_func == operator.ge:  # pylint: disable=comparison-with-callable
                         new_value = rhs_value
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
+
                     if not op_func(hyperparam_value, rhs_value):
                         logger_ts_wrapper.warning(
                             "For hyperparam %s, setting value = %s to satisfy condition:\n%s",
@@ -1304,10 +1329,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 "m_AutoARIMA",
             ]:
                 continue
+
             if _k in boolean_hyperparams:
                 self.chosen_hyperparams[_k] = 0 < _v
             elif _k in integer_hyperparams:
                 self.chosen_hyperparams[_k] = int(_v)
+
             if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
                 pass
             elif _k in self.allowed_variable_hyperparams:
@@ -1319,13 +1346,16 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         raise ValueError(
                             f"Hyperparameter {_k} with value {_v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
                         )
+
                 elif allowed_values is not None and isinstance(allowed_values, list):
                     if not set(_v).issubset(set(allowed_values)):
                         raise ValueError(
                             f"Hyperparameter {_k} with value {_v} is not allowed, expected to be a subset of {allowed_values}!"
                         )
+
                 else:
                     raise ValueError(f"Hyperparameter {_k} with value {_v} can not be checked!")
+
             if _k == "time_bin_size_in_minutes" and 60 % _v != 0:
                 raise ValueError(
                     f"Hyperparameter {_k} with value {_v} is not allowed, {60 % _v = } should be 0!"
@@ -1342,9 +1372,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         if kwargs:
             self.variable_hyperparams = kwargs
+
         self._assemble_hyperparams()
         if TYPE_CHECKING:
             assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
+
         return self.chosen_hyperparams
 
     def translate_hyperparameters_to_numeric(
@@ -1371,6 +1403,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     hyperparam_value = 2
                 else:
                     raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+
             elif hyperparam == "season_mode_FourTheta":
                 if hyperparam_value == SeasonalityMode.NONE:
                     hyperparam_value = 0
@@ -1380,6 +1413,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     hyperparam_value = 2
                 else:
                     raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 if hyperparam_value == "multiplicative":
                     hyperparam_value = 1
@@ -1389,6 +1423,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     raise ValueError(
                         f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
                     )
+
             hyperparams_dict[hyperparam] = hyperparam_value
 
         return hyperparams_dict
@@ -1444,6 +1479,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
+
             gc.collect()
 
             _model_class = copy.deepcopy(self.model_class)
@@ -1507,6 +1543,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 if y_presentation == 1:  # y is binned
                     interpolate_method = "pad"
                     interpolate_limit_direction = "forward"
+
                 logger_ts_wrapper.debug(
                     "Missing %.1g%% of values, filling via %s interpolation.",
                     100.0 * frac_missing,
@@ -1557,16 +1594,17 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     model_covariates_kwargs[f"val_{covariates_type}_covariates"] = (
                         dart_series_covariates_val
                     )
+
                 prediction_covariates_kwargs[f"{covariates_type}_covariates"] = (
                     dart_series_covariates_train.append(dart_series_covariates_val)
                 )
 
-            # train
             train_kwargs = {}
             if self.is_nn:
                 train_kwargs["val_series"] = dart_series_y_val
                 train_kwargs["verbose"] = self.verbose
 
+            # actually train!
             _ = self.model.fit(
                 dart_series_y_train,
                 **train_kwargs,
@@ -1599,6 +1637,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.ipc_collect()
+
             gc.collect()
 
         return loss

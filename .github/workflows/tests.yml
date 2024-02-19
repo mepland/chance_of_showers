@@ -27,6 +27,7 @@ jobs:
         node_version: ["lts/*"]
 
     steps:
+      # Setup
       - name: Check out source repository
         uses: actions/checkout@v3
 
@@ -41,86 +42,175 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
+      - name: Install Python Dependencies
+        run: poetry install --with daq,web,ana,dev
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          tool-cache: false
+          # does not break anything, and saves a lot of space, but runs slowly
+          # do not use unless necessary
+          large-packages: false
+
+          # needed for markdownlint-cli
+          docker-images: false
+
+          # test if this gets the poetry cache back
+          swap-storage: false
+
+          # these will be cleaned
+          android: true
+          dotnet: true
+          haskell: true
+
+      # File filters
+      - name: Paths Changes Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: shell
+          filters: |
+            poetry:
+            - added|modified: '**/pyproject.toml'
+            - added|modified: '**/poetry.lock'
+            python:
+            - added|modified: '**.py'
+            javascript:
+            - added|modified: '**.js'
+            html:
+            - added|modified: '**.html'
+            prettier:
+            - added|modified: '**.html'
+            - added|modified: '**.css'
+            - added|modified: '**.scss'
+            - added|modified: '**.json'
+            yaml:
+            - added|modified: '**.yaml'
+            - added|modified: '**.yml'
+            makefile:
+            - added|modified: '**/Makefile'
+            - added|modified: '**/makefile'
+            markdown:
+            - added|modified: '**.md'
+            tex:
+            - added|modified: '**.tex'
+            rst:
+            - added|modified: '**.rst'
+
+      # Filtered setup
       - name: Install Node
+        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
           check-latest: true
 
-      - name: Install Python Dependencies
-        run: poetry install --with daq,web,ana,dev
-
       - name: Install Node Dependencies
+        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: sudo npm install --global standard prettier
 
-      - name: poetry
-        run: poetry check && poetry lock --no-update
-
-      - name: isort
-        run: poetry run isort .
-
-      - name: black
-        run: poetry run black --check --diff .
-
-      - name: blacken-docs
-        run: poetry run blacken-docs --line-length=100 $(git ls-files '*.py') $(git ls-files '*.md') $(git ls-files '*.rst')  # yamllint disable-line rule:line-length
-
-      - name: flake8
-        run: poetry run flake8 --version && poetry run flake8
-
-      - name: mypy
-        run: poetry run mypy .
-
-      - name: pylint
-        run: poetry run pylint $(git ls-files '*.py')
-
-      - name: bandit
-        run: poetry run bandit -r .
-
-      - name: vulture
-        run: poetry run vulture
-
-      - name: pyupgrade
-        run: poetry run pyupgrade
-
-      - name: deptry
-        run: poetry run deptry .
-
+      # All files
       - name: detect-secrets
         run: poetry run detect-secrets-hook --exclude-lines 'integrity='
-
-      - name: yamllint
-        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
 
       - name: blocklint
         run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
-      - name: markdownlint-cli
-        uses: nosborn/github-action-markdown-cli@v3.3.0
-        with:
-          files: .
-          dot: true
-          config_file: .dev_config/.markdownlint.yaml
-          ignore_files: LICENSE.md
+      # poetry
+      - name: poetry
+        if: steps.filter.outputs.poetry == 'true'
+        run: poetry check && poetry lock --no-update
 
+      # python
+      - name: isort
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run isort ${{ steps.filter.outputs.python_files }}
+
+      - name: black
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
+
+      - name: flake8
+        if: steps.filter.outputs.python == 'true'
+        run: |
+            echo "::group::version and plugins"
+            poetry run flake8 --version
+            echo "::endgroup::"
+            poetry run flake8 ${{ steps.filter.outputs.python_files }}
+
+      - name: mypy
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
+
+      - name: pylint
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run pylint ${{ steps.filter.outputs.python_files }}
+
+      - name: bandit
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run bandit -r ${{ steps.filter.outputs.python_files }}
+
+      - name: vulture
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run vulture .  # Needs to run on whole package
+
+      - name: pyupgrade
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run pyupgrade ${{ steps.filter.outputs.python_files }}
+
+      - name: deptry
+        if: steps.filter.outputs.python == 'true'
+        run: poetry run deptry .  # Runs on whole package
+
+      # javascript
       - name: standard
-        run: standard
+        if: steps.filter.outputs.javascript == 'true'
+        run: standard ${{ steps.filter.outputs.javascript_files }}
 
+      # html
       - name: html5validator
+        if: steps.filter.outputs.html == 'true'
         uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
         with:
           config: .dev_config/.html5validator.yaml
+          # only configurable to run on paths, so just run on whole package
 
+      # prettier: html css scss json
       - name: prettier
+        if: steps.filter.outputs.prettier == 'true'
         id: prettier
-        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check .  # yamllint disable-line rule:line-length
+        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check ${{ steps.filter.outputs.prettier_files }}  # yamllint disable-line rule:line-length
 
+      # yaml
+      - name: yamllint
+        if: steps.filter.outputs.yaml == 'true'
+        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
+
+      # makefile
       - name: checkmake
-        uses: Uno-Takashi/checkmake-action@main
+        if: steps.filter.outputs.makefile == 'true'
+        uses: Uno-Takashi/checkmake-action@main  # Can not pass multiple files
 
+      # shell files - no extension to filter on, always run
       - name: shellcheck shfmt checkbashisms
         uses: luizm/action-sh-checker@master  # blocklint: pragma
         env:
           SHFMT_OPTS: -bn -ci -sr -s -d
         with:
           sh_checker_checkbashisms_enable: true
+
+      # docs
+      - name: markdownlint-cli
+        if: steps.filter.outputs.markdown == 'true'
+        uses: nosborn/github-action-markdown-cli@v3.3.0
+        with:
+          files: ${{ steps.filter.outputs.markdown_files }}
+          dot: true
+          config_file: .dev_config/.markdownlint.yaml
+          ignore_files: LICENSE.md
+
+      - name: blacken-docs
+        if: steps.filter.outputs.python_files == 'true' || steps.filter.outputs.markdown_files== 'true' || steps.filter.outputs.rst_files== 'true' || steps.filter.outputs.tex_files== 'true'  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} $${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
