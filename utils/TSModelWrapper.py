@@ -90,14 +90,10 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
 # loss function
 LOSS_FN_STR: Final = "MSE"
 LOSS_FN: Final = METRIC_COLLECTION[LOSS_FN_STR]
-print("TODO LOSS_FN")
-print(type(LOSS_FN))
-print(LOSS_FN)
 
 # Set a finite, but horrible, target = -loss for when the training fails to complete.
 # np.finfo(np.float64).min + 1 does not work, sklearn errors in run_bayesian_opt()
 BAD_TARGET: Final = -999.0
-
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
 # copy docs from
