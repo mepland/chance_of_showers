@@ -401,7 +401,6 @@ else:
 import prophet
 from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
-
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
