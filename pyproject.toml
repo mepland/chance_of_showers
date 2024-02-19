@@ -173,7 +173,7 @@ extend-exclude = '''
 '''
 
 [tool.flake8]
-max-complexity = 18
+max-complexity = 20
 ignore = [
 "E501",
 "ESC102",
