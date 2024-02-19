@@ -198,7 +198,7 @@ extend-select = [
 "B908",
 ]
 per-file-ignores = [
-    "ana/exploratory_ana.py:E402,E800",
+    "ana/exploratory_ana.py:E402,E800,DALL000",
     "ana/drive_bayesian_opt.py:E402,CM001",
 ]
 exclude = [
