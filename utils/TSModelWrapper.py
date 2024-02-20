@@ -1384,7 +1384,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def translate_hyperparameters_to_numeric(
         self: "TSModelWrapper", hyperparams_dict: dict
     ) -> dict:
-        """Translate odd hyperparam_values back to their original numeric representations, used in Bayesian optimization.
+        """Translate strange hyperparam_values back to their original numeric representations, used in Bayesian optimization.
 
         Args:
             hyperparams_dict: Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.

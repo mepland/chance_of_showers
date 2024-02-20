@@ -616,7 +616,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
         n_points += 1
         if probed_point:
-            # translate odd hyperparam_values back to original representation
+            # translate strange hyperparam_values back to original representation
             probed_point = model_wrapper.translate_hyperparameters_to_numeric(probed_point)
 
             if not (
