@@ -17,6 +17,7 @@
 import datetime
 import pathlib
 import pprint
+import re
 import shutil
 import sys
 import warnings
@@ -25,6 +26,7 @@ from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import xlsxwriter
 from hydra import compose, initialize
 from IPython.display import Image, display
 
@@ -40,7 +42,7 @@ from utils.shared_functions import (
 )
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper
+from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper
@@ -1311,7 +1313,9 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # ## Review Best Results
 
 # %%
-dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
+dfp_best_points, dfp_runs_dict = load_best_points(
+    MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME, use_csv=True
+)
 
 # %%
 with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
@@ -1329,39 +1333,77 @@ with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
 # %%
 f_excel = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "search_results.xlsx"
 with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
+    # Setup formats
     workbook = writer.book
-
     elapsed_minutes_fmt = workbook.add_format({"num_format": "0.00"})
-    target_fmt = workbook.add_format({"num_format": "0.000000"})
+    loss_fmt = workbook.add_format({"num_format": "0.000000"})
+    loss_color_fmt = {
+        "type": "3_color_scale",
+        "min_color": "#57bb8a",
+        "mid_color": "#ffffff",
+        "max_color": "#e67c73",
+    }
     target_color_fmt = {
         "type": "3_color_scale",
-        "min_type": "num",
         "min_value": -0.05,
-        "min_color": "#e67c73",
-        "mid_type": "num",
+        "min_color": loss_color_fmt["max_color"],
         "mid_value": -0.01,
-        "mid_color": "#ffffff",
-        "max_type": "num",
+        "mid_color": loss_color_fmt["mid_color"],
         "max_value": -0.005,
-        "max_color": "#57bb8a",
+        "max_color": loss_color_fmt["min_color"],
     }
+    for k in ["min_type", "mid_type", "max_type"]:
+        loss_color_fmt[k] = "num"
+        target_color_fmt[k] = "num"
 
+    def _fmt_worksheet(worksheet: xlsxwriter.worksheet.Worksheet, dfp_source: pd.DataFrame) -> None:
+        """Format a log worksheet for this project
+
+        Args:
+            worksheet: Input worksheet.
+            dfp_source: Orignal dataframe.
+        """
+        # Format loss columns
+        for i_col, col_str in enumerate(dfp_source.columns):
+            if not re.match(r"^.*?_val$", col_str):
+                continue
+
+            _dfp = dfp_source.loc[dfp_source[col_str] != -BAD_TARGET]
+            _min = _dfp[col_str].min()
+            _max = _dfp[col_str].max()
+            loss_color_fmt["min_value"] = _min
+            loss_color_fmt["mid_value"] = _min + (_max - _min) / 2.0
+            loss_color_fmt["max_value"] = _max
+
+            worksheet.set_column(i_col, i_col, None, loss_fmt)
+            worksheet.conditional_format(1, i_col, dfp_source.shape[0], i_col, loss_color_fmt)
+
+        # Format target columns
+        for i_col, col_str in enumerate(dfp_source.columns):
+            if col_str not in ["target", "best_target"]:
+                continue
+
+            worksheet.set_column(i_col, i_col, None, loss_fmt)
+            worksheet.conditional_format(1, i_col, dfp_source.shape[0], i_col, target_color_fmt)
+
+        # Format minutes elapsed columns
+        for i_col, col_str in enumerate(dfp_source.columns):
+            if not re.match(r"^minutes_elapsed_.*$", col_str):
+                continue
+
+            worksheet.set_column(i_col, i_col, None, elapsed_minutes_fmt)
+
+        # Filter columns and fit column widths
+        worksheet.autofilter(0, 0, dfp_source.shape[0], dfp_source.shape[1] - 1)
+        worksheet.autofit()
+
+    # Write and format sheets
     dfp_best_points.to_excel(writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False)
-    worksheet = writer.sheets["Best Points"]
-    worksheet.set_column(1, 1, None, target_fmt)
-    worksheet.conditional_format(1, 1, dfp_best_points.shape[0], 1, target_color_fmt)
-    worksheet.set_column(5, 5, None, elapsed_minutes_fmt)
-    worksheet.autofilter(0, 0, dfp_best_points.shape[0], dfp_best_points.shape[1] - 1)
-    worksheet.autofit()
+    _fmt_worksheet(writer.sheets["Best Points"], dfp_best_points)
 
     for model_name, dfp in dfp_runs_dict.items():
         dfp.to_excel(writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
-        worksheet = writer.sheets[model_name]
-        worksheet.set_column(1, 1, None, target_fmt)
-        worksheet.conditional_format(1, 1, dfp.shape[0], 1, target_color_fmt)
-        worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
-        worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
-        worksheet.autofit()
+        _fmt_worksheet(writer.sheets[model_name], dfp)
 
 # %% [markdown]
 # ***
