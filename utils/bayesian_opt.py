@@ -541,7 +541,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             datetime_str = "NULL"
 
         new_row = [datetime_str, i_iter, i_point, int(is_clean), target]
-        metrics_val_sorted = {k: metrics_val[k] for k in METRICS_KEYS}
+        metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
         new_row += list(metrics_val_sorted.values())
         point = dict(sorted(point.items()))
         new_row += list(point.values())
