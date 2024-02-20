@@ -111,6 +111,56 @@ BAYESIAN_OPT_PREFIX: Final = "bayesian_opt_"
 
 BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
+BAYES_OPT_LOG_COLS_FIXED: Final = ["datetime", "i_iter", "i_point", "is_clean", "target"] + [
+    f"{_}_val" for _ in METRICS_KEYS
+]
+
+
+def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
+    """Clean and augment log dataframe.
+
+    Args:
+        dfp: Log as pandas dataframe.
+
+    Returns:
+        Log as pandas dataframe, cleaned and augmented.
+    """
+    if dfp is None:
+        return None
+
+    if "is_clean" in dfp.columns:
+        dfp["is_clean"] = dfp["is_clean"].astype(bool)
+
+    # The datetime format here is set by bayes_opt
+    dfp["datetime"] = pd.to_datetime(dfp["datetime"], format="%Y-%m-%d %H:%M:%S")
+
+    dfp["minutes_elapsed_total"] = (dfp["datetime"] - dfp["datetime"].min()) / pd.Timedelta(
+        minutes=1
+    )
+
+    dfp_minutes_elapsed = (
+        dfp.groupby(["datetime"]).agg({"minutes_elapsed_total": "max"}).reset_index()
+    )
+    dfp_minutes_elapsed = dfp_minutes_elapsed.sort_values(
+        by="datetime", ascending=True
+    ).reset_index(drop=True)
+
+    dfp_minutes_elapsed["minutes_elapsed_iteration"] = (
+        dfp_minutes_elapsed["minutes_elapsed_total"].diff().fillna(0.0)
+    )
+
+    dfp = (
+        dfp.drop("minutes_elapsed_total", axis=1)
+        .merge(dfp_minutes_elapsed, how="left", on="datetime")
+        .sort_values(by="datetime", ascending=True)
+        .reset_index(drop=True)
+    )
+
+    return dfp[
+        [_ for _ in BAYES_OPT_LOG_COLS_FIXED if _ in dfp.columns]
+        + [_ for _ in dfp.columns if _ not in BAYES_OPT_LOG_COLS_FIXED]
+    ]
+
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from json file as a pandas dataframe.
@@ -135,7 +185,15 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
             for _k0, _v0 in dict(sorted(json.loads(iteration).items())).items():
                 if isinstance(_v0, dict):
                     for _k1, _v1 in dict(sorted(_v0.items())).items():
-                        row[f"{_k0}_{_k1}"] = _v1
+                        if _k0 == "datetime":
+                            if _k1 != "datetime":
+                                continue
+
+                            _prefix = ""
+                        else:
+                            _prefix = f"{_k0}_"
+
+                        row[f"{_prefix}{_k1}"] = _v1
                 else:
                     row[_k0] = _v0
 
@@ -147,17 +205,36 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
             dfp = pd.DataFrame(rows)
             dfp["i_point"] = dfp.index
 
-            cols_fixed = ["i_point", "target", "datetime_datetime"]
-            return dfp[cols_fixed + [_ for _ in dfp.columns if _ not in cols_fixed]]
+            return clean_log_dfp(dfp)
 
         return None
 
 
-def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
-    """Load best points from all bayes_opt json files in the dir_path.
+def load_csv_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
+    """Load prior bayes_opt log from csv file as a pandas dataframe.
 
     Args:
-        dir_path: Path to search recursively for json log files.
+        f_path: Path to csv log file.
+
+    Returns:
+        Log as pandas dataframe.
+    """
+    with f_path.open("r", encoding="utf-8") as f_csv:
+        dfp = pd.read_csv(f_csv, header=0)
+
+        return clean_log_dfp(dfp)
+
+    return None
+
+
+def load_best_points(
+    dir_path: pathlib.Path, *, use_csv: bool = True
+) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """Load best points from all bayes_opt, csv or json, log files in the dir_path.
+
+    Args:
+        dir_path: Path to search recursively for csv, or json, log files.
+        use_csv: Flag to load csv files, rather than json, log files.
 
     Returns:
         Best points with metadata as pandas dataframe, and dict of all logs as pandas dataframes.
@@ -167,10 +244,14 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
     """
     dfp_runs_dict = {}
     rows = []
-    for f_path in sorted(dir_path.glob("**/*.json")):
+    for f_path in sorted(dir_path.glob(f"**/*.{'csv' if use_csv else 'json'}")):
         model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
 
-        dfp = load_json_log_to_dfp(f_path)
+        if use_csv:
+            dfp = load_csv_log_to_dfp(f_path)
+        else:
+            dfp = load_json_log_to_dfp(f_path)
+
         if dfp is None:
             raise ValueError(f"Could load {f_path}!")
 
@@ -188,9 +269,19 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
         if not dfp_best_points.index.size:
             raise ValueError(f"Could not find a best point for {model_name} in {f_path}")
 
-        # Get the second point at the best target value, if possible.
-        # This should be the next_point_to_probe_cleaned version
-        best_dict = dfp_best_points.iloc[1 if 1 < dfp_best_points.index.size else 0].to_dict()
+        if use_csv:
+            dfp_best_points = (
+                dfp_best_points.sort_values(by=["is_clean", "i_point"], ascending=[False, True])
+                .reset_index(drop=True)
+                .iloc[0]
+            )
+        else:
+            # Get the second point at the best target value, if possible.
+            # This should be the next_point_to_probe_cleaned version
+            # Note we do not have a nice is_clean flag here.
+            dfp_best_points = dfp_best_points.iloc[1 if 1 < dfp_best_points.index.size else 0]
+
+        best_dict = dfp_best_points.to_dict()
 
         params = []
         for k, v in best_dict.items():
@@ -202,10 +293,11 @@ def load_best_points(dir_path: pathlib.Path) -> tuple[pd.DataFrame, dict[str, pd
                 "model_name": model_name,
                 "best_target": best_dict["target"],
                 "i_point": best_dict["i_point"],
-                "n_points": dfp["i_point"].max(),
+                "n_points": dfp["i_point"].max() + 1,
                 "n_points_bad_target": dfp.loc[dfp["target"] == BAD_TARGET].index.size,
-                "datetime": best_dict["datetime_datetime"],
-                "elapsed_minutes": best_dict["datetime_elapsed"],
+                "datetime": best_dict["datetime"],
+                "minutes_elapsed_total": best_dict["minutes_elapsed_total"],
+                "minutes_elapsed_iteration": best_dict["minutes_elapsed_iteration"],
                 "params_str": ", ".join(params),
             }
         )
@@ -426,7 +518,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         datetime_str: str | None,
         i_iter: int,
         i_point: int,
-        is_cleaned: bool,
+        is_clean: bool,
         target: float,
         metrics_val: dict[str, float],
         point: dict,
@@ -437,7 +529,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             datetime_str: Datetime string of this iteration, from json log.
             i_iter: Index of this iteration.
             i_point: Index of this point.
-            is_cleaned: Flag for if these are cleaned or raw hyperparameters.
+            is_clean: Flag for if these are cleaned or raw hyperparameters.
             target: Target value.
             metrics_val: Metrics on the validation set.
             point: Hyperparameter point.
@@ -448,7 +540,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         if datetime_str is None:
             datetime_str = "NULL"
 
-        new_row = [datetime_str, i_iter, i_point, int(is_cleaned), target]
+        new_row = [datetime_str, i_iter, i_point, int(is_clean), target]
         metrics_val_sorted = {k: metrics_val[k] for k in METRICS_KEYS}
         new_row += list(metrics_val_sorted.values())
         point = dict(sorted(point.items()))
@@ -458,11 +550,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             m_writer = writer(f_csv)
             if f_csv.tell() == 0:
                 # empty file, create header
-                m_writer.writerow(
-                    ["i_iter", "i_point", "is_cleaned", "target"]
-                    + [f"{_}_val" for _ in METRICS_KEYS]
-                    + list(point.keys())
-                )
+                m_writer.writerow(BAYES_OPT_LOG_COLS_FIXED + [f"params_{_}" for _ in point.keys()])
 
             m_writer.writerow(new_row)
             f_csv.close()
@@ -520,7 +608,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             datetime_str=_get_datetime_str_from_json(),
             i_iter=i_iter,
             i_point=n_points,
-            is_cleaned=False,
+            is_clean=False,
             target=target,
             metrics_val=metrics_val,
             point=point_to_probe,
@@ -545,7 +633,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     datetime_str=_get_datetime_str_from_json(),
                     i_iter=i_iter,
                     i_point=n_points,
-                    is_cleaned=True,
+                    is_clean=True,
                     target=target,
                     metrics_val=metrics_val,
                     point=probed_point,
