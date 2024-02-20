@@ -32,11 +32,7 @@ sys.path.append(str(pathlib.Path.cwd().parent))
 
 # pylint: disable=import-error,useless-suppression
 # pylint: enable=useless-suppression
-from utils.bayesian_opt import (
-    BAYESIAN_OPT_PREFIX,
-    load_best_points,
-    load_json_log_to_dfp,
-)
+from utils.bayesian_opt import load_best_points
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -1366,60 +1362,6 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
         worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
         worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
         worksheet.autofit()
-
-# %% [markdown]
-# ### DEV: Compare Run Times
-
-# %%
-model_name = "NBEATSModel"  # pylint: disable=invalid-name
-
-dfp_cpu = load_json_log_to_dfp(
-    pathlib.Path(
-        PARENT_WRAPPER.work_dir_base,
-        BAYESIAN_OPT_WORK_DIR_NAME,
-        f"{model_name}_cpu",
-        f"{BAYESIAN_OPT_PREFIX}{model_name}.json",
-    )
-)
-
-dfp_gpu = load_json_log_to_dfp(
-    pathlib.Path(
-        PARENT_WRAPPER.work_dir_base,
-        BAYESIAN_OPT_WORK_DIR_NAME,
-        f"{model_name}_gpu",
-        f"{BAYESIAN_OPT_PREFIX}{model_name}.json",
-    )
-)
-
-# %%
-if dfp_cpu is None:
-    raise ValueError("Could not load dfp_cpu")
-
-if dfp_gpu is None:
-    raise ValueError("Could not load dfp_gpu")
-
-if TYPE_CHECKING:
-    assert isinstance(dfp_cpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
-    assert isinstance(dfp_gpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
-
-suffixes = ("_cpu", "_gpu")
-dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=suffixes)
-
-ordered_cols = ["datetime_elapsed", "datetime_delta"]
-paired_cols = ordered_cols + [
-    _.replace("_cpu", "") for _ in dfp_gpu.columns if _ not in ["i_point"] + ordered_cols
-]
-ordered_cols = ["i_point"]
-for _0 in paired_cols:
-    for _1 in suffixes:
-        ordered_cols.append(f"{_0}{_1}")
-
-dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not in ordered_cols]]
-dfp_merged = dfp_merged.loc[
-    (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])
-]
-with pd.option_context("display.max_rows", 10, "display.max_columns", None):
-    display(dfp_merged)
 
 # %% [markdown]
 # ***
