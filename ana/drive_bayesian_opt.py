@@ -105,7 +105,7 @@ def drive_bayesian_opt(
 
     prod_kwargs = {
         "n_iter": 1,
-        "verbose": 1,
+        "verbose": 2,
         "disregard_training_exceptions": True,
         "max_time_per_model": datetime.timedelta(minutes=45),
     }
