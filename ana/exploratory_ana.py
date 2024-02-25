@@ -1428,9 +1428,9 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
             worksheet.filter_column(i_col, "x == TRUE")
 
             # Hide rows which do not match the filter criteria
-            for irow, row in dfp_source.iterrows():
+            for irow, row in dfp_source.iterrows():  # type: ignore[assignment]
                 if not row["represents_iter"]:
-                    worksheet.set_row(1 + irow, options={"hidden": True})
+                    worksheet.set_row(irow + 1, options={"hidden": True})
 
         # Autofit column widths
         worksheet.autofit()
