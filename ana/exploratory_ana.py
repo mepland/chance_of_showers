@@ -1336,6 +1336,13 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
     # Setup formats
     workbook = writer.book
     elapsed_minutes_fmt = workbook.add_format({"num_format": "0.00"})
+    elapsed_minutes_fmt_bar = {
+        "type": "data_bar",
+        "bar_solid": True,
+        "bar_no_border": True,
+        "bar_direction": "right",
+        "bar_color": "#4a86e8",
+    }
     loss_fmt = workbook.add_format({"num_format": "0.000000"})
     loss_color_fmt = {
         "type": "3_color_scale",
@@ -1352,6 +1359,12 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
         "max_value": -0.005,
         "max_color": loss_color_fmt["min_color"],
     }
+    red_format = workbook.add_format({"bg_color": "#e67c73"})
+    bad_points_color_fmt = {
+        "type": "cell",
+        "criteria": ">=",
+        "format": red_format,
+    }
     for k in ["min_type", "mid_type", "max_type"]:
         loss_color_fmt[k] = "num"
         target_color_fmt[k] = "num"
@@ -1365,7 +1378,7 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
         """
         # Format loss columns
         for i_col, col_str in enumerate(dfp_source.columns):
-            if not re.match(r"^.*?_val$", col_str):
+            if not re.match(r"^.*?_val_loss$", col_str):
                 continue
 
             _dfp = dfp_source.loc[dfp_source[col_str] != -BAD_TARGET]
@@ -1393,8 +1406,33 @@ with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
 
             worksheet.set_column(i_col, i_col, None, elapsed_minutes_fmt)
 
-        # Filter columns and fit column widths
+            elapsed_minutes_fmt_bar["min_value"] = dfp_source[col_str].min()
+            elapsed_minutes_fmt_bar["max_value"] = dfp_source[col_str].max()
+
+            worksheet.conditional_format(
+                1, i_col, dfp_source.shape[0], i_col, elapsed_minutes_fmt_bar
+            )
+
+        # Format n_points_bad_target based on percent of n_points
+        if "n_points" in dfp_source.columns and "n_points_bad_target" in dfp_source.columns:
+            i_col = list(dfp_source.columns).index("n_points_bad_target")
+            for irow in range(dfp_source.shape[0]):
+                bad_points_color_fmt["value"] = 0.2 * dfp_source["n_points"].iloc[irow]
+                worksheet.conditional_format(irow, i_col, irow, i_col, bad_points_color_fmt)
+
+        # Filter columns
         worksheet.autofilter(0, 0, dfp_source.shape[0], dfp_source.shape[1] - 1)
+
+        if "represents_iter" in dfp_source.columns:
+            i_col = list(dfp_source.columns).index("represents_iter")
+            worksheet.filter_column(i_col, "x == TRUE")
+
+            # Hide rows which do not match the filter criteria
+            for irow, row in dfp_source.iterrows():
+                if not row["represents_iter"]:
+                    worksheet.set_row(1 + irow, options={"hidden": True})
+
+        # Autofit column widths
         worksheet.autofit()
 
     # Write and format sheets

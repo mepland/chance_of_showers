@@ -111,9 +111,14 @@ BAYESIAN_OPT_PREFIX: Final = "bayesian_opt_"
 
 BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
-BAYES_OPT_LOG_COLS_FIXED: Final = ["datetime", "i_iter", "i_point", "is_clean", "target"] + [
-    f"{_}_val" for _ in METRICS_KEYS
-]
+BAYES_OPT_LOG_COLS_FIXED: Final = [
+    "datetime",
+    "i_iter",
+    "i_point",
+    "is_clean",
+    "represents_iter",
+    "target",
+] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
 
 def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
@@ -130,6 +135,19 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
 
     if "is_clean" in dfp.columns:
         dfp["is_clean"] = dfp["is_clean"].astype(bool)
+
+    # Use is_clean if available to select the best i_point per i_iter
+    # Otherwise, take the last i_point per i_iter
+    dfp["represents_iter"] = (
+        dfp.sort_values(
+            by=["is_clean", "i_point"] if "is_clean" in dfp.columns else ["i_point"],
+            ascending=[False, True] if "is_clean" in dfp.columns else [False],
+        )
+        .groupby("i_iter", sort=False)
+        .cumcount()
+        .add(1)
+        == 1
+    )
 
     # The datetime format here is set by bayes_opt
     dfp["datetime"] = pd.to_datetime(dfp["datetime"], format="%Y-%m-%d %H:%M:%S")
@@ -265,23 +283,16 @@ def load_best_points(
 
         dfp_runs_dict[model_name] = pd.DataFrame(dfp)
 
-        dfp_best_points = dfp.loc[dfp["target"] == dfp["target"].max()]
+        dfp_best_points = dfp.loc[
+            (dfp["target"] == dfp["target"].max()) & dfp["represents_iter"]
+        ].sort_values(
+            by=["is_clean", "i_point"] if "is_clean" in dfp.columns else ["i_point"],
+            ascending=[False, True] if "is_clean" in dfp.columns else [True],
+        )
         if not dfp_best_points.index.size:
             raise ValueError(f"Could not find a best point for {model_name} in {f_path}")
 
-        if use_csv:
-            dfp_best_points = (
-                dfp_best_points.sort_values(by=["is_clean", "i_point"], ascending=[False, True])
-                .reset_index(drop=True)
-                .iloc[0]
-            )
-        else:
-            # Get the second point at the best target value, if possible.
-            # This should be the next_point_to_probe_cleaned version
-            # Note we do not have a nice is_clean flag here.
-            dfp_best_points = dfp_best_points.iloc[1 if 1 < dfp_best_points.index.size else 0]
-
-        best_dict = dfp_best_points.to_dict()
+        best_dict = dfp_best_points.iloc[0].to_dict()
 
         params = []
         for k, v in best_dict.items():
