@@ -99,6 +99,14 @@ Any values that are outside the normalization range are capped.
 | :---: | :---: |
 | ![Prophet Components Weekly](media/ana_outputs/prophet/prophet_component_weekly.png) | ![Prophet Components Daily](media/ana_outputs/prophet/prophet_component_daily.png) |
 
+### Running Bayesian Optimization
+1. Create the input `parent_wrapper.pickle` file for `bayesian_opt_runner.py` via the `exploratory_ana.py` notebook.
+2. Configure the run in `start_bayesian_opt` and `bayesian_opt_runner.py`.
+2. Run the optimization shell script, logging outputs via:
+```bash
+./ana/start_bayesian_opt 2>&1 | tee ana/models/bayesian_optimization/bayesian_opt.log
+```
+
 ## Hardware
 
 ### Bill of Materials
