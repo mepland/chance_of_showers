@@ -28,6 +28,9 @@ from darts import TimeSeries
 
 with warnings.catch_warnings():
     warnings.simplefilter(action="ignore", category=FutureWarning)
+    # Reported in https://github.com/Nixtla/statsforecast/issues/781
+    # Fixed in https://github.com/Nixtla/statsforecast/pull/786
+    # Leaving warning filter as the patch needs to propagate through statsforecast and darts releases
     from darts.models.forecasting.forecasting_model import ForecastingModel
 
 from darts.utils.callbacks import TFMProgressBar
