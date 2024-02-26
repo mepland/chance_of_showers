@@ -889,8 +889,13 @@ Returning {BAD_TARGET:.3g} as target and continuing"""
         )
         print(f"Returning with current objects and {exception_status = }.")
     except Exception as error:
-        exception_status = 3
         error_msg = _build_error_msg("Unexpected error in run_bayesian_opt():", error)
+        if disregard_training_exceptions:
+            error_msg = f"""{error_msg}
+Disregard_training_exceptions is set, continuing!"""
+        else:
+            exception_status = 3
+
         error_msg = f"""{error_msg}
 Returning with current objects and {exception_status = }."""
         print(error_msg)
