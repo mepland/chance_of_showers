@@ -880,14 +880,20 @@ Returning {BAD_TARGET:.3g} as target and continuing"""
         exception_status = 1
         print(f"KeyboardInterrupt: Returning with current objects and {exception_status = }.")
     except bayes_opt.util.NotUniqueError as error:
-        exception_status = 2
-        print(
+        error_msg = (
             str(error).replace(
                 '. You can set "allow_duplicate_points=True" to avoid this error', ""
             )
             + ", stopping optimization here."
         )
-        print(f"Returning with current objects and {exception_status = }.")
+        if disregard_training_exceptions:
+            error_msg = f"""{error_msg}i
+Disregard_training_exceptions is set, continuing!"""
+        else:
+            exception_status = 2
+
+        error_msg = f"""{error_msg}
+Returning with current objects and {exception_status = }."""
     except Exception as error:
         error_msg = _build_error_msg("Unexpected error in run_bayesian_opt():", error)
         if disregard_training_exceptions:
