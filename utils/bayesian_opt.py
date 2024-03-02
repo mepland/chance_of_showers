@@ -10,6 +10,7 @@ import pprint
 import re
 import signal
 import traceback
+import warnings
 from contextlib import suppress
 from csv import writer
 from types import FrameType  # noqa: TC003
@@ -70,6 +71,10 @@ __all__ = ["load_best_points", "load_json_log_to_dfp", "print_memory_usage", "ru
 
 
 # isort: on
+
+# When showing warnings ignore everything except the message
+# https://stackoverflow.com/a/2187390
+warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"  # noqa: U100
 
 WrapperTypes: TypeAlias = type[
     # Prophet
@@ -136,18 +141,23 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     if "is_clean" in dfp.columns:
         dfp["is_clean"] = dfp["is_clean"].astype(bool)
 
-    # Use is_clean if available to select the best i_point per i_iter
-    # Otherwise, take the last i_point per i_iter
-    dfp["represents_iter"] = (
-        dfp.sort_values(
-            by=["is_clean", "i_point"] if "is_clean" in dfp.columns else ["i_point"],
-            ascending=[False, True] if "is_clean" in dfp.columns else [False],
+    # See if there are multiple iterations in this file, i.e. ran from a single python call,
+    # or if everything has i_iter=0, i.e. ran via the shell script calling python multiple times.
+    if 1 < len(dfp["i_iter"].unique()):
+        # Use is_clean if available to select the representative i_point per i_iter
+        # Otherwise, take the last i_point per i_iter
+        dfp["represents_iter"] = (
+            dfp.sort_values(
+                by=["is_clean", "i_point"] if "is_clean" in dfp.columns else ["i_point"],
+                ascending=[False, True] if "is_clean" in dfp.columns else [False],
+            )
+            .groupby("i_iter", sort=False)
+            .cumcount()
+            .add(1)
+            == 1
         )
-        .groupby("i_iter", sort=False)
-        .cumcount()
-        .add(1)
-        == 1
-    )
+    else:
+        dfp = dfp.drop("i_iter", axis=1)
 
     # The datetime format here is set by bayes_opt
     dfp["datetime"] = pd.to_datetime(dfp["datetime"], format="%Y-%m-%d %H:%M:%S")
@@ -283,14 +293,26 @@ def load_best_points(
 
         dfp_runs_dict[model_name] = pd.DataFrame(dfp)
 
-        dfp_best_points = dfp.loc[
-            (dfp["target"] == dfp["target"].max()) & dfp["represents_iter"]
-        ].sort_values(
-            by=["is_clean", "i_point"] if "is_clean" in dfp.columns else ["i_point"],
-            ascending=[False, True] if "is_clean" in dfp.columns else [True],
-        )
+        dfp_best_points = dfp.loc[dfp["target"] != BAD_TARGET]
+
+        if {"i_iter", "represents_iter"}.issubset(set(dfp_best_points.columns)):
+            dfp_best_points = dfp_best_points.loc[
+                (dfp["target"] == dfp["target"].max()) & dfp["represents_iter"]
+            ]
+        else:
+            dfp_best_points = dfp_best_points.loc[dfp["target"] == dfp["target"].max()]
+
         if not dfp_best_points.index.size:
-            raise ValueError(f"Could not find a best point for {model_name} in {f_path}")
+            dfp_best_points = pd.DataFrame(dfp)
+            warnings.warn(
+                f"Could not find a best point for {model_name} in {f_path}, just taking them all!",
+                stacklevel=1,
+            )
+
+        dfp_best_points = dfp_best_points.sort_values(
+            by=["is_clean", "i_point"] if "is_clean" in dfp_best_points.columns else ["i_point"],
+            ascending=[False, True] if "is_clean" in dfp_best_points.columns else [True],
+        )
 
         best_dict = dfp_best_points.iloc[0].to_dict()
 
@@ -561,7 +583,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             m_writer = writer(f_csv)
             if f_csv.tell() == 0:
                 # empty file, create header
-                m_writer.writerow(BAYES_OPT_LOG_COLS_FIXED + [f"params_{_}" for _ in point.keys()])
+                m_writer.writerow(
+                    [_ for _ in BAYES_OPT_LOG_COLS_FIXED if _ != "represents_iter"]
+                    + [f"params_{_}" for _ in point.keys()]
+                )
 
             m_writer.writerow(new_row)
             f_csv.close()
