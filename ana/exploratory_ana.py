@@ -17,7 +17,6 @@
 import datetime
 import pathlib
 import pprint
-import re
 import shutil
 import sys
 import warnings
@@ -26,7 +25,6 @@ from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import xlsxwriter
 from hydra import compose, initialize
 from IPython.display import Image, display
 
@@ -34,7 +32,7 @@ sys.path.append(str(pathlib.Path.cwd().parent))
 
 # pylint: disable=import-error,useless-suppression
 # pylint: enable=useless-suppression
-from utils.bayesian_opt import load_best_points
+from utils.bayesian_opt import load_best_points, write_search_results
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -42,7 +40,7 @@ from utils.shared_functions import (
 )
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET
+from utils.TSModelWrapper import TSModelWrapper
 
 # Prophet
 from utils.ProphetWrapper import ProphetWrapper
@@ -1297,13 +1295,16 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 # %%
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
 if not PARENT_WRAPPER_PATH.is_file():
-    write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
+    if "PARENT_WRAPPER" not in globals():
+        print("PARENT_WRAPPER not defined, can not write pickle!")
+    else:
+        write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
 
 # %% [markdown]
 # ## Show TensorBoard Logs
 
 # %%
-tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
+# tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
 # print(tensorboard_logs)
 
 # %%
@@ -1318,130 +1319,23 @@ dfp_best_points, dfp_runs_dict = load_best_points(
 )
 
 # %%
-with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-    display(dfp_best_points)
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_best_points)
 
 # %%
 best_model = dfp_best_points["model_name"].iloc[0]
 print(f"{best_model = }")
-with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-    display(dfp_runs_dict[best_model])
+
+# %%
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_runs_dict[best_model])
 
 # %% [markdown]
 # ### Write results to xlsx
 
 # %%
 f_excel = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "search_results.xlsx"
-with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
-    # Setup formats
-    workbook = writer.book
-    elapsed_minutes_fmt = workbook.add_format({"num_format": "0.00"})
-    elapsed_minutes_fmt_bar = {
-        "type": "data_bar",
-        "bar_solid": True,
-        "bar_no_border": True,
-        "bar_direction": "right",
-        "bar_color": "#4a86e8",
-    }
-    loss_fmt = workbook.add_format({"num_format": "0.000000"})
-    loss_color_fmt = {
-        "type": "3_color_scale",
-        "min_color": "#57bb8a",
-        "mid_color": "#ffffff",
-        "max_color": "#e67c73",
-    }
-    target_color_fmt = {
-        "type": "3_color_scale",
-        "min_value": -0.05,
-        "min_color": loss_color_fmt["max_color"],
-        "mid_value": -0.01,
-        "mid_color": loss_color_fmt["mid_color"],
-        "max_value": -0.005,
-        "max_color": loss_color_fmt["min_color"],
-    }
-    red_format = workbook.add_format({"bg_color": "#e67c73"})
-    bad_points_color_fmt = {
-        "type": "cell",
-        "criteria": ">=",
-        "format": red_format,
-    }
-    for k in ["min_type", "mid_type", "max_type"]:
-        loss_color_fmt[k] = "num"
-        target_color_fmt[k] = "num"
-
-    def _fmt_worksheet(worksheet: xlsxwriter.worksheet.Worksheet, dfp_source: pd.DataFrame) -> None:
-        """Format a log worksheet for this project
-
-        Args:
-            worksheet: Input worksheet.
-            dfp_source: Orignal dataframe.
-        """
-        # Format loss columns
-        for i_col, col_str in enumerate(dfp_source.columns):
-            if not re.match(r"^.*?_val_loss$", col_str):
-                continue
-
-            _dfp = dfp_source.loc[dfp_source[col_str] != -BAD_TARGET]
-            _min = _dfp[col_str].min()
-            _max = _dfp[col_str].max()
-            loss_color_fmt["min_value"] = _min
-            loss_color_fmt["mid_value"] = _min + (_max - _min) / 2.0
-            loss_color_fmt["max_value"] = _max
-
-            worksheet.set_column(i_col, i_col, None, loss_fmt)
-            worksheet.conditional_format(1, i_col, dfp_source.shape[0], i_col, loss_color_fmt)
-
-        # Format target columns
-        for i_col, col_str in enumerate(dfp_source.columns):
-            if col_str not in ["target", "best_target"]:
-                continue
-
-            worksheet.set_column(i_col, i_col, None, loss_fmt)
-            worksheet.conditional_format(1, i_col, dfp_source.shape[0], i_col, target_color_fmt)
-
-        # Format minutes elapsed columns
-        for i_col, col_str in enumerate(dfp_source.columns):
-            if not re.match(r"^minutes_elapsed_.*$", col_str):
-                continue
-
-            worksheet.set_column(i_col, i_col, None, elapsed_minutes_fmt)
-
-            elapsed_minutes_fmt_bar["min_value"] = dfp_source[col_str].min()
-            elapsed_minutes_fmt_bar["max_value"] = dfp_source[col_str].max()
-
-            worksheet.conditional_format(
-                1, i_col, dfp_source.shape[0], i_col, elapsed_minutes_fmt_bar
-            )
-
-        # Format n_points_bad_target based on percent of n_points
-        if "n_points" in dfp_source.columns and "n_points_bad_target" in dfp_source.columns:
-            i_col = list(dfp_source.columns).index("n_points_bad_target")
-            for irow in range(dfp_source.shape[0]):
-                bad_points_color_fmt["value"] = 0.2 * dfp_source["n_points"].iloc[irow]
-                worksheet.conditional_format(irow, i_col, irow, i_col, bad_points_color_fmt)
-
-        # Filter columns
-        worksheet.autofilter(0, 0, dfp_source.shape[0], dfp_source.shape[1] - 1)
-
-        if "represents_iter" in dfp_source.columns:
-            i_col = list(dfp_source.columns).index("represents_iter")
-            worksheet.filter_column(i_col, "x == TRUE")
-
-            # Hide rows which do not match the filter criteria
-            for irow, row in dfp_source.iterrows():  # type: ignore[assignment]
-                if not row["represents_iter"]:
-                    worksheet.set_row(irow + 1, options={"hidden": True})
-
-        # Autofit column widths
-        worksheet.autofit()
-
-    # Write and format sheets
-    dfp_best_points.to_excel(writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False)
-    _fmt_worksheet(writer.sheets["Best Points"], dfp_best_points)
-
-    for model_name, dfp in dfp_runs_dict.items():
-        dfp.to_excel(writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
-        _fmt_worksheet(writer.sheets[model_name], dfp)
+write_search_results(f_excel, dfp_best_points, dfp_runs_dict)
 
 # %% [markdown]
 # ***
