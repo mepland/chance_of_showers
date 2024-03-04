@@ -32,11 +32,7 @@ sys.path.append(str(pathlib.Path.cwd().parent))
 
 # pylint: disable=import-error,useless-suppression
 # pylint: enable=useless-suppression
-from utils.bayesian_opt import (
-    BAYESIAN_OPT_JSON_PREFIX,
-    load_best_points,
-    load_json_log_to_dfp,
-)
+from utils.bayesian_opt import load_best_points, write_search_results
 from utils.shared_functions import (
     create_datetime_component_cols,
     normalize_pressure_value,
@@ -401,9 +397,6 @@ else:
 import prophet
 from darts.models.forecasting.prophet_model import Prophet as darts_Prophet
 
-__all__: list[str] = []
-
-
 # %%
 model_wrapper_Prophet = ProphetWrapper(
     TSModelWrapper=PARENT_WRAPPER,
@@ -417,8 +410,8 @@ configurable_hyperparams = model_wrapper_Prophet.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Prophet.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Prophet.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Prophet)
@@ -611,8 +604,8 @@ configurable_hyperparams = model_wrapper_NBEATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NBEATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NBEATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NBEATS)
@@ -642,8 +635,8 @@ configurable_hyperparams = model_wrapper_NHiTS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NHiTS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NHiTS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NHiTS)
@@ -673,8 +666,8 @@ configurable_hyperparams = model_wrapper_TCN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TCN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TCN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TCN)
@@ -704,8 +697,8 @@ configurable_hyperparams = model_wrapper_Transformer.get_configurable_hyperparam
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Transformer.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Transformer.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Transformer)
@@ -735,8 +728,8 @@ configurable_hyperparams = model_wrapper_TFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TFT.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TFT.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TFT)
@@ -766,8 +759,8 @@ configurable_hyperparams = model_wrapper_DLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_DLinear.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_DLinear.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_DLinear)
@@ -797,8 +790,8 @@ configurable_hyperparams = model_wrapper_NLinear.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_NLinear.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NLinear.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_NLinear)
@@ -828,8 +821,8 @@ configurable_hyperparams = model_wrapper_TiDE.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TiDE.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TiDE.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TiDE)
@@ -861,8 +854,8 @@ configurable_hyperparams = model_wrapper_RNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_RNN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_RNN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_RNN)
@@ -894,8 +887,8 @@ configurable_hyperparams = model_wrapper_BlockRNN.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_BlockRNN.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_BlockRNN.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_BlockRNN)
@@ -931,8 +924,8 @@ configurable_hyperparams = model_wrapper_AutoARIMA.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_AutoARIMA.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_AutoARIMA.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_AutoARIMA)
@@ -953,8 +946,8 @@ configurable_hyperparams = model_wrapper_BATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_BATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_BATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_BATS)
@@ -975,8 +968,8 @@ configurable_hyperparams = model_wrapper_TBATS.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_TBATS.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_TBATS.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_TBATS)
@@ -997,8 +990,8 @@ configurable_hyperparams = model_wrapper_FourTheta.get_configurable_hyperparams(
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_FourTheta.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_FourTheta.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_FourTheta)
@@ -1024,8 +1017,8 @@ configurable_hyperparams = model_wrapper_StatsForecastAutoTheta.get_configurable
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_StatsForecastAutoTheta.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_StatsForecastAutoTheta.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_StatsForecastAutoTheta)
@@ -1046,8 +1039,8 @@ configurable_hyperparams = model_wrapper_FFT.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_FFT.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_FFT.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_FFT)
@@ -1068,8 +1061,8 @@ configurable_hyperparams = model_wrapper_KalmanForecaster.get_configurable_hyper
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_KalmanForecaster.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_KalmanForecaster.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_KalmanForecaster)
@@ -1094,8 +1087,8 @@ configurable_hyperparams = model_wrapper_Croston.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_Croston.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_Croston.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_Croston)
@@ -1121,8 +1114,8 @@ configurable_hyperparams = model_wrapper_LinearRegressionModel.get_configurable_
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_LinearRegressionModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_LinearRegressionModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_LinearRegressionModel)
@@ -1143,8 +1136,8 @@ configurable_hyperparams = model_wrapper_RandomForest.get_configurable_hyperpara
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_RandomForest.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_RandomForest.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_RandomForest)
@@ -1166,8 +1159,8 @@ configurable_hyperparams = model_wrapper_LightGBMModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_LightGBMModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_LightGBMModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_LightGBMModel)
@@ -1188,8 +1181,8 @@ configurable_hyperparams = model_wrapper_XGBModel.get_configurable_hyperparams()
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_XGBModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_XGBModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_XGBModel)
@@ -1210,8 +1203,8 @@ configurable_hyperparams = model_wrapper_CatBoostModel.get_configurable_hyperpar
 pprint.pprint(configurable_hyperparams)
 
 # %%
-val_loss = -model_wrapper_CatBoostModel.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_CatBoostModel.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 print(model_wrapper_CatBoostModel)
@@ -1229,8 +1222,8 @@ model_wrapper_NaiveMean = NaiveMeanWrapper(
 )
 model_wrapper_NaiveMean.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveMean.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveMean.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveMean)
@@ -1245,8 +1238,8 @@ model_wrapper_NaiveSeasonal = NaiveSeasonalWrapper(
 )
 model_wrapper_NaiveSeasonal.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveSeasonal.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveSeasonal.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveSeasonal)
@@ -1261,8 +1254,8 @@ model_wrapper_NaiveDrift = NaiveDriftWrapper(
 )
 model_wrapper_NaiveDrift.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveDrift.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveDrift.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveDrift)
@@ -1277,8 +1270,8 @@ model_wrapper_NaiveMovingAverage = NaiveMovingAverageWrapper(
 )
 model_wrapper_NaiveMovingAverage.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
 
-val_loss = -model_wrapper_NaiveMovingAverage.train_model()
-print(f"{val_loss = }")
+loss_val, metrics_val = model_wrapper_NaiveMovingAverage.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
 
 # %%
 # print(model_wrapper_NaiveMovingAverage)
@@ -1302,13 +1295,16 @@ BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
 # %%
 PARENT_WRAPPER_PATH: Final = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "parent_wrapper.pickle"
 if not PARENT_WRAPPER_PATH.is_file():
-    write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
+    if "PARENT_WRAPPER" not in globals():
+        print("PARENT_WRAPPER not defined, can not write pickle!")
+    else:
+        write_secure_pickle(PARENT_WRAPPER, PARENT_WRAPPER_PATH)
 
 # %% [markdown]
 # ## Show TensorBoard Logs
 
 # %%
-tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
+# tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_DIR_NAME)
 # print(tensorboard_logs)
 
 # %%
@@ -1318,111 +1314,28 @@ tensorboard_logs = pathlib.Path(PARENT_WRAPPER.work_dir_base, BAYESIAN_OPT_WORK_
 # ## Review Best Results
 
 # %%
-dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
+dfp_best_points, dfp_runs_dict = load_best_points(
+    MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME, use_csv=True
+)
 
 # %%
-with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-    display(dfp_best_points)
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_best_points)
 
 # %%
 best_model = dfp_best_points["model_name"].iloc[0]
 print(f"{best_model = }")
-with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
-    display(dfp_runs_dict[best_model])
+
+# %%
+# with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+#     display(dfp_runs_dict[best_model])
 
 # %% [markdown]
 # ### Write results to xlsx
 
 # %%
 f_excel = MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME / "search_results.xlsx"
-with pd.ExcelWriter(f_excel, engine="xlsxwriter") as writer:
-    workbook = writer.book
-
-    elapsed_minutes_fmt = workbook.add_format({"num_format": "0.00"})
-    target_fmt = workbook.add_format({"num_format": "0.000000"})
-    target_color_fmt = {
-        "type": "3_color_scale",
-        "min_type": "num",
-        "min_value": -0.05,
-        "min_color": "#e67c73",
-        "mid_type": "num",
-        "mid_value": -0.01,
-        "mid_color": "#ffffff",
-        "max_type": "num",
-        "max_value": -0.005,
-        "max_color": "#57bb8a",
-    }
-
-    dfp_best_points.to_excel(writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False)
-    worksheet = writer.sheets["Best Points"]
-    worksheet.set_column(1, 1, None, target_fmt)
-    worksheet.conditional_format(1, 1, dfp_best_points.shape[0], 1, target_color_fmt)
-    worksheet.set_column(5, 5, None, elapsed_minutes_fmt)
-    worksheet.autofilter(0, 0, dfp_best_points.shape[0], dfp_best_points.shape[1] - 1)
-    worksheet.autofit()
-
-    for model_name, dfp in dfp_runs_dict.items():
-        dfp.to_excel(writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
-        worksheet = writer.sheets[model_name]
-        worksheet.set_column(1, 1, None, target_fmt)
-        worksheet.conditional_format(1, 1, dfp.shape[0], 1, target_color_fmt)
-        worksheet.set_column(3, 4, None, elapsed_minutes_fmt)
-        worksheet.autofilter(0, 0, dfp.shape[0], dfp.shape[1] - 1)
-        worksheet.autofit()
-
-# %% [markdown]
-# ### DEV: Compare Run Times
-
-# %%
-model_name = "NBEATSModel"  # pylint: disable=invalid-name
-
-dfp_cpu = load_json_log_to_dfp(
-    pathlib.Path(
-        PARENT_WRAPPER.work_dir_base,
-        BAYESIAN_OPT_WORK_DIR_NAME,
-        f"{model_name}_cpu",
-        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
-    )
-)
-
-dfp_gpu = load_json_log_to_dfp(
-    pathlib.Path(
-        PARENT_WRAPPER.work_dir_base,
-        BAYESIAN_OPT_WORK_DIR_NAME,
-        f"{model_name}_gpu",
-        f"{BAYESIAN_OPT_JSON_PREFIX}{model_name}.json",
-    )
-)
-
-# %%
-if dfp_cpu is None:
-    raise ValueError("Could not load dfp_cpu")
-
-if dfp_gpu is None:
-    raise ValueError("Could not load dfp_gpu")
-
-if TYPE_CHECKING:
-    assert isinstance(dfp_cpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
-    assert isinstance(dfp_gpu, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
-
-suffixes = ("_cpu", "_gpu")
-dfp_merged = dfp_cpu.merge(dfp_gpu, how="outer", on="i_point", suffixes=suffixes)
-
-ordered_cols = ["datetime_elapsed", "datetime_delta"]
-paired_cols = ordered_cols + [
-    _.replace("_cpu", "") for _ in dfp_gpu.columns if _ not in ["i_point"] + ordered_cols
-]
-ordered_cols = ["i_point"]
-for _0 in paired_cols:
-    for _1 in suffixes:
-        ordered_cols.append(f"{_0}{_1}")
-
-dfp_merged = dfp_merged[ordered_cols + [_ for _ in dfp_merged.columns if _ not in ordered_cols]]
-dfp_merged = dfp_merged.loc[
-    (0.001 < dfp_merged["datetime_delta_cpu"]) & (0.001 < dfp_merged["datetime_delta_gpu"])
-]
-with pd.option_context("display.max_rows", 10, "display.max_columns", None):
-    display(dfp_merged)
+write_search_results(f_excel, dfp_best_points, dfp_runs_dict)
 
 # %% [markdown]
 # ***

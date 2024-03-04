@@ -89,7 +89,7 @@ def drive_bayesian_opt(
     # pylint: enable=invalid-name
 
     ################################################################################
-    # Select settings and model(s) to run
+    # Setup run_bayesian_opt_kwargs
 
     dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
         "n_iter": 1,
@@ -105,13 +105,21 @@ def drive_bayesian_opt(
 
     prod_kwargs = {
         "n_iter": 1,
-        "verbose": 1,
+        "verbose": 2,
         "disregard_training_exceptions": True,
         "max_time_per_model": datetime.timedelta(minutes=45),
     }
 
     run_bayesian_opt_kwargs = dict(prod_kwargs)
     run_bayesian_opt_kwargs["bayesian_opt_work_dir_name"] = BAYESIAN_OPT_WORK_DIR_NAME
+
+    # accept n_iter CLI argument
+    n_iter = cfg.get("n_iter")
+    if n_iter is not None and 0 < n_iter:
+        run_bayesian_opt_kwargs["n_iter"] = n_iter
+
+    ################################################################################
+    # Select model(s) to run
 
     model_kwarg_list = [
         # Prophet

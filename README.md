@@ -209,6 +209,45 @@ echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > sec
 source daq/heartbeat
 ```
 
+## Bayesian Optimization
+
+To optimize the many hyperparameters present in this project,
+both of the individual forecasting models themselves as well as how the data is prepared,
+[Bayesian optimization](https://github.com/mepland/data_science_notes)
+was used to efficiently sample the parameter space.
+The functions needed to run Bayesian optimization
+are located in [`bayesian_opt.py`](utils/bayesian_opt.py).
+
+Unfortunately, actually running the optimization over GPU accelerated models
+is not as simple as calling the `run_bayesian_opt()` function.
+I have been unable to successfully detach the training of one GPU accelerated model
+from the next when training multiple models in a loop.
+The second training session will still have access to the tensors of the first,
+leading to out of GPU memory errors, even when
+[using commands like `gc.collect()` and `torch.cuda.empty_cache()`](https://stackoverflow.com/questions/70508960/how-to-free-gpu-memory-in-pytorch).
+The `torch` models created by `darts` are very convenient,
+but do not provide as much configurability as building your own `torch` model from scratch,
+leading me unable to fix this issue in a clean way.
+
+To work around the GPU memory issues, a shell script,
+[`start_bayesian_opt`](ana/start_bayesian_opt), is used to repeatedly call `run_bayesian_opt()`
+via the [`bayesian_opt_runner.py`](ana/bayesian_opt_runner.py) script.
+In this way each model is trained in its own Python session,
+totally clearing memory between training iterations.
+A signed pickle file is used to quickly load the necessary data and settings on each iteration.
+Instructions for running the whole Bayesian optimization workflow are provided below.
+
+### Running Bayesian Optimization
+
+1. Create the input `parent_wrapper.pickle` file for `bayesian_opt_runner.py`
+via the `exploratory_ana.py` notebook.
+2. Configure the run in `start_bayesian_opt` and `bayesian_opt_runner.py`.
+3. Run the shell script, logging outputs to disk via:
+
+```bash
+./ana/start_bayesian_opt 2>&1 | tee ana/models/bayesian_optimization/bayesian_opt.log
+```
+
 ## Dev Notes
 
 ### Data Analysis Setup - Installing CUDA and PyTorch

@@ -54,9 +54,8 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 			unset TQDM_DISABLE
 			exit $status
 		elif [[ $max_points -le $n_points ]]; then
-			echo "On i_iter = $i_iter, found $n_points >= $max_points points, finished"
-			unset TQDM_DISABLE
-			exit
+			echo "On i_iter = $i_iter, found $n_points >= $max_points points, breaking to next model"
+			break
 		fi
 
 	done

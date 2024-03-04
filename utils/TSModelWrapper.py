@@ -28,6 +28,9 @@ from darts import TimeSeries
 
 with warnings.catch_warnings():
     warnings.simplefilter(action="ignore", category=FutureWarning)
+    # Reported in https://github.com/Nixtla/statsforecast/issues/781
+    # Fixed in https://github.com/Nixtla/statsforecast/pull/786
+    # Leaving warning filter as the patch needs to propagate through statsforecast and darts releases
     from darts.models.forecasting.forecasting_model import ForecastingModel
 
 from darts.utils.callbacks import TFMProgressBar
@@ -76,10 +79,7 @@ logger_ts_wrapper.setLevel(logging.INFO)
 if not logger_ts_wrapper.handlers:
     logger_ts_wrapper.addHandler(logging.StreamHandler(sys.stdout))
 
-# loss function
-LOSS_FN: Final = torchmetrics.MeanSquaredError(squared=True)
-
-# metrics to log at each epoch
+# metrics to log at each epoch, and for trained model
 METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
     {
         "MSE": torchmetrics.MeanSquaredError(squared=True),
@@ -89,10 +89,15 @@ METRIC_COLLECTION: Final = torchmetrics.MetricCollection(
         "sMAPE": torchmetrics.SymmetricMeanAbsolutePercentageError(),
     }
 )
+METRICS_KEYS: Final = METRIC_COLLECTION.keys()
 
-# Set a finite, but horrible, loss for when the training fails to complete.
+# loss function
+LOSS_FN_STR: Final = "MSE"
+LOSS_FN: Final = METRIC_COLLECTION[LOSS_FN_STR]
+
+# Set a finite, but horrible, target = -loss for when the training fails to complete.
 # np.finfo(np.float64).min + 1 does not work, sklearn errors in run_bayesian_opt()
-BAD_LOSS: Final = -999.0
+BAD_TARGET: Final = -999.0
 
 
 # EarlyStopping stops training when validation loss does not decrease more than min_delta over a period of patience epochs
@@ -1382,7 +1387,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def translate_hyperparameters_to_numeric(
         self: "TSModelWrapper", hyperparams_dict: dict
     ) -> dict:
-        """Translate odd hyperparam_values back to their original numeric representations, used in Bayesian optimization.
+        """Translate strange hyperparam_values back to their original numeric representations, used in Bayesian optimization.
 
         Args:
             hyperparams_dict: Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
@@ -1430,14 +1435,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
     def train_model(  # pylint: disable=too-many-locals
         self: "TSModelWrapper", **kwargs: float
-    ) -> float:
-        """Train the model and return loss.
+    ) -> tuple[float, dict[str, float]]:
+        """Train the model, return loss and other metrics on the validation set.
 
         Args:
             **kwargs: Hyperparameters to change, used in Bayesian optimization.
 
         Returns:
-            Loss.
+            Loss and other metrics on the validation set.
         """
         if 0 < self.verbose:
             logger_ts_wrapper.setLevel(logging.DEBUG)
@@ -1472,7 +1477,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             if k in chosen_hyperparams_model:
                 chosen_hyperparams_model[v] = chosen_hyperparams_model.pop(k)
 
-        loss = BAD_LOSS
+        metrics_val = {}
+        loss_val = -BAD_TARGET
 
         try:
             # clean up
@@ -1612,7 +1618,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             )
 
             with torch.no_grad():
-                # measure loss on validation
+                # measure loss and other metrics on the validation set
                 y_pred_val = self.model.predict(
                     dart_series_y_val.n_timesteps,
                     num_samples=1,
@@ -1626,8 +1632,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 y_val_tensor = torch.Tensor(dart_series_y_val["y"].values())
                 y_pred_val_tensor = torch.Tensor(y_pred_val["y"].values())
 
-                # make loss negative as we want to maximize the target in run_bayesian_opt()
-                loss = -float(LOSS_FN(y_val_tensor, y_pred_val_tensor))
+                metrics_val = METRIC_COLLECTION(y_val_tensor, y_pred_val_tensor)
+                metrics_val = {k: float(v) for k, v in metrics_val.items()}
+
+                loss_val = metrics_val[LOSS_FN_STR]
 
             # set the is_trained flag
             self.is_trained = True
@@ -1640,4 +1648,4 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
             gc.collect()
 
-        return loss
+        return loss_val, metrics_val
