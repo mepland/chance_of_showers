@@ -463,12 +463,20 @@ def write_search_results(  # noqa: C901
                 if not re.match(r"^.*?_val_loss$", col_str):
                     continue
 
-                _dfp = dfp_source.loc[dfp_source[col_str] != -BAD_TARGET]
-                _min = _dfp[col_str].min()
-                _max = _dfp[col_str].max()
-                loss_color_fmt["min_value"] = _min
-                loss_color_fmt["mid_value"] = _min + (_max - _min) / 2.0
-                loss_color_fmt["max_value"] = _max
+                _loss = dfp_source.loc[dfp_source[col_str] != -BAD_TARGET][col_str].to_numpy()
+                _loss = _loss[np.isfinite(_loss)]
+                if len(_loss) == 0:
+                    continue
+
+                _min = np.min(_loss)
+                _q1 = np.quantile(_loss, 0.25)
+                _median = np.quantile(_loss, 0.50)
+                _q3 = np.quantile(_loss, 0.75)
+                _max = np.max(_loss)
+
+                loss_color_fmt["min_value"] = max(_min, _q1 - 1.5 * (_q3 - _q1))
+                loss_color_fmt["mid_value"] = _median
+                loss_color_fmt["max_value"] = min(_max, _q3 + 1.5 * (_q3 - _q1))
 
                 worksheet.set_column(i_col, i_col, None, loss_fmt)
                 worksheet.conditional_format(1, i_col, dfp_source.shape[0], i_col, loss_color_fmt)
