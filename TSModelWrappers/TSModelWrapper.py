@@ -666,7 +666,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
     """
 
-    def __init__(  # pylint: too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments
         self: "TSModelWrapper",
         # required
         dfp_trainable_evergreen: pd.DataFrame,
