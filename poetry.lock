@@ -1262,13 +1262,13 @@ files = [
 
 [[package]]
 name = "darts"
-version = "0.27.2"
+version = "0.28.0"
 description = "A python library for easy manipulation and forecasting of time series."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "darts-0.27.2-py3-none-any.whl", hash = "sha256:41444f46a2bca9d13dc1465cd49b4c118ca63dd8cc66ee0f35984a51ba02557e"},
-    {file = "darts-0.27.2.tar.gz", hash = "sha256:eff39d54394877b8e60f9a79336d5b082b0cc89cd8319a578f2c1f26b9c3bcfe"},
+    {file = "darts-0.28.0-py3-none-any.whl", hash = "sha256:f5115c0cf72087c1534e274750960c9183148172a9829bef622b61248633b96c"},
+    {file = "darts-0.28.0.tar.gz", hash = "sha256:b69b755faf8ea6b585f4c110651a841f1250688a6a9ca966897cae74101391be"},
 ]
 
 [package.dependencies]
@@ -1280,7 +1280,7 @@ numpy = ">=1.19.0"
 pandas = {version = ">=1.0.5", markers = "python_version >= \"3.9\""}
 pmdarima = ">=1.8.0"
 pyod = ">=0.9.5"
-pytorch-lightning = ">=1.5.0,<=2.1.2"
+pytorch-lightning = ">=1.5.0"
 requests = ">=2.22.0"
 scikit-learn = ">=1.0.1"
 scipy = ">=1.3.2"
@@ -7182,4 +7182,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "5e8dcdb0cb994d760d2900e8b5caefc569b9dacc8ee475740b4a59fb53aae9d2"
+content-hash = "dfdb4a94f06ff7b79debdd19c7db7dec04230d2e33a6abad92bdd2b59a547270"
