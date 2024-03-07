@@ -28,45 +28,45 @@ from bayes_opt.logger import JSONLogger, ScreenLogger
 from bayes_opt.util import load_logs
 
 # isort: off
-from utils.TSModelWrapper import TSModelWrapper, BAD_TARGET, METRICS_KEYS
+from TSModelWrappers.TSModelWrapper import TSModelWrapper, BAD_TARGET, METRICS_KEYS
 
 # Prophet
-from utils.ProphetWrapper import ProphetWrapper  # noqa: TC001
+from TSModelWrappers.ProphetWrapper import ProphetWrapper  # noqa: TC001
 
 # PyTorch NN Models
-from utils.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: TC001
-from utils.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: TC001
-from utils.TCNModelWrapper import TCNModelWrapper  # noqa: TC001
-from utils.TransformerModelWrapper import TransformerModelWrapper  # noqa: TC001
-from utils.TFTModelWrapper import TFTModelWrapper  # noqa: TC001
-from utils.DLinearModelWrapper import DLinearModelWrapper  # noqa: TC001
-from utils.NLinearModelWrapper import NLinearModelWrapper  # noqa: TC001
-from utils.TiDEModelWrapper import TiDEModelWrapper  # noqa: TC001
-from utils.RNNModelWrapper import RNNModelWrapper  # noqa: TC001
-from utils.BlockRNNModelWrapper import BlockRNNModelWrapper  # noqa: TC001
+from TSModelWrappers.NBEATSModelWrapper import NBEATSModelWrapper  # noqa: TC001
+from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: TC001
+from TSModelWrappers.TCNModelWrapper import TCNModelWrapper  # noqa: TC001
+from TSModelWrappers.TransformerModelWrapper import TransformerModelWrapper  # noqa: TC001
+from TSModelWrappers.TFTModelWrapper import TFTModelWrapper  # noqa: TC001
+from TSModelWrappers.DLinearModelWrapper import DLinearModelWrapper  # noqa: TC001
+from TSModelWrappers.NLinearModelWrapper import NLinearModelWrapper  # noqa: TC001
+from TSModelWrappers.TiDEModelWrapper import TiDEModelWrapper  # noqa: TC001
+from TSModelWrappers.RNNModelWrapper import RNNModelWrapper  # noqa: TC001
+from TSModelWrappers.BlockRNNModelWrapper import BlockRNNModelWrapper  # noqa: TC001
 
 # Statistical Models
-from utils.AutoARIMAWrapper import AutoARIMAWrapper  # noqa: TC001
-from utils.BATSWrapper import BATSWrapper  # noqa: TC001
-from utils.TBATSWrapper import TBATSWrapper  # noqa: TC001
-from utils.FourThetaWrapper import FourThetaWrapper  # noqa: TC001
-from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper  # noqa: TC001
-from utils.FFTWrapper import FFTWrapper  # noqa: TC001
-from utils.KalmanForecasterWrapper import KalmanForecasterWrapper  # noqa: TC001
-from utils.CrostonWrapper import CrostonWrapper  # noqa: TC001
+from TSModelWrappers.AutoARIMAWrapper import AutoARIMAWrapper  # noqa: TC001
+from TSModelWrappers.BATSWrapper import BATSWrapper  # noqa: TC001
+from TSModelWrappers.TBATSWrapper import TBATSWrapper  # noqa: TC001
+from TSModelWrappers.FourThetaWrapper import FourThetaWrapper  # noqa: TC001
+from TSModelWrappers.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper  # noqa: TC001
+from TSModelWrappers.FFTWrapper import FFTWrapper  # noqa: TC001
+from TSModelWrappers.KalmanForecasterWrapper import KalmanForecasterWrapper  # noqa: TC001
+from TSModelWrappers.CrostonWrapper import CrostonWrapper  # noqa: TC001
 
 # Regression Models
-from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper  # noqa: TC001
-from utils.RandomForestWrapper import RandomForestWrapper  # noqa: TC001
-from utils.LightGBMModelWrapper import LightGBMModelWrapper  # noqa: TC001
-from utils.XGBModelWrapper import XGBModelWrapper  # noqa: TC001
-from utils.CatBoostModelWrapper import CatBoostModelWrapper  # noqa: TC001
+from TSModelWrappers.LinearRegressionModelWrapper import LinearRegressionModelWrapper  # noqa: TC001
+from TSModelWrappers.RandomForestWrapper import RandomForestWrapper  # noqa: TC001
+from TSModelWrappers.LightGBMModelWrapper import LightGBMModelWrapper  # noqa: TC001
+from TSModelWrappers.XGBModelWrapper import XGBModelWrapper  # noqa: TC001
+from TSModelWrappers.CatBoostModelWrapper import CatBoostModelWrapper  # noqa: TC001
 
 # Naive Models
-from utils.NaiveMeanWrapper import NaiveMeanWrapper  # noqa: TC001
-from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper  # noqa: TC001
-from utils.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
-from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
+from TSModelWrappers.NaiveMeanWrapper import NaiveMeanWrapper  # noqa: TC001
+from TSModelWrappers.NaiveSeasonalWrapper import NaiveSeasonalWrapper  # noqa: TC001
+from TSModelWrappers.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
+from TSModelWrappers.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
 __all__ = ["load_best_points", "load_json_log_to_dfp", "print_memory_usage", "run_bayesian_opt"]
 

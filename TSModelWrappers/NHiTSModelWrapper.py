@@ -6,7 +6,7 @@ from typing import Any
 
 from darts.models import NHiTSModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
@@ -52,7 +52,7 @@ class NHiTSModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
