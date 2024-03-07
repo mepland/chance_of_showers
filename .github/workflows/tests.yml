@@ -48,10 +48,11 @@ jobs:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
-          # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
           tool-cache: false
-          # does not break anything, and saves a lot of space, but runs slowly
-          # do not use unless necessary
+
+          # Does not break anything, and saves a lot of space, but runs slowly.
+          # Do not use unless necessary.
           large-packages: true
 
           # Needed for markdownlint-cli
@@ -60,7 +61,7 @@ jobs:
           # Gets the poetry cache back
           swap-storage: false
 
-          # these will be cleaned
+          # These will be cleaned
           android: true
           dotnet: true
           haskell: true
