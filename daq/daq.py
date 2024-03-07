@@ -290,7 +290,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     from adafruit_mcp3xxx.analog_in import AnalogIn
 
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
-    cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5  # pylint: disable=invalid-name
+    cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5
     mcp = MCP.MCP3008(spi, cs, ref_voltage=5)  # 5 Volts
     chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 

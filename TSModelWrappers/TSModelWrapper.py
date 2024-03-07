@@ -666,7 +666,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
     """
 
-    def __init__(
+    def __init__(  # pylint: too-many-arguments
         self: "TSModelWrapper",
         # required
         dfp_trainable_evergreen: pd.DataFrame,
@@ -1290,7 +1290,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         condition_dict["rhs"], get_hyperparam_value(condition_dict["rhs"])
                     )
                     op_func = condition_dict["condition"]
-                    if op_func == operator.lt:  # pylint: disable=comparison-with-callable
+                    if op_func == operator.lt:
                         new_value = rhs_value - 1
                         if new_value < 0 <= rhs_value:
                             logger_ts_wrapper.warning(
@@ -1299,7 +1299,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                             )
                             new_value = 0
 
-                    elif op_func == operator.ge:  # pylint: disable=comparison-with-callable
+                    elif op_func == operator.ge:
                         new_value = rhs_value
                     else:
                         raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")

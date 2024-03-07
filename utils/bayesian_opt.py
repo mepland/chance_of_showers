@@ -613,7 +613,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
 n_points = 0  # pylint: disable=invalid-name
 
 
-def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
+def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals,too-many-arguments
     *,
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: WrapperTypes,
