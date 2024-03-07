@@ -274,11 +274,11 @@ enable = [
 ]
 
 [tool.pylint.design]
-max-args = 15
+max-args = 8
 max-locals = 30
 max-statements = 100
 max-attributes = 15
-max-nested-blocks = 10
+max-nested-blocks = 6
 min-public-methods = 1
 
 [tool.pylint.basic]
