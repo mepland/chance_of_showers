@@ -116,8 +116,8 @@ shfmt:
 
 .PHONY: clean
 clean:
-	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -f
-	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -rf
+	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -rf
+	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -f
 
 # isort ~ isort:
 # flake8 ~ noqa
