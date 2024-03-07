@@ -50,7 +50,9 @@ from TSModelWrappers.AutoARIMAWrapper import AutoARIMAWrapper  # noqa: TC001
 from TSModelWrappers.BATSWrapper import BATSWrapper  # noqa: TC001
 from TSModelWrappers.TBATSWrapper import TBATSWrapper  # noqa: TC001
 from TSModelWrappers.FourThetaWrapper import FourThetaWrapper  # noqa: TC001
-from TSModelWrappers.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper  # noqa: TC001
+from TSModelWrappers.StatsForecastAutoThetaWrapper import (  # noqa: TC001
+    StatsForecastAutoThetaWrapper,
+)
 from TSModelWrappers.FFTWrapper import FFTWrapper  # noqa: TC001
 from TSModelWrappers.KalmanForecasterWrapper import KalmanForecasterWrapper  # noqa: TC001
 from TSModelWrappers.CrostonWrapper import CrostonWrapper  # noqa: TC001
