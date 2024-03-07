@@ -127,9 +127,9 @@ matplotlib = "^3.8.3"
 plotly = "^5.19.0"
 statsmodels = "^0.14.1"
 prophet = "^1.1.5"
-torch = {version = "^2.0.1+cu118", source = "pytorch-gpu-src"}
-torchvision = {version = "^0.15.2+cu118", source = "pytorch-gpu-src"}
-torchaudio = {version = "^2.0.2+cu118", source = "pytorch-gpu-src"}
+torch = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
+torchvision = {version = "^0.17.1+cu118", source = "pytorch-gpu-src"}
+torchaudio = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
 catboost = "^1.2.3"
 lightgbm = "^4.3.0"
 darts = "^0.28.0"
