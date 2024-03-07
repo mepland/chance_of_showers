@@ -27,42 +27,42 @@ from utils.shared_functions import read_secure_pickle
 from utils.bayesian_opt import run_bayesian_opt
 
 # Prophet
-from utils.ProphetWrapper import ProphetWrapper
+from TSModelWrappers.ProphetWrapper import ProphetWrapper
 
 # PyTorch NN Models
-from utils.NBEATSModelWrapper import NBEATSModelWrapper
-from utils.NHiTSModelWrapper import NHiTSModelWrapper
-from utils.TCNModelWrapper import TCNModelWrapper
-from utils.TransformerModelWrapper import TransformerModelWrapper
-from utils.TFTModelWrapper import TFTModelWrapper
-from utils.DLinearModelWrapper import DLinearModelWrapper
-from utils.NLinearModelWrapper import NLinearModelWrapper
-from utils.TiDEModelWrapper import TiDEModelWrapper
-from utils.RNNModelWrapper import RNNModelWrapper
-from utils.BlockRNNModelWrapper import BlockRNNModelWrapper
+from TSModelWrappers.NBEATSModelWrapper import NBEATSModelWrapper
+from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
+from TSModelWrappers.TCNModelWrapper import TCNModelWrapper
+from TSModelWrappers.TransformerModelWrapper import TransformerModelWrapper
+from TSModelWrappers.TFTModelWrapper import TFTModelWrapper
+from TSModelWrappers.DLinearModelWrapper import DLinearModelWrapper
+from TSModelWrappers.NLinearModelWrapper import NLinearModelWrapper
+from TSModelWrappers.TiDEModelWrapper import TiDEModelWrapper
+from TSModelWrappers.RNNModelWrapper import RNNModelWrapper
+from TSModelWrappers.BlockRNNModelWrapper import BlockRNNModelWrapper
 
 # Statistical Models
-from utils.AutoARIMAWrapper import AutoARIMAWrapper
-from utils.BATSWrapper import BATSWrapper
-from utils.TBATSWrapper import TBATSWrapper
-from utils.FourThetaWrapper import FourThetaWrapper
-from utils.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
-from utils.FFTWrapper import FFTWrapper
-from utils.KalmanForecasterWrapper import KalmanForecasterWrapper
-from utils.CrostonWrapper import CrostonWrapper
+from TSModelWrappers.AutoARIMAWrapper import AutoARIMAWrapper
+from TSModelWrappers.BATSWrapper import BATSWrapper
+from TSModelWrappers.TBATSWrapper import TBATSWrapper
+from TSModelWrappers.FourThetaWrapper import FourThetaWrapper
+from TSModelWrappers.StatsForecastAutoThetaWrapper import StatsForecastAutoThetaWrapper
+from TSModelWrappers.FFTWrapper import FFTWrapper
+from TSModelWrappers.KalmanForecasterWrapper import KalmanForecasterWrapper
+from TSModelWrappers.CrostonWrapper import CrostonWrapper
 
 # Regression Models
-from utils.LinearRegressionModelWrapper import LinearRegressionModelWrapper
-from utils.RandomForestWrapper import RandomForestWrapper
-from utils.LightGBMModelWrapper import LightGBMModelWrapper
-from utils.XGBModelWrapper import XGBModelWrapper
-from utils.CatBoostModelWrapper import CatBoostModelWrapper
+from TSModelWrappers.LinearRegressionModelWrapper import LinearRegressionModelWrapper
+from TSModelWrappers.RandomForestWrapper import RandomForestWrapper
+from TSModelWrappers.LightGBMModelWrapper import LightGBMModelWrapper
+from TSModelWrappers.XGBModelWrapper import XGBModelWrapper
+from TSModelWrappers.CatBoostModelWrapper import CatBoostModelWrapper
 
 # Naive Models
-from utils.NaiveMeanWrapper import NaiveMeanWrapper
-from utils.NaiveSeasonalWrapper import NaiveSeasonalWrapper
-from utils.NaiveDriftWrapper import NaiveDriftWrapper
-from utils.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
+from TSModelWrappers.NaiveMeanWrapper import NaiveMeanWrapper
+from TSModelWrappers.NaiveSeasonalWrapper import NaiveSeasonalWrapper
+from TSModelWrappers.NaiveDriftWrapper import NaiveDriftWrapper
+from TSModelWrappers.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper
 
 __all__: list[str] = []
 

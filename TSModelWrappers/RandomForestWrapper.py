@@ -1,51 +1,44 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for FourTheta."""
+"""Wrapper for RandomForest."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import FourTheta
+from darts.models import RandomForest
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+    TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+    TREE_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["FourThetaWrapper"]
+__all__ = ["RandomForestWrapper"]
 
 
-class FourThetaWrapper(TSModelWrapper):
-    """FourTheta wrapper.
+class RandomForestWrapper(TSModelWrapper):
+    """RandomForest wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.theta.html#darts.models.forecasting.theta.FourTheta
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.random_forest.html
     """
 
-    # config wrapper for FourTheta
-    _model_class = FourTheta
+    # config wrapper for RandomForest
+    _model_class = RandomForest
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
-        "theta",
-        "season_mode_FourTheta",
-        "model_mode_FourTheta",
+    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS + [
+        "n_estimators",
+        "max_depth",
     ]
-
-    # leave the following hyperparameters at their default values:
-    # seasonality_period ~ None, will be tentatively inferred from the training series upon calling fit().
-    # trend_mode ~ TrendMode.LINEAR
-    # normalization ~ True
-
     _allowed_variable_hyperparams = {
         **DATA_VARIABLE_HYPERPARAMS,
-        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
     }
-
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    def __init__(self: "FourThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "RandomForestWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -57,7 +50,7 @@ class FourThetaWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

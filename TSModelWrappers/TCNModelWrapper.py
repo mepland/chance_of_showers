@@ -1,48 +1,61 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for StatsForecastAutoTheta."""
+"""Wrapper for TCN."""
 # pylint: enable=invalid-name
 
+import operator
 from typing import Any
 
-from darts.models import StatsForecastAutoTheta
+from darts.models import TCNModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+    NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    NN_FIXED_HYPERPARAMS,
+    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["StatsForecastAutoThetaWrapper"]
+__all__ = ["TCNModelWrapper"]
 
 
-class StatsForecastAutoThetaWrapper(TSModelWrapper):
-    """StatsForecastAutoTheta wrapper.
+class TCNModelWrapper(TSModelWrapper):
+    """TCNModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.sf_auto_theta.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tcn_model.html
     """
 
-    # config wrapper for StatsForecastAutoTheta
-    _model_class = StatsForecastAutoTheta
-    _is_nn = False
+    # config wrapper for TCNModel
+    _model_class = TCNModel
+    _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
-        "season_length_StatsForecastAutoTheta",
-        "decomposition_type_StatsForecastAutoTheta",
+    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+        "kernel_size",
+        "num_filters",
+        "num_layers",  # Optional
+        "dilation_base",
+        "weight_norm",
+    ]
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+
+    _hyperparams_conditions = [
+        # The kernel size must be strictly smaller than the input length.
+        {
+            "hyperparam": "kernel_size",
+            "condition": operator.lt,
+            "rhs": "input_chunk_length",
+        },
+        # The output length must be strictly smaller than the input length
+        {
+            "hyperparam": "output_chunk_length",
+            "condition": operator.lt,
+            "rhs": "input_chunk_length",
+        },
     ]
 
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
-
-    # Overwrite time_bin_size_in_minutes as small values crash with too many rows
-    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5  # type: ignore[index]
-
-    _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
-
-    def __init__(self: "StatsForecastAutoThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "TCNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -54,7 +67,7 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
@@ -67,6 +80,7 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
+            self.hyperparams_conditions = self._hyperparams_conditions
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -87,4 +101,5 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
+                hyperparams_conditions=self._hyperparams_conditions,
             )

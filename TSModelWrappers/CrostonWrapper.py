@@ -1,54 +1,76 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for Prophet."""
+"""Wrapper for Croston."""
 # pylint: enable=invalid-name
 
-from typing import Any, Final
+from typing import Any
 
-from darts.models import Prophet
+from darts.models import Croston
+from darts.models.forecasting.forecasting_model import (
+    FutureCovariatesLocalForecastingModel,
+)
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["ProphetWrapper"]
+__all__ = ["CrostonWrapper"]
 
 
-class ProphetWrapper(TSModelWrapper):
-    """Prophet wrapper.
+class CrostonWrapper(TSModelWrapper):
+    """Croston wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.prophet_model.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.croston.html
     """
 
-    # config wrapper for Prophet
-    PROPHET_FIXED_HYPERPARAMS: Final = {
-        "growth": "flat",
-        "country_holidays": "US",
-        "suppress_stdout_stderror": True,
-    }
-
-    _model_class = Prophet
+    # config wrapper for Croston
+    _model_class = Croston
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
+    _required_hyperparams_model = ["version"]
+    _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
+    _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
-    # Prophet makes "day_of_week_frac", "time_of_day_frac", "is_holiday" equivalent components, so remove as covariates
-    _covariates = [
-        _
-        for _ in _allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
-        if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
+    _valid_versions = [
+        "classic",
+        "optimized",
+        "sba",
+        # Do not use tsb as alpha_d and alpha_p must be set
     ]
 
-    _allowed_variable_hyperparams["covariates"]["allowed"] = _covariates  # type: ignore[index]
-    _allowed_variable_hyperparams["covariates"]["default"] = _covariates  # type: ignore[index]
+    def __init__(self: "CrostonWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # setup the version parameter correctly
+        if "version" in kwargs:
+            version = kwargs["version"]
+            # check validity of version, and set model_name_tag appropriately
+            if version in self._valid_versions:
+                if "model_name_tag" in kwargs and len(kwargs["model_name_tag"]):
+                    kwargs["model_name_tag"] = f'{version}_{kwargs["model_name_tag"]}'
+                else:
+                    kwargs["model_name_tag"] = version
 
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
+            elif isinstance(version, type) and issubclass(version, FutureCovariatesLocalForecastingModel):  # type: ignore[arg-type]
+                if "model_name_tag" not in kwargs:
+                    raise ValueError(
+                        "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
+                    )
 
-    def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+            else:
+                valid_versions_str = ", ".join([f"{_!r}" for _ in self._valid_versions])
+                raise ValueError(
+                    f"{version = } must be in {valid_versions_str} or be a subclass of FutureCovariatesLocalForecastingModel"
+                )
+
+            self._fixed_hyperparams["version"] = version
+            # remove version from kwargs so it does not cause later complications
+            del kwargs["version"]
+        else:
+            raise ValueError("'version' is required in kwargs for CrostonWrapper!")
+
         # boilerplate - the same for all models below here
+
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
@@ -59,7 +81,7 @@ class ProphetWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

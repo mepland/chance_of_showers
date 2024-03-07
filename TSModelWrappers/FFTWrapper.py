@@ -1,42 +1,48 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for XGBModel."""
+"""Wrapper for FFT."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import XGBModel
+from darts.models import FFT
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    TREE_REQUIRED_HYPERPARAMS,
+    OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["XGBModelWrapper"]
+__all__ = ["FFTWrapper"]
 
 
-class XGBModelWrapper(TSModelWrapper):
-    """XGBModel wrapper.
+class FFTWrapper(TSModelWrapper):
+    """FFT wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.xgboost.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.fft.html
     """
 
-    # config wrapper for XGBModel
-    _model_class = XGBModel
+    # config wrapper for FFT
+    _model_class = FFT
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS
+    _required_hyperparams_model = [
+        "nr_freqs_to_keep",
+    ]
+
+    # leave the following hyperparameters at their default values:
+    # required_matches ~ None
+    # trend ~ None
 
     _allowed_variable_hyperparams = {
         **DATA_VARIABLE_HYPERPARAMS,
-        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     }
+
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    def __init__(self: "XGBModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "FFTWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -48,7 +54,7 @@ class XGBModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

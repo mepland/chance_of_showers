@@ -1,44 +1,42 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for RandomForest."""
+"""Wrapper for NLinear."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import RandomForest
+from darts.models import NLinearModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    TREE_REQUIRED_HYPERPARAMS,
+    NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    NN_FIXED_HYPERPARAMS,
+    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["RandomForestWrapper"]
+__all__ = ["NLinearModelWrapper"]
 
 
-class RandomForestWrapper(TSModelWrapper):
-    """RandomForest wrapper.
+class NLinearModelWrapper(TSModelWrapper):
+    """NLinearModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.random_forest.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nlinear.html
     """
 
-    # config wrapper for RandomForest
-    _model_class = RandomForest
-    _is_nn = False
+    # config wrapper for NLinearModel
+    _model_class = NLinearModel
+    _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS + [
-        "n_estimators",
-        "max_depth",
+    _required_hyperparams_model = [_ for _ in NN_REQUIRED_HYPERPARAMS if _ != "dropout"] + [
+        "const_init",
+        "normalize",
     ]
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
-    _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
-    def __init__(self: "RandomForestWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "NLinearModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -50,7 +48,7 @@ class RandomForestWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

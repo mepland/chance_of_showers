@@ -1,12 +1,14 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for DLinear."""
+"""Wrapper for RNN."""
 # pylint: enable=invalid-name
 
+import operator
 from typing import Any
 
-from darts.models import DLinearModel
+from darts.models import RNNModel
+from darts.models.forecasting.rnn_model import CustomRNNModule
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
@@ -16,28 +18,74 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
-__all__ = ["DLinearModelWrapper"]
+__all__ = ["RNNModelWrapper"]
 
 
-class DLinearModelWrapper(TSModelWrapper):
-    """DLinearModel wrapper.
+class RNNModelWrapper(TSModelWrapper):
+    """RNNModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.dlinear.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.rnn_model.html
     """
 
-    # config wrapper for DLinearModel
-    _model_class = DLinearModel
+    # config wrapper for RNNModel
+    _model_class = RNNModel
     _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [_ for _ in NN_REQUIRED_HYPERPARAMS if _ != "dropout"] + [
-        "kernel_size",
-        "const_init",
+    _required_hyperparams_model = [
+        _ for _ in NN_REQUIRED_HYPERPARAMS if _ != "output_chunk_length"
+    ] + [
+        "model",
+        "hidden_dim",
+        "n_rnn_layers",
+        "training_length",
     ]
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
-    def __init__(self: "DLinearModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    _hyperparams_conditions = [
+        # The length of both input (target and covariates) and output (target) time series used during training.
+        # Generally speaking, training_length should have a higher value than input_chunk_length
+        # because otherwise during training the RNN is never run for as many iterations as it will during inference.
+        {
+            "hyperparam": "training_length",
+            "condition": operator.ge,
+            "rhs": "input_chunk_length",
+        },
+    ]
+
+    _valid_models = ["RNN", "LSTM", "GRU"]
+
+    def __init__(self: "RNNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # setup the model parameter correctly
+        if "model" in kwargs:
+            model = kwargs["model"]
+            # check validity of model, and set model_name_tag appropriately
+            if model in self._valid_models:
+                if "model_name_tag" in kwargs and len(kwargs["model_name_tag"]):
+                    kwargs["model_name_tag"] = f'{model}_{kwargs["model_name_tag"]}'
+                else:
+                    kwargs["model_name_tag"] = model
+
+            elif isinstance(model, type) and issubclass(model, CustomRNNModule):  # type: ignore[arg-type]
+                if "model_name_tag" not in kwargs:
+                    raise ValueError(
+                        "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
+                    )
+
+            else:
+                valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
+                raise ValueError(
+                    f"{model = } must be in {valid_models_str} or be a subclass of CustomRNNModule"
+                )
+
+            self._fixed_hyperparams["model"] = model
+            # remove model from kwargs so it does not cause later complications
+            del kwargs["model"]
+        else:
+            raise ValueError("'model' is required in kwargs for RNNModelWrapper!")
+
         # boilerplate - the same for all models below here
+
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
@@ -48,7 +96,7 @@ class DLinearModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
@@ -61,6 +109,7 @@ class DLinearModelWrapper(TSModelWrapper):
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
+            self.hyperparams_conditions = self._hyperparams_conditions
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -81,4 +130,5 @@ class DLinearModelWrapper(TSModelWrapper):
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
+                hyperparams_conditions=self._hyperparams_conditions,
             )

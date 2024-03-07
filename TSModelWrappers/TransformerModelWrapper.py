@@ -1,57 +1,55 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for TBATS."""
+"""Wrapper for Transformer."""
 # pylint: enable=invalid-name
 
+import operator
 from typing import Any
 
-from darts.models import TBATS
+from darts.models import TransformerModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
+    NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    NN_FIXED_HYPERPARAMS,
+    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["TBATSWrapper"]
+__all__ = ["TransformerModelWrapper"]
 
 
-class TBATSWrapper(TSModelWrapper):
-    """TBATS wrapper.
+class TransformerModelWrapper(TSModelWrapper):
+    """TransformerModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tbats_model.html#darts.models.forecasting.tbats_model.TBATS
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.transformer_model.html
     """
 
-    # config wrapper for TBATS
-    _model_class = TBATS
-    _is_nn = False
+    # config wrapper for TransformerModel
+    _model_class = TransformerModel
+    _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
-        # "seasonal_periods_BATS", # Warning, causes very long run times!
-        "use_trend",
-        "multiprocessing_start_method",
-        "show_warnings",
-        "random_state",
+    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+        "d_model",
+        "nhead",
+        "num_encoder_layers",
+        "num_decoder_layers",
+        "dim_feedforward",
+    ]
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+
+    _hyperparams_conditions = [
+        # embed_dim must be divisible by num_heads
+        {
+            "hyperparam": "d_model",
+            "condition": operator.ge,
+            "rhs": "nhead",
+        },
     ]
 
-    # leave the following hyperparameters at their default values:
-    # use_box_cox ~ None
-    # box_cox_bounds ~ (0, 1)
-    # use_arma_errors ~ True
-    # n_jobs ~ None
-
-    _fixed_hyperparams_TBATS = {
-        "use_trend": False,
-        "multiprocessing_start_method": "fork",  # Runs in jupyter lab with "spawn", but crashes if run in normal env
-    }
-
-    _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
-    _fixed_hyperparams = {
-        **DATA_FIXED_HYPERPARAMS,
-        **_fixed_hyperparams_TBATS,
-    }
-
-    def __init__(self: "TBATSWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "TransformerModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -63,7 +61,7 @@ class TBATSWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
@@ -76,6 +74,7 @@ class TBATSWrapper(TSModelWrapper):
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
+            self.hyperparams_conditions = self._hyperparams_conditions
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -96,4 +95,5 @@ class TBATSWrapper(TSModelWrapper):
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
+                hyperparams_conditions=self._hyperparams_conditions,
             )

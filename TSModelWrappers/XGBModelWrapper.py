@@ -1,37 +1,42 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for NaiveSeasonal."""
+"""Wrapper for XGBModel."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import NaiveSeasonal
+from darts.models import XGBModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
+    TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+    TREE_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["NaiveSeasonalWrapper"]
+__all__ = ["XGBModelWrapper"]
 
 
-class NaiveSeasonalWrapper(TSModelWrapper):
-    """NaiveSeasonal wrapper.
+class XGBModelWrapper(TSModelWrapper):
+    """XGBModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.baselines.html#darts.models.forecasting.baselines.NaiveSeasonal
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.xgboost.html
     """
 
-    # config wrapper for NaiveSeasonal
-    _model_class = NaiveSeasonal
+    # config wrapper for XGBModel
+    _model_class = XGBModel
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model: list[str] = []
+    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS
 
-    _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
+    _allowed_variable_hyperparams = {
+        **DATA_VARIABLE_HYPERPARAMS,
+        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+    }
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    def __init__(self: "NaiveSeasonalWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "XGBModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -43,7 +48,7 @@ class NaiveSeasonalWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

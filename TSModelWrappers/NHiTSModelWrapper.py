@@ -1,37 +1,46 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for NaiveMean."""
+"""Wrapper for NHiTS."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import NaiveMean
+from darts.models import NHiTSModel
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
+    NN_ALLOWED_VARIABLE_HYPERPARAMS,
+    NN_FIXED_HYPERPARAMS,
+    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["NaiveMeanWrapper"]
+__all__ = ["NHiTSModelWrapper"]
 
 
-class NaiveMeanWrapper(TSModelWrapper):
-    """NaiveMean wrapper.
+class NHiTSModelWrapper(TSModelWrapper):
+    """NHiTSModel wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.baselines.html#darts.models.forecasting.baselines.NaiveMean
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nhits.html
     """
 
-    # config wrapper for NaiveMean
-    _model_class = NaiveMean
-    _is_nn = False
+    # config wrapper for NHiTSModel
+    _model_class = NHiTSModel
+    _is_nn = True
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model: list[str] = []
+    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+        "num_stacks",
+        "num_blocks",
+        "num_layers",
+        "layer_widths",
+        "MaxPool1d",
+        # Leave tuple hyperparameters, pooling_kernel_sizes and n_freq_downsample, as default, i.e. None
+    ]
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
-    _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
-    _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
-
-    def __init__(self: "NaiveMeanWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "NHiTSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -43,7 +52,7 @@ class NaiveMeanWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

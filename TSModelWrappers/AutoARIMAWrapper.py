@@ -1,42 +1,108 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for LinearRegressionModel."""
+"""Wrapper for AutoARIMA."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import LinearRegressionModel
+from darts.models import AutoARIMA
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    TREE_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["LinearRegressionModelWrapper"]
+__all__ = ["AutoARIMAWrapper"]
 
 
-class LinearRegressionModelWrapper(TSModelWrapper):
-    """LinearRegressionModel wrapper.
+class AutoARIMAWrapper(TSModelWrapper):
+    """AutoARIMA wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.linear_regression_model.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.auto_arima.html
     """
 
-    # config wrapper for LinearRegressionModel
-    _model_class = LinearRegressionModel
+    # config wrapper for AutoARIMA
+    _model_class = AutoARIMA
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS
+    _required_hyperparams_model = [
+        "m_AutoARIMA",
+        "stationary",
+        "max_p",
+        "max_q",
+        "max_P",
+        "max_D",
+        "max_Q",
+        "maxiter",
+        "random_state",
+    ]
+
+    # Set m_AutoARIMA as either a variable or fixed hyperparameter
+    _variable_hyperparams_AutoARIMA = {
+        "m_AutoARIMA": {
+            "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+            "max": 1,  # Default
+            "default": 1,
+            "type": int,
+        },
+    }
 
     _allowed_variable_hyperparams = {
         **DATA_VARIABLE_HYPERPARAMS,
-        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+        # **_variable_hyperparams_AutoARIMA,
     }
-    _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    def __init__(self: "LinearRegressionModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    _fixed_hyperparams_AutoARIMA = {
+        # "m_AutoARIMA": 0,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+        "m_AutoARIMA": 1,  # Default
+        "stationary": True,
+        # Increase max values
+        "max_p": 15,
+        "max_q": 15,
+        "max_P": 5,
+        "max_D": 3,
+        "max_Q": 5,
+        "maxiter": 100,
+    }
+
+    # leave the following hyperparameters at their default values:
+    # max_d ~ 2
+    # start_p ~ 2
+    # d ~ None
+    # start_q ~ 2
+    # start_P ~ 1
+    # D ~ None
+    # start_Q ~ 1
+    # max_order ~ 5
+    # seasonal ~ True
+    # information_criterion ~ 'aic'
+    # alpha ~ 0.05
+    # test ~ 'kpss'
+    # seasonal_test ~ 'ocsb'
+    # stepwise ~ True
+    # n_jobs ~ 1
+    # start_params ~ None
+    # trend ~ None
+    # method ~ 'lbfgs'
+    # offset_test_args ~ None
+    # seasonal_test_args ~ None
+    # suppress_warnings ~ True
+    # error_action ~ 'trace'
+    # trace ~ False
+    # random ~ False
+    # n_fits ~ 10
+    # out_of_sample_size ~ 0
+    # scoring ~ 'mse'
+    # scoring_args ~ None
+    # with_intercept ~ 'auto'
+
+    _fixed_hyperparams = {
+        **DATA_FIXED_HYPERPARAMS,
+        **_fixed_hyperparams_AutoARIMA,
+    }
+
+    def __init__(self: "AutoARIMAWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -48,7 +114,7 @@ class LinearRegressionModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

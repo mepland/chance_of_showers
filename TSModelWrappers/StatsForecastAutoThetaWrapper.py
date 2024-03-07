@@ -1,12 +1,12 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for KalmanForecaster."""
+"""Wrapper for StatsForecastAutoTheta."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import KalmanForecaster
+from darts.models import StatsForecastAutoTheta
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
@@ -14,21 +14,22 @@ from utils.TSModelWrapper import (
     TSModelWrapper,
 )
 
-__all__ = ["KalmanForecasterWrapper"]
+__all__ = ["StatsForecastAutoThetaWrapper"]
 
 
-class KalmanForecasterWrapper(TSModelWrapper):
-    """KalmanForecaster wrapper.
+class StatsForecastAutoThetaWrapper(TSModelWrapper):
+    """StatsForecastAutoTheta wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.kalman_forecaster.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.sf_auto_theta.html
     """
 
-    # config wrapper for KalmanForecaster
-    _model_class = KalmanForecaster
+    # config wrapper for StatsForecastAutoTheta
+    _model_class = StatsForecastAutoTheta
     _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
     _required_hyperparams_model = [
-        "dim_x",
+        "season_length_StatsForecastAutoTheta",
+        "decomposition_type_StatsForecastAutoTheta",
     ]
 
     _allowed_variable_hyperparams = {
@@ -36,9 +37,12 @@ class KalmanForecasterWrapper(TSModelWrapper):
         **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
     }
 
+    # Overwrite time_bin_size_in_minutes as small values crash with too many rows
+    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5  # type: ignore[index]
+
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    def __init__(self: "KalmanForecasterWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self: "StatsForecastAutoThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -50,7 +54,7 @@ class KalmanForecasterWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

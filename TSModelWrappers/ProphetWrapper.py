@@ -1,45 +1,53 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for TFT."""
+"""Wrapper for Prophet."""
 # pylint: enable=invalid-name
 
-from typing import Any
+from typing import Any, Final
 
-from darts.models import TFTModel
+from darts.models import Prophet
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    NN_ALLOWED_VARIABLE_HYPERPARAMS,
-    NN_FIXED_HYPERPARAMS,
-    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["TFTModelWrapper"]
+__all__ = ["ProphetWrapper"]
 
 
-class TFTModelWrapper(TSModelWrapper):
-    """TFTModel wrapper.
+class ProphetWrapper(TSModelWrapper):
+    """Prophet wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tft_model.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.prophet_model.html
     """
 
-    # config wrapper for TFTModel
-    _model_class = TFTModel
-    _is_nn = True
-    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
-        "hidden_size",
-        "lstm_layers",
-        "num_attention_heads",
-        "full_attention",
-        "hidden_continuous_size",
-    ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+    # config wrapper for Prophet
+    PROPHET_FIXED_HYPERPARAMS: Final = {
+        "growth": "flat",
+        "country_holidays": "US",
+        "suppress_stdout_stderror": True,
+    }
 
-    def __init__(self: "TFTModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    _model_class = Prophet
+    _is_nn = False
+    _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
+    _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
+
+    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
+    # Prophet makes "day_of_week_frac", "time_of_day_frac", "is_holiday" equivalent components, so remove as covariates
+    _covariates = [
+        _
+        for _ in _allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
+        if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
+    ]
+
+    _allowed_variable_hyperparams["covariates"]["allowed"] = _covariates  # type: ignore[index]
+    _allowed_variable_hyperparams["covariates"]["default"] = _covariates  # type: ignore[index]
+
+    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
+
+    def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -51,7 +59,7 @@ class TFTModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class

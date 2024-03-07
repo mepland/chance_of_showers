@@ -1,46 +1,57 @@
 # pylint: disable=invalid-name,duplicate-code
-"""Wrapper for NHiTS."""
+"""Wrapper for TBATS."""
 # pylint: enable=invalid-name
 
 from typing import Any
 
-from darts.models import NHiTSModel
+from darts.models import TBATS
 
-from utils.TSModelWrapper import (
+from TSModelWrappers.TSModelWrapper import (
     DATA_FIXED_HYPERPARAMS,
     DATA_REQUIRED_HYPERPARAMS,
     DATA_VARIABLE_HYPERPARAMS,
-    NN_ALLOWED_VARIABLE_HYPERPARAMS,
-    NN_FIXED_HYPERPARAMS,
-    NN_REQUIRED_HYPERPARAMS,
     TSModelWrapper,
 )
 
-__all__ = ["NHiTSModelWrapper"]
+__all__ = ["TBATSWrapper"]
 
 
-class NHiTSModelWrapper(TSModelWrapper):
-    """NHiTSModel wrapper.
+class TBATSWrapper(TSModelWrapper):
+    """TBATS wrapper.
 
-    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nhits.html
+    https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tbats_model.html#darts.models.forecasting.tbats_model.TBATS
     """
 
-    # config wrapper for NHiTSModel
-    _model_class = NHiTSModel
-    _is_nn = True
+    # config wrapper for TBATS
+    _model_class = TBATS
+    _is_nn = False
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
-        "num_stacks",
-        "num_blocks",
-        "num_layers",
-        "layer_widths",
-        "MaxPool1d",
-        # Leave tuple hyperparameters, pooling_kernel_sizes and n_freq_downsample, as default, i.e. None
+    _required_hyperparams_model = [
+        # "seasonal_periods_BATS", # Warning, causes very long run times!
+        "use_trend",
+        "multiprocessing_start_method",
+        "show_warnings",
+        "random_state",
     ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
 
-    def __init__(self: "NHiTSModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+    # leave the following hyperparameters at their default values:
+    # use_box_cox ~ None
+    # box_cox_bounds ~ (0, 1)
+    # use_arma_errors ~ True
+    # n_jobs ~ None
+
+    _fixed_hyperparams_TBATS = {
+        "use_trend": False,
+        "multiprocessing_start_method": "fork",  # Runs in jupyter lab with "spawn", but crashes if run in normal env
+    }
+
+    _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
+    _fixed_hyperparams = {
+        **DATA_FIXED_HYPERPARAMS,
+        **_fixed_hyperparams_TBATS,
+    }
+
+    def __init__(self: "TBATSWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -52,7 +63,7 @@ class NHiTSModelWrapper(TSModelWrapper):
             )
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
-            == str(TSModelWrapper)  # <class 'utils.TSModelWrappers.TSModelWrapper'>
+            == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
