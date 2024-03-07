@@ -87,7 +87,7 @@ jobs:
 
           # Does not break anything, and saves a lot of space, but runs slowly,
           # do not use unless necessary.
-          large-packages: steps.filter.outputs.poetry == 'true'
+          large-packages: steps.filter.outputs.poetry
 
           # Needed for markdownlint-cli
           docker-images: false
