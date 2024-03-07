@@ -52,12 +52,12 @@ jobs:
           tool-cache: false
           # does not break anything, and saves a lot of space, but runs slowly
           # do not use unless necessary
-          large-packages: false
+          large-packages: true
 
-          # needed for markdownlint-cli
+          # Needed for markdownlint-cli
           docker-images: false
 
-          # test if this gets the poetry cache back
+          # Gets the poetry cache back
           swap-storage: false
 
           # these will be cleaned
