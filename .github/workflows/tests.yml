@@ -108,6 +108,9 @@ jobs:
           node-version: ${{ matrix.node_version }}
           check-latest: true
 
+      - name: test_echo
+        run: echo steps.filter.outputs.poetry & echo ${{steps.filter.outputs.poetry}}
+
       - name: Install Node Dependencies
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: sudo npm install --global standard prettier
