@@ -290,7 +290,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     from adafruit_mcp3xxx.analog_in import AnalogIn
 
     spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
-    cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5  # pylint: disable=invalid-name
+    cs = digitalio.DigitalInOut(board.D5)  # GPIO pin 5
     mcp = MCP.MCP3008(spi, cs, ref_voltage=5)  # 5 Volts
     chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 
@@ -300,6 +300,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
     # but my flow sensor only produces a constant Vcc while flow is occurring, no pulses.
     from gpiozero import Button
+    from gpiozero.pins.rpigpio import RPiGPIOFactory
 
     def rise() -> None:
         """Flow sensor rise action."""
@@ -312,7 +313,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         had_flow = 0
 
     # bounce_time and hold_time are in seconds
-    flow_switch = Button(pin=19, pull_up=False, bounce_time=0.1, hold_time=1)
+    factory = RPiGPIOFactory()
+    flow_switch = Button(pin=19, pull_up=False, bounce_time=0.1, hold_time=1, pin_factory=factory)
     flow_switch.when_held = rise
     flow_switch.when_released = fall
 

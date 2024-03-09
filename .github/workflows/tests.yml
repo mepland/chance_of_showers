@@ -45,26 +45,6 @@ jobs:
       - name: Install Python Dependencies
         run: poetry install --with daq,web,ana,dev
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          tool-cache: false
-          # does not break anything, and saves a lot of space, but runs slowly
-          # do not use unless necessary
-          large-packages: false
-
-          # needed for markdownlint-cli
-          docker-images: false
-
-          # test if this gets the poetry cache back
-          swap-storage: false
-
-          # these will be cleaned
-          android: true
-          dotnet: true
-          haskell: true
-
       # File filters
       - name: Paths Changes Filter
         uses: dorny/paths-filter@v3
@@ -98,6 +78,27 @@ jobs:
             - added|modified: '**.tex'
             rst:
             - added|modified: '**.rst'
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # Does not break anything, and saves a lot of space, but runs slowly,
+          # do not use unless necessary, i.e. when running poetry checks.
+          large-packages: ${{steps.filter.outputs.poetry}}
+
+          # Needed by any dockerized github action
+          docker-images: false
+
+          # Gets the poetry cache back
+          swap-storage: false
+
+          # These will be cleaned
+          android: true
+          dotnet: true
+          haskell: true
 
       # Filtered setup
       - name: Install Node

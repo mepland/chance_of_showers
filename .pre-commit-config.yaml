@@ -16,7 +16,7 @@ repos:
 
   # black
   - repo: https://github.com/psf/black
-    rev: '24.1.1'
+    rev: '24.2.0'
     hooks:
       - id: black-jupyter
   - repo: https://github.com/adamchainz/blacken-docs
@@ -111,13 +111,13 @@ repos:
 
   # vulture
   - repo: https://github.com/jendrikseipp/vulture
-    rev: 'v2.10'
+    rev: 'v2.11'
     hooks:
       - id: vulture
 
   # pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.15.0'
+    rev: 'v3.15.1'
     hooks:
       - id: pyupgrade
 
@@ -137,7 +137,7 @@ repos:
 
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: 'v1.33.0'
+    rev: 'v1.35.1'
     hooks:
       - id: yamllint
         args: ['-c', '.dev_config/.yamllint.yaml', '--strict']
@@ -191,14 +191,14 @@ repos:
 
   # shfmt
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: 'v3.7.0-4'
+    rev: 'v3.8.0-1'
     hooks:
       - id: shfmt
         args: ['-bn', '-ci', '-sr', '-s', '-w']
 
   # github actions
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.26
+    rev: v1.6.27
     hooks:
       - id: actionlint
         args: ['-ignore', 'SC2086']

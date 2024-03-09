@@ -10,49 +10,49 @@ repository = "https://github.com/mepland/chance_of_showers"
 [tool.poetry.dependencies]
 python = "~=3.11.4"
 hydra-core = "^1.3.2"
-numpy = "^1.24.3"
-pandas = "^2.0.1"
-polars = "^0.18.4"
-humanize = "^4.7.0"
-holidays = "^0.36"
-psutil = "^5.9.5"
+numpy = "^1.26.4"
+pandas = "^2.2.1"
+polars = "^0.20.13"
+humanize = "^4.9.0"
+holidays = "^0.44"
+psutil = "^5.9.8"
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.3.3"
-isort = "^5.12.0"
-black = {extras = ["jupyter"], version = "^24.1.1"}
-blacken-docs = "^1.14.0"
+pre-commit = "^3.6.2"
+isort = "^5.13.2"
+black = {extras = ["jupyter"], version = "^24.2.0"}
+blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
-mypy = "^1.4.1"
-pylint = "^2.17.4"
+mypy = "^1.8.0"
+pylint = "^3.1.0"
 bandit = "^1.7.7"
 detect-secrets = "^1.4.0"
-vulture = "^2.7"
-yamllint = "^1.32.0"
+vulture = "^2.11"
+yamllint = "^1.35.1"
 blocklint = "^0.2.4"
-pyupgrade = "^3.9.0"
+pyupgrade = "^3.15.1"
 deptry = "^0.12.0"
 html5validator = "^0.4.2"
-pandas-stubs = "^2.0.2.230605"
-types-pillow = "^9.5.0.5"
-types-pyyaml = "^6.0.12.10"
-types-pygments = "^2.15.0.1"
-types-colorama = "^0.4.15.11"
-types-decorator = "^5.1.8.3"
-types-six = "^1.16.21.8"
+pandas-stubs = "^2.2.0.240218"
+types-pillow = "^10.2.0.20240213"
+types-pyyaml = "^6.0.12.12"
+types-pygments = "^2.17.0.20240106"
+types-colorama = "^0.4.15.20240205"
+types-decorator = "^5.1.8.20240106"
+types-six = "^1.16.21.20240301"
 flake8-absolute-import = "^1.0.0.2"
 flake8-all-not-strings = "^0.0.1"
 flake8-annotations = "^3.0.1"
 flake8-assertive = "^2.1.0"
 flake8-async = "^22.11.14"
-flake8-boolean-trap = "^1.0.0"
+flake8-boolean-trap = "^1.0.1"
 flake8-broken-line = "^1.0.0"
-flake8-bugbear = "^23.6.5"
-flake8-builtins = "^2.1.0"
+flake8-bugbear = "^24.2.6"
+flake8-builtins = "^2.2.0"
 flake8-clean-block = "^0.1.2"
 flake8-coding = "^1.3.2"
 flake8-comments = "^0.1.2"
-flake8-comprehensions = "^3.13.0"
+flake8-comprehensions = "^3.14.0"
 flake8-datetimez = "^20.10.0"
 flake8-dunder-all = "^0.3.1"
 flake8-dunder-class-obj = "^0.1.1"
@@ -64,78 +64,78 @@ flake8-get-chaining = "^0.2.0"
 flake8-github-annotations = "^1.1.1"
 flake8-import-conventions = "^0.1.0"
 flake8-inflammatory-jargon = "^1.0.1"
-flake8-keyword-params = "^1.1.1"
-flake8-literal = "^1.3.0"
-flake8-logging = "^1.2.0"
+flake8-keyword-params = "^1.2.0"
+flake8-literal = "^1.4.0"
+flake8-logging = "^1.5.0"
 flake8-loopy = "^1.1.0"
 flake8-mutable = "^1.2.0"
 flake8-no-debug-vars = "^0.1.0"
-flake8-no-implicit-concat = "^0.3.4"
-flake8-noqa = "^1.3.2"
-flake8-pep3101 = "^2.0.0"
+flake8-no-implicit-concat = "^0.3.5"
+flake8-noqa = "^1.4.0"
+flake8-pep3101 = "^2.1.0"
 flake8-pep585 = "^0.1.7"
-flake8-picky-parentheses = "^0.5.0"
+flake8-picky-parentheses = "^0.5.4"
 flake8-pie = "^0.16.0"
 flake8-printf-formatting = "^1.1.2"
 flake8-pyprojecttoml = "^0.0.2"
 flake8-pytest-style = "^1.7.2"
 flake8-return = "^1.2.0"
-flake8-secure-coding-standard = "^1.4.0"
-flake8-simplify = "^0.20.0"
+flake8-secure-coding-standard = "^1.4.1"
+flake8-simplify = "^0.21.0"
 flake8-string-format = "^0.3.0"
-flake8-type-checking = "^2.4.0"
+flake8-type-checking = "^2.9.0"
 flake8-typing-as-t = "^0.0.3"
 flake8-unused-arguments = "^0.0.13"
 flake8-use-fstring = "^1.4"
 flake8-use-pathlib = "^0.3.0"
 dlint = "^0.14.1"
 pandas-vet = "^2023.8.2"
-pydoclint = {extras = ["flake8"], version = "^0.4.0"}
+pydoclint = {extras = ["flake8"], version = "^0.4.1"}
 tryceratops = "^2.3.2"
 
 [tool.poetry.group.daq]
 optional = true
 
 [tool.poetry.group.daq.dependencies]
-adafruit-circuitpython-mcp3xxx = "^1.4.14"
-gpiozero = "^1.6.2"
+adafruit-circuitpython-mcp3xxx = "^1.4.17"
+gpiozero = "^2.0.1"
 rpi-gpio = "^0.7.1"
-"luma.oled" = "^3.12.0"
+"luma.oled" = "^3.13.0"
 pause = "^0.3"
 
 [tool.poetry.group.web]
 optional = true
 
 [tool.poetry.group.web.dependencies]
-flask = "^2.3.2"
-flask-socketio = "^5.3.4"
-simple-websocket = "^0.10.0"
+flask = "^3.0.2"
+flask-socketio = "^5.3.6"
+simple-websocket = "^1.0.0"
 python-arptable = "^0.0.2"
 
 [tool.poetry.group.ana]
 optional = true
 
 [tool.poetry.group.ana.dependencies]
-jupyterlab = "^4.0.6"
-jupytext = "^1.14.5"
-jupyterlab-vim = "^4.0.3"
+jupyterlab = "^4.1.3"
+jupytext = "^1.16.1"
+jupyterlab-vim = "^4.1.3"
 jupyter-dash = "^0.4.2"
-ipywidgets = "^8.1.0"
-pyarrow = "^14.0.1"
-tqdm = "^4.66.1"
-matplotlib = "^3.7.1"
-plotly = "^5.14.1"
-statsmodels = "^0.14.0"
-prophet = "^1.1.4"
-torch = {version = "^2.0.1+cu118", source = "pytorch-gpu-src"}
-torchvision = {version = "^0.15.2+cu118", source = "pytorch-gpu-src"}
-torchaudio = {version = "^2.0.2+cu118", source = "pytorch-gpu-src"}
-catboost = "^1.2"
-lightgbm = "^4.0.0"
-darts = "^0.27.1"
-tensorboard = "^2.14.0"
+ipywidgets = "^8.1.2"
+pyarrow = "^15.0.0"
+tqdm = "^4.66.2"
+matplotlib = "^3.8.3"
+plotly = "^5.19.0"
+statsmodels = "^0.14.1"
+prophet = "^1.1.5"
+torch = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
+torchvision = {version = "^0.17.1+cu118", source = "pytorch-gpu-src"}
+torchaudio = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
+catboost = "^1.2.3"
+lightgbm = "^4.3.0"
+darts = "^0.28.0"
+tensorboard = "^2.16.2"
 bayesian-optimization = "^1.4.3"
-xlsxwriter = "^3.1.9"
+xlsxwriter = "^3.2.0"
 
 [[tool.poetry.source]]
 name = "pytorch-gpu-src"
@@ -274,11 +274,11 @@ enable = [
 ]
 
 [tool.pylint.design]
-max-args = 15
+max-args = 8
 max-locals = 30
 max-statements = 100
 max-attributes = 15
-max-nested-blocks = 10
+max-nested-blocks = 6
 min-public-methods = 1
 
 [tool.pylint.basic]
