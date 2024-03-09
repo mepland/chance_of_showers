@@ -318,3 +318,12 @@ DEP001 = [
     "board", "busio", "digitalio", # adafruit-circuitpython-mcp3xxx
     "PIL", # luma-core
 ]
+
+[tool.typos.default]
+locale = "en-us"
+extend-ignore-words-re = ["MAPE", "Dout"]
+
+[tool.typos.files]
+extend-exclude = [".git", "*.kicad*"]
+ignore-hidden = false
+ignore-parent = false
