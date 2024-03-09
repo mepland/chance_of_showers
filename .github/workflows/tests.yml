@@ -45,27 +45,6 @@ jobs:
       - name: Install Python Dependencies
         run: poetry install --with daq,web,ana,dev
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          tool-cache: false
-
-          # Does not break anything, and saves a lot of space, but runs slowly,
-          # do not use unless necessary.
-          large-packages: true
-
-          # Needed for markdownlint-cli
-          docker-images: false
-
-          # Gets the poetry cache back
-          swap-storage: false
-
-          # These will be cleaned
-          android: true
-          dotnet: true
-          haskell: true
-
       # File filters
       - name: Paths Changes Filter
         uses: dorny/paths-filter@v3
@@ -100,6 +79,27 @@ jobs:
             rst:
             - added|modified: '**.rst'
 
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # Does not break anything, and saves a lot of space, but runs slowly,
+          # do not use unless necessary.
+          large-packages: ${{steps.filter.outputs.poetry}}
+
+          # Needed for markdownlint-cli, TODO but docker containers are prepared by github actions prior to this
+          docker-images: true
+
+          # Gets the poetry cache back
+          swap-storage: false
+
+          # These will be cleaned
+          android: true
+          dotnet: true
+          haskell: true
+
       # Filtered setup
       - name: Install Node
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
@@ -107,9 +107,6 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
           check-latest: true
-
-      - name: test_echo
-        run: echo steps.filter.outputs.poetry & echo ${{steps.filter.outputs.poetry}}
 
       - name: Install Node Dependencies
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
