@@ -76,7 +76,7 @@ def fan_control(cfg: DictConfig) -> None:
     def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
         """Fell action.
 
-        Caculate pulse frequency and RPM.
+        Calculate pulse frequency and RPM.
 
         Args:
             pin: Unused, but needed to type annotation the callback of GPIO.add_event_detect().
@@ -106,7 +106,7 @@ def fan_control(cfg: DictConfig) -> None:
         elif temp > MAX_TEMP:
             fan_commanded_speed = FAN_MAX
 
-        # Caculate dynamic fan speed
+        # Calculate dynamic fan speed
         else:
             step = (FAN_HIGH - FAN_LOW) / (MAX_TEMP - MIN_TEMP)
             fan_commanded_speed = FAN_LOW + step * round(temp - MIN_TEMP)

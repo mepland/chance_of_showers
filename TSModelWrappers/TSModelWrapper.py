@@ -1302,7 +1302,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     elif op_func == operator.ge:
                         new_value = rhs_value
                     else:
-                        raise ValueError(f"Uknown {op_func = }! Need to extend code for this use.")
+                        raise ValueError(f"Unknown {op_func = }! Need to extend code for this use.")
 
                     if not op_func(hyperparam_value, rhs_value):
                         logger_ts_wrapper.warning(

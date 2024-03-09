@@ -174,7 +174,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             use_print: Flag for printing to stdout.
             print_prefix: String to prepend to `line` before printing to stdout.
             print_postfix: String to append to `line` before printing to stdout.
-            use_stdout_overwrite: Flag for overwritting the previous line on stdout.
+            use_stdout_overwrite: Flag for overwriting the previous line on stdout.
         """
         if not LOG_TO_FILE or logger_level is None:
             pass
