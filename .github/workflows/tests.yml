@@ -53,7 +53,8 @@ jobs:
           list-files: shell
           filters: |
             poetry:
-            - added|modified: '**/pyproject.toml'
+            # Do not run poetry check and lock if just the pyproject.toml file changes
+            # - added|modified: '**/pyproject.toml'
             - added|modified: '**/poetry.lock'
             python:
             - added|modified: '**.py'
