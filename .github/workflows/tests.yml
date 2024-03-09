@@ -86,11 +86,11 @@ jobs:
           tool-cache: false
 
           # Does not break anything, and saves a lot of space, but runs slowly,
-          # do not use unless necessary.
+          # do not use unless necessary, i.e. when running poetry checks.
           large-packages: ${{steps.filter.outputs.poetry}}
 
-          # Needed for markdownlint-cli, TODO but docker containers are prepared by github actions prior to this
-          docker-images: true
+          # Needed by any dockerized github action
+          docker-images: false
 
           # Gets the poetry cache back
           swap-storage: false
