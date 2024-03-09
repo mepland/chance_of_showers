@@ -114,6 +114,14 @@ shellcheck:
 shfmt:
 	@shfmt -bn -ci -sr -s -w $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
 
+.PHONY: typos
+typos:
+	@poetry run typos --format=brief
+
+.PHONY: typos-long
+typos-long:
+	@poetry run typos --format=long
+
 .PHONY: clean
 clean:
 	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -rf
