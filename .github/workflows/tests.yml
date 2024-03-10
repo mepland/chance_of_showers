@@ -203,6 +203,13 @@ jobs:
         with:
           sh_checker_checkbashisms_enable: true
 
+      # typos - always run
+      - name: typos-action
+        uses: crate-ci/typos@v1.19.0
+        with:
+          config: pyproject.toml
+          # exclude: "^.*\\.kicad_.*$"
+
       # docs
       - name: markdownlint-cli
         if: steps.filter.outputs.markdown == 'true'
