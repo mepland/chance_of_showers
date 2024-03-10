@@ -122,6 +122,10 @@ typos:
 typos-long:
 	@poetry run typos --format=long
 
+.PHONY: typos-fix
+typos-fix:
+	@poetry run typos -w
+
 .PHONY: clean
 clean:
 	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -rf
