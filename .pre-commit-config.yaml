@@ -3,7 +3,7 @@ repos:
 
   # poetry - commented out due to long run times
   # - repo: https://github.com/python-poetry/poetry
-  #   rev: '1.5.0'
+  #   rev: '1.7.0'
   #   hooks:
   #     - id: poetry-check
   #     - id: poetry-lock
@@ -195,6 +195,15 @@ repos:
     hooks:
       - id: shfmt
         args: ['-bn', '-ci', '-sr', '-s', '-w']
+
+  # typos
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.19.0
+    hooks:
+      - id: typos
+        args: ["-c", "pyproject.toml"]
+        types: [text]
+        exclude: "^.*\\.kicad_.*$"
 
   # github actions
   - repo: https://github.com/rhysd/actionlint

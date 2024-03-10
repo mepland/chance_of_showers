@@ -457,7 +457,7 @@ def write_search_results(  # noqa: C901
 
             Args:
                 worksheet: Input worksheet.
-                dfp_source: Orignal dataframe.
+                dfp_source: Original dataframe.
                 hide_non_represents_iter: Hide non-represents_iter columns.
             """
             # Format loss columns
@@ -642,7 +642,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     Args:
         parent_wrapper: TSModelWrapper object containing all parent configs.
         model_wrapper_class: TSModelWrapper class to optimize.
-        model_wrapper_kwargs: kwargs to passs to model_wrapper.
+        model_wrapper_kwargs: kwargs to pass to model_wrapper.
         hyperparams_to_opt: List of hyperparameters to optimize.
             If None, use all configurable hyperparameters.
         n_iter: How many iterations of Bayesian optimization to perform.
@@ -674,7 +674,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_TARGET instead.
         max_time_per_model: Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
-            while non-torch models will use it for the whole iteration if signal is avaliable e.g. Linux, Darwin.
+            while non-torch models will use it for the whole iteration if signal is available e.g. Linux, Darwin.
         accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter, but not optimize.
         enable_json_logging: Enable JSON logging of points.
@@ -908,7 +908,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         dummy_signal: int,  # noqa: U100
         dummy_frame: FrameType | None,  # noqa: U100
     ) -> None:
-        """Stop iteration gracefuly.
+        """Stop iteration gracefully.
 
         https://medium.com/@chamilad/timing-out-of-long-running-methods-in-python-818b3582eed6
 

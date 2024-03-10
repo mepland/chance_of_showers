@@ -92,7 +92,7 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
         e_precision: Precision passed to e formatter.
 
     Returns:
-        Formated value.
+        Formatted value.
     """
     if value > 1000:
         return f"{value:.{e_precision}e}"
@@ -935,7 +935,7 @@ def plot_prophet(  # pylint: disable=too-many-arguments
         clean_ax(ax, x_axis_params, y_axis_params)
         set_ax_limits(ax, x_axis_params, y_axis_params, allow_max_mult=True)
 
-        # Improve graphics of Forcast line
+        # Improve graphics of forecast line
         for child in ax.get_children():
             if hasattr(child, "get_label") and child.get_label() == "Forecast":
                 child.set_color(MPL_C1)  # type: ignore[attr-defined]
