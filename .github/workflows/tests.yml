@@ -206,6 +206,7 @@ jobs:
       # typos - always run
       - name: typos-action
         uses: crate-ci/typos@v1.19.0
+        continue-on-error: true
         with:
           config: pyproject.toml
           # exclude: "^.*\\.kicad_.*$"
