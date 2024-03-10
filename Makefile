@@ -131,6 +131,11 @@ clean:
 	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache)" | xargs rm -rf
 	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -f
 
+# Reverse prose and lint to avoid autocomplete matches with pre-commit
+.PHONY: lintprose
+lintprose:
+	@poetry run proselint --config .dev_config/.proselint.json $(shell git ls-files | grep -v -E "media/|circuit_diagram/|poetry.lock|Makefile|daq/cron_jobs.txt") | grep -v -E "30ppm|né|high and dry"
+
 # isort ~ isort:
 # flake8 ~ noqa
 # mypy ~ type:
