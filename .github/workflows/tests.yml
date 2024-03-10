@@ -80,7 +80,7 @@ jobs:
             rst:
             - added|modified: '**.rst'
 
-      - name: Free Disk Space (Ubuntu)
+      - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
@@ -204,13 +204,13 @@ jobs:
           sh_checker_checkbashisms_enable: true
 
       # typos - always run
-      - name: typos-action
+      - name: typos
         uses: crate-ci/typos@v1.19.0
         with:
           config: pyproject.toml
 
       # docs
-      - name: markdownlint-cli
+      - name: markdownlint
         if: steps.filter.outputs.markdown == 'true'
         uses: nosborn/github-action-markdown-cli@v3.3.0
         with:
