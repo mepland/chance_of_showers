@@ -2,11 +2,11 @@
 repos:
 
   # poetry - commented out due to long run times
-  - repo: https://github.com/python-poetry/poetry
-    rev: '1.5.0'
-    hooks:
-      - id: poetry-check
-      - id: poetry-lock
+  # - repo: https://github.com/python-poetry/poetry
+  #   rev: '1.7.0'
+  #   hooks:
+  #     - id: poetry-check
+  #     - id: poetry-lock
 
   # isort
   - repo: https://github.com/pycqa/isort
