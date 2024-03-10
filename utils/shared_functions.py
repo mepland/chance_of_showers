@@ -1,4 +1,4 @@
-"""Shared TEST othe transfered anouncement TEST functions."""
+"""Shared functions."""
 
 ################################################################################
 # python imports
