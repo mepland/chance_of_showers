@@ -11,6 +11,7 @@ import re
 import signal
 import traceback
 import warnings
+import zoneinfo
 from contextlib import suppress
 from csv import writer
 from types import FrameType  # noqa: TC003
@@ -120,25 +121,22 @@ BAYESIAN_OPT_PREFIX: Final = "bayesian_opt_"
 BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
 BAYES_OPT_LOG_COLS_FIXED: Final = [
-    "datetime",
+    "datetime_start",
+    "datetime_end",
     "i_point",
     "is_clean",
-    # "represents_iter",
     "target",
 ] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
+# The datetime format used by bayes_opt.
+BAYES_OPT_DATETIME_FMT: Final = "%Y-%m-%d %H:%M:%S"
 
-def clean_log_dfp(
-    dfp: pd.DataFrame | None, *, exclude_outlier_minutes_elapsed_iteration: float = 100.0
-) -> None | pd.DataFrame:
+
+def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     """Clean and augment log dataframe.
 
     Args:
         dfp: Log as pandas dataframe.
-        exclude_outlier_minutes_elapsed_iteration: Flag to exclude outliers minutes_elapsed_iteration from runs in different sessions.
-            0: Do not exclude outliers
-            -1: Exclude outliers greater than the 99th percentile
-            x: Exclude outliers greater than Q3+x*IQR. Default is 100.0, i.e. extreme outliers in comparison to the standard 1.5.
 
     Returns:
         Log as pandas dataframe, cleaned and augmented.
@@ -152,8 +150,8 @@ def clean_log_dfp(
     if "is_clean" in dfp.columns:
         dfp["is_clean"] = dfp["is_clean"].astype(bool)
 
-    # Setup dfp_minutes for calculations. The datetime format here is set by bayes_opt.
-    dfp["datetime"] = pd.to_datetime(dfp["datetime"], format="%Y-%m-%d %H:%M:%S")
+    # Setup dfp_minutes for calculations.
+    dfp["datetime"] = pd.to_datetime(dfp["datetime"], format=BAYES_OPT_DATETIME_FMT)
 
     dfp_minutes = pd.DataFrame(dfp)
 
@@ -169,47 +167,10 @@ def clean_log_dfp(
         .reset_index(drop=True)
     )
 
-    # TODO
-    # # Use is_clean if available to select the representative i_point per i_iter
-    # # Otherwise, take the last i_point per i_iter
-    # dfp["represents_iter"] = (
-    #     dfp.sort_values(
-    #         by=["is_clean", "i_iter"] if "is_clean" in dfp.columns else ["i_iter"],
-    #         ascending=[False, True] if "is_clean" in dfp.columns else [False],
-    #     )
-    #     .groupby("i_iter", sort=False)
-    #     .cumcount()
-    #     .add(1)
-    #     == 1
-    # )
-
     # compute minutes_elapsed_ columns
     dfp_minutes["minutes_elapsed_iteration"] = (
         dfp_minutes["minutes_elapsed_total"].diff().fillna(0.0)
     )
-
-    if exclude_outlier_minutes_elapsed_iteration != 0:
-        if exclude_outlier_minutes_elapsed_iteration == -1:
-            outlier_threshold = dfp_minutes["minutes_elapsed_iteration"].quantile(0.99)
-        else:
-            outlier_threshold = dfp_minutes["minutes_elapsed_iteration"].quantile(0.75)
-            iqr = dfp_minutes["minutes_elapsed_iteration"].quantile(0.75) - dfp_minutes[
-                "minutes_elapsed_iteration"
-            ].quantile(0.25)
-
-            outlier_threshold += exclude_outlier_minutes_elapsed_iteration * iqr
-
-        dfp_minutes["minutes_elapsed_iteration_full"] = dfp_minutes["minutes_elapsed_iteration"]
-
-        dfp_minutes.loc[
-            outlier_threshold < dfp_minutes["minutes_elapsed_iteration"],
-            "minutes_elapsed_iteration",
-        ] = np.nan
-
-        # recompute minutes_elapsed_total
-        dfp_minutes["minutes_elapsed_total"] = (
-            dfp_minutes["minutes_elapsed_iteration"].fillna(0.0).cumsum()
-        )
 
     dfp = (
         dfp.merge(dfp_minutes, how="left", on="datetime")
@@ -224,10 +185,10 @@ def clean_log_dfp(
 
 
 def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
-    """Load prior bayes_opt log from json file as a pandas dataframe.
+    """Load prior bayes_opt log from JSON file as a pandas dataframe.
 
     Args:
-        f_path: Path to json log file.
+        f_path: Path to JSON log file.
 
     Returns:
         Log as pandas dataframe.
@@ -251,10 +212,12 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
                                 continue
 
                             _prefix = ""
+                            _postfix = "_end"
                         else:
                             _prefix = f"{_k0}_"
+                            _postfix = ""
 
-                        row[f"{_prefix}{_k1}"] = _v1
+                        row[f"{_prefix}{_k1}{_postfix}"] = _v1
                 else:
                     row[_k0] = _v0
 
@@ -369,14 +332,14 @@ def load_best_points(
                 "minutes_elapsed": dfp["minutes_elapsed_total"].max(),
                 "minutes_elapsed_iteration_best": best_dict["minutes_elapsed_iteration"],
                 "i_point_best": best_dict["i_point"],
-                "datetime_best": best_dict["datetime"],
+                "datetime_end_best": best_dict["datetime_end"],
                 "params_best": ", ".join(best_params),
             }
         )
 
     dfp_best_points = pd.DataFrame(rows)
     dfp_best_points = dfp_best_points.sort_values(
-        by=["target_best", "model_name", "datetime_best"], ascending=[False, True, False]
+        by=["target_best", "model_name", "datetime_end_best"], ascending=[False, True, False]
     ).reset_index(drop=True)
 
     # Sort dfp_runs_dict in the same order as dfp_best_points
@@ -394,7 +357,7 @@ def write_search_results(  # noqa: C901
     *,
     bad_points_frac_thr: float = 0.2,
 ) -> None:
-    """Load prior bayes_opt log from json file as a pandas dataframe.
+    """Load prior bayes_opt log from JSON file as a pandas dataframe.
 
     Args:
         f_excel: Path to output xlsx file.
@@ -501,7 +464,8 @@ def write_search_results(  # noqa: C901
             # Format n_points_ based on percent of n_points
             for col_str, col_denom in {
                 "n_points_bad_target": "n_points",
-                "n_points_representative_bad_target": "n_points_representative",
+                # TODO
+                # "n_points_representative_bad_target": "n_points_representative",
             }.items():
                 if {col_str, col_denom}.issubset(set(dfp_source.columns)):
                     _i_col = list(dfp_source.columns).index(col_str)
@@ -514,7 +478,7 @@ def write_search_results(  # noqa: C901
                         )
 
             for i_col, col_str in enumerate(dfp_source.columns):
-                if col_str not in ["is_clean", "represents_iter"]:
+                if col_str not in ["is_clean"]:  # , "represents_iter"
                     continue
 
                 worksheet.set_column(i_col, i_col, None, boolean_fmt)
@@ -608,6 +572,69 @@ def print_memory_usage(*, header: str | None = None) -> None:
 n_points = 0  # pylint: disable=invalid-name
 
 
+# Function to write additional metadata per point to a csv
+# Easier than modifying the json_logger from bayes_opt
+def _write_csv_row(  # pylint: disable=too-many-arguments
+    *,
+    enable_csv_logging: bool,
+    fname_csv_log: pathlib.Path,
+    datetime_start_str: str,
+    datetime_end_str: str,
+    i_point: int,
+    is_clean: bool,
+    target: float,
+    metrics_val: dict[str, float],
+    point: dict,
+) -> None:
+    """Save validation metrics and other metadata for this iteration and point to csv.
+
+    Args:
+        enable_csv_logging: Enable CSV logging of points.
+        fname_csv_log: Path to CSV log file.
+        datetime_end_str: Ending datetime string of this iteration, from JSON log.
+        datetime_start_str: Starting datetime string of this iteration.
+        i_point: Index of this point.
+        is_clean: Flag for if these are cleaned or raw hyperparameters.
+        target: Target value.
+        metrics_val: Metrics on the validation set.
+        point: Hyperparameter point.
+    """
+    if not enable_csv_logging:
+        return
+
+    new_row = [datetime_start_str, datetime_end_str, i_point, int(is_clean), target]
+    metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
+    new_row += list(metrics_val_sorted.values())
+    point = dict(sorted(point.items()))
+    new_row += list(point.values())
+
+    with fname_csv_log.open("a", encoding="utf-8") as f_csv:
+        m_writer = writer(f_csv)
+        if f_csv.tell() == 0:
+            # empty file, create header
+            m_writer.writerow(BAYES_OPT_LOG_COLS_FIXED + [f"params_{_}" for _ in point.keys()])
+
+        m_writer.writerow(new_row)
+        f_csv.close()
+
+
+def get_i_point_duplicate(point: dict, optimizer: bayes_opt.BayesianOptimization) -> int:
+    """Get index of duplicate prior point from optimizer, if one exists.
+
+    Args:
+        point: The point to check.
+        optimizer: The optimizer to search.
+
+    Returns:
+        The index of the first duplicate prior point from optimizer, if one exists, otherwise returns -1.
+    """
+    for i_param in range(optimizer.space.params.shape[0]):
+        if np.array_equiv(optimizer.space.params_to_array(point), optimizer.space.params[i_param]):
+            return i_param
+
+    return -1
+
+
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals,too-many-arguments
     *,
     parent_wrapper: TSModelWrapper,
@@ -631,6 +658,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
     bayesian_opt_work_dir_name: str = "bayesian_optimization",
+    local_timezone: zoneinfo.ZoneInfo | None = None,
 ) -> tuple[dict, bayes_opt.BayesianOptimization, int]:
     """Run Bayesian optimization for this model wrapper.
 
@@ -676,6 +704,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         enable_reloading: Enable reloading of prior points from JSON log.
         enable_model_saves: Save the trained model at each iteration.
         bayesian_opt_work_dir_name: Directory name to save logs and models in, within the parent_wrapper.work_dir_base.
+        local_timezone: Local timezone.
 
     Returns:
         optimal_values: Optimal hyperparameter values.
@@ -753,63 +782,19 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         for event in DEFAULT_EVENTS:
             optimizer.subscribe(event, screen_logger)
 
-    # Function to write additional metadata per point to a csv
-    # Easier than modifying the json_logger from bayes_opt
-    def _write_csv_row(
-        *,
-        datetime_str: str | None,
-        i_point: int,
-        is_clean: bool,
-        target: float,
-        metrics_val: dict[str, float],
-        point: dict,
-    ) -> None:
-        """Save validation metrics and other metadata for this iteration and point to csv.
+    # Define function to get datetime start from json
+    def _get_datetime_str_from_json() -> str:
+        """Load datatime str from last row in JSON log.
 
-        Args:
-            datetime_str: Datetime string of this iteration, from json log.
-            i_point: Index of this point.
-            is_clean: Flag for if these are cleaned or raw hyperparameters.
-            target: Target value.
-            metrics_val: Metrics on the validation set.
-            point: Hyperparameter point.
-        """
-        if not enable_json_logging:
-            return
-
-        if datetime_str is None:
-            datetime_str = "NULL"
-
-        new_row = [datetime_str, i_point, int(is_clean), target]
-        metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
-        new_row += list(metrics_val_sorted.values())
-        point = dict(sorted(point.items()))
-        new_row += list(point.values())
-
-        with fname_csv_log.open("a", encoding="utf-8") as f_csv:
-            m_writer = writer(f_csv)
-            if f_csv.tell() == 0:
-                # empty file, create header
-                m_writer.writerow(
-                    [_ for _ in BAYES_OPT_LOG_COLS_FIXED if _ != "represents_iter"]
-                    + [f"params_{_}" for _ in point.keys()]
-                )
-
-            m_writer.writerow(new_row)
-            f_csv.close()
-
-    def _get_datetime_str_from_json() -> str | None:
-        """Load datatime str from last row in json log.
-
-            The {"datetime: {"datetime": "..."}} timestamp in the json log created by the optimizer.register() call
-            is a good field to have, but is only created in in the json logger here:
+            The {"datetime: {"datetime": "..."}} timestamp in the JSON log created by the optimizer.register() call
+            is a good field to have, but is only created in in the JSON logger here:
             https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/logger.py#L153C50-L158
-            We need to load last line of the json from disk and extract the datatime string.
+            We need to load last line of the JSON from disk and extract the datatime string.
 
         Returns:
             datetime_str: Datetime as str.
         """
-        last_datetime_str = None
+        last_datetime_str = "NULL"
         if enable_json_logging:
             with fname_json_log.open("rb") as f_json:
                 # https://stackoverflow.com/a/54278929
@@ -827,61 +812,70 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Define function to complete an iteration
     def complete_iter(
+        datetime_start_str: str,
         i_iter: int,
         model_wrapper: TSModelWrapper,
         target: float,
         metrics_val: dict[str, float],
-        point_to_probe: dict,
         *,
-        probed_point: dict | None = None,
+        point_to_probe: dict,
+        is_point_to_probe_clean: bool,
+        point_to_probe_clean: dict | None = None,
     ) -> None:
         """Complete this iteration, register point(s) and clean up.
 
         Args:
+            datetime_start_str:
             i_iter: Index of this iteration.
             model_wrapper: Model wrapper object to reset.
             target: Target value to register.
             metrics_val: Metrics on the validation set.
             point_to_probe: Raw point to probe.
-            probed_point: Point that was actually probed.
+            is_point_to_probe_clean: If point_to_probe is clean.
+            point_to_probe_clean: Point that was actually probed.
         """
         global n_points
-        optimizer.register(params=point_to_probe, target=target)
-        _write_csv_row(
-            datetime_str=_get_datetime_str_from_json(),
-            i_iter=i_iter,
-            i_point=n_points,
-            is_clean=False,
-            target=target,
-            metrics_val=metrics_val,
-            point=point_to_probe,
-        )
 
-        n_points += 1
-        if probed_point:
-            # translate strange hyperparam_values back to original representation
-            probed_point = model_wrapper.translate_hyperparameters_to_numeric(probed_point)
+        if get_i_point_duplicate(point_to_probe, optimizer) == -1:
+            optimizer.register(params=point_to_probe, target=target)
+            datetime_end_str = _get_datetime_str_from_json()
 
-            if not (
-                # point_to_probe is exactly the same as probed_point on this iter,
-                # i.e. the optimizer chose a point that required no cleanup in _assemble_hyperparams().
-                # Do not register the probed_point.
-                np.array_equiv(
-                    optimizer.space.params_to_array(point_to_probe),
-                    optimizer.space.params_to_array(probed_point),
-                )
-            ):
-                optimizer.register(params=probed_point, target=target)
-                _write_csv_row(
-                    datetime_str=_get_datetime_str_from_json(),
-                    i_point=n_points,
-                    is_clean=True,
-                    target=target,
-                    metrics_val=metrics_val,
-                    point=probed_point,
+            _write_csv_row(
+                enable_csv_logging=enable_json_logging,
+                fname_csv_log=fname_csv_log,
+                datetime_start_str=datetime_start_str,
+                datetime_end_str=datetime_end_str,
+                i_point=n_points,
+                is_clean=is_point_to_probe_clean,
+                target=target,
+                metrics_val=metrics_val,
+                point=point_to_probe,
+            )
+
+            n_points += 1
+
+            if point_to_probe_clean:
+                # translate strange hyperparam_values back to original representation
+                point_to_probe_clean = model_wrapper.translate_hyperparameters_to_numeric(
+                    point_to_probe_clean
                 )
 
-                n_points += 1
+                if get_i_point_duplicate(point_to_probe_clean, optimizer) == -1:
+                    optimizer.register(params=point_to_probe_clean, target=target)
+
+                    _write_csv_row(
+                        enable_csv_logging=enable_json_logging,
+                        fname_csv_log=fname_csv_log,
+                        datetime_start_str=datetime_start_str,
+                        datetime_end_str=datetime_end_str,
+                        i_point=n_points,
+                        is_clean=True,
+                        target=target,
+                        metrics_val=metrics_val,
+                        point=point_to_probe_clean,
+                    )
+
+                    n_points += 1
 
         model_wrapper.reset_wrapper()
         if torch.cuda.is_available():
@@ -953,6 +947,10 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
             if 3 <= verbose:
                 print(f"\nStarting {i_iter = }, with {n_points = }")
 
+            datetime_start_str = datetime.datetime.now(local_timezone).strftime(
+                BAYES_OPT_DATETIME_FMT
+            )
+
             next_point_to_probe = optimizer.suggest(utility)
 
             # Setup model_wrapper
@@ -973,33 +971,41 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 # Check if we already tested this chosen_hyperparams point
                 # If it has been tested, save the raw next_point_to_probe with the same target and continue
                 chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
-
                 next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
+
+                is_next_point_to_probe_clean = np.array_equiv(
+                    optimizer.space.params_to_array(next_point_to_probe),
+                    optimizer.space.params_to_array(
+                        model_wrapper.translate_hyperparameters_to_numeric(
+                            next_point_to_probe_cleaned
+                        )
+                    ),
+                )
+
                 if 6 <= verbose:
                     print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
                     print(
                         f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
                     )
 
-                is_duplicate_point = False
-                for i_param in range(optimizer.space.params.shape[0]):
-                    if np.array_equiv(
-                        optimizer.space.params_to_array(next_point_to_probe_cleaned),
-                        optimizer.space.params[i_param],
-                    ):
-                        target = optimizer.space.target[i_param]
-                        if 3 <= verbose:
-                            print(
-                                f"On iteration {i_iter} testing prior point {i_param}, returning prior {target = } for the raw next_point_to_probe."
-                            )
-
-                        complete_iter(
-                            i_iter, model_wrapper, target, BAD_METRICS, next_point_to_probe
+                i_point_duplicate = get_i_point_duplicate(next_point_to_probe_cleaned, optimizer)
+                if 0 <= i_point_duplicate:
+                    target = optimizer.space.target[i_point_duplicate]
+                    if 3 <= verbose:
+                        print(
+                            f"On iteration {i_iter} testing prior point {i_point_duplicate}, returning prior {target = } for the next_point_to_probe which is {'clean' if is_next_point_to_probe_clean else 'raw'}."
                         )
-                        is_duplicate_point = True
-                        break
 
-                if is_duplicate_point:
+                    complete_iter(
+                        datetime_start_str,
+                        i_iter,
+                        model_wrapper,
+                        target,
+                        BAD_METRICS,
+                        point_to_probe=next_point_to_probe,
+                        is_point_to_probe_clean=is_next_point_to_probe_clean,
+                    )
+
                     continue
 
                 # set model_name_tag for this iteration
@@ -1076,12 +1082,14 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
 Returning {BAD_TARGET:.3g} as target and continuing"""
                     )
                     complete_iter(
+                        datetime_start_str,
                         i_iter,
                         model_wrapper,
                         BAD_TARGET,
                         BAD_METRICS,
-                        next_point_to_probe,
-                        probed_point=next_point_to_probe_cleaned,
+                        point_to_probe=next_point_to_probe,
+                        is_point_to_probe_clean=is_next_point_to_probe_clean,
+                        point_to_probe_clean=next_point_to_probe_cleaned,
                     )
                     continue
 
@@ -1099,12 +1107,14 @@ Returning {BAD_TARGET:.3g} as target and continuing"""
 
             # Register the point
             complete_iter(
+                datetime_start_str,
                 i_iter,
                 model_wrapper,
                 target,
                 metrics_val,
-                next_point_to_probe,
-                probed_point=next_point_to_probe_cleaned,
+                point_to_probe=next_point_to_probe,
+                is_point_to_probe_clean=is_next_point_to_probe_clean,
+                point_to_probe_clean=next_point_to_probe_cleaned,
             )
 
     except KeyboardInterrupt:
