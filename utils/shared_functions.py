@@ -11,6 +11,7 @@ import pickle  # nosec B403
 import platform
 import socket
 import sys
+import zoneinfo
 from typing import TYPE_CHECKING, Any
 
 import holidays
@@ -61,6 +62,25 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     res = os.popen("vcgencmd measure_temp").readline()  # noqa: DUO106, SCS110 # nosec: B605, B607
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
+
+
+################################################################################
+def get_local_timezone_from_cfg(cfg: dict) -> tuple[zoneinfo.ZoneInfo, str]:
+    """Get SoC's temperature.
+
+    Args:
+        cfg: Hydra config.
+
+    Returns:
+        Local timezone as zoneinfo object and string.
+    """
+    local_timezone_str = cfg.get("general", {}).get("local_timezone")
+
+    if local_timezone_str is None or local_timezone_str not in zoneinfo.available_timezones():
+        available_timezones = "\n".join(list(zoneinfo.available_timezones()))
+        raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}")
+
+    return zoneinfo.ZoneInfo(local_timezone_str), local_timezone_str
 
 
 ################################################################################
