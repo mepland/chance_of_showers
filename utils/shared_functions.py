@@ -66,7 +66,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
 
 ################################################################################
 def get_local_timezone_from_cfg(cfg: dict) -> tuple[zoneinfo.ZoneInfo, str]:
-    """Get SoC's temperature.
+    """Get local timezone from Hydra config.
 
     Args:
         cfg: Hydra config.
