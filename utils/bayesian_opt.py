@@ -121,10 +121,9 @@ BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
 BAYES_OPT_LOG_COLS_FIXED: Final = [
     "datetime",
-    "i_iter",
     "i_point",
     "is_clean",
-    "represents_iter",
+    # "represents_iter",
     "target",
 ] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
@@ -170,27 +169,19 @@ def clean_log_dfp(
         .reset_index(drop=True)
     )
 
-    if len(dfp["i_iter"].unique()) == 1:
-        # Everything has i_iter=0, i.e. ran via the shell script calling python multiple times,
-        # recompute i_iter based on datetime field.
-        dfp_minutes["i_iter"] = dfp_minutes.index
-
-        dfp = dfp.drop("i_iter", axis=1)
-        dfp = dfp.merge(dfp_minutes[["datetime", "i_iter"]], how="left", on="datetime")
-        dfp_minutes = dfp_minutes.drop("i_iter", axis=1)
-
-    # Use is_clean if available to select the representative i_point per i_iter
-    # Otherwise, take the last i_point per i_iter
-    dfp["represents_iter"] = (
-        dfp.sort_values(
-            by=["is_clean", "i_iter"] if "is_clean" in dfp.columns else ["i_iter"],
-            ascending=[False, True] if "is_clean" in dfp.columns else [False],
-        )
-        .groupby("i_iter", sort=False)
-        .cumcount()
-        .add(1)
-        == 1
-    )
+    # TODO
+    # # Use is_clean if available to select the representative i_point per i_iter
+    # # Otherwise, take the last i_point per i_iter
+    # dfp["represents_iter"] = (
+    #     dfp.sort_values(
+    #         by=["is_clean", "i_iter"] if "is_clean" in dfp.columns else ["i_iter"],
+    #         ascending=[False, True] if "is_clean" in dfp.columns else [False],
+    #     )
+    #     .groupby("i_iter", sort=False)
+    #     .cumcount()
+    #     .add(1)
+    #     == 1
+    # )
 
     # compute minutes_elapsed_ columns
     dfp_minutes["minutes_elapsed_iteration"] = (
@@ -337,12 +328,13 @@ def load_best_points(
 
         dfp_best_points = dfp.loc[dfp["target"] != BAD_TARGET]
 
-        if "represents_iter" in dfp_best_points.columns:
-            dfp_best_points = dfp_best_points.loc[
-                (dfp["target"] == dfp["target"].max()) & dfp["represents_iter"]
-            ]
-        else:
-            dfp_best_points = dfp_best_points.loc[dfp["target"] == dfp["target"].max()]
+        # TODO
+        # if "represents_iter" in dfp_best_points.columns:
+        #     dfp_best_points = dfp_best_points.loc[
+        #         (dfp["target"] == dfp["target"].max()) & dfp["represents_iter"]
+        #     ]
+        # else:
+        #     dfp_best_points = dfp_best_points.loc[dfp["target"] == dfp["target"].max()]
 
         if not dfp_best_points.index.size:
             dfp_best_points = pd.DataFrame(dfp)
@@ -369,10 +361,11 @@ def load_best_points(
                 "target_best": best_dict["target"],
                 "n_points": dfp["i_point"].max() + 1,
                 "n_points_bad_target": dfp.loc[dfp["target"] == BAD_TARGET].index.size,
-                "n_points_representative": dfp.loc[dfp["represents_iter"]].index.size,
-                "n_points_representative_bad_target": dfp.loc[
-                    (dfp["target"] == BAD_TARGET) & dfp["represents_iter"]
-                ].index.size,
+                # TODO
+                # "n_points_representative": dfp.loc[dfp["represents_iter"]].index.size,
+                # "n_points_representative_bad_target": dfp.loc[
+                #     (dfp["target"] == BAD_TARGET) & dfp["represents_iter"]
+                # ].index.size,
                 "minutes_elapsed": dfp["minutes_elapsed_total"].max(),
                 "minutes_elapsed_iteration_best": best_dict["minutes_elapsed_iteration"],
                 "i_point_best": best_dict["i_point"],
@@ -450,16 +443,16 @@ def write_search_results(  # noqa: C901
         def _fmt_worksheet(
             worksheet: xlsxwriter.worksheet.Worksheet,
             dfp_source: pd.DataFrame,
-            *,
-            hide_non_represents_iter: bool = False,
+            # *,
+            # hide_non_represents_iter: bool = False,
         ) -> None:
             """Format a log worksheet for this project
 
             Args:
                 worksheet: Input worksheet.
                 dfp_source: Original dataframe.
-                hide_non_represents_iter: Hide non-represents_iter columns.
             """
+            # hide_non_represents_iter: Hide non-represents_iter columns.
             # Format loss columns
             for i_col, col_str in enumerate(dfp_source.columns):
                 if not re.match(r"^.*?_val_loss$", col_str):
@@ -529,32 +522,34 @@ def write_search_results(  # noqa: C901
             # Filter columns
             worksheet.autofilter(0, 0, dfp_source.shape[0], dfp_source.shape[1] - 1)
 
-            if "represents_iter" in dfp_source.columns:
-                _i_col = list(dfp_source.columns).index("represents_iter")
-                worksheet.filter_column(_i_col, "x == TRUE")
+            # TODO
+            # if "represents_iter" in dfp_source.columns:
+            #     _i_col = list(dfp_source.columns).index("represents_iter")
+            #     worksheet.filter_column(_i_col, "x == TRUE")
 
-                # Hide rows which do not match the filter criteria
-                for i_row, row in dfp_source.iterrows():  # type: ignore[assignment]
-                    if not row["represents_iter"]:
-                        worksheet.set_row(i_row + 1, options={"hidden": True})
+            #     # Hide rows which do not match the filter criteria
+            #     for i_row, row in dfp_source.iterrows():  # type: ignore[assignment]
+            #         if not row["represents_iter"]:
+            #             worksheet.set_row(i_row + 1, options={"hidden": True})
 
             # Autofit column widths
             worksheet.autofit()
 
+            # TODO
             # hide non-represents_iter columns
-            if hide_non_represents_iter:
-                for i_col, col_str in enumerate(dfp_source.columns):
-                    if col_str not in ["n_points", "n_points_bad_target"]:
-                        continue
+            # if hide_non_represents_iter:
+            #     for i_col, col_str in enumerate(dfp_source.columns):
+            #         if col_str not in ["n_points", "n_points_bad_target"]:
+            #             continue
 
-                    worksheet.set_column(i_col, i_col, None, options={"hidden": True})
+            #         worksheet.set_column(i_col, i_col, None, options={"hidden": True})
 
         # Write and format sheets
         dfp_best_points.to_excel(
             xlsx_writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False
         )
         _fmt_worksheet(
-            xlsx_writer.sheets["Best Points"], dfp_best_points, hide_non_represents_iter=True
+            xlsx_writer.sheets["Best Points"], dfp_best_points  # , hide_non_represents_iter=True
         )
 
         for model_name, dfp in dfp_runs_dict.items():
@@ -763,7 +758,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     def _write_csv_row(
         *,
         datetime_str: str | None,
-        i_iter: int,
         i_point: int,
         is_clean: bool,
         target: float,
@@ -774,7 +768,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
         Args:
             datetime_str: Datetime string of this iteration, from json log.
-            i_iter: Index of this iteration.
             i_point: Index of this point.
             is_clean: Flag for if these are cleaned or raw hyperparameters.
             target: Target value.
@@ -787,7 +780,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         if datetime_str is None:
             datetime_str = "NULL"
 
-        new_row = [datetime_str, i_iter, i_point, int(is_clean), target]
+        new_row = [datetime_str, i_point, int(is_clean), target]
         metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
         new_row += list(metrics_val_sorted.values())
         point = dict(sorted(point.items()))
@@ -881,7 +874,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 optimizer.register(params=probed_point, target=target)
                 _write_csv_row(
                     datetime_str=_get_datetime_str_from_json(),
-                    i_iter=i_iter,
                     i_point=n_points,
                     is_clean=True,
                     target=target,
