@@ -84,6 +84,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
+    # Do not use get_local_timezone_from_cfg() due to the way utils.shared_functions is imported.
     LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()

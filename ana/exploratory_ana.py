@@ -20,7 +20,6 @@ import pprint
 import shutil
 import sys
 import warnings
-import zoneinfo
 from typing import TYPE_CHECKING, Final
 
 import matplotlib.pyplot as plt
@@ -35,6 +34,7 @@ sys.path.append(str(pathlib.Path.cwd().parent))
 from utils.bayesian_opt import load_best_points, write_search_results
 from utils.shared_functions import (
     create_datetime_component_cols,
+    get_local_timezone_from_cfg,
     normalize_pressure_value,
     write_secure_pickle,
 )
@@ -117,15 +117,7 @@ DATE_FMT: Final = cfg["general"]["date_fmt"]
 TIME_FMT: Final = cfg["general"]["time_fmt"]
 FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
 DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
-
-LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
-
-if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
-    AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-    raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
-
-# UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
-LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
+LOCAL_TIMEZONE, LOCAL_TIMEZONE_STR = get_local_timezone_from_cfg(cfg)
 
 DT_TRAINABLE_START_DATETIME_LOCAL: Final = datetime.datetime.strptime(
     TRAINABLE_START_DATETIME_LOCAL, DATETIME_FMT
