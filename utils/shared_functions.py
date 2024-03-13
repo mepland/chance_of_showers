@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 
 import holidays
 import pandas as pd
+from omegaconf import DictConfig  # noqa: TC002
 
 __all__ = [
     "create_datetime_component_cols",
@@ -65,7 +66,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
 
 
 ################################################################################
-def get_local_timezone_from_cfg(cfg: dict) -> tuple[zoneinfo.ZoneInfo, str]:
+def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str]:
     """Get local timezone from Hydra config.
 
     Args:
