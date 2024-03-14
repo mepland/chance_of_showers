@@ -120,18 +120,15 @@ BAYESIAN_OPT_PREFIX: Final = "bayesian_opt_"
 
 BAD_METRICS: Final = {str(k): -BAD_TARGET for k in METRICS_KEYS}
 
-BAYES_OPT_LOG_COLS_FIXED: Final = (
-    [
-        "datetime_start",
-        "datetime_end",
-        "rank_point",
-        "represents_point",
-        "is_clean",
-        "target",
-    ]
-    + [f"{_}_val_loss" for _ in METRICS_KEYS]
-    + ["id_point"]
-)
+BAYES_OPT_LOG_COLS_FIXED: Final = [
+    "datetime_start",
+    "datetime_end",
+    "id_point",
+    "rank_point",
+    "represents_point",
+    "is_clean",
+    "target",
+] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
 NON_CSV_COLS: Final = [
     "rank_point",
