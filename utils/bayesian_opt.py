@@ -159,7 +159,8 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
         dfp["is_clean"] = dfp["is_clean"].astype(bool)
 
     # Setup dfp_minutes for calculations.
-    if "datetime_start" in dfp.columns:
+    has_datetime_start = "datetime_start" in dfp.columns
+    if has_datetime_start:
         dfp["datetime_start"] = pd.to_datetime(dfp["datetime_start"], format=BAYES_OPT_DATETIME_FMT)
 
     dfp["datetime_end"] = pd.to_datetime(dfp["datetime_end"], format=BAYES_OPT_DATETIME_FMT)
@@ -168,20 +169,30 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
 
     dfp_minutes["minutes_elapsed_total"] = (
         dfp_minutes["datetime_end"]
-        - dfp_minutes[
-            "datetime_start" if "datetime_start" in dfp_minutes.columns else "datetime_end"
-        ].min()
+        - dfp_minutes["datetime_start" if has_datetime_start else "datetime_end"].min()
     ) / pd.Timedelta(minutes=1)
 
     dfp_minutes = (
         dfp_minutes.groupby(["datetime_end"])
-        .agg({"minutes_elapsed_total": "max"})
+        .agg(
+            {"minutes_elapsed_total": "max", "datetime_start": "min"}
+            if has_datetime_start
+            else {"minutes_elapsed_total": "max"}
+        )
         .reset_index()
         .sort_values(by="datetime_end", ascending=True)
         .reset_index(drop=True)
     )
 
-    dfp_minutes["minutes_elapsed_point"] = dfp_minutes["minutes_elapsed_total"].diff().fillna(0.0)
+    if has_datetime_start:
+        dfp_minutes["minutes_elapsed_point"] = (
+            dfp_minutes["datetime_end"] - dfp_minutes["datetime_start"]
+        )
+        dfp_minutes = dfp_minutes.drop("datetime_start", axis=1)
+    else:
+        dfp_minutes["minutes_elapsed_point"] = (
+            dfp_minutes["minutes_elapsed_total"].diff().fillna(0.0)
+        )
 
     dfp = dfp.merge(dfp_minutes, how="left", on="datetime_end")
 
@@ -363,8 +374,10 @@ def load_best_points(
                 "n_points_representative_bad_target": dfp.loc[
                     (dfp["target"] == BAD_TARGET) & dfp["represents_point"]
                 ].index.size,
-                "minutes_elapsed": dfp["minutes_elapsed_total"].max(),
+                "minutes_elapsed_total": dfp["minutes_elapsed_total"].max(),
                 "minutes_elapsed_point_best": best_dict["minutes_elapsed_point"],
+                "minutes_elapsed_mean": dfp["minutes_elapsed_point"].mean(),
+                "minutes_elapsed_stddev": dfp["minutes_elapsed_point"].std(),
                 "id_point_best": best_dict["id_point"],
                 "datetime_end_best": best_dict["datetime_end"],
                 "params_best": ", ".join(best_params),
@@ -441,15 +454,14 @@ def write_search_results(  # noqa: C901
             worksheet: xlsxwriter.worksheet.Worksheet,
             dfp_source: pd.DataFrame,
             *,
-            hide_non_represents_point: bool = False,
-            hide_id_point: bool = True,
+            hide_debug_cols: bool = True,
         ) -> None:
             """Format a log worksheet for this project
 
             Args:
                 worksheet: Input worksheet.
                 dfp_source: Original dataframe.
-                hide_non_represents_point: Hide non-represents_point columns.
+                hide_debug_cols: Hide low level debugging columns.
             """
             # Format loss columns
             for i_col, col_str in enumerate(dfp_source.columns):
@@ -489,7 +501,7 @@ def write_search_results(  # noqa: C901
 
                 worksheet.set_column(i_col, i_col, None, elapsed_minutes_fmt)
 
-                elapsed_minutes_fmt_bar["min_value"] = dfp_source[col_str].min()
+                elapsed_minutes_fmt_bar["min_value"] = 0.0
                 elapsed_minutes_fmt_bar["max_value"] = dfp_source[col_str].max()
 
                 worksheet.conditional_format(
@@ -534,18 +546,21 @@ def write_search_results(  # noqa: C901
 
             # Hide columns
             for i_col, col_str in enumerate(dfp_source.columns):
-                if (
-                    hide_non_represents_point and col_str in ["n_points", "n_points_bad_target"]
-                ) or (hide_id_point and col_str in ["id_point", "id_point_best"]):
+                if hide_debug_cols and col_str in [
+                    "n_points",
+                    "n_points_bad_target",
+                    "id_point",
+                    "id_point_best",
+                    "minutes_elapsed_point_best",
+                    "datetime_end_best",
+                ]:
                     worksheet.set_column(i_col, i_col, None, options={"hidden": True})
 
         # Write and format sheets
         dfp_best_points.to_excel(
             xlsx_writer, sheet_name="Best Points", freeze_panes=(1, 1), index=False
         )
-        _fmt_worksheet(
-            xlsx_writer.sheets["Best Points"], dfp_best_points, hide_non_represents_point=True
-        )
+        _fmt_worksheet(xlsx_writer.sheets["Best Points"], dfp_best_points)
 
         for model_name, dfp in dfp_runs_dict.items():
             dfp.to_excel(xlsx_writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
