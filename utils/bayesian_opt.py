@@ -204,13 +204,13 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     if "id_point" in dfp.columns:
         dfp_id_to_rank = (
             dfp.groupby(["id_point"])
-            .agg({"target": "max"})
+            .agg({"target": "max", "datetime_end": "min"})
             .reset_index()
-            .sort_values(by="target", ascending=False)
+            .sort_values(by=["target", "datetime_end"], ascending=[False, True])
             .reset_index(drop=True)
         )
         dfp_id_to_rank["rank_point"] = dfp_id_to_rank.index
-        dfp_id_to_rank = dfp_id_to_rank.drop("target", axis=1)
+        dfp_id_to_rank = dfp_id_to_rank[["id_point", "rank_point"]]
 
         dfp = dfp.merge(dfp_id_to_rank, how="left", on="id_point")
 
@@ -367,8 +367,8 @@ def load_best_points(
                     (dfp["target"] == BAD_TARGET) & dfp["represents_point"]
                 ].index.size,
                 "minutes_elapsed": dfp["minutes_elapsed_total"].max(),
-                "id_point_best": best_dict["id_point"],
                 "minutes_elapsed_point_best": best_dict["minutes_elapsed_point"],
+                "id_point_best": best_dict["id_point"],
                 "datetime_end_best": best_dict["datetime_end"],
                 "params_best": ", ".join(best_params),
             }
@@ -445,6 +445,7 @@ def write_search_results(  # noqa: C901
             dfp_source: pd.DataFrame,
             *,
             hide_non_represents_point: bool = False,
+            hide_id_point: bool = True,
         ) -> None:
             """Format a log worksheet for this project
 
@@ -534,11 +535,11 @@ def write_search_results(  # noqa: C901
             # Autofit column widths
             worksheet.autofit()
 
-            if hide_non_represents_point:
-                for i_col, col_str in enumerate(dfp_source.columns):
-                    if col_str not in ["n_points", "n_points_bad_target"]:
-                        continue
-
+            # Hide columns
+            for i_col, col_str in enumerate(dfp_source.columns):
+                if (
+                    hide_non_represents_point and col_str in ["n_points", "n_points_bad_target"]
+                ) or (hide_id_point and col_str in ["id_point", "id_point_best"]):
                     worksheet.set_column(i_col, i_col, None, options={"hidden": True})
 
         # Write and format sheets
