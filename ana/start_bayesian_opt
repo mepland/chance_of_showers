@@ -45,7 +45,7 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 		# Can add \r to start to backup one line, if drive_bayesian_opt.py is printing nothing out
 		printf "Starting drive_bayesian_opt.py %d of %d for i_model %d, currently have %d points\n" "$i_iter" "$n_iter" "$i_model" "$n_points"
 
-		poetry run python -u $pkg_path/ana/drive_bayesian_opt.py +i_model=$i_model
+		poetry run python -u $pkg_path/ana/drive_bayesian_opt.py +i_model=$i_model +max_points=$max_points
 		status=$?
 		n_points=$((status - 10))
 
@@ -54,7 +54,7 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 			unset TQDM_DISABLE
 			exit $status
 		elif [[ $max_points -le $n_points ]]; then
-			echo "On i_iter = $i_iter, found $n_points >= $max_points points, breaking to next model"
+			echo "On i_iter = $i_iter, found $max_points <= $n_points points, breaking to next model"
 			break
 		fi
 

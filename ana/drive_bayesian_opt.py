@@ -201,6 +201,8 @@ def drive_bayesian_opt(
 
         model_kwarg_list = [model_kwarg_list[i_model]]
 
+    max_points = cfg.get("max_points")
+
     ################################################################################
     # Load PARENT_WRAPPER from pickle
 
@@ -215,6 +217,7 @@ def drive_bayesian_opt(
 
     run_bayesian_opt_kwargs["parent_wrapper"] = PARENT_WRAPPER
     run_bayesian_opt_kwargs["local_timezone"] = LOCAL_TIMEZONE
+    run_bayesian_opt_kwargs["max_points"] = max_points
 
     ################################################################################
     # Run Bayesian Optimization
