@@ -751,6 +751,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     model_wrapper_kwargs: dict | None = None,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
+    max_points: int | None = None,
     allow_duplicate_points: bool = False,
     utility_kind: str = "ucb",
     utility_kappa: float = 2.576,
@@ -779,6 +780,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             If None, use all configurable hyperparameters.
         n_iter: How many iterations of Bayesian optimization to perform.
             This is the number of new models to train, in addition to any duplicated or reloaded points.
+        max_points: The maximum number of points to train.
+            If this number of points has been reached, stop optimizing even without finishing n_iter.
         allow_duplicate_points: If True, the optimizer will allow duplicate points to be registered.
             This behavior may be desired in high noise situations where repeatedly probing
             the same point will give different answers. In other situations, the acquisition
@@ -1010,6 +1013,12 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
     # Run Bayesian optimization iterations
     try:
         for i_iter in range(n_iter):
+            if max_points is not None and max_points <= n_points:
+                if 3 <= verbose:
+                    print(f"Have {max_points = } <= {n_points = }, stopping here.")
+
+                break
+
             if i_iter == 0:
                 optimizer.dispatch(Events.OPTIMIZATION_START)
 
