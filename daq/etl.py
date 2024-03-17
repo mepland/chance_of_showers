@@ -3,8 +3,6 @@
 Cleans and combines raw_data/*.csv files into a single parquet file.
 """
 
-################################################################################
-# python imports
 import datetime
 import pathlib
 import traceback

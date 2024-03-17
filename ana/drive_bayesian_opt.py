@@ -5,9 +5,6 @@ Used to brute force GPU memory resets between runs.
 Returns 10 + the number of completed points as the exit code, or a integer 0 < status < 10 for exceptions.
 """
 
-################################################################################
-# python imports
-
 import datetime
 import os
 import pathlib
@@ -81,7 +78,6 @@ def drive_bayesian_opt(
     Args:
         cfg: Hydra configuration.
     """
-    ################################################################################
     # Setup variables
     # pylint: disable=invalid-name
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
@@ -90,7 +86,6 @@ def drive_bayesian_opt(
     LOCAL_TIMEZONE, _ = get_local_timezone_from_cfg(cfg)
     # pylint: enable=invalid-name
 
-    ################################################################################
     # Setup run_bayesian_opt_kwargs
 
     dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
@@ -120,7 +115,6 @@ def drive_bayesian_opt(
     if n_iter is not None and 0 < n_iter:
         run_bayesian_opt_kwargs["n_iter"] = n_iter
 
-    ################################################################################
     # Select model(s) to run
 
     model_kwarg_list = [
@@ -203,7 +197,6 @@ def drive_bayesian_opt(
 
     max_points = cfg.get("max_points")
 
-    ################################################################################
     # Load PARENT_WRAPPER from pickle
 
     # pylint: disable=invalid-name
@@ -219,7 +212,6 @@ def drive_bayesian_opt(
     run_bayesian_opt_kwargs["local_timezone"] = LOCAL_TIMEZONE
     run_bayesian_opt_kwargs["max_points"] = max_points
 
-    ################################################################################
     # Run Bayesian Optimization
 
     single_iter_flag = len(model_kwarg_list) == 1 and run_bayesian_opt_kwargs["n_iter"] == 1

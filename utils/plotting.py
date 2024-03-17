@@ -50,7 +50,6 @@ mpl.rcParams["axes.spines.top"] = True
 mpl.rcParams["axes.spines.bottom"] = True
 mpl.rcParams["axes.labelweight"] = "normal"
 
-########################################################
 # Set common plot parameters
 VSIZE: Final = 11  # inches
 # aspect ratio width / height
@@ -82,7 +81,6 @@ MARKER_SIZE_LARGE: Final = 12
 MARKER_SIZE_SMALL: Final = 6
 
 
-########################################################
 # setup my own large number formatter for convenience and tweakability
 def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
     """Format large numbers.
@@ -100,7 +98,6 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
     return f"{value:.0f}"
 
 
-########################################################
 def make_epoch_bins(
     dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
 ) -> np.ndarray:
@@ -120,7 +117,6 @@ def make_epoch_bins(
     return np.linspace(bin_min, bin_max, nbins + 1)
 
 
-########################################################
 def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> str:
     """Generate date range.
 
@@ -147,7 +143,6 @@ def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> s
     return f"{dt_start.strftime('%Y-%m-%d')} - {dt_stop.strftime('%Y-%m-%d')}"
 
 
-########################################################
 def ann_text_std(
     dt_start: datetime.date | None,
     dt_stop: datetime.date | None,
@@ -194,7 +189,6 @@ def ann_text_std(
     return ann_str.strip("\n")
 
 
-########################################################
 def _setup_vars(
     ann_texts_in: list[dict] | None, x_axis_params: dict | None, y_axis_params: dict | None
 ) -> tuple[list[dict], dict, dict]:
@@ -221,7 +215,6 @@ def _setup_vars(
     return ann_texts, x_axis_params, y_axis_params
 
 
-########################################################
 def set_ax_limits(
     _ax: mpl.axes.Axes, x_axis_params: dict, y_axis_params: dict, *, allow_max_mult: bool = False
 ) -> None:
@@ -263,7 +256,6 @@ def set_ax_limits(
         _ax.set_yticks(y_ticks)
 
 
-########################################################
 def clean_ax(
     _ax: mpl.axes.Axes, x_axis_params: dict, y_axis_params: dict, *, turn_off_axes: bool = False
 ) -> None:
@@ -303,7 +295,6 @@ def clean_ax(
             _ax.set_yscale("log")
 
 
-########################################################
 def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict | None) -> None:
     """Draw the legend from objects.
 
@@ -334,7 +325,6 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
         leg.get_frame().set_facecolor(legend_params.get("box_color", "none"))
 
 
-########################################################
 def ann_then_save(
     _fig: mpl.figure.Figure,
     ann_texts: list[dict],
@@ -387,7 +377,6 @@ def ann_then_save(
         plt.close("all")
 
 
-########################################################
 def save_ploty_to_html(
     fig: go.Figure,
     m_path: pathlib.Path,
@@ -410,7 +399,6 @@ def save_ploty_to_html(
     fig.write_html(m_path / f"{fname}{tag}.html", include_plotlyjs=include_plotlyjs)
 
 
-########################################################
 def _process_hist_binning(
     binning: dict | None,
     hist_values: list[float] | np.ndarray | pd.Series,
@@ -476,7 +464,6 @@ def _process_hist_binning(
     return bin_edges, nbins, bin_size_str
 
 
-########################################################
 def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
     hist_dicts: list[dict],
     *,
@@ -713,7 +700,6 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-########################################################
 def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
     x_values: list[float] | np.ndarray | pd.Series,
     y_values: list[float] | np.ndarray | pd.Series,
@@ -876,7 +862,6 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
     )
 
 
-########################################################
 def plot_prophet(  # pylint: disable=too-many-arguments
     fig: mpl.figure.Figure,
     *,
@@ -964,7 +949,6 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-########################################################
 def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
     dfp_in: pd.DataFrame,
     x_axis_params: dict,

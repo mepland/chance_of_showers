@@ -48,7 +48,6 @@ from utils.shared_functions import (
 __all__ = ["TSModelWrapper"]
 
 
-################################################################################
 # Setup global parameters
 
 # Control warnings
@@ -215,7 +214,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
     }
 
 
-################################################################################
 # Setup global hyperparameter sets
 
 # data hyperparameters
@@ -639,7 +637,6 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
         integer_hyperparams.append(_k)
 
 
-################################################################################
 # parent class
 class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
     """Parent class for all time series wrappers.

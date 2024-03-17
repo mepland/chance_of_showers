@@ -1,7 +1,5 @@
 """Shared functions."""
 
-################################################################################
-# python imports
 import datetime
 import hashlib
 import hmac
@@ -29,7 +27,6 @@ __all__ = [
 ]
 
 
-################################################################################
 def get_lock(process_name: str) -> None:
     """Lock script via abstract socket, only works in Linux!
 
@@ -53,7 +50,6 @@ def get_lock(process_name: str) -> None:
         sys.exit()
 
 
-################################################################################
 def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature.
 
@@ -65,7 +61,6 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     return float(res.replace("temp=", "").replace("'C\n", ""))
 
 
-################################################################################
 def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str]:
     """Get local timezone from Hydra config.
 
@@ -84,7 +79,6 @@ def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str
     return zoneinfo.ZoneInfo(local_timezone_str), local_timezone_str
 
 
-################################################################################
 def normalize_pressure_value(
     pressure_value: int,
     observed_pressure_min: float,
@@ -118,7 +112,6 @@ def normalize_pressure_value(
     return normalized_pressure_value
 
 
-################################################################################
 def rebin_chance_of_showers_time_series(
     dfp_in: pd.DataFrame,
     time_col: str,
@@ -199,7 +192,6 @@ def rebin_chance_of_showers_time_series(
     return dfp
 
 
-################################################################################
 def create_datetime_component_cols(
     dfp: pd.DataFrame,
     datetime_col: str,
@@ -258,7 +250,6 @@ def create_datetime_component_cols(
     return dfp
 
 
-################################################################################
 def _get_key_from_platform() -> bytes:
     """Create a key for pickles from platform properties.
 
@@ -287,7 +278,6 @@ def _get_key_from_platform() -> bytes:
     )
 
 
-################################################################################
 def write_secure_pickle(
     data: Any, f_path: pathlib.Path, *, shared_key: None | bytes = None  # noqa: ANN401
 ) -> None:
@@ -320,7 +310,6 @@ def write_secure_pickle(
         f_pickle.write(bytes(digest, sys.stdin.encoding) + b"\n" + pickle_data)
 
 
-################################################################################
 def read_secure_pickle(
     f_path: pathlib.Path, *, shared_key: None | bytes = None
 ) -> Any:  # noqa: ANN401
