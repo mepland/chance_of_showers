@@ -799,6 +799,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model
 
+    def get_model_type(self: "TSModelWrapper") -> str:
+        """Get the model_type of this model wrapper.
+
+        Returns:
+            Model_type str for this model wrapper
+        """
+        return self.model_type
+
     def get_n_prediction_steps_and_time_bin_size(  # noqa: FNE007
         self: "TSModelWrapper",
     ) -> tuple[int, datetime.timedelta]:
