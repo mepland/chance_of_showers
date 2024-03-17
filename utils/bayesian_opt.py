@@ -201,7 +201,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     # Add represents_point
     dfp["row_number"] = (
         dfp.sort_values(
-            ["is_clean", "datetime_end"] if has_is_clean else "datetime_end",
+            by=["is_clean", "datetime_end"] if has_is_clean else "datetime_end",
             ascending=[False, True] if has_is_clean else True,
         )
         .groupby(["id_point"])
@@ -355,7 +355,7 @@ def load_best_points(
 
         has_is_clean = "is_clean" in dfp_best_points.columns
         dfp_best_points = dfp_best_points.sort_values(
-            ["is_clean", "datetime_end"] if has_is_clean else "datetime_end",
+            by=["is_clean", "datetime_end"] if has_is_clean else "datetime_end",
             ascending=[False, True] if has_is_clean else True,
         )
 
