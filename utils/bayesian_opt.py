@@ -128,6 +128,8 @@ BAYES_OPT_LOG_COLS_FIXED: Final = [
     "represents_point",
     "is_clean",
     "target",
+    "generic_model_name",
+    "model_type",
 ] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
 NON_CSV_COLS: Final = [
@@ -630,6 +632,8 @@ def write_csv_row(  # pylint: disable=too-many-arguments
     metrics_val: dict[str, float],
     point: dict,
     is_clean: bool,
+    generic_model_name: str,
+    model_type: str,
 ) -> None:
     """Save validation metrics and other metadata for this point to CSV.
 
@@ -643,11 +647,21 @@ def write_csv_row(  # pylint: disable=too-many-arguments
         metrics_val: Metrics on the validation set.
         point: Hyperparameter point.
         is_clean: Flag for if these are cleaned or raw hyperparameters.
+        generic_model_name: Generic model name, e.g. NBEATS.
+        model_type: General type of model; prophet, torch, statistical, regression, or naive.
     """
     if not enable_csv_logging:
         return
 
-    new_row = [datetime_start_str, datetime_end_str, id_point, int(is_clean), target]
+    new_row = [
+        datetime_start_str,
+        datetime_end_str,
+        id_point,
+        int(is_clean),
+        target,
+        generic_model_name,
+        model_type,
+    ]
     metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
     new_row += list(metrics_val_sorted.values())
     point = dict(sorted(point.items()))
@@ -863,6 +877,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     # Setup Logging
     generic_model_name: Final = model_wrapper.get_generic_model_name()
+    model_type: Final = model_wrapper.get_model_type()
     bayesian_opt_work_dir: Final = pathlib.Path(
         model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
     ).expanduser()
@@ -941,6 +956,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 metrics_val=metrics_val,
                 point=point_to_probe,
                 is_clean=point_to_probe_is_clean,
+                generic_model_name=generic_model_name,
+                model_type=model_type,
             )
 
             n_points += 1
@@ -963,6 +980,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     metrics_val=metrics_val,
                     point=point_to_probe_clean,
                     is_clean=True,
+                    generic_model_name=generic_model_name,
+                    model_type=model_type,
                 )
 
                 n_points += 1
@@ -981,7 +1000,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     max_time_per_model_flag = (
         max_time_per_model is not None
-        and not model_wrapper.is_nn
+        and model_type != "torch"
         and platform.system() in ["Linux", "Darwin"]
     )
     if max_time_per_model_flag:
