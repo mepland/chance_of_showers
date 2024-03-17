@@ -175,7 +175,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     ) / pd.Timedelta(minutes=1)
 
     dfp_minutes = (
-        dfp_minutes.groupby(["datetime_end"])
+        dfp_minutes.groupby("datetime_end", sort=False)
         .agg(
             {"minutes_elapsed_total": "max", "datetime_start": "min"}
             if has_datetime_start
@@ -204,7 +204,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
             by=["is_clean", "datetime_end"] if has_is_clean else "datetime_end",
             ascending=[False, True] if has_is_clean else True,
         )
-        .groupby(["id_point"])
+        .groupby("id_point", sort=False)
         .cumcount()
     )
     dfp["represents_point"] = dfp["row_number"] == 0
@@ -213,7 +213,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     # Add rank_point
     if "id_point" in dfp.columns:
         dfp_id_to_rank = (
-            dfp.groupby(["id_point"])
+            dfp.groupby("id_point", sort=False)
             .agg({"target": "max", "datetime_end": "min"})
             .reset_index()
             .sort_values(by=["target", "datetime_end"], ascending=[False, True])
