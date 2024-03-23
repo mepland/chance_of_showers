@@ -909,6 +909,12 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
     if verbose:
         screen_logger = ScreenLogger(verbose=verbose)
+        # _iterations and _previous_max are not reloaded correctly by default
+        # https://github.com/bayesian-optimization/BayesianOptimization/blob/c7e5c3926944fc6011ae7ace29f7b5ed0f9c983b/bayes_opt/observer.py#L9
+        # pylint: disable=protected-access
+        screen_logger._iterations = n_points
+        screen_logger._previous_max = max(optimizer.space.target)
+        # pylint: enable=protected-access
         for event in DEFAULT_EVENTS:
             if (verbose < 3) and event in [Events.OPTIMIZATION_START, Events.OPTIMIZATION_END]:
                 continue
@@ -941,6 +947,11 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         """
         global n_points
 
+        # translate strange hyperparam_values back to original representation
+        point_to_probe_clean = model_wrapper.translate_hyperparameters_to_numeric(
+            point_to_probe_clean
+        )
+
         id_point = get_point_hash(point_to_probe_clean)
 
         model_name = model_wrapper.get_model_name()
@@ -968,11 +979,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             )
 
             n_points += 1
-
-            # translate strange hyperparam_values back to original representation
-            point_to_probe_clean = model_wrapper.translate_hyperparameters_to_numeric(
-                point_to_probe_clean
-            )
 
             if get_i_point_duplicate(point_to_probe_clean, optimizer) == -1:
                 optimizer.register(params=point_to_probe_clean, target=target)
