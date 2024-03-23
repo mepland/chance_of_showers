@@ -32,6 +32,7 @@ max_points=$((2 * n_iter + 1))
 # Check for running drive_bayesian_opt.py
 if pgrep -fc "python.*?drive_bayesian_opt.py" > /dev/null 2>&1; then
 	echo "Found python drive_bayesian_opt.py running, doing nothing"
+	unset TQDM_DISABLE
 	exit
 fi
 
@@ -50,9 +51,8 @@ for ((i_model = i_model_min; i_model <= i_model_max; i_model++)); do
 		n_points=$((status - 10))
 
 		if [[ $status -lt 10 ]]; then
-			echo "On i_iter = $i_iter, found status = $status, an exception occurred, halting!"
-			unset TQDM_DISABLE
-			exit $status
+			echo "On i_iter = $i_iter, found status = $status, an exception occurred, breaking to next model!"
+			break
 		elif [[ $max_points -le $n_points ]]; then
 			echo "On i_iter = $i_iter, found $max_points <= $n_points points, breaking to next model"
 			break
