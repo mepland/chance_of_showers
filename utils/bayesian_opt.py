@@ -2,6 +2,7 @@
 
 import datetime
 import gc
+import hashlib
 import json
 import os
 import pathlib
@@ -276,6 +277,7 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
         if rows:
             dfp = pd.DataFrame(rows)
             dfp["id_point"] = dfp.index
+            dfp["id_point"] = dfp["id_point"].astype(str)
 
             return clean_log_dfp(dfp)
 
@@ -630,7 +632,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
     fname_csv_log: pathlib.Path,
     datetime_start_str: str,
     datetime_end_str: str,
-    id_point: int,
+    id_point: str,
     target: float,
     metrics_val: dict[str, float],
     point: dict,
@@ -731,16 +733,18 @@ def get_i_point_duplicate(point: dict, optimizer: bayes_opt.BayesianOptimization
     return -1
 
 
-def get_point_hash(point: dict) -> int:
+def get_point_hash(point: dict) -> str:
     """Get hash of prior.
 
     Args:
         point: The point to hash.
 
     Returns:
-        The hash of the point.
+        The SHA-256 hash of the point.
     """
-    return hash(", ".join([f"{k}: {v}" for k, v in dict(sorted(point.items())).items()]))
+    return hashlib.sha256(
+        ", ".join([f"{k}: {v}" for k, v in dict(sorted(point.items())).items()]).encode("utf-8")
+    ).hexdigest()
 
 
 def signal_handler_for_stopping(
@@ -1105,7 +1109,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                     target = optimizer.space.target[i_point_duplicate]
                     if 3 <= verbose:
                         print(
-                            f"On iteration {i_iter} testing prior id_point = {i_point_duplicate}, returning prior {target = :.9f} for the next_point_to_probe, which is a {'clean' if next_point_to_probe_is_clean else 'raw'} point."
+                            f"On iteration {i_iter} testing prior i_point = {i_point_duplicate}, returning prior {target = :.9f} for the next_point_to_probe, which is a {'clean' if next_point_to_probe_is_clean else 'raw'} point."
                         )
 
                     complete_iter(
