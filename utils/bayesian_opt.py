@@ -128,7 +128,7 @@ BAYES_OPT_LOG_COLS_FIXED: Final = [
     "represents_point",
     "is_clean",
     "target",
-    "generic_model_name",
+    "model_name",
     "model_type",
 ] + [f"{_}_val_loss" for _ in METRICS_KEYS]
 
@@ -312,12 +312,12 @@ def load_best_points(
         Best points with metadata as pandas dataframe, and dict of all logs as pandas dataframes.
 
     Raises:
-        ValueError: Could not load from disk, or found duplicate model_name.
+        ValueError: Could not load from disk, or found duplicate generic_model_name.
     """
     dfp_runs_dict = {}
     rows = []
     for f_path in sorted(dir_path.glob(f"**/*.{'csv' if use_csv else 'json'}")):
-        model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
+        generic_model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
 
         if use_csv:
             dfp = load_csv_log_to_dfp(f_path)
@@ -330,12 +330,12 @@ def load_best_points(
         if TYPE_CHECKING:
             assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
 
-        if model_name in dfp_runs_dict:
+        if generic_model_name in dfp_runs_dict:
             raise ValueError(
-                f"Already loaded log for {model_name}! Please clean the dir structure of {dir_path} and try again."
+                f"Already loaded log for {generic_model_name}! Please clean the dir structure of {dir_path} and try again."
             )
 
-        dfp_runs_dict[model_name] = pd.DataFrame(dfp)
+        dfp_runs_dict[generic_model_name] = pd.DataFrame(dfp)
 
         dfp_best_points = dfp.loc[dfp["target"] != BAD_TARGET]
 
@@ -349,7 +349,7 @@ def load_best_points(
         if not dfp_best_points.index.size:
             dfp_best_points = pd.DataFrame(dfp)
             warnings.warn(
-                f"Could not find a best point for {model_name} in {f_path}, just taking them all!",
+                f"Could not find a best point for {generic_model_name} in {f_path}, just taking them all!",
                 stacklevel=1,
             )
 
@@ -368,7 +368,7 @@ def load_best_points(
 
         rows.append(
             {
-                "model_name": model_name,
+                "generic_model_name": generic_model_name,
                 "target_best": best_dict["target"],
                 "n_points": dfp.index.size,
                 "n_points_bad_target": dfp.loc[dfp["target"] == BAD_TARGET].index.size,
@@ -388,12 +388,13 @@ def load_best_points(
 
     dfp_best_points = pd.DataFrame(rows)
     dfp_best_points = dfp_best_points.sort_values(
-        by=["target_best", "model_name", "datetime_end_best"], ascending=[False, True, False]
+        by=["target_best", "generic_model_name", "datetime_end_best"],
+        ascending=[False, True, False],
     ).reset_index(drop=True)
 
     # Sort dfp_runs_dict in the same order as dfp_best_points
     # https://stackoverflow.com/a/21773891
-    index_map = {v: i for i, v in enumerate(dfp_best_points["model_name"].to_list())}
+    index_map = {v: i for i, v in enumerate(dfp_best_points["generic_model_name"].to_list())}
     dfp_runs_dict = dict(sorted(dfp_runs_dict.items(), key=lambda pair: index_map[pair[0]]))
 
     return dfp_best_points, dfp_runs_dict
@@ -564,9 +565,11 @@ def write_search_results(  # noqa: C901
         )
         _fmt_worksheet(xlsx_writer.sheets["Best Points"], dfp_best_points)
 
-        for model_name, dfp in dfp_runs_dict.items():
-            dfp.to_excel(xlsx_writer, sheet_name=model_name, freeze_panes=(1, 1), index=False)
-            _fmt_worksheet(xlsx_writer.sheets[model_name], dfp)
+        for generic_model_name, dfp in dfp_runs_dict.items():
+            dfp.to_excel(
+                xlsx_writer, sheet_name=generic_model_name, freeze_panes=(1, 1), index=False
+            )
+            _fmt_worksheet(xlsx_writer.sheets[generic_model_name], dfp)
 
 
 def print_memory_usage(*, header: str | None = None) -> None:
@@ -632,7 +635,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
     metrics_val: dict[str, float],
     point: dict,
     is_clean: bool,
-    generic_model_name: str,
+    model_name: str,
     model_type: str,
 ) -> None:
     """Save validation metrics and other metadata for this point to CSV.
@@ -647,7 +650,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
         metrics_val: Metrics on the validation set.
         point: Hyperparameter point.
         is_clean: Flag for if these are cleaned or raw hyperparameters.
-        generic_model_name: Generic model name, e.g. NBEATS.
+        model_name: Model name with training time stamp.
         model_type: General type of model; prophet, torch, statistical, regression, or naive.
     """
     if not enable_csv_logging:
@@ -659,7 +662,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
         id_point,
         int(is_clean),
         target,
-        generic_model_name,
+        model_name,
         model_type,
     ]
     metrics_val_sorted = {k: metrics_val[str(k)] for k in METRICS_KEYS}
@@ -940,6 +943,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 
         id_point = get_point_hash(point_to_probe_clean)
 
+        model_name = model_wrapper.get_model_name()
+
         if get_i_point_duplicate(point_to_probe, optimizer) == -1:
             optimizer.register(params=point_to_probe, target=target)
             datetime_end_str = get_datetime_str_from_json(
@@ -956,7 +961,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                 metrics_val=metrics_val,
                 point=point_to_probe,
                 is_clean=point_to_probe_is_clean,
-                generic_model_name=generic_model_name,
+                model_name=model_name,
                 model_type=model_type,
             )
 
@@ -980,7 +985,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
                     metrics_val=metrics_val,
                     point=point_to_probe_clean,
                     is_clean=True,
-                    generic_model_name=generic_model_name,
+                    model_name=model_name,
                     model_type=model_type,
                 )
 

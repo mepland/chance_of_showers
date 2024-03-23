@@ -1315,7 +1315,7 @@ dfp_best_points, dfp_runs_dict = load_best_points(
 #     display(dfp_best_points)
 
 # %%
-best_model = dfp_best_points["model_name"].iloc[0]
+best_model = dfp_best_points["generic_model_name"].iloc[0]
 print(f"{best_model = }")
 
 # %%
