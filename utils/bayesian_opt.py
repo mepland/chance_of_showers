@@ -555,6 +555,7 @@ def write_search_results(  # noqa: C901
                     "n_points",
                     "n_points_bad_target",
                     "id_point",
+                    "model_name",
                     "id_point_best",
                     "minutes_elapsed_point_best",
                     "datetime_end_best",
