@@ -993,6 +993,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Name this model, with training time stamp."""
         self.model_name = f"{self.get_generic_model_name()}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
+    def get_model_name(self: "TSModelWrapper") -> str:
+        """Get the name for this model, with a time stamp.
+
+        Raises:
+            ValueError: Bad configuration.
+
+        Returns:
+            The name for this model, out a time stamp.
+        """
+        if self.model_name is None:
+            raise ValueError("self.model_name is None, the model has not been trained yet.")
+
+        return self.model_name
+
     def get_configurable_hyperparams(self: "TSModelWrapper", *, for_opt_only: bool = True) -> dict:
         """Get the configurable hyperparameters for this model.
 
