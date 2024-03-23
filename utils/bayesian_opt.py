@@ -944,6 +944,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         id_point = get_point_hash(point_to_probe_clean)
 
         model_name = model_wrapper.get_model_name()
+        if model_name is None:
+            model_name = "reusing_prior_point"
 
         if get_i_point_duplicate(point_to_probe, optimizer) == -1:
             optimizer.register(params=point_to_probe, target=target)
