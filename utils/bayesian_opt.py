@@ -917,7 +917,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         # https://github.com/bayesian-optimization/BayesianOptimization/blob/c7e5c3926944fc6011ae7ace29f7b5ed0f9c983b/bayes_opt/observer.py#L9
         # pylint: disable=protected-access
         screen_logger._iterations = n_points
-        screen_logger._previous_max = max(optimizer.space.target)
+        screen_logger._previous_max = max(optimizer.space.target, default=BAD_TARGET)
         # pylint: enable=protected-access
         for event in DEFAULT_EVENTS:
             if (verbose < 3) and event in [Events.OPTIMIZATION_START, Events.OPTIMIZATION_END]:
