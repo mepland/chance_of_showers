@@ -27,7 +27,7 @@ class CrostonWrapper(TSModelWrapper):
 
     # config wrapper for Croston
     _model_class = Croston
-    _is_nn = False
+    _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
     _required_hyperparams_model = ["version"]
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
@@ -85,7 +85,7 @@ class CrostonWrapper(TSModelWrapper):
         ):
             self.__dict__ = kwargs["TSModelWrapper"].__dict__.copy()
             self.model_class = self._model_class
-            self.is_nn = self._is_nn
+            self.model_type = self._model_type
             self.verbose = kwargs.get("verbose", 1)
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
@@ -105,7 +105,7 @@ class CrostonWrapper(TSModelWrapper):
                 fname_datetime_fmt=kwargs["fname_datetime_fmt"],
                 local_timezone=kwargs["local_timezone"],
                 model_class=self._model_class,
-                is_nn=self._is_nn,
+                model_type=self._model_type,
                 verbose=kwargs.get("verbose", 1),
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),

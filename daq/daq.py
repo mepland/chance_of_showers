@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-################################################################################
-# python imports
 import datetime
 import logging
 import pathlib
@@ -32,7 +30,6 @@ if TYPE_CHECKING:
 
 # pylint: disable=import-outside-toplevel
 
-################################################################################
 # Global variables
 # pylint: disable=invalid-name
 thread_daq_loop = None
@@ -58,7 +55,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     global running_daq_loop
     global had_flow
     global new_connection
-    ################################################################################
     # Setup variables
     # pylint: disable=invalid-name
     LOG_TO_FILE: Final = cfg["daq"]["log_to_file"]
@@ -84,6 +80,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
+    # Do not use get_local_timezone_from_cfg() due to the way utils.shared_functions is imported.
     LOCAL_TIMEZONE: Final = zoneinfo.ZoneInfo(LOCAL_TIMEZONE_STR)
 
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
@@ -108,15 +105,13 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     polling_pressure_samples.fill(np.nan)
     polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841 # pylint: disable=unused-variable
 
-    ################################################################################
     # Lock script, avoid launching duplicates
     sys.path.append(str(pathlib.Path.cwd().parent))
     from utils.shared_functions import get_lock, get_SoC_temp, normalize_pressure_value
 
     get_lock("daq")
 
-    ################################################################################
-    # Paths
+    # Setup paths
     RAW_DATA_FULL_PATH: Final = (  # pylint: disable=invalid-name
         PACKAGE_PATH / RAW_DATA_RELATIVE_PATH
     )
@@ -124,8 +119,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     RAW_DATA_FULL_PATH.mkdir(parents=True, exist_ok=True)
     LOGS_FULL_PATH.mkdir(parents=True, exist_ok=True)
 
-    ################################################################################
-    # Logging
+    # Setup logging
     logger_daq = logging.getLogger("daq")
     logger_daq.setLevel(logging.INFO)
     if 0 < VERBOSITY:
@@ -201,7 +195,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             sys.stdout.write("\x1b[1A\x1b[2K" + line + "\r")
             sys.stdout.flush()
 
-    ################################################################################
     # Helper variables and functions
 
     def normalize_pressure_value_safe(pressure_value: int) -> float:
@@ -275,7 +268,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    ################################################################################
     # Setup connection to MCP3008 ADC
     # https://docs.circuitpython.org/projects/mcp3xxx/en/stable/index.html#mcp3008-single-ended
     # https://docs.circuitpython.org/projects/mcp3xxx/en/stable/api.html#adafruit_mcp3xxx.analog_in.AnalogIn
@@ -294,7 +286,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     mcp = MCP.MCP3008(spi, cs, ref_voltage=5)  # 5 Volts
     chan_0 = AnalogIn(mcp, MCP.P0)  # MCP3008 pin 0
 
-    ################################################################################
     # Setup connection for reading the flow sensor as a switch
     # https://gpiozero.readthedocs.io/en/stable/api_input.html?highlight=Button#gpiozero.Button
     # Note, I would prefer to read the pulses per minute with RPi.GPIO as in fan_control.py,
@@ -318,7 +309,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     flow_switch.when_held = rise
     flow_switch.when_released = fall
 
-    ################################################################################
     # Setup connection to i2c display
     # https://luma-oled.readthedocs.io/en/latest
     if DISPLAY_OLED:
@@ -392,7 +382,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 )
                 pass
 
-    ################################################################################
     # Setup web page
     # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
     if DISPLAY_WEB:
@@ -558,7 +547,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         PORT_NUMBER: Final = 5000  # pylint: disable=invalid-name
         host_ip_address = get_ip_address()
 
-    ################################################################################
     # Wait until UTC minutes is mod STARTING_TIME_MINUTES_MOD
     # Then if the script is interrupted, we can resume on the same cadence
     t_start = datetime.datetime.now(UTC_TIMEZONE)
@@ -604,7 +592,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         print_postfix="\n\n",
     )
 
-    ################################################################################
     def daq_loop(t_utc_str: str, t_local_str: str) -> None:
         """DAQ loop.
 
@@ -770,14 +757,12 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
         my_print(f"Exiting daq_loop() via {running_daq_loop = }")
 
-    ################################################################################
     # start daq_loop()
     if thread_daq_loop is None:
         # kill gracefully via running_daq_loop
         thread_daq_loop = threading.Thread(target=daq_loop, args=(t_utc_str, t_local_str))
         thread_daq_loop.start()
 
-    ################################################################################
     # serve index.html
     if DISPLAY_WEB:
         try:
@@ -812,7 +797,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             )
             pass
 
-    ################################################################################
     # run daq_loop() until we exit the main thread
     if thread_daq_loop is not None:
         thread_daq_loop.join()

@@ -5,8 +5,6 @@ Used to brute force GPU memory resets between runs.
 Returns 10 + the number of completed points as the exit code, or a integer 0 < status < 10 for exceptions.
 """
 
-################################################################################
-# python imports
 import datetime
 import os
 import pathlib
@@ -21,7 +19,7 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
 # pylint: disable=import-error,useless-suppression
 # pylint: enable=useless-suppression
-from utils.shared_functions import read_secure_pickle
+from utils.shared_functions import get_local_timezone_from_cfg, read_secure_pickle
 
 # isort: off
 from utils.bayesian_opt import run_bayesian_opt
@@ -80,15 +78,14 @@ def drive_bayesian_opt(
     Args:
         cfg: Hydra configuration.
     """
-    ################################################################################
     # Setup variables
     # pylint: disable=invalid-name
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
     BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
+    LOCAL_TIMEZONE, _ = get_local_timezone_from_cfg(cfg)
     # pylint: enable=invalid-name
 
-    ################################################################################
     # Setup run_bayesian_opt_kwargs
 
     dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
@@ -118,7 +115,6 @@ def drive_bayesian_opt(
     if n_iter is not None and 0 < n_iter:
         run_bayesian_opt_kwargs["n_iter"] = n_iter
 
-    ################################################################################
     # Select model(s) to run
 
     model_kwarg_list = [
@@ -199,7 +195,8 @@ def drive_bayesian_opt(
 
         model_kwarg_list = [model_kwarg_list[i_model]]
 
-    ################################################################################
+    max_points = cfg.get("max_points")
+
     # Load PARENT_WRAPPER from pickle
 
     # pylint: disable=invalid-name
@@ -212,8 +209,9 @@ def drive_bayesian_opt(
         sys.exit(3)
 
     run_bayesian_opt_kwargs["parent_wrapper"] = PARENT_WRAPPER
+    run_bayesian_opt_kwargs["local_timezone"] = LOCAL_TIMEZONE
+    run_bayesian_opt_kwargs["max_points"] = max_points
 
-    ################################################################################
     # Run Bayesian Optimization
 
     single_iter_flag = len(model_kwarg_list) == 1 and run_bayesian_opt_kwargs["n_iter"] == 1

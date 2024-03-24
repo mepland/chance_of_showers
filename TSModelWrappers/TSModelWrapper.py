@@ -48,7 +48,6 @@ from utils.shared_functions import (
 __all__ = ["TSModelWrapper"]
 
 
-################################################################################
 # Setup global parameters
 
 # Control warnings
@@ -215,7 +214,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
     }
 
 
-################################################################################
 # Setup global hyperparameter sets
 
 # data hyperparameters
@@ -639,7 +637,6 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
         integer_hyperparams.append(_k)
 
 
-################################################################################
 # parent class
 class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
     """Parent class for all time series wrappers.
@@ -654,7 +651,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         fname_datetime_fmt: String format of date times for file names.
         local_timezone: Local timezone.
         model_class: Dart model class.
-        is_nn: Flag for if the model is a neural network (NN).
+        model_type: General type of model; prophet, torch, statistical, regression, or naive.
         verbose: Verbosity level.
         work_dir: Path to directory to save this model's files.
         model_name_tag: Descriptive tag to add to the model name, optional.
@@ -680,7 +677,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         # optional, will later load in child classes
         *,
         model_class: ForecastingModel | None = None,
-        is_nn: bool | None = None,
+        model_type: str = "base_class",
         verbose: int = 1,
         work_dir: pathlib.Path | None = None,
         model_name_tag: str | None = None,
@@ -697,6 +694,15 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         if required_hyperparams_model is None:
             required_hyperparams_model = []
 
+        if model_type is None or model_type not in [
+            "prophet",
+            "torch",
+            "statistical",
+            "regression",
+            "naive",
+        ]:
+            raise ValueError(f"Unknown {model_type = }")
+
         self.dfp_trainable_evergreen = dfp_trainable_evergreen
         self.dt_val_start_datetime_local = dt_val_start_datetime_local.replace(tzinfo=None)
         self.work_dir_base = work_dir_base
@@ -707,7 +713,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.local_timezone = local_timezone
 
         self.model_class = model_class
-        self.is_nn = is_nn
+        self.model_type = model_type
         self.verbose = verbose
         self.work_dir = work_dir
         self.model_name_tag = model_name_tag
@@ -740,7 +746,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 {self.local_timezone = }
 
 {self.model_class = }
-{self.is_nn = }
+{self.model_type = }
 {self.verbose = }
 {self.work_dir = }
 {self.model_name_tag = }
@@ -789,6 +795,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             Model object from this model wrapper
         """
         return self.model
+
+    def get_model_type(self: "TSModelWrapper") -> str:
+        """Get the model_type of this model wrapper.
+
+        Returns:
+            Model_type str for this model wrapper
+        """
+        return self.model_type
 
     def get_n_prediction_steps_and_time_bin_size(  # noqa: FNE007
         self: "TSModelWrapper",
@@ -978,6 +992,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def _name_model(self: "TSModelWrapper") -> None:
         """Name this model, with training time stamp."""
         self.model_name = f"{self.get_generic_model_name()}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
+
+    def get_model_name(self: "TSModelWrapper") -> str | None:
+        """Get the name for this model, with a time stamp.
+             Note, the value will be None if the model has not been trained yet.
+
+        Returns:
+            The name for this model, with a time stamp.
+        """
+        return self.model_name
 
     def get_configurable_hyperparams(self: "TSModelWrapper", *, for_opt_only: bool = True) -> dict:
         """Get the configurable hyperparameters for this model.
@@ -1596,7 +1619,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 model_covariates_kwargs[f"{covariates_type}_covariates"] = (
                     dart_series_covariates_train
                 )
-                if self.is_nn:
+                if self.model_type == "torch":
                     model_covariates_kwargs[f"val_{covariates_type}_covariates"] = (
                         dart_series_covariates_val
                     )
@@ -1606,7 +1629,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
 
             train_kwargs = {}
-            if self.is_nn:
+            if self.model_type == "torch":
                 train_kwargs["val_series"] = dart_series_y_val
                 train_kwargs["verbose"] = self.verbose
 
