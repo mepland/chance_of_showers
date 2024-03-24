@@ -552,15 +552,20 @@ def write_search_results(  # noqa: C901
 
             # Hide columns
             for i_col, col_str in enumerate(dfp_source.columns):
-                if hide_debug_cols and col_str in [
-                    "n_points",
-                    "n_points_bad_target",
-                    "id_point",
-                    "model_name",
-                    "id_point_best",
-                    "minutes_elapsed_point_best",
-                    "datetime_end_best",
-                ]:
+                if hide_debug_cols and (
+                    col_str
+                    in [
+                        "datetime_start",
+                        "n_points",
+                        "n_points_bad_target",
+                        "id_point",
+                        "model_name",
+                        "id_point_best",
+                        "minutes_elapsed_point_best",
+                        "datetime_end_best",
+                    ]
+                    or (col_str == "model_type" and "minutes_elapsed_point" in dfp_source.columns)
+                ):
                     worksheet.set_column(i_col, i_col, None, options={"hidden": True})
 
         # Write and format sheets
@@ -571,7 +576,7 @@ def write_search_results(  # noqa: C901
 
         for generic_model_name, dfp in dfp_runs_dict.items():
             dfp.to_excel(
-                xlsx_writer, sheet_name=generic_model_name, freeze_panes=(1, 1), index=False
+                xlsx_writer, sheet_name=generic_model_name, freeze_panes=(1, 2), index=False
             )
             _fmt_worksheet(xlsx_writer.sheets[generic_model_name], dfp)
 
