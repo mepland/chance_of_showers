@@ -1306,9 +1306,7 @@ if not PARENT_WRAPPER_PATH.is_file():
 # ## Review Best Results
 
 # %%
-dfp_best_points, dfp_runs_dict = load_best_points(
-    MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME, use_csv=True
-)
+dfp_best_points, dfp_runs_dict = load_best_points(MODELS_PATH / BAYESIAN_OPT_WORK_DIR_NAME)
 
 # %%
 # with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
