@@ -372,7 +372,7 @@ def load_best_points(
             {
                 "generic_model_name": generic_model_name,
                 "target_best": best_dict["target"],
-                "model_type": best_dict["model_type"],
+                "model_type": best_dict.get("model_type", None),
                 "n_points": dfp.index.size,
                 "n_points_bad_target": dfp.loc[dfp["target"] == BAD_TARGET].index.size,
                 "n_points_representative": dfp.loc[dfp["represents_point"]].index.size,
