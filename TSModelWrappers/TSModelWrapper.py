@@ -59,6 +59,13 @@ warnings.filterwarnings(
     category=PossibleUserWarning,
 )
 
+# darts - torch
+warnings.filterwarnings(
+    "ignore",
+    message="torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm",
+    category=FutureWarning,
+)
+
 # We'll handle our own KeyboardInterrupt
 # https://github.com/Lightning-AI/pytorch-lightning/blob/47c8f4cba089a78fa3fe31dcac6a43416bc13820/src/lightning/pytorch/trainer/call.py#L54
 warnings.filterwarnings(
