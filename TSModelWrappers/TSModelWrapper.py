@@ -695,6 +695,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             required_hyperparams_model = []
 
         if model_type is None or model_type not in [
+            "base_class",
             "prophet",
             "torch",
             "statistical",
