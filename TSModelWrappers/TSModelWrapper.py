@@ -192,7 +192,7 @@ def get_pl_trainer_kwargs(
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) -> dict:
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
@@ -204,7 +204,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
             with no improvement, and will only decrease the LR after the
             3rd epoch if the loss still hasn't improved then.
             Default: 10.
-        verbose: If non-zero, prints a message to stdout for each update.
 
     Returns:
         lr_scheduler_kwargs.
@@ -217,7 +216,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
         "cooldown": 0,
         "min_lr": 0.0,
         "eps": 1e-08,
-        "verbose": 0 < verbose,
     }
 
 
@@ -1228,7 +1226,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_lr_scheduler_kwargs(
                     self.chosen_hyperparams["lr_factor"],
                     self.chosen_hyperparams["lr_patience"],
-                    self.verbose,
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
