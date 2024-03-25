@@ -63,7 +63,7 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     "ignore",
     message="torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm",
-    category=FutureWarning,
+    category=UserWarning,
 )
 
 # We'll handle our own KeyboardInterrupt
