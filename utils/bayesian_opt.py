@@ -161,43 +161,40 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     if has_is_clean:
         dfp["is_clean"] = dfp["is_clean"].astype(bool)
 
-    # Setup dfp_minutes for calculations.
-    has_datetime_start = "datetime_start" in dfp.columns
-    if has_datetime_start:
-        dfp["datetime_start"] = pd.to_datetime(dfp["datetime_start"], format=BAYES_OPT_DATETIME_FMT)
-
+    # Setup dfp_minutes for calculations
     dfp["datetime_end"] = pd.to_datetime(dfp["datetime_end"], format=BAYES_OPT_DATETIME_FMT)
+
+    has_measured_datetime_start = "datetime_start" in dfp.columns
+    if has_measured_datetime_start:
+        dfp["datetime_start"] = pd.to_datetime(dfp["datetime_start"], format=BAYES_OPT_DATETIME_FMT)
 
     dfp_minutes = pd.DataFrame(dfp)
 
-    dfp_minutes["minutes_elapsed_total"] = (
-        dfp_minutes["datetime_end"]
-        - dfp_minutes["datetime_start" if has_datetime_start else "datetime_end"].min()
-    ) / pd.Timedelta(minutes=1)
+    if not has_measured_datetime_start:
+        dfp_minutes["datetime_start"] = dfp_minutes["datetime_end"]
 
     dfp_minutes = (
         dfp_minutes.groupby("datetime_end", sort=False)
-        .agg(
-            {"minutes_elapsed_total": "max", "datetime_start": "min"}
-            if has_datetime_start
-            else {"minutes_elapsed_total": "max"}
-        )
+        .agg({"datetime_start": "min"})
         .reset_index()
         .sort_values(by="datetime_end", ascending=True)
         .reset_index(drop=True)
     )
 
-    if has_datetime_start:
+    if has_measured_datetime_start:
         dfp_minutes["minutes_elapsed_point"] = (
             dfp_minutes["datetime_end"] - dfp_minutes["datetime_start"]
-        )
-        dfp_minutes = dfp_minutes.drop("datetime_start", axis=1)
+        ) / pd.Timedelta(minutes=1)
+        dfp_minutes["minutes_elapsed_total"] = dfp_minutes["minutes_elapsed_point"].cumsum()
     else:
+        dfp_minutes["minutes_elapsed_total"] = (
+            dfp_minutes["datetime_end"] - dfp_minutes["datetime_end"].min()
+        ) / pd.Timedelta(minutes=1)
         dfp_minutes["minutes_elapsed_point"] = (
             dfp_minutes["minutes_elapsed_total"].diff().fillna(0.0)
         )
 
-    dfp = dfp.merge(dfp_minutes, how="left", on="datetime_end")
+    dfp = dfp.merge(dfp_minutes.drop("datetime_start", axis=1), how="left", on="datetime_end")
 
     # Add represents_point
     dfp["row_number"] = (
