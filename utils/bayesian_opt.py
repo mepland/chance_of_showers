@@ -222,7 +222,14 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
 
         dfp = dfp.merge(dfp_id_to_rank, how="left", on="id_point")
 
-    dfp = dfp.sort_values(by="datetime_end", ascending=True).reset_index(drop=True)
+    dfp = dfp.sort_values(
+        by=(
+            ["datetime_end", "is_clean", "represents_point"]
+            if has_is_clean
+            else ["datetime_end", "represents_point"]
+        ),
+        ascending=True,
+    ).reset_index(drop=True)
 
     return dfp[
         [_ for _ in BAYES_OPT_LOG_COLS_FIXED if _ in dfp.columns]
