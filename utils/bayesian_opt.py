@@ -958,11 +958,6 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         """
         global n_points
 
-        # translate strange hyperparam_values back to original representation
-        point_to_probe_clean = model_wrapper.translate_hyperparameters_to_numeric(
-            point_to_probe_clean
-        )
-
         id_point = get_point_hash(point_to_probe_clean)
 
         model_name = model_wrapper.get_model_name()
@@ -1089,28 +1084,27 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
             model_wrapper.verbose = model_verbose
 
             try:
-                # Check if we already tested this chosen_hyperparams point
-                # If it has been tested, save the raw next_point_to_probe with the same target and continue
-                chosen_hyperparams = model_wrapper.preview_hyperparameters(**next_point_to_probe)
+                # Construct next_point_to_probe_cleaned to be in the same format as next_point_to_probe
+                chosen_hyperparams = model_wrapper.translate_hyperparameters_to_numeric(
+                    model_wrapper.preview_hyperparameters(**next_point_to_probe)
+                )
                 next_point_to_probe_cleaned = {k: chosen_hyperparams[k] for k in hyperparams_to_opt}
 
                 # Check if next_point_to_probe is clean
                 next_point_to_probe_is_clean = np.array_equiv(
                     optimizer.space.params_to_array(next_point_to_probe),
-                    optimizer.space.params_to_array(
-                        model_wrapper.translate_hyperparameters_to_numeric(
-                            next_point_to_probe_cleaned
-                        )
-                    ),
+                    optimizer.space.params_to_array(next_point_to_probe_cleaned),
                 )
 
                 if 6 <= verbose:
-                    print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
                     print(f"{next_point_to_probe_is_clean = }")
+                    print(f"next_point_to_probe = {pprint.pformat(next_point_to_probe)}")
                     print(
                         f"next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"
                     )
 
+                # Check if we already tested this next_point_to_probe_cleaned point
+                # If it has been tested, save the raw next_point_to_probe with the same target and continue
                 i_point_duplicate = get_i_point_duplicate(next_point_to_probe_cleaned, optimizer)
                 if 0 <= i_point_duplicate:
                     target = optimizer.space.target[i_point_duplicate]
