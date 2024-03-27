@@ -1034,6 +1034,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         signal.signal(signal.SIGALRM, signal_handler_for_stopping)
 
     next_point_to_probe = None
+    next_point_to_probe_is_clean = False
     next_point_to_probe_cleaned = None
 
     def _build_error_msg(error_msg: str, error: Exception) -> str:
@@ -1279,6 +1280,7 @@ Disregard_training_exceptions is set, continuing!"""
 Returning with current objects and {exception_status = }."""
         print(error_msg)
 
-    optimizer.dispatch(Events.OPTIMIZATION_END)
+    with suppress(Exception):
+        optimizer.dispatch(Events.OPTIMIZATION_END)
 
     return optimizer.max, optimizer, exception_status
