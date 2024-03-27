@@ -1250,7 +1250,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        hyperparam_value, (int, float)
+                    )
 
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
@@ -1261,7 +1263,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 elif hyperparam_value == 1:
                     # default
                     pass
-                else:
+
+                if not (isinstance(hyperparam_value, int) and 0 <= hyperparam_value):
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
 
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
