@@ -66,6 +66,13 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
+# darts - TransformerModel
+warnings.filterwarnings(
+    "ignore",
+    message="enable_nested_tensor is True, but self.use_nested_tensor is False because",
+    category=UserWarning,
+)
+
 # We'll handle our own KeyboardInterrupt
 # https://github.com/Lightning-AI/pytorch-lightning/blob/47c8f4cba089a78fa3fe31dcac6a43416bc13820/src/lightning/pytorch/trainer/call.py#L54
 warnings.filterwarnings(
@@ -384,7 +391,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     },
     # TransformerModel hyperparams
     "d_model": {
-        "min": 0,
+        "min": 1,
         "max": 128,
         "default": 64,
         "type": int,
@@ -396,19 +403,19 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "num_encoder_layers": {  # and TiDEModel
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 3,
         "type": int,
     },
     "num_decoder_layers": {  # and TiDEModel
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 3,
         "type": int,
     },
     "dim_feedforward": {
-        "min": 0,
+        "min": 1,
         "max": 1024,
         "default": 512,
         "type": int,
