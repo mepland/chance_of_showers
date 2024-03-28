@@ -226,6 +226,13 @@ def drive_bayesian_opt(
     # pylint: disable=duplicate-code
     for model_kwarg in (pbar := tqdm.auto.tqdm(model_kwarg_list)):
         _model_name = model_kwarg["model_wrapper_class"].__name__.replace("Wrapper", "")
+
+        if model_kwarg.get("model_wrapper_kwargs", {}).get("model") is not None:
+            _model_name = f'{_model_name}_{model_kwarg["model_wrapper_kwargs"]["model"]}'
+
+        if model_kwarg.get("model_wrapper_kwargs", {}).get("version") is not None:
+            _model_name = f'{_model_name}_{model_kwarg["model_wrapper_kwargs"]["version"]}'
+
         if not os.environ.get("TQDM_DISABLE", 0):
             pbar.set_postfix_str(f"Optimizing {_model_name}")
         else:
