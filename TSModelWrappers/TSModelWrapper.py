@@ -372,7 +372,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "num_filters": {
-        "min": 0,
+        "min": 1,
         "max": 10,
         "default": 3,
         "type": int,
