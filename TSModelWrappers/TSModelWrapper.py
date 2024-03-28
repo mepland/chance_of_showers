@@ -66,6 +66,12 @@ warnings.filterwarnings(
     category=UserWarning,
 )
 
+warnings.filterwarnings(
+    "ignore",
+    message="dropout option adds dropout after all but last recurrent layer",
+    category=UserWarning,
+)
+
 # darts - TransformerModel
 warnings.filterwarnings(
     "ignore",
