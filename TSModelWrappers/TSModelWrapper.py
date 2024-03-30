@@ -173,7 +173,9 @@ def get_pl_trainer_kwargs(
             pl_module: "pytorch_lightning.LightningModule",  # noqa: U100
             exception: BaseException,
         ) -> None:
-            print(f"Caught {exception = } in lightning trainer, passing it on!")
+            if "CUDA out of memory. Tried to allocate" not in str(exception):
+                print(f"Caught {exception = } in lightning trainer, passing it on!")
+
             raise exception
 
     return {
