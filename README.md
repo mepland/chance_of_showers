@@ -204,7 +204,7 @@ The provided `cron_jobs.txt` will setup a cron job
 to send the heartbeat on the 15 and 45 minute of each hour.
 
 ```bash
-sudo apt install jq
+sudo apt install -y jq
 echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > secrets.json
 source daq/heartbeat
 ```
@@ -281,7 +281,7 @@ sudo wget https://www.python.org/ftp/python/3.11.4/Python-3.11.4.tgz
 sudo tar -xzvf Python-3.11.4.tgz
 cd Python-3.11.4/
 sudo apt update && sudo apt full-upgrade -y
-sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev -y
+sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev
 ./configure --enable-optimizations --enable-loadable-sqlite-extensions
 sudo make altinstall
 
