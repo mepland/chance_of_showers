@@ -17,6 +17,9 @@ humanize = "^4.9.0"
 holidays = "^0.44"
 psutil = "^5.9.8"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.2"
 isort = "^5.13.2"
