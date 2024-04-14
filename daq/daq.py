@@ -304,10 +304,10 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         had_flow = 0
 
     # bounce_time and hold_time are in seconds
-    factory = RPiGPIOFactory()
-    flow_switch = Button(pin=19, pull_up=False, bounce_time=0.1, hold_time=1, pin_factory=factory)
-    flow_switch.when_held = rise
-    flow_switch.when_released = fall
+    # factory = RPiGPIOFactory()
+    # flow_switch = Button(pin=19, pull_up=False, bounce_time=0.1, hold_time=1, pin_factory=factory)
+    # flow_switch.when_held = rise
+    # flow_switch.when_released = fall
 
     # Setup connection to i2c display
     # https://luma-oled.readthedocs.io/en/latest
