@@ -45,10 +45,10 @@ else
 fi
 
 # Start fan_control.py, if it is not running
-# if ! pgrep -fc "python -u fan_control.py" > /dev/null 2>&1; then
-# 	echo "No python -u fan_control.py running, starting..."
-# 	# Start fan_control.py in daq:fan
-# 	tmux send-keys -t daq:fan "cd $pkg_path/fan_control && poetry run python -u fan_control.py" Enter
-# else
-# 	echo "Found python -u fan_control.py running, doing nothing"
-# fi
+if ! pgrep -fc "python -u fan_control.py" > /dev/null 2>&1; then
+	echo "No python -u fan_control.py running, starting..."
+	# Start fan_control.py in daq:fan
+	tmux send-keys -t daq:fan "cd $pkg_path/fan_control && poetry run python -u fan_control.py" Enter
+else
+	echo "Found python -u fan_control.py running, doing nothing"
+fi
