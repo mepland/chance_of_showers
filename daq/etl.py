@@ -88,7 +88,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
 
     # remove any datetimes that have more than 1 row, caused by historical bug in DAQ threading
     DFPL_DUPLICATE_DATETIME: Final = (  # pylint: disable=invalid-name
-        dfpl.groupby(by=["datetime_utc"]).agg(pl.count()).filter(1 < pl.col("count"))
+        dfpl.group_by("datetime_utc").agg(pl.len()).filter(1 < pl.col("len"))
     )
     dfpl = dfpl.join(
         DFPL_DUPLICATE_DATETIME.select("datetime_utc"),
@@ -102,7 +102,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
 
     N_DUPLICATE_DATETIME_POST_THREADING_FIX: Final = (  # pylint: disable=invalid-name
-        DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX.select(pl.count()).collect(streaming=True).item()
+        DFPL_DUPLICATE_DATETIME_POST_THREADING_FIX.select(pl.len()).collect(streaming=True).item()
     )
     if 0 < N_DUPLICATE_DATETIME_POST_THREADING_FIX:
         DUPLICATE_DATETIME_POST_FIX_MIN: Final = (  # pylint: disable=invalid-name
@@ -129,7 +129,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         & (pl.col("datetime_utc").dt.second() != 0)
     )
     N_ROWS_DRIFT_SECONDS: Final = (  # pylint: disable=invalid-name
-        DFPL_DRIFT_SECONDS_RECORDS.select(pl.count()).collect(streaming=True).item()
+        DFPL_DRIFT_SECONDS_RECORDS.select(pl.len()).collect(streaming=True).item()
     )
     if 0 < N_ROWS_DRIFT_SECONDS:
         print(DFPL_DRIFT_SECONDS_RECORDS.collect(streaming=True))
@@ -149,7 +149,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ~pl.col("had_flow").is_in([-1, 0, 1])
     )
     N_INVALID_HAD_FLOW_ROWS: Final = (  # pylint: disable=invalid-name
-        DFPL_INVALID_HAD_FLOW_RECORDS.select(pl.count()).collect(streaming=True).item()
+        DFPL_INVALID_HAD_FLOW_RECORDS.select(pl.len()).collect(streaming=True).item()
     )
     if 0 < N_INVALID_HAD_FLOW_ROWS:
         print(DFPL_INVALID_HAD_FLOW_RECORDS.collect(streaming=True))

@@ -204,9 +204,22 @@ The provided `cron_jobs.txt` will setup a cron job
 to send the heartbeat on the 15 and 45 minute of each hour.
 
 ```bash
-sudo apt install jq
+sudo apt install -y jq
 echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > secrets.json
 source daq/heartbeat
+```
+
+### Combining Raw DAQ Files
+
+Raw CSV files can be combined into convenient Parquet files
+prior to analysis with the [`etl.py`](daq/etl.py) script.
+If the script crashes, you may need to manually repair
+any lines in the CSV files corrupted due to power losses.
+Polars should generate error messages indicating
+the corrupt datetime to help you locate the problematic file and line.
+
+```bash
+python daq/etl.py
 ```
 
 ## Bayesian Optimization
@@ -275,13 +288,16 @@ If `python 3.11` is not available in your release of Raspbian,
 you can compile it from source following the instructions [here](https://aruljohn.com/blog/python-raspberrypi),
 but will also need to [install the sqlite extensions](https://stackoverflow.com/a/24449632):
 
+<!-- markdownlint-disable MD013 -->
 ```bash
 cd /usr/src/
 sudo wget https://www.python.org/ftp/python/3.11.4/Python-3.11.4.tgz
 sudo tar -xzvf Python-3.11.4.tgz
 cd Python-3.11.4/
 sudo apt update && sudo apt full-upgrade -y
-sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev -y
+sudo apt install -y build-essential libbz2-dev libc6-dev libexpat1-dev libffi-dev libgdbm-dev liblzma-dev libncurses5-dev libnss3-dev libsqlite3-dev libssl-dev lzma pkg-config zlib1g-dev
+sudo apt autoremove -y
+sudo apt update && sudo apt full-upgrade -y
 ./configure --enable-optimizations --enable-loadable-sqlite-extensions
 sudo make altinstall
 
@@ -296,6 +312,32 @@ sudo ln -s /usr/local/bin/python3.11 /usr/bin/python3
 
 # Should match /usr/local/bin/python3.11 -VV
 python -VV
+```
+<!-- markdownlint-enable MD013 -->
+
+#### Additional DAQ Dependencies
+To finish setting up the DAQ system you must also:
+
+* Install `tmux`, which is not included in Raspbian by default.
+`tmux` is used to control multiple terminal sessions in [`start_daq`](daq/start_daq).
+* Install `pigpio`, which is not included in Raspbian Lite, i.e. headless, installations.
+`pigpio` is necessary to interface with the GPIO ports and must also be enabled via a [daemon](https://gpiozero.readthedocs.io/en/latest/remote_gpio.html)
+* Enable SPI, I2C, and Remote GPIO via `raspi-config`.
+* Prevent the [WiFi from powering off](https://desertbot.io/blog/headless-raspberry-pi-4-ssh-wifi-setup-64-bit-mac-windows).
+
+```bash
+# Install tmux and pigpio
+sudo apt-get install -y tmux pigpio
+
+# Enable SPI, I2C, and Remote GPIO
+sudo raspi-config
+
+# Setup pigpio daemon
+sudo systemctl enable pigpiod
+
+# Prevent the WiFi from powering off
+# Above the line that says exit 0 insert `/sbin/iw wlan0 set power_save off` and save the file
+sudo vi /etc/rc.local
 ```
 
 ### Installing Dependencies with Poetry
