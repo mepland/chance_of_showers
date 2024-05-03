@@ -29,3 +29,8 @@ if [ "$delta_seconds" -lt "$grace_period" ]; then
 else
 	curl -fsS -m 10 --retry 5 -o /dev/null --data-raw "$payload" https://hc-ping.com/"$chance_of_showers_heartbeat_uuid"/fail
 fi
+
+# Backup data to local USB drive
+backup_path="/media/usb_drive/daq_backup"
+rsync -aP $pkg_path/daq/raw_data $backup_path > /dev/null 2>&1
+rsync -aP $pkg_path/daq/saved_data $backup_path > /dev/null 2>&1

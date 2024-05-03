@@ -209,6 +209,13 @@ echo -e "{\n\t\"chance_of_showers_heartbeat_uuid\": \"YOUR_UUID_HERE\"\n}" > sec
 source daq/heartbeat
 ```
 
+The `heartbeat` script has also been setup to backup
+the `daq/raw_data` and `daq/saved_data` directories to
+`backup_path="/media/usb_drive/daq_backup"`.
+Please configure `backup_path` to fit your path, or comment out the `rsync` lines to turn them off.
+Regular backups of the data to a separate drive are helpful as Raspberry Pis
+have been known to corrupt their SD cards due to power loss or excessive writes.
+
 ### Combining Raw DAQ Files
 
 Raw CSV files can be combined into convenient Parquet files
