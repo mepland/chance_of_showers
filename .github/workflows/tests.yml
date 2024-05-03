@@ -220,5 +220,5 @@ jobs:
           ignore_files: LICENSE.md
 
       - name: blacken-docs
-        if: steps.filter.outputs.python_files == 'true' || steps.filter.outputs.markdown_files== 'true' || steps.filter.outputs.rst_files== 'true' || steps.filter.outputs.tex_files== 'true'  # yamllint disable-line rule:line-length
+        if: steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true'  # yamllint disable-line rule:line-length
         run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} $${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
