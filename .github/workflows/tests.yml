@@ -58,6 +58,7 @@ jobs:
             - added|modified: '**/poetry.lock'
             python:
             - added|modified: '**.py'
+            - added|modified: '**.ipynb'
             javascript:
             - added|modified: '**.js'
             html:
