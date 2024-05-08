@@ -59,6 +59,26 @@ warnings.filterwarnings(
     category=PossibleUserWarning,
 )
 
+# darts - torch
+warnings.filterwarnings(
+    "ignore",
+    message="torch.nn.utils.weight_norm is deprecated in favor of torch.nn.utils.parametrizations.weight_norm",
+    category=UserWarning,
+)
+
+warnings.filterwarnings(
+    "ignore",
+    message="dropout option adds dropout after all but last recurrent layer",
+    category=UserWarning,
+)
+
+# darts - TransformerModel
+warnings.filterwarnings(
+    "ignore",
+    message="enable_nested_tensor is True, but self.use_nested_tensor is False because",
+    category=UserWarning,
+)
+
 # We'll handle our own KeyboardInterrupt
 # https://github.com/Lightning-AI/pytorch-lightning/blob/47c8f4cba089a78fa3fe31dcac6a43416bc13820/src/lightning/pytorch/trainer/call.py#L54
 warnings.filterwarnings(
@@ -153,7 +173,9 @@ def get_pl_trainer_kwargs(
             pl_module: "pytorch_lightning.LightningModule",  # noqa: U100
             exception: BaseException,
         ) -> None:
-            print(f"Caught {exception = } in lightning trainer, passing it on!")
+            if "CUDA out of memory. Tried to allocate" not in str(exception):
+                print(f"Caught {exception = } in lightning trainer, passing it on!")
+
             raise exception
 
     return {
@@ -185,7 +207,7 @@ def get_pl_trainer_kwargs(
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) -> dict:
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
@@ -197,7 +219,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
             with no improvement, and will only decrease the LR after the
             3rd epoch if the loss still hasn't improved then.
             Default: 10.
-        verbose: If non-zero, prints a message to stdout for each update.
 
     Returns:
         lr_scheduler_kwargs.
@@ -210,7 +231,6 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int, verbose: int) ->
         "cooldown": 0,
         "min_lr": 0.0,
         "eps": 1e-08,
-        "verbose": 0 < verbose,
     }
 
 
@@ -360,7 +380,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "num_filters": {
-        "min": 0,
+        "min": 1,
         "max": 10,
         "default": 3,
         "type": int,
@@ -379,7 +399,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
     },
     # TransformerModel hyperparams
     "d_model": {
-        "min": 0,
+        "min": 1,
         "max": 128,
         "default": 64,
         "type": int,
@@ -391,19 +411,19 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "num_encoder_layers": {  # and TiDEModel
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 3,
         "type": int,
     },
     "num_decoder_layers": {  # and TiDEModel
-        "min": 0,
+        "min": 1,
         "max": 20,
         "default": 3,
         "type": int,
     },
     "dim_feedforward": {
-        "min": 0,
+        "min": 1,
         "max": 1024,
         "default": 512,
         "type": int,
@@ -695,6 +715,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             required_hyperparams_model = []
 
         if model_type is None or model_type not in [
+            "base_class",
             "prophet",
             "torch",
             "statistical",
@@ -1220,7 +1241,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = get_lr_scheduler_kwargs(
                     self.chosen_hyperparams["lr_factor"],
                     self.chosen_hyperparams["lr_patience"],
-                    self.verbose,
                 )
             elif hyperparam == "verbose":
                 hyperparam_value = self.verbose
@@ -1245,7 +1265,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        hyperparam_value, (int, float)
+                    )
 
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
@@ -1256,13 +1278,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 elif hyperparam_value == 1:
                     # default
                     pass
-                else:
+
+                if not (isinstance(hyperparam_value, int) and 0 <= hyperparam_value):
                     raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
 
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if not isinstance(hyperparam_value, float):
+                if isinstance(hyperparam_value, (int, float)):
                     hyperparam_value = int(round(hyperparam_value))
                     if hyperparam_value == 0:
                         hyperparam_value = ModelMode.NONE
@@ -1270,12 +1293,17 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         hyperparam_value = ModelMode.MULTIPLICATIVE
                     elif hyperparam_value == 2:
                         hyperparam_value = ModelMode.ADDITIVE
-                    else:
-                        raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+
+                if hyperparam_value not in [
+                    ModelMode.NONE,
+                    ModelMode.MULTIPLICATIVE,
+                    ModelMode.ADDITIVE,
+                ]:
+                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
 
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if not isinstance(hyperparam_value, float):
+                if isinstance(hyperparam_value, (int, float)):
                     hyperparam_value = int(round(hyperparam_value))
                     if hyperparam_value == 0:
                         hyperparam_value = SeasonalityMode.NONE
@@ -1283,21 +1311,27 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         hyperparam_value = SeasonalityMode.MULTIPLICATIVE
                     elif hyperparam_value == 2:
                         hyperparam_value = SeasonalityMode.ADDITIVE
-                    else:
-                        raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+
+                if hyperparam_value not in [
+                    SeasonalityMode.NONE,
+                    SeasonalityMode.MULTIPLICATIVE,
+                    SeasonalityMode.ADDITIVE,
+                ]:
+                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
 
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                if not isinstance(hyperparam_value, float):
+                if isinstance(hyperparam_value, (int, float)):
                     hyperparam_value = int(round(hyperparam_value))
                     if hyperparam_value == 1:
                         hyperparam_value = "multiplicative"
                     elif hyperparam_value == 2:
                         hyperparam_value = "additive"
-                    else:
-                        raise ValueError(
-                            f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
-                        )
+
+                if hyperparam_value not in ["multiplicative", "additive"]:
+                    raise ValueError(
+                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    )
 
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
