@@ -34,7 +34,7 @@ isort:
 .PHONY: black
 black:
 	@poetry run black .
-	@poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py') $(shell git ls-files '*.md') $(shell git ls-files '*.rst')
+	@poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py' '*.ipynb' '*.md' '*.rst')
 
 .PHONY: flake8
 flake8:
@@ -47,7 +47,7 @@ mypy:
 # https://stackoverflow.com/a/63044665
 .PHONY: pylint
 pylint:
-	@poetry run pylint $(shell git ls-files '*.py')
+	@poetry run pylint $(shell git ls-files '*.py' '*.ipynb')
 
 .PHONY: bandit
 bandit:
@@ -67,7 +67,7 @@ vulture-update_ignore:
 
 .PHONY: pyupgrade
 pyupgrade:
-	@poetry run pyupgrade $(shell git ls-files '*.py')
+	@poetry run pyupgrade $(shell git ls-files '*.py' '*.ipynb')
 
 .PHONY: deptry
 deptry:
@@ -138,6 +138,7 @@ lintprose:
 
 # isort ~ isort:
 # flake8 ~ noqa
+# ruff ~ noqa
 # mypy ~ type:
 # pylint ~ pylint
 # bandit ~ nosec
@@ -149,9 +150,15 @@ lintprose:
 # prettier ~ <!-- prettier-ignore -->
 .PHONY: find_noqa_comments
 find_noqa_comments:
-	@grep -rIn 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py')
-	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml' '*.yml')
-	@grep -rIn 'pragma\|blocklint:' $(shell git ls-files '*')
-	@grep -rIn 'markdownlint-' $(shell git ls-files '*.md')
-	@grep -rIn 'eslint' $(shell git ls-files '*.js')
-	@grep -rIn 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css')
+	@grep -rIn 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py' '*.ipynb') || true
+	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml' '*.yml') || true
+	@grep -rIn 'pragma\|blocklint:' $(shell git ls-files) || true
+	@grep -rIn 'markdownlint-' $(shell git ls-files '*.md') || true
+	@grep -rIn 'eslint' $(shell git ls-files '*.js') || true
+	@grep -rIn 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
+
+# Find double spaces that are not leading, and that are not before a `#` character,
+# i.e. indents and `code  # comment` are fine, but `code  # comment with  extra space` is not
+.PHONY: find_double_spaces
+find_double_spaces:
+	@grep -rInE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
