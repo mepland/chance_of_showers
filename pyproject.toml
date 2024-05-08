@@ -219,6 +219,9 @@ exclude = [
 literal-inline-quotes="double"
 literal-multiline-quotes="double"
 no-accept-encodings = true
+# https://jsh9.github.io/pydoclint/config_options.html
+style = "google"
+arg-type-hints-in-docstring = false
 
 [tool.mypy]
 python_version = "3.11"
