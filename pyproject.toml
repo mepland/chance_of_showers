@@ -97,6 +97,7 @@ dlint = "^0.14.1"
 pandas-vet = "^2023.8.2"
 pydoclint = {extras = ["flake8"], version = "^0.4.1"}
 tryceratops = "^2.3.2"
+ruff = "^0.4.3"
 
 [tool.poetry.group.daq]
 optional = true
@@ -222,6 +223,21 @@ no-accept-encodings = true
 # https://jsh9.github.io/pydoclint/config_options.html
 style = "google"
 arg-type-hints-in-docstring = false
+
+[tool.ruff]
+exclude = [
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"ana/exploratory_ana.py" = ["E402"]
 
 [tool.mypy]
 python_version = "3.11"

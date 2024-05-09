@@ -40,6 +40,10 @@ black:
 flake8:
 	@poetry run flake8
 
+.PHONY: ruff-check
+ruff-check:
+	@poetry run ruff check
+
 .PHONY: mypy
 mypy:
 	@poetry run mypy .
