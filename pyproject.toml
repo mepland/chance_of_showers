@@ -223,7 +223,7 @@ literal-multiline-quotes="double"
 no-accept-encodings = true
 # https://jsh9.github.io/pydoclint/config_options.html
 style = "google"
-arg-type-hints-in-docstring = false
+arg-type-hints-in-docstring = true
 
 [tool.ruff]
 exclude = [
