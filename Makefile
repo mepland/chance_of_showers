@@ -85,6 +85,15 @@ vulture-update_ignore:
 pyupgrade:
 	@poetry run pyupgrade $(shell git ls-files '*.py' '*.ipynb')
 
+.PHONY: pymend
+pymend:
+	@poetry run pymend $(shell git ls-files '*.py' '*.ipynb')
+
+.PHONY: pymend-fix
+pymend-fix:
+	@poetry run pymend --write $(shell git ls-files '*.py' '*.ipynb')
+
+
 .PHONY: deptry
 deptry:
 	@poetry run deptry .

@@ -34,6 +34,7 @@ vulture = "^2.11"
 yamllint = "^1.35.1"
 blocklint = "^0.2.4"
 pyupgrade = "^3.15.1"
+pymend = {git = "https://github.com/JanEricNitschke/pymend.git"}
 deptry = "^0.12.0"
 html5validator = "^0.4.2"
 typos = "^1.19.0"
@@ -328,6 +329,35 @@ exclude = [
     ".venv",
     "__pycache__"
 ]
+
+[tool.pymend]
+input-style = "auto"
+output-style = "google"
+check = true
+force-params= true
+force-params-min-n-params = 0
+force-meta-min-func-length = 0
+force-return = true
+force-raises = true
+force-methods = false
+force-attributes = false
+force-defaults = true
+ignore-privates = true
+ignore-unused-arguments = true
+ignored-functions = ["__init__", "on_exception"]
+extend-exclude = '''
+(
+  ^\.cache
+  | .direnv
+  | .env
+  | .git
+  | .github
+  | .ipynb_checkpoints
+  | .venv
+  | __pycache__
+  | .dev_config
+)
+'''
 
 [tool.deptry]
 ignore = [
