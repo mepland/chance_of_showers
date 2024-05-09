@@ -44,6 +44,18 @@ flake8:
 ruff-check:
 	@poetry run ruff check
 
+.PHONY: ruff-fix
+ruff-fix:
+	@poetry run ruff check --fix
+
+.PHONY: ruff-check-unsafe
+ruff-check-unsafe:
+	@poetry run ruff check --unsafe-fixes
+
+.PHONY: ruff-fix-unsafe
+ruff-fix-unsafe:
+	@poetry run ruff check --fix --unsafe-fixes
+
 .PHONY: mypy
 mypy:
 	@poetry run mypy .
