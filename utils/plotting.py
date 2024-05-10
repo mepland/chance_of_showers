@@ -512,7 +512,6 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
 
     Raises:
         ValueError: Bad configuration.
-        NotImplementedError: Not implemented for these parameters.
     """
     ann_texts, x_axis_params, y_axis_params = _setup_vars(
         ann_texts_in, x_axis_params, y_axis_params
@@ -995,6 +994,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
 
     Raises:
         ValueError: Bad configuration.
+        NotImplementedError: Not implemented for these parameters.
     """
     if not (save_html or plot_inline):
         print("Will not display or save anything, continuing!")
