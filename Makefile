@@ -93,7 +93,6 @@ pymend:
 pymend-fix:
 	@poetry run pymend --write $(shell git ls-files '*.py' '*.ipynb')
 
-
 .PHONY: deptry
 deptry:
 	@poetry run deptry .
