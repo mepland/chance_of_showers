@@ -208,7 +208,7 @@ per-file-ignores = [
     "ana/exploratory_ana.py:E402,E800,DALL000",
     "ana/drive_bayesian_opt.py:E402,CM001",
 ]
-exclude = [
+extend-exclude = [
     ".cache",
     ".direnv",
     ".env",
@@ -226,7 +226,7 @@ style = "google"
 arg-type-hints-in-docstring = true
 
 [tool.ruff]
-exclude = [
+extend-exclude = [
     ".cache",
     ".direnv",
     ".env",
@@ -376,6 +376,16 @@ locale = "en-us"
 extend-ignore-words-re = ["MAPE", "Dout"]
 
 [tool.typos.files]
-extend-exclude = [".git", "*.kicad*"]
+extend-exclude = [
+    ".cache",
+    ".direnv",
+    ".env",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".venv",
+    "__pycache__",
+	"*.kicad*"
+]
 ignore-hidden = false
 ignore-parent = false
