@@ -386,11 +386,12 @@ pre-commit install
 ### Installing Non-Python Based Linters
 Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli),
 JavaScript by [`standard`](https://github.com/standard/standard),
-and HTML, SCSS, and CSS by [`prettier`](https://prettier.io).
+and HTML, SCSS, CSS, and TOML by [`prettier`](https://prettier.io).
 You can install these JavaScript-based linters globally with:
 
 ```bash
 sudo npm install -g markdownlint-cli standard prettier
+sudo npm install -g prettier-plugin-toml --save-dev --save-exact
 ```
 
 Shell files are linted using [`shellcheck`](https://github.com/koalaman/shellcheck)
