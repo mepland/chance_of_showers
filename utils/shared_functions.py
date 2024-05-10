@@ -28,12 +28,12 @@ __all__ = [
 
 
 def get_lock(process_name: str) -> None:
-    """Lock script via abstract socket, only works in Linux!
+    """Lock script via abstract socket, only works in Linux.
 
     Adapted from https://stackoverflow.com/a/7758075
 
     Args:
-        process_name: The process_name to use for the locking socket.
+        process_name (str): The process_name to use for the locking socket.
     """
     # Without holding a reference to our socket somewhere it gets garbage collected when the function exits
     # pylint: disable=protected-access
@@ -54,7 +54,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     """Get SoC's temperature.
 
     Returns:
-        SoC temperature as a float.
+        float: SoC temperature.
     """
     res = os.popen("vcgencmd measure_temp").readline()  # noqa: DUO106, SCS110 # nosec: B605, B607
 
@@ -65,10 +65,13 @@ def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str
     """Get local timezone from Hydra config.
 
     Args:
-        cfg: Hydra config.
+        cfg (DictConfig): Hydra config.
 
     Returns:
-        Local timezone as zoneinfo object and string.
+        tuple[zoneinfo.ZoneInfo, str]: Local timezone as zoneinfo object and string.
+
+    Raises:
+        ValueError: Bad configuration.
     """
     local_timezone_str = cfg.get("general", {}).get("local_timezone")
 
@@ -89,14 +92,14 @@ def normalize_pressure_value(
     """Normalize raw ADC pressure_value.
 
     Args:
-        pressure_value: The raw ADC pressure_value to be normalized.
-        observed_pressure_min: The minimum observed ADC pressure value.
-        observed_pressure_max: The maximum observed ADC pressure value.
-        clip: Clip output between 0.0 and 1.0.
+        pressure_value (int): The raw ADC pressure_value to be normalized.
+        observed_pressure_min (float): The minimum observed ADC pressure value.
+        observed_pressure_max (float): The maximum observed ADC pressure value.
+        clip (bool): Clip output between 0.0 and 1.0. (Default value = False)
 
     Returns:
-        (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
-        i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
+        float: (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
+            i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
     """
     normalized_pressure_value = (pressure_value - observed_pressure_min) / (
         observed_pressure_max - observed_pressure_min
@@ -125,17 +128,17 @@ def rebin_chance_of_showers_time_series(
     """Rebin the chance of showers time_series in time and y prior to modeling.
 
     Args:
-        dfp_in: The input dataframe to rebin.
-        time_col: The time column.
-        y_col: The y column.
-        time_bin_size: The size of time bins.
-            Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere.
-        retain_DateTimeIndex: Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex.
-        other_cols_to_agg_dict: Other columns to aggregate during time rebinning, and their aggregation function(s).
-        y_bin_edges: The left bin edges for y.
+        dfp_in (pd.DataFrame): The input dataframe to rebin.
+        time_col (str): The time column.
+        y_col (str): The y column.
+        time_bin_size (datetime.timedelta | None): The size of time bins.
+            Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere. (Default value = None)
+        retain_DateTimeIndex (bool): Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex. (Default value = True)
+        other_cols_to_agg_dict (dict | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
+        y_bin_edges (list[float] | None): The left bin edges for y. (Default value = None)
 
     Returns:
-        The rebinned dataframe.
+        pd.DataFrame: The rebinned dataframe.
 
     Raises:
         ValueError: Bad configuration.
@@ -206,17 +209,17 @@ def create_datetime_component_cols(
     """Add columns for day of week, time of day, holidays, etc based on datetime_col.
 
     Args:
-        dfp: Input dataframe.
-        datetime_col: Datetime column.
-        date_fmt: String format of dates.
-        time_fmt: String format of times.
-        country_code: The country ISO code for holidays.
-        prov: The province for holidays.
-        state: The state for holidays.
-        language: The language for holidays.
+        dfp (pd.DataFrame): Input dataframe.
+        datetime_col (str): Datetime column.
+        date_fmt (str): String format of dates.
+        time_fmt (str): String format of times.
+        country_code (str): The country ISO code for holidays. (Default value = 'US')
+        prov (str | None): The province for holidays. (Default value = None)
+        state (str | None): The state for holidays. (Default value = 'NY')
+        language (str | None): The language for holidays. (Default value = 'en_US')
 
     Returns:
-        Dataframe with additional columns.
+        pd.DataFrame: Dataframe with additional columns.
     """
     dfp = dfp.copy()
 
@@ -259,7 +262,7 @@ def _get_key_from_platform() -> bytes:
     really being more of an exercise in how to do it, so just using the platform's properties as the key should be fine.
 
     Returns:
-        Key made from the platform's properties.
+        bytes: Key made from the platform's properties.
     """
     return bytes(
         hashlib.sha256(
@@ -288,9 +291,9 @@ def write_secure_pickle(
         https://stackoverflow.com/questions/74638045/getting-invalid-signature-for-hmac-authentication-of-python-pickle-file
 
     Args:
-        data: The object to be pickled.
-        f_path: The full path for the output pickle file.
-        shared_key: The shared key to sign the file.
+        data (Any): The object to be pickled.
+        f_path (pathlib.Path): The full path for the output pickle file.
+        shared_key (None | bytes): The shared key to sign the file. (Default value = None)
 
     Raises:
         ValueError: Bad configuration.
@@ -320,11 +323,11 @@ def read_secure_pickle(
         https://stackoverflow.com/questions/74638045/getting-invalid-signature-for-hmac-authentication-of-python-pickle-file
 
     Args:
-        f_path: The full path for the output pickle file.
-        shared_key: The shared key to sign the file.
+        f_path (pathlib.Path): The full path for the output pickle file.
+        shared_key (None | bytes): The shared key to sign the file. (Default value = None)
 
     Returns:
-        Pickled data.
+        Any: Pickled data.
 
     Raises:
         OSError: Could not load file.

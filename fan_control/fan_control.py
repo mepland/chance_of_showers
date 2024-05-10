@@ -27,7 +27,7 @@ def fan_control(cfg: DictConfig) -> None:
     """Run the fan control script.
 
     Args:
-        cfg: Hydra configuration.
+        cfg (DictConfig): Hydra configuration.
     """
     # Configuration
     # pylint: disable=invalid-name
@@ -68,7 +68,7 @@ def fan_control(cfg: DictConfig) -> None:
         """Set fan speed.
 
         Args:
-            speed: Desired fan speed, 0 to 100.
+            speed (float): Desired fan speed, 0 to 100.
         """
         fan.start(speed)
         # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
@@ -79,7 +79,7 @@ def fan_control(cfg: DictConfig) -> None:
         Calculate pulse frequency and RPM.
 
         Args:
-            pin: Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+            pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
         """
         global current_time
         global rpm

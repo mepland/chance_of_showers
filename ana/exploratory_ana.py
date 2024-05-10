@@ -164,8 +164,8 @@ def display_image(fname: pathlib.Path, *, plot_inline: bool = PLOT_INLINE) -> No
     """Show image from local file in jupyter.
 
     Args:
-        fname: Path to image file.
-        plot_inline: Display plot, or not.
+        fname (pathlib.Path): Path to image file.
+        plot_inline (bool): Display plot, or not. (Default value = PLOT_INLINE)
     """
     if plot_inline:
         display(Image(filename=fname))

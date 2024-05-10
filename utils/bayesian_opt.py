@@ -146,13 +146,10 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     """Clean and augment log dataframe.
 
     Args:
-        dfp: Log as pandas dataframe.
+        dfp (pd.DataFrame | None): Log dataframe.
 
     Returns:
-        Log as pandas dataframe, cleaned and augmented.
-
-    Raises:
-        ValueError: Bad configuration.
+        None | pd.DataFrame: Log cleaned and augmented.
     """
     if dfp is None:
         return None
@@ -245,10 +242,10 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from JSON file as a pandas dataframe.
 
     Args:
-        f_path: Path to JSON log file.
+        f_path (pathlib.Path): Path to JSON log file.
 
     Returns:
-        Log as pandas dataframe.
+        None | pd.DataFrame: Log.
     """
     # Adapted from:
     # https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/util.py#L214-L241
@@ -296,10 +293,10 @@ def load_csv_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from CSV file as a pandas dataframe.
 
     Args:
-        f_path: Path to CSV log file.
+        f_path (pathlib.Path): Path to CSV log file.
 
     Returns:
-        Log as pandas dataframe.
+        None | pd.DataFrame: Log.
     """
     with f_path.open("r", encoding="utf-8") as f_csv:
         dfp = pd.read_csv(f_csv, header=0)
@@ -315,11 +312,11 @@ def load_best_points(
     """Load best points from all bayes_opt, CSV or JSON, log files in the dir_path.
 
     Args:
-        dir_path: Path to search recursively for CSV, or JSON, log files.
-        use_csv: Flag to load CSV files, rather than JSON, log files.
+        dir_path (pathlib.Path): Path to search recursively for CSV, or JSON, log files.
+        use_csv (bool): Flag to load CSV files, rather than JSON, log files. (Default value = True)
 
     Returns:
-        Best points with metadata as pandas dataframe, and dict of all logs as pandas dataframes.
+        tuple[pd.DataFrame, dict[str, pd.DataFrame]]: Best points with metadata as pandas dataframe, and dict of all logs as pandas dataframes.
 
     Raises:
         ValueError: Could not load from disk, or found duplicate generic_model_name.
@@ -418,13 +415,13 @@ def write_search_results(  # noqa: C901
     *,
     bad_points_frac_thr: float = 0.2,
 ) -> None:
-    """Load prior bayes_opt log from JSON file as a pandas dataframe.
+    """Write search results to excel file.
 
     Args:
-        f_excel: Path to output xlsx file.
-        dfp_best_points: Best points dataframe created by load_best_points().
-        dfp_best_points: Dict of all logs as pandas dataframes load_best_points().
-        bad_points_frac_thr: Bad points fraction threshold for red formatting.
+        f_excel (pathlib.Path): Path to output xlsx file.
+        dfp_best_points (pd.DataFrame): Best points dataframe created by load_best_points().
+        dfp_runs_dict (dict[str, pd.DataFrame]): Dict of all logs as pandas dataframes created by load_best_points().
+        bad_points_frac_thr (float): Bad points fraction threshold for red formatting. (Default value = 0.2)
     """
     with pd.ExcelWriter(f_excel, engine="xlsxwriter") as xlsx_writer:
         workbook = xlsx_writer.book
@@ -470,12 +467,12 @@ def write_search_results(  # noqa: C901
             *,
             hide_debug_cols: bool = True,
         ) -> None:
-            """Format a log worksheet for this project
+            """Format a log worksheet for this project.
 
             Args:
-                worksheet: Input worksheet.
-                dfp_source: Original dataframe.
-                hide_debug_cols: Hide low level debugging columns.
+                worksheet (xlsxwriter.worksheet.Worksheet): Input worksheet.
+                dfp_source (pd.DataFrame): Original dataframe.
+                hide_debug_cols (bool): Hide low level debugging columns. (Default value = True)
             """
             # Format loss columns
             for i_col, col_str in enumerate(dfp_source.columns):
@@ -593,7 +590,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
     """Print system memory usage statistics.
 
     Args:
-        header: Header to print before the rest of the memory usage.
+        header (str | None): Header to print before the rest of the memory usage. (Default value = None)
     """
     ram_info = psutil.virtual_memory()
     process = psutil.Process()
@@ -618,10 +615,10 @@ def print_memory_usage(*, header: str | None = None) -> None:
             """Print system memory usage statistics.
 
             Args:
-                key: Key to get from gpu_memory_stats.
+                key (str): Key to get from gpu_memory_stats.
 
             Returns:
-                Clean humanized string for printing.
+                str: Clean humanized string for printing.
             """
             _v = gpu_memory_stats.get(key)
             if _v is not None:
@@ -658,17 +655,17 @@ def write_csv_row(  # pylint: disable=too-many-arguments
     """Save validation metrics and other metadata for this point to CSV.
 
     Args:
-        enable_csv_logging: Enable CSV logging of points.
-        fname_csv_log: Path to CSV log file.
-        datetime_end_str: Ending datetime string of this iteration, from JSON log.
-        datetime_start_str: Starting datetime string of this iteration.
-        id_point: ID of this point.
-        target: Target value.
-        metrics_val: Metrics on the validation set.
-        point: Hyperparameter point.
-        is_clean: Flag for if these are cleaned or raw hyperparameters.
-        model_name: Model name with training time stamp.
-        model_type: General type of model; prophet, torch, statistical, regression, or naive.
+        enable_csv_logging (bool): Enable CSV logging of points.
+        fname_csv_log (pathlib.Path): Path to CSV log file.
+        datetime_start_str (str): Starting datetime string of this iteration.
+        datetime_end_str (str): Ending datetime string of this iteration, from JSON log.
+        id_point (str): ID of this point.
+        target (float): Target value.
+        metrics_val (dict[str, float]): Metrics on the validation set.
+        point (dict): Hyperparameter point.
+        is_clean (bool): Flag for if these are cleaned or raw hyperparameters.
+        model_name (str): Model name with training time stamp.
+        model_type (str): General type of model; prophet, torch, statistical, regression, or naive.
     """
     if not enable_csv_logging:
         return
@@ -703,17 +700,17 @@ def write_csv_row(  # pylint: disable=too-many-arguments
 def get_datetime_str_from_json(*, enable_json_logging: bool, fname_json_log: pathlib.Path) -> str:
     """Load datatime str from last row in JSON log.
 
-        The {"datetime": {"datetime": "..."}} timestamp in the JSON log created by the optimizer.register() call
+    The {"datetime": {"datetime": "..."}} timestamp in the JSON log created by the optimizer.register() call
         is a good field to have, but is only created in in the JSON logger here:
         https://github.com/bayesian-optimization/BayesianOptimization/blob/129caac02177b146ce315e177d4d88950b75253a/bayes_opt/logger.py#L153C50-L158
         We need to load last line of the JSON from disk and extract the datatime string.
 
     Args:
-        enable_json_logging: Enable JSON logging of points.
-        fname_json_log: Path to JSON log file.
+        enable_json_logging (bool): Enable JSON logging of points.
+        fname_json_log (pathlib.Path): Path to JSON log file.
 
     Returns:
-        datetime_str: Datetime as str.
+        str: Datetime.
     """
     if enable_json_logging:
         with fname_json_log.open("rb") as f_json:
@@ -735,11 +732,11 @@ def get_i_point_duplicate(point: dict, optimizer: bayes_opt.BayesianOptimization
     """Get index of duplicate prior point from optimizer, if one exists.
 
     Args:
-        point: The point to check.
-        optimizer: The optimizer to search.
+        point (dict): The point to check.
+        optimizer (bayes_opt.BayesianOptimization): The optimizer to search.
 
     Returns:
-        The index of the first duplicate prior point from optimizer, if one exists, otherwise returns -1.
+        int: The index of the first duplicate prior point from optimizer, if one exists, otherwise returns -1.
     """
     for i_param in range(optimizer.space.params.shape[0]):
         if np.array_equiv(optimizer.space.params_to_array(point), optimizer.space.params[i_param]):
@@ -752,10 +749,10 @@ def get_point_hash(point: dict) -> str:
     """Get hash of prior.
 
     Args:
-        point: The point to hash.
+        point (dict): The point to hash.
 
     Returns:
-        The SHA-256 hash of the point.
+        str: The SHA-256 hash of the point.
     """
     return hashlib.sha256(
         ", ".join([f"{k}: {v}" for k, v in dict(sorted(point.items())).items()]).encode("utf-8")
@@ -771,8 +768,8 @@ def signal_handler_for_stopping(
     https://medium.com/@chamilad/timing-out-of-long-running-methods-in-python-818b3582eed6
 
     Args:
-        dummy_signal: signal number.
-        dummy_frame: Frame object.
+        dummy_signal (int): signal number.
+        dummy_frame (FrameType | None): Frame object.
 
     Raises:
         RuntimeError: Out of Time!
@@ -809,27 +806,27 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     """Run Bayesian optimization for this model wrapper.
 
     Args:
-        parent_wrapper: TSModelWrapper object containing all parent configs.
-        model_wrapper_class: TSModelWrapper class to optimize.
-        model_wrapper_kwargs: kwargs to pass to model_wrapper.
-        hyperparams_to_opt: List of hyperparameters to optimize.
-            If None, use all configurable hyperparameters.
-        n_iter: How many iterations of Bayesian optimization to perform.
-            This is the number of new models to train, in addition to any duplicated or reloaded points.
-        max_points: The maximum number of points to train.
-            If this number of points has been reached, stop optimizing even without finishing n_iter.
-        allow_duplicate_points: If True, the optimizer will allow duplicate points to be registered.
+        parent_wrapper (TSModelWrapper): TSModelWrapper object containing all parent configs.
+        model_wrapper_class (WrapperTypes): TSModelWrapper class to optimize.
+        model_wrapper_kwargs (dict | None): kwargs to pass to model_wrapper. (Default value = None)
+        hyperparams_to_opt (list[str] | None): List of hyperparameters to optimize.
+            If None, use all configurable hyperparameters. (Default value = None)
+        n_iter (int): How many iterations of Bayesian optimization to perform.
+            This is the number of new models to train, in addition to any duplicated or reloaded points. (Default value = 100)
+        max_points (int | None): The maximum number of points to train.
+            If this number of points has been reached, stop optimizing even without finishing n_iter. (Default value = None)
+        allow_duplicate_points (bool): If True, the optimizer will allow duplicate points to be registered.
             This behavior may be desired in high noise situations where repeatedly probing
             the same point will give different answers. In other situations, the acquisition
-            may occasionally generate a duplicate point.
-        utility_kind: {'ucb', 'ei', 'poi'}
+            may occasionally generate a duplicate point. (Default value = False)
+        utility_kind (str): {'ucb', 'ei', 'poi'}
             * 'ucb' stands for the Upper Confidence Bounds method
             * 'ei' is the Expected Improvement method
-            * 'poi' is the Probability Of Improvement criterion.
-        utility_kappa: Parameter to indicate how closed are the next parameters sampled.
+            * 'poi' is the Probability Of Improvement criterion. (Default value = 'ucb')
+        utility_kappa (float): Parameter to indicate how closed are the next parameters sampled.
             Higher value = favors spaces that are least explored.
-            Lower value = favors spaces where the regression function is the highest.
-        verbose: Optimizer verbosity
+            Lower value = favors spaces where the regression function is the highest. (Default value = 2.576)
+        verbose (int): Optimizer verbosity
             7 prints memory usage
             6 prints points before training
             5 prints point count at each iteration
@@ -837,27 +834,27 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             3 prints basic workflow messages
             2 prints all iterations
             1 prints only when a maximum is observed
-            0 is silent
-        model_verbose: Verbose level of model_wrapper, default is -1 to silence LightGBMModel.
-        enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
-        enable_torch_model_summary: Enable torch model summary.
-        enable_torch_progress_bars: Enable torch progress bars.
-        disregard_training_exceptions: Flag to disregard all exceptions raised when training a model, and return BAD_TARGET instead.
-        max_time_per_model: Set the maximum amount of training time for each iteration.
+            0 is silent (Default value = 3)
+        model_verbose (int): Verbose level of model_wrapper, -1 silences LightGBMModel. (Default value = -1)
+        enable_torch_warnings (bool): Enable torch warning messages about training devices and CUDA, globally, via the logging module. (Default value = False)
+        enable_torch_model_summary (bool): Enable torch model summary. (Default value = True)
+        enable_torch_progress_bars (bool): Enable torch progress bars. (Default value = False)
+        disregard_training_exceptions (bool): Flag to disregard all exceptions raised when training a model, and return BAD_TARGET instead. (Default value = False)
+        max_time_per_model (datetime.timedelta | None): Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
-            while non-torch models will use it for the whole iteration if signal is available e.g. Linux, Darwin.
-        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
-        fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter, but not optimize.
-        enable_json_logging: Enable JSON logging of points.
-        enable_reloading: Enable reloading of prior points from JSON log.
-        enable_model_saves: Save the trained model at each iteration.
-        bayesian_opt_work_dir_name: Directory name to save logs and models in, within the parent_wrapper.work_dir_base.
-        local_timezone: Local timezone.
+            while non-torch models will use it for the whole iteration if signal is available e.g. Linux, Darwin. (Default value = None)
+        accelerator (str | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto") (Default value = 'auto')
+        fixed_hyperparams_to_alter (dict | None): Fixed hyperparameters to alter, but not optimize. (Default value = None)
+        enable_json_logging (bool): Enable JSON logging of points. (Default value = True)
+        enable_reloading (bool): Enable reloading of prior points from JSON log. (Default value = True)
+        enable_model_saves (bool): Save the trained model at each iteration. (Default value = False)
+        bayesian_opt_work_dir_name (str): Directory name to save logs and models in, within the parent_wrapper.work_dir_base. (Default value = 'bayesian_optimization')
+        local_timezone (zoneinfo.ZoneInfo | None): Local timezone. (Default value = None)
 
     Returns:
-        optimal_values: Optimal hyperparameter values.
-        optimizer: bayes_opt.BayesianOptimization object for further details.
-        exception_status: Int exception status, to pass on to bash scripts.
+        tuple[dict, bayes_opt.BayesianOptimization, int]: optimal_values - Optimal hyperparameter values,
+            optimizer - bayes_opt.BayesianOptimization object for further details,
+            exception_status - Int exception status to pass on to bash scripts.
 
     Raises:
         ValueError: Bad configuration.
@@ -955,14 +952,14 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         """Complete this iteration, register point(s) and clean up.
 
         Args:
-            datetime_start_str: Starting datetime string of this iteration.
-            i_iter: Index of this iteration.
-            model_wrapper: Model wrapper object to reset.
-            target: Target value to register.
-            metrics_val: Metrics on the validation set.
-            point_to_probe: Raw point to probe.
-            point_to_probe_is_clean: If point_to_probe is clean.
-            point_to_probe_clean: Point that was actually probed.
+            datetime_start_str (str): Starting datetime string of this iteration.
+            i_iter (int): Index of this iteration.
+            model_wrapper (TSModelWrapper): Model wrapper object to reset.
+            target (float): Target value to register.
+            metrics_val (dict[str, float]): Metrics on the validation set.
+            point_to_probe (dict): Raw point to probe.
+            point_to_probe_is_clean (bool): If point_to_probe is clean.
+            point_to_probe_clean (dict): Point that was actually probed.
         """
         global n_points
 
@@ -1038,6 +1035,15 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     next_point_to_probe_cleaned = None
 
     def _build_error_msg(error_msg: str, error: Exception) -> str:
+        """Build error message from user string and exception.
+
+        Args:
+            error_msg (str): Custom error message from user.
+            error (Exception): Exception from process.
+
+        Returns:
+            str: Nicely formatted error message with full context.
+        """
         if 3 <= verbose:
             error_msg = f"""{error_msg}
 {error = }"""

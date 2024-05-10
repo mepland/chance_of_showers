@@ -136,9 +136,9 @@ def get_pl_trainer_kwargs(
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
     Args:
-        es_min_delta: Minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute
+        es_min_delta (float): Minimum change in the monitored quantity to qualify as an improvement, i.e. an absolute
             change of less than or equal to `min_delta`, will count as no improvement.
-        es_patience: Number of checks with no improvement
+        es_patience (int): Number of checks with no improvement
             after which training will be stopped. Under the default configuration, one check happens after
             every training epoch. However, the frequency of validation can be modified by setting various parameters on
             the ``Trainer``, for example ``check_val_every_n_epoch`` and ``val_check_interval``.
@@ -147,14 +147,14 @@ def get_pl_trainer_kwargs(
                 no improvement, and not the number of training epochs. Therefore, with parameters
                 ``check_val_every_n_epoch=10`` and ``patience=3``, the trainer will perform at least 40 training
                 epochs before being stopped.
-        enable_torch_model_summary: Enable torch model summary.
-        enable_torch_progress_bars: Enable torch progress bars.
-        max_time: Set the maximum amount of time for training. Training will be interrupted mid-epoch.
-        accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
-        log_every_n_steps: How often to log within steps.
+        enable_torch_model_summary (bool): Enable torch model summary.
+        enable_torch_progress_bars (bool): Enable torch progress bars.
+        max_time (str | datetime.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
+        accelerator (str | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto") (Default value = None)
+        log_every_n_steps (int | None): How often to log within steps. (Default value = None)
 
     Returns:
-        pl_trainer_kwargs.
+        dict: pl_trainer_kwargs.
     """
     if accelerator is None:
         accelerator = "auto"
@@ -211,17 +211,16 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
-        lr_factor: Factor by which the learning rate will be
-            reduced. new_lr = lr * factor. Default: 0.1.
-        lr_patience: Number of epochs with no improvement after
+        lr_factor (float): Factor by which the learning rate will be
+            reduced. new_lr = lr * factor. (Default value = 0.1)
+        lr_patience (int): Number of epochs with no improvement after
             which learning rate will be reduced. For example, if
             `patience = 2`, then we will ignore the first 2 epochs
             with no improvement, and will only decrease the LR after the
-            3rd epoch if the loss still hasn't improved then.
-            Default: 10.
+            3rd epoch if the loss still hasn't improved then.(Default value = 10)
 
     Returns:
-        lr_scheduler_kwargs.
+        dict: lr_scheduler_kwargs.
     """
     return {
         "factor": lr_factor,
@@ -662,25 +661,28 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
     """Parent class for all time series wrappers.
 
     Args:
-        dfp_trainable_evergreen: Time series data.
-        dt_val_start_datetime_local: Date to cut the validation from the training set.
-        work_dir_base: Top level directory for saving model files.
-        random_state: Random seed.
-        date_fmt: String format of dates.
-        time_fmt: String format of times.
-        fname_datetime_fmt: String format of date times for file names.
-        local_timezone: Local timezone.
-        model_class: Dart model class.
-        model_type: General type of model; prophet, torch, statistical, regression, or naive.
-        verbose: Verbosity level.
-        work_dir: Path to directory to save this model's files.
-        model_name_tag: Descriptive tag to add to the model name, optional.
-        required_hyperparams_data: List of required data hyperparameters for this model.
-        required_hyperparams_model: List of required hyperparameters for this model's constructor.
-        allowed_variable_hyperparams: Dictionary of allowed variable hyperparameters for this model.
-        variable_hyperparams: Dictionary of variable hyperparameters for this model.
-        fixed_hyperparams: Dictionary of fixed hyperparameters for this model.
-        hyperparams_conditions: List of dictionaries with hyperparameter conditions for this model.
+        dfp_trainable_evergreen (pd.DataFrame): Time series data.
+        dt_val_start_datetime_local (datetime.datetime): Date to cut the validation from the training set.
+        work_dir_base (pathlib.Path): Top level directory for saving model files.
+        random_state (int): Random seed.
+        date_fmt (str): String format of dates.
+        time_fmt (str): String format of times.
+        fname_datetime_fmt (str): String format of date times for file names.
+        local_timezone (zoneinfo.ZoneInfo): Local timezone.
+        model_class (ForecastingModel | None): Dart model class.
+        model_type (str): General type of model; prophet, torch, statistical, regression, or naive.
+        verbose (int): Verbosity level.
+        work_dir (pathlib.Path | None): Path to directory to save this model's files.
+        model_name_tag (str | None): Descriptive tag to add to the model name, optional.
+        required_hyperparams_data (list[str] | None): List of required data hyperparameters for this model.
+        required_hyperparams_model (list[str] | None): List of required hyperparameters for this model's constructor.
+        allowed_variable_hyperparams (dict | None): Allowed variable hyperparameters for this model.
+        variable_hyperparams (dict | None): Variable hyperparameters for this model.
+        fixed_hyperparams (dict | None): Fixed hyperparameters for this model.
+        hyperparams_conditions (list[dict] | None): List of dictionaries with hyperparameter conditions for this model.
+
+    Raises:
+        ValueError: Bad configuration.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -754,7 +756,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         """Redefine the str method.
 
         Returns:
-            Description of model as str.
+            str: Description of model.
         """
         return f"""
 {self.dfp_trainable_evergreen.index.size = }
@@ -794,10 +796,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the random_state of this model wrapper.
 
         Args:
-            default_random_state: Default random state to return if random_state is not set.
+            default_random_state (int): Default random state to return if random_state is not set.
 
         Returns:
-            Random state of this model wrapper.
+            int: Random state of this model wrapper.
         """
         random_state = self.random_state
 
@@ -813,7 +815,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the model object from this model wrapper.
 
         Returns:
-            Model object from this model wrapper
+            ForecastingModel: Model object from this model wrapper.
         """
         return self.model
 
@@ -821,7 +823,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the model_type of this model wrapper.
 
         Returns:
-            Model_type str for this model wrapper
+            str: Model_type str for this model wrapper.
         """
         return self.model_type
 
@@ -830,11 +832,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     ) -> tuple[int, datetime.timedelta]:
         """Get number of prediction steps from prediction_length_in_minutes and time_bin_size, used for Prophet predictions.
 
+        Returns:
+            tuple[int, datetime.timedelta]: Number of prediction steps and time bin size.
+
         Raises:
             TypeError: Bad configuration.
-
-        Returns:
-            Number of prediction steps and time bin size.
         """
         if not (
             isinstance(self.fixed_hyperparams, dict) and isinstance(self.chosen_hyperparams, dict)
@@ -860,7 +862,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Alter fixed_hyperparams for this model wrapper.
 
         Args:
-            fixed_hyperparams_to_alter: Dict of fixed hyperparameters to alter.
+            fixed_hyperparams_to_alter (dict | None): Fixed hyperparameters to alter.
         """
         if fixed_hyperparams_to_alter is None:
             fixed_hyperparams_to_alter = {}
@@ -882,7 +884,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Set the max_time for this model wrapper.
 
         Args:
-            max_time: Set the maximum amount of time for training. Training will get interrupted mid-epoch.
+            max_time (str | datetime.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
@@ -900,7 +902,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Set the accelerator for this model wrapper.
 
         Args:
-            accelerator: Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+            accelerator (str | datetime.timedelta | dict[str, int] | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
@@ -920,9 +922,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Set the enable_torch_warnings, enable_torch_model_summary, and enable_torch_progress_bars flags for this model wrapper.
 
         Args:
-            enable_torch_warnings: Enable torch warning messages about training devices and CUDA, globally, via the logging module.
-            enable_torch_model_summary: Enable torch model summary.
-            enable_torch_progress_bars: Enable torch progress bars.
+            enable_torch_warnings (bool): Enable torch warning messages about training devices and CUDA, globally, via the logging module.
+            enable_torch_model_summary (bool): Enable torch model summary.
+            enable_torch_progress_bars (bool): Enable torch progress bars.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
@@ -954,8 +956,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Set the work_dir for this model wrapper.
 
         Args:
-            work_dir_relative_to_base: Set work_dir with this extension to work_dir_base.
-            work_dir_absolute: Absolute path for work_dir, disregard work_dir_base.
+            work_dir_relative_to_base (pathlib.Path | None): Set work_dir with this extension to work_dir_base. (Default value = None)
+            work_dir_absolute (pathlib.Path | None): Absolute path for work_dir, disregard work_dir_base. (Default value = None)
 
         Raises:
             ValueError: Bad configuration.
@@ -980,18 +982,18 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Set the model_name_tag for this model wrapper.
 
         Args:
-            model_name_tag: Descriptive tag to add to the model name, optional.
+            model_name_tag (str): Descriptive tag to add to the model name, optional.
         """
         self.model_name_tag = model_name_tag
 
     def get_generic_model_name(self: "TSModelWrapper") -> str:
         """Get the generic name for this model, without a time stamp.
 
+        Returns:
+            str: The generic name for this model, without a time stamp.
+
         Raises:
             TypeError: Bad configuration.
-
-        Returns:
-            The generic name for this model, without a time stamp.
         """
         if not issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
             raise TypeError(
@@ -1016,10 +1018,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
     def get_model_name(self: "TSModelWrapper") -> str | None:
         """Get the name for this model, with a time stamp.
-             Note, the value will be None if the model has not been trained yet.
+
+        Note, the value will be None if the model has not been trained yet.
 
         Returns:
-            The name for this model, with a time stamp.
+            str | None: The name for this model, with a time stamp.
         """
         return self.model_name
 
@@ -1027,10 +1030,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Get the configurable hyperparameters for this model.
 
         Args:
-            for_opt_only: Flag to only return optimizable hyperparameters, i.e. exclude covariates and y_bin_edges.
+            for_opt_only (bool): Flag to only return optimizable hyperparameters, i.e. exclude covariates and y_bin_edges. (Default value = True)
 
         Returns:
-            Dictionary of hyperparameters showing allowed values.
+            dict: Hyperparameters showing allowed values.
         """
         # construct model object
         if TYPE_CHECKING:
@@ -1089,11 +1092,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             """Get hyperparam value from variable and fixed hyperparams dicts.
 
             Args:
-                hyperparam: Key to search for.
-                return_none_if_not_found: Return None if the key is not found. Defaults to True, i.e. raise a ValueError.
+                hyperparam (str): Key to search for.
+                return_none_if_not_found (bool): Return None if the key is not found. (Default value = False)
 
             Returns:
-                hyperparam_value
+                str | float | int | None: hyperparam_value
 
             Raises:
                 ValueError: Bad configuration.
@@ -1135,11 +1138,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 """Get the integer divisor of n that is the closest to input_divisor.
 
                 Args:
-                    input_divisor: Input divisor to search around.
-                    n: Number to divide.
+                    input_divisor (float): Input divisor to search around.
+                    n (int): Number to divide. (Default value = 60)
 
                 Returns:
-                    Integer divisor.
+                    int: Integer divisor.
                 """
                 if n % input_divisor == 0:  # noqa: S001
                     return int(input_divisor)
@@ -1427,10 +1430,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Return hyperparameters the model would actually run with if trained now, used in Bayesian optimization.
 
         Args:
-            **kwargs: Hyperparameters to change.
+            **kwargs (float): Hyperparameters to change.
 
         Returns:
-            Hyperparameters the model would actually run with if trained now.
+            dict: Hyperparameters the model would actually run with if trained now.
         """
         if kwargs:
             self.variable_hyperparams = kwargs
@@ -1447,10 +1450,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Translate strange hyperparam_values back to their original numeric representations, used in Bayesian optimization.
 
         Args:
-            hyperparams_dict: Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
+            hyperparams_dict (dict): Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
 
         Returns:
-            Hyperparameters in their original representations.
+            dict: Hyperparameters in their original representations.
 
         Raises:
             ValueError: Bad configuration.
@@ -1496,10 +1499,10 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """Train the model, return loss and other metrics on the validation set.
 
         Args:
-            **kwargs: Hyperparameters to change, used in Bayesian optimization.
+            **kwargs (float): Hyperparameters to change, used in Bayesian optimization.
 
         Returns:
-            Loss and other metrics on the validation set.
+            tuple[float, dict[str, float]]: Loss and other metrics on the validation set.
         """
         if 0 < self.verbose:
             logger_ts_wrapper.setLevel(logging.DEBUG)
@@ -1667,7 +1670,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 train_kwargs["val_series"] = dart_series_y_val
                 train_kwargs["verbose"] = self.verbose
 
-            # actually train!
+            # Actually train the model!
             _ = self.model.fit(
                 dart_series_y_train,
                 **train_kwargs,

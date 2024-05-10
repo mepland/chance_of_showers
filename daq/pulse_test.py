@@ -20,7 +20,7 @@ def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
     """Fell action.
 
     Args:
-        pin: Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+        pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
     """
     global n_pulse
     n_pulse += 1
