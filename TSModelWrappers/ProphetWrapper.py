@@ -35,19 +35,21 @@ class ProphetWrapper(TSModelWrapper):
     _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
 
     _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
-    # Prophet makes "day_of_week_frac", "time_of_day_frac", "is_holiday" equivalent components, so remove as covariates
-    _covariates = [
-        _
-        for _ in _allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
-        if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
-    ]
-
-    _allowed_variable_hyperparams["covariates"]["allowed"] = _covariates  # type: ignore[index]
-    _allowed_variable_hyperparams["covariates"]["default"] = _covariates  # type: ignore[index]
-
     _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
 
     def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # Internally Prophet makes use of components equivalent to
+        # day_of_week_frac, time_of_day_frac, and is_holiday,
+        # so remove them as potential covariates here.
+        allowed_prophet_covariates = [
+            _
+            for _ in self._allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
+            if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
+        ]
+
+        for k in self._allowed_variable_hyperparams["covariates"]:  # type: ignore[attr-defined]
+            self._allowed_variable_hyperparams["covariates"][k] = [_ for _ in self._allowed_variable_hyperparams["covariates"][k] if _ in allowed_prophet_covariates]  # type: ignore[index]
+
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
