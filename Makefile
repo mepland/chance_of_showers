@@ -124,7 +124,7 @@ html5validator:
 
 .PHONY: fmt_prettier
 fmt_prettier:
-	@prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --write .
+	@prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --plugin=prettier-plugin-toml --write .
 
 .PHONY: checkmake
 checkmake:

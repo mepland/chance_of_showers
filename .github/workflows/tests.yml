@@ -68,7 +68,8 @@ jobs:
             - added|modified: '**.css'
             - added|modified: '**.scss'
             - added|modified: '**.json'
-            - added|modified: '**.toml'
+            # prettier-plugin-toml is not being found on the actions runner, only lint toml files locally
+            # - added|modified: '**.toml'
             yaml:
             - added|modified: '**.yaml'
             - added|modified: '**.yml'
@@ -115,7 +116,6 @@ jobs:
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: |
           sudo npm install --global standard prettier
-          sudo npm install --global prettier-plugin-toml --save-dev --save-exact
 
       # All files
       - name: detect-secrets
