@@ -1089,14 +1089,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         def get_hyperparam_value(
             hyperparam: str, *, return_none_if_not_found: bool = False
         ) -> str | float | int | None:
-            """Get hyperparam value from variable and fixed hyperparams dicts.
+            """Get hyperparamter value from variable and fixed hyperparamter dicts.
 
             Args:
                 hyperparam (str): Key to search for.
                 return_none_if_not_found (bool): Return None if the key is not found. (Default value = False)
 
             Returns:
-                str | float | int | None: hyperparam_value
+                str | float | int | None: Hyperparamter value.
 
             Raises:
                 ValueError: Bad configuration.
