@@ -23,7 +23,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.2"
 isort = "^5.13.2"
-black = {extras = ["jupyter"], version = "^24.3.0"}
+black = { extras = ["jupyter"], version = "^24.3.0" }
 blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
 mypy = "^1.8.0"
@@ -34,6 +34,7 @@ vulture = "^2.11"
 yamllint = "^1.35.1"
 blocklint = "^0.2.4"
 pyupgrade = "^3.15.1"
+pymend = { git = "https://github.com/JanEricNitschke/pymend.git" }
 deptry = "^0.12.0"
 html5validator = "^0.4.2"
 typos = "^1.19.0"
@@ -95,8 +96,9 @@ flake8-use-fstring = "^1.4"
 flake8-use-pathlib = "^0.3.0"
 dlint = "^0.14.1"
 pandas-vet = "^2023.8.2"
-pydoclint = {extras = ["flake8"], version = "^0.4.1"}
+pydoclint = { extras = ["flake8"], version = "^0.4.1" }
 tryceratops = "^2.3.2"
+ruff = "^0.4.3"
 
 [tool.poetry.group.daq]
 optional = true
@@ -127,14 +129,14 @@ jupyterlab-vim = "^4.1.3"
 jupyter-dash = "^0.4.2"
 ipywidgets = "^8.1.2"
 pyarrow = "^15.0.0"
-tqdm = "^4.66.2"
+tqdm = "^4.66.4"
 matplotlib = "^3.8.3"
 plotly = "^5.19.0"
 statsmodels = "^0.14.1"
 prophet = "^1.1.5"
-torch = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
-torchvision = {version = "^0.17.1+cu118", source = "pytorch-gpu-src"}
-torchaudio = {version = "^2.2.1+cu118", source = "pytorch-gpu-src"}
+torch = { version = "^2.2.1+cu118", source = "pytorch-gpu-src" }
+torchvision = { version = "^0.17.1+cu118", source = "pytorch-gpu-src" }
+torchaudio = { version = "^2.2.1+cu118", source = "pytorch-gpu-src" }
 catboost = "^1.2.3"
 lightgbm = "^4.3.0"
 darts = "^0.28.0"
@@ -180,66 +182,73 @@ extend-exclude = '''
 [tool.flake8]
 max-complexity = 20
 ignore = [
-"E501",
-"ESC102",
-"FNE003",
-"FNE004",
-"FNE008",
-"PD005",
-"PIE786",
-"SCS109",
-"TRY003",
-"TYT03",
-"W503",
+  "E501",
+  "ESC102",
+  "FNE003",
+  "FNE004",
+  "FNE008",
+  "PD005",
+  "PIE786",
+  "SCS109",
+  "TRY003",
+  "TYT03",
+  "W503",
 ]
-extend-select = [
-"B901",
-"B902",
-"B903",
-"B904",
-"B905",
-"B906",
-"B907",
-"B908",
-]
+extend-select = ["B901", "B902", "B903", "B904", "B905", "B906", "B907", "B908"]
 per-file-ignores = [
-    "ana/exploratory_ana.py:E402,E800,DALL000",
-    "ana/drive_bayesian_opt.py:E402,CM001",
+  "ana/exploratory_ana.py:E402,E800,DALL000",
+  "ana/drive_bayesian_opt.py:E402,CM001",
 ]
-exclude = [
-    ".cache",
-    ".direnv",
-    ".env",
-    ".git",
-    ".github",
-    ".ipynb_checkpoints",
-    ".venv",
-    "__pycache__"
+extend-exclude = [
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
 ]
-literal-inline-quotes="double"
-literal-multiline-quotes="double"
+literal-inline-quotes = "double"
+literal-multiline-quotes = "double"
 no-accept-encodings = true
+# https://jsh9.github.io/pydoclint/config_options.html
+style = "google"
+arg-type-hints-in-docstring = true
+
+[tool.ruff]
+extend-exclude = [
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"ana/exploratory_ana.py" = ["E402"]
 
 [tool.mypy]
 python_version = "3.11"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
-disable_error_code = [
-    "import",
-]
+disable_error_code = ["import"]
 # warn_unused_ignores = true is useful when upgrading mypy versions,
 # but leaving it as true all the time gives false positives when running mypy in the pre-commit env
 warn_unused_ignores = false
 exclude = [
-    ".cache",
-    ".direnv",
-    ".env",
-    ".git",
-    ".github",
-    ".ipynb_checkpoints",
-    ".venv",
-    "__pycache__"
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
 ]
 
 [tool.pylint.main]
@@ -249,34 +258,32 @@ jobs = 0
 py-version = "3.11"
 suggestion-mode = true
 ignore = [
-    ".cache",
-    ".direnv",
-    ".env",
-    ".git",
-    ".github",
-    ".ipynb_checkpoints",
-    ".venv",
-    "__pycache__"
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
 ]
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
-    "line-too-long",
-    "global-statement",
-    "useless-return",
-    "too-many-branches",
-    "too-many-lines",
-    "wrong-import-position",
-    "ungrouped-imports",
-    "unnecessary-pass",
-    "broad-exception-caught",
-    "logging-format-interpolation",
-    "logging-fstring-interpolation",
-    "logging-not-lazy"
+  "line-too-long",
+  "global-statement",
+  "useless-return",
+  "too-many-branches",
+  "too-many-lines",
+  "wrong-import-position",
+  "ungrouped-imports",
+  "unnecessary-pass",
+  "broad-exception-caught",
+  "logging-format-interpolation",
+  "logging-fstring-interpolation",
+  "logging-not-lazy",
 ]
-enable = [
-    "useless-suppression"
-]
+enable = ["useless-suppression"]
 
 [tool.pylint.design]
 max-args = 8
@@ -300,26 +307,57 @@ good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "ax", "v", "n"]
 [tool.vulture]
 paths = ["."]
 exclude = [
-    ".cache",
-    ".direnv",
-    ".env",
-    ".git",
-    ".github",
-    ".ipynb_checkpoints",
-    ".venv",
-    "__pycache__"
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
 ]
+
+[tool.pymend]
+input-style = "auto"
+output-style = "google"
+check = true
+force-params = true
+force-params-min-n-params = 0
+force-meta-min-func-length = 0
+force-return = true
+force-raises = true
+force-methods = false
+force-attributes = false
+force-defaults = true
+ignore-privates = true
+ignore-unused-arguments = true
+ignored-functions = ["__init__", "on_exception"]
+extend-exclude = '''
+(
+  ^\.cache
+  | .direnv
+  | .env
+  | .git
+  | .github
+  | .ipynb_checkpoints
+  | .venv
+  | __pycache__
+  | .dev_config
+)
+'''
 
 [tool.deptry]
 ignore = [
-    "DEP003", # transitive dependencies
-    "DEP004", # false positives from optional poetry groups
+  "DEP003", # transitive dependencies
+  "DEP004", # false positives from optional poetry groups
 ]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = [
-    "board", "busio", "digitalio", # adafruit-circuitpython-mcp3xxx
-    "PIL", # luma-core
+  "board",     # adafruit-circuitpython-mcp3xxx
+  "busio",     # adafruit-circuitpython-mcp3xxx
+  "digitalio", # adafruit-circuitpython-mcp3xxx
+  "PIL",       # luma-core
 ]
 
 [tool.typos.default]
@@ -327,6 +365,16 @@ locale = "en-us"
 extend-ignore-words-re = ["MAPE", "Dout"]
 
 [tool.typos.files]
-extend-exclude = [".git", "*.kicad*"]
+extend-exclude = [
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
+  "*.kicad*",
+]
 ignore-hidden = false
 ignore-parent = false

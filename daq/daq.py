@@ -46,7 +46,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     """Run the DAQ script.
 
     Args:
-        cfg: Hydra configuration.
+        cfg (DictConfig): Hydra configuration.
 
     Raises:
         ValueError: Bad configuration.
@@ -163,12 +163,12 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         but as we also want to erase lines on stdout we define our own print function instead.
 
         Args:
-            line: The line to be printed.
-            logger_level: The level to use for logging, None to disable logging.
-            use_print: Flag for printing to stdout.
-            print_prefix: String to prepend to `line` before printing to stdout.
-            print_postfix: String to append to `line` before printing to stdout.
-            use_stdout_overwrite: Flag for overwriting the previous line on stdout.
+            line (str): The line to be printed.
+            logger_level (int | None): The level to use for logging, None to disable logging. (Default value = logging.INFO)
+            use_print (bool): Flag for printing to stdout. (Default value = DISPLAY_TERMINAL)
+            print_prefix (str): String to prepend to `line` before printing to stdout. (Default value = '')
+            print_postfix (str): String to append to `line` before printing to stdout. (Default value = '')
+            use_stdout_overwrite (bool): Flag for overwriting the previous line on stdout. (Default value = False)
         """
         if not LOG_TO_FILE or logger_level is None:
             pass
@@ -201,11 +201,11 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         """Normalize raw ADC pressure_value.
 
         Args:
-            pressure_value: The raw ADC pressure_value to be normalized.
+            pressure_value (int): The raw ADC pressure_value to be normalized.
 
         Returns:
-            (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
-            i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
+            float: (pressure_value-observed_pressure_min)/(observed_pressure_max-observed_pressure_min),
+                i.e. observed_pressure_min (observed_pressure_max) maps to 0 (1).
         """
         normalize_pressure_value_float = -1.0
         try:
@@ -227,7 +227,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         """Get SoC's temperature.
 
         Returns:
-            SoC temperature as a float.
+            float: SoC temperature.
         """
         temp = -1.0
         try:
@@ -253,8 +253,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
 
         Args:
-            dummy_signal: signal number.
-            dummy_frame: Frame object.
+            dummy_signal (int): signal number.
+            dummy_frame (FrameType | None): Frame object.
         """
         global running_daq_loop
         my_print(
@@ -347,11 +347,11 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             """Function to paint OLED display.
 
             Args:
-                lines: List of strings to be printed.
-                lpad: Screen left pad.
-                vpad: Screen top vertical pad.
-                line_height: Line height.
-                bounding_box: Flag for including an outline bounding box.
+                lines (list[str]): List of strings to be printed.
+                lpad (float): Screen left pad. (Default value = 4.0)
+                vpad (float): Screen top vertical pad. (Default value = 0.0)
+                line_height (int): Line height. (Default value = OLED_FONT_SIZE)
+                bounding_box (bool): Flag for including an outline bounding box. (Default value = False)
             """
             try:
                 with canvas(i2c_device) as draw:
@@ -422,7 +422,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             """Serve index.html.
 
             Returns:
-                Rendered template.
+                str: Rendered template.
             """
             try:
                 return render_template("index.html")
@@ -441,7 +441,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             Session ID, IP address and MAC address.
 
             Returns:
-                Connection details as a string.
+                str: Connection details.
             """
             try:
                 ip_address = request.remote_addr
@@ -529,7 +529,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             https://stackoverflow.com/a/28950776
 
             Returns:
-                IP address of host as a string.
+                str: IP address of host.
             """
             m_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             m_socket.settimeout(0)
@@ -596,8 +596,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         """DAQ loop.
 
         Args:
-            t_utc_str: Starting UTC time as a string
-            t_local_str: Starting local time as a string
+            t_utc_str (str): Starting UTC time.
+            t_local_str (str): Starting local time.
         """
         global new_connection
         global had_flow

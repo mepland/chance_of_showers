@@ -76,7 +76,7 @@ def drive_bayesian_opt(
     """Run the drive_bayesian_opt script.
 
     Args:
-        cfg: Hydra configuration.
+        cfg (DictConfig): Hydra configuration.
     """
     # Setup variables
     # pylint: disable=invalid-name

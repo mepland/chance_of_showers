@@ -86,11 +86,11 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
     """Format large numbers.
 
     Args:
-        value: Input value.
-        e_precision: Precision passed to e formatter.
+        value (float): Input value.
+        e_precision (int): Precision passed to e formatter. (Default value = 3)
 
     Returns:
-        Formatted value.
+        str: Formatted value.
     """
     if value > 1000:
         return f"{value:.{e_precision}e}"
@@ -104,12 +104,12 @@ def make_epoch_bins(
     """Make Unix epoch bins between endpoints, like linspace.
 
     Args:
-        dt_start: Start datetime.
-        dt_stop: Stop datetime.
-        bin_size_seconds: Bin size in seconds.
+        dt_start (datetime.date): Start date.
+        dt_stop (datetime.date): Stop date.
+        bin_size_seconds (int): Bin size in seconds.
 
     Returns:
-        Numpy array of bin edges in epoch seconds between dt_start and dt_stop.
+        np.ndarray: Array of bin edges in epoch seconds between dt_start and dt_stop.
     """
     bin_min = dt_start.timestamp()  # type: ignore[attr-defined]
     bin_max = dt_stop.timestamp()  # type: ignore[attr-defined]
@@ -121,11 +121,11 @@ def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> s
     """Generate date range.
 
     Args:
-        dt_start: Data start date.
-        dt_stop: Data end date.
+        dt_start (datetime.date | None): Data start date.
+        dt_stop (datetime.date | None): Data end date.
 
     Returns:
-        Date range.
+        str: Date range.
     """
     if not (
         isinstance(dt_start, (datetime.datetime, datetime.date))
@@ -154,14 +154,14 @@ def ann_text_std(
     """Generate standard annotation.
 
     Args:
-        dt_start: Data start date.
-        dt_stop: Data end date.
-        ann_text_std_add: Text to add to the standard annotation.
-        ann_text_hard_coded: Any hard coded text to add.
-        gen_date: If date range should be generated.
+        dt_start (datetime.date | None): Data start date.
+        dt_stop (datetime.date | None): Data end date.
+        ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
+        ann_text_hard_coded (str | None): Any hard coded text to add. (Default value = None)
+        gen_date (bool): If date range should be generated. (Default value = False)
 
     Returns:
-        Standard annotation.
+        str: Standard annotation.
     """
     element_1 = ""
     if TOP_LINE_STD_ANN != "":
@@ -195,12 +195,12 @@ def _setup_vars(
     """Setup variables.
 
     Args:
-        ann_texts_in: Input annotations.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
+        ann_texts_in (list[dict] | None): Input annotations.
+        x_axis_params (dict | None): X axis parameters.
+        y_axis_params (dict | None): Y axis parameters.
 
     Returns:
-        Cleaned variables.
+        tuple[list[dict], dict, dict]: Cleaned variables.
     """
     ann_texts = []
     if ann_texts_in is not None:
@@ -221,10 +221,10 @@ def set_ax_limits(
     """Set the axes limits.
 
     Args:
-        _ax: Axes object.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
-        allow_max_mult: Allow multiplying the y maximum to auto scale the y axis.
+        _ax (mpl.axes.Axes): Axes object.
+        x_axis_params (dict): X axis parameters.
+        y_axis_params (dict): Y axis parameters.
+        allow_max_mult (bool): Allow multiplying the y maximum to auto scale the y axis. (Default value = False)
     """
     x_min_auto, x_max_auto = _ax.get_xlim()
     if (x_min := x_axis_params.get("min")) is None:
@@ -262,10 +262,10 @@ def clean_ax(
     """Clean the axes.
 
     Args:
-        _ax: Axes object.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
-        turn_off_axes: Turn off axes.
+        _ax (mpl.axes.Axes): Axes object.
+        x_axis_params (dict): X axis parameters.
+        y_axis_params (dict): Y axis parameters.
+        turn_off_axes (bool): Turn off axes. (Default value = False)
     """
     if turn_off_axes:
         _ax.axis("off")
@@ -302,9 +302,9 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
       legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
 
     Args:
-        fig: figure object.
-        leg_objects: List of legend objects.
-        legend_params: Legend parameters.
+        fig (mpl.figure.Figure): figure object.
+        leg_objects (list): List of legend objects.
+        legend_params (dict | None): Legend parameters.
     """
     if len(leg_objects) > 0:
         if not isinstance(legend_params, dict):
@@ -340,15 +340,15 @@ def ann_then_save(
     """Annotate and save the plot.
 
     Args:
-        _fig: Figure object.
-        ann_texts: List of annotation dictionaries.
-        plot_inline: Display plot inline in a notebook, or save to file.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        ann_text_origin_x: Annotation origin in x on pad.
-        ann_text_origin_y: Annotation origin in y on pad.
-        forced_text_size: Override given text sizes per annotation and use this value for all annotations instead.
+        _fig (mpl.figure.Figure): Figure object.
+        ann_texts (list[dict]): List of annotation dictionaries.
+        plot_inline (bool): Display plot inline in a notebook, or save to file.
+        m_path (pathlib.Path): Path output directory for saved plots.
+        fname (str): Output file name.
+        tag (str): Tag to append to file name.
+        ann_text_origin_x (float): Annotation origin in x on pad. (Default value = STD_ANN_X)
+        ann_text_origin_y (float): Annotation origin in y on pad. (Default value = STD_ANN_Y)
+        forced_text_size (int | None): Override given text sizes per annotation and use this value for all annotations instead. (Default value = None)
     """
     if ann_texts is not None:
         for text in ann_texts:
@@ -388,12 +388,12 @@ def save_ploty_to_html(
     """Save the plotly plot to html.
 
     Args:
-        fig: Plotly object.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        include_plotlyjs: Include plotly js, use CDN, or other options. For more see:
-            https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#plotly.graph_objects.Figure.write_html
+        fig (go.Figure): Plotly object.
+        m_path (pathlib.Path): Path output directory for saved plots.
+        fname (str): Output file name.
+        tag (str): Tag to append to file name.
+        include_plotlyjs (str): Include plotly js, use CDN, or other options. For more see:
+            https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html#plotly.graph_objects.Figure.write_html (Default value = 'cdn')
     """
     m_path.mkdir(parents=True, exist_ok=True)
     fig.write_html(m_path / f"{fname}{tag}.html", include_plotlyjs=include_plotlyjs)
@@ -409,16 +409,16 @@ def _process_hist_binning(
     """Process binning dict for histograms.
 
     Args:
-        binning: Binning parameters.
-        hist_values: Values for filling histogram
-        current_bin_min: Minimum bin value.
-        current_bin_max: Maximum bin value.
+        binning (dict | None): Binning parameters.
+        hist_values (list[float] | np.ndarray | pd.Series): Values for filling histogram.
+        current_bin_min (float | None): Minimum bin value. (Default value = None)
+        current_bin_max (float | None): Maximum bin value. (Default value = None)
+
+    Returns:
+        tuple[list[float], int, str]: Cleaned binning parameter variables.
 
     Raises:
         ValueError: Bad configuration.
-
-    Returns:
-        cleaned binning parameter variables.
     """
     if binning is None:
         binning = {"nbins": 10}
@@ -495,20 +495,20 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        hist_dicts: List of histogram dictionaries.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        dt_start: Data start date.
-        dt_stop: Data end date.
-        plot_inline: Display plot inline in a notebook, or save to file.
-        ann_text_std_add: Text to add to the standard annotation.
-        ann_texts_in: List of annotation dictionaries.
-        binning: Binning parameters.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
-        legend_params: Legend parameters.
-        reference_lines: List of reference line dicts.
+        hist_dicts (list[dict]): List of histogram dictionaries.
+        m_path (pathlib.Path): Path output directory for saved plots.
+        fname (str): Output file name. (Default value = 'hist')
+        tag (str): Tag to append to file name. (Default value = '')
+        dt_start (datetime.date | None): Data start date. (Default value = None)
+        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
+        ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
+        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
+        binning (dict | None): Binning parameters. (Default value = None)
+        x_axis_params (dict | None): X axis parameters. (Default value = None)
+        y_axis_params (dict | None): Y axis parameters. (Default value = None)
+        legend_params (dict | None): Legend parameters. (Default value = None)
+        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
 
     Raises:
         ValueError: Bad configuration.
@@ -731,22 +731,22 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        x_values: X values for filling histogram.
-        y_values: Y values for filling histogram.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        dt_start: Data start date.
-        dt_stop: Data end date.
-        plot_inline: Display plot inline in a notebook, or save to file.
-        ann_text_std_add: Text to add to the standard annotation.
-        ann_texts_in: List of annotation dictionaries.
-        binning: Binning parameters, for x and y axes.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
-        z_axis_params: Z axis parameters.
-        legend_params: Legend parameters.
-        reference_lines: List of reference line dicts.
+        x_values (list[float] | np.ndarray | pd.Series): X values for filling histogram.
+        y_values (list[float] | np.ndarray | pd.Series): Y values for filling histogram.
+        m_path (pathlib.Path): Path output directory for saved plots.
+        fname (str): Output file name. (Default value = 'hist_2d')
+        tag (str): Tag to append to file name. (Default value = '')
+        dt_start (datetime.date | None): Data start date. (Default value = None)
+        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
+        ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
+        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
+        binning (dict | None): Binning parameters, for x and y axes. (Default value = None)
+        x_axis_params (dict | None): X axis parameters. (Default value = None)
+        y_axis_params (dict | None): Y axis parameters. (Default value = None)
+        z_axis_params (dict | None): Z axis parameters. (Default value = None)
+        legend_params (dict | None): Legend parameters. (Default value = None)
+        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
 
     Raises:
         ValueError: Bad configuration.
@@ -886,18 +886,18 @@ def plot_prophet(  # pylint: disable=too-many-arguments
       legend_params = {"fontsize": None, "bbox_to_anchor": None, "loc": None, "ncol": None, "borderaxespad": None}
 
     Args:
-        fig: Output figure from prophet.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        dt_start: Data start date.
-        dt_stop: Data end date.
-        plot_inline: Display plot inline in a notebook, or save to file.
-        ann_text_std_add: Text to add to the standard annotation.
-        ann_texts_in: List of annotation dictionaries.
-        x_axis_params_list: List of X axis parameters.
-        y_axis_params_list: List of Y axis parameters.
-        legend_params: Legend parameters.
+        fig (mpl.figure.Figure): Output figure from prophet.
+        m_path (pathlib.Path): Path output directory for saved plots.
+        fname (str): Output file name. (Default value = 'prophet')
+        tag (str): Tag to append to file name. (Default value = '')
+        dt_start (datetime.date | None): Data start date. (Default value = None)
+        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
+        ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
+        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
+        x_axis_params_list (list[dict | None] | None): List of X axis parameters. (Default value = None)
+        y_axis_params_list (list[dict | None] | None): List of Y axis parameters. (Default value = None)
+        legend_params (dict | None): Legend parameters. (Default value = None)
     """
     fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)
 
@@ -976,24 +976,25 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
     reference_lines=[ {"orientation": "h", "value": 0, "c": "black"}]
 
     Args:
-        dfp_in: Pandas dataframe containing the needed data.
-        x_axis_params: X axis parameters.
-        y_axis_params: Y axis parameters.
-        z_axis_params: Z axis parameters.
-        m_path: Path output directory for saved plots.
-        fname: Plot output file name.
-        tag: Tag to append to file name.
-        dt_start: Data start date.
-        dt_stop: Data end date.
-        plot_inline: Display plot inline in a notebook, or save to file.
-        save_html: Save plot as html.
-        ann_text_std_add: Text to add to the standard annotation.
-        ann_texts_in: List of annotation dictionaries.
-        reference_lines: List of reference line dicts.
-        standard_flow_legend: Use standard "No Flow"/"Had Flow" legend entries, instead of trace legend entries.
+        dfp_in (pd.DataFrame): Pandas dataframe containing the needed data.
+        x_axis_params (dict): X axis parameters.
+        y_axis_params (dict): Y axis parameters.
+        z_axis_params (dict | None): Z axis parameters. (Default value = None)
+        m_path (pathlib.Path | None): Path output directory for saved plots. (Default value = None)
+        fname (str): Output file name. (Default value = 'ts')
+        tag (str): Tag to append to file name. (Default value = '')
+        dt_start (datetime.date | None): Data start date. (Default value = None)
+        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = True)
+        save_html (bool): Save plot as html. (Default value = False)
+        ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
+        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
+        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
+        standard_flow_legend (bool): Use standard "No Flow"/"Had Flow" legend entries, instead of trace legend entries. (Default value = True)
 
     Raises:
         ValueError: Bad configuration.
+        NotImplementedError: Not implemented for these parameters.
     """
     if not (save_html or plot_inline):
         print("Will not display or save anything, continuing!")
@@ -1217,8 +1218,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
         or ann_text_std_add is not None
         or ann_texts_in is not None
     ):
-        raise ValueError(
-            "Have not written annotation function yet!",
+        raise NotImplementedError(
+            "Not implemented for these parameters:",
             dt_start,
             dt_stop,
             ann_text_std_add,

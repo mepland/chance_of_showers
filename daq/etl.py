@@ -22,7 +22,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     """Run ETL script.
 
     Args:
-        cfg: Hydra configuration.
+        cfg (DictConfig): Hydra configuration.
 
     Raises:
         OSError: An error occurred reading a csv.

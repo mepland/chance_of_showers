@@ -5,3 +5,6 @@ rules:
     max: 100
   document-start:
     present: false
+
+ignore: |
+  ana/models/
