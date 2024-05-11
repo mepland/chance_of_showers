@@ -46,7 +46,7 @@ ruff-check:
 
 .PHONY: ruff-fix
 ruff-fix:
-	@poetry run ruff check --fix
+	@poetry run ruff check --fix-only
 
 .PHONY: ruff-check-unsafe
 ruff-check-unsafe:
@@ -54,7 +54,7 @@ ruff-check-unsafe:
 
 .PHONY: ruff-fix-unsafe
 ruff-fix-unsafe:
-	@poetry run ruff check --fix --unsafe-fixes
+	@poetry run ruff check --fix-only --unsafe-fixes
 
 .PHONY: mypy
 mypy:
