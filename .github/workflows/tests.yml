@@ -68,7 +68,8 @@ jobs:
             - added|modified: '**.css'
             - added|modified: '**.scss'
             - added|modified: '**.json'
-            # prettier-plugin-toml is not being found on the actions runner, only lint toml files locally
+            # prettier-plugin-toml is not being properly installed on the actions runner,
+            # lint toml files locally
             # - added|modified: '**.toml'
             yaml:
             - added|modified: '**.yaml'
