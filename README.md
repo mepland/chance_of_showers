@@ -390,8 +390,8 @@ and HTML, SCSS, CSS, and TOML by [`prettier`](https://prettier.io).
 You can install these JavaScript-based linters globally with:
 
 ```bash
-sudo npm install -g markdownlint-cli standard prettier
-sudo npm install -g prettier-plugin-toml --save-dev --save-exact
+sudo npm install --global markdownlint-cli standard prettier
+sudo npm install --global --save-dev --save-exact prettier-plugin-toml
 ```
 
 Shell files are linted using [`shellcheck`](https://github.com/koalaman/shellcheck)
