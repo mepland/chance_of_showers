@@ -354,8 +354,8 @@ ignore = [
 
 [tool.deptry.per_rule_ignores]
 DEP001 = [
-  "board",
-  "busio",
+  "board",     # adafruit-circuitpython-mcp3xxx
+  "busio",     # adafruit-circuitpython-mcp3xxx
   "digitalio", # adafruit-circuitpython-mcp3xxx
   "PIL",       # luma-core
 ]
