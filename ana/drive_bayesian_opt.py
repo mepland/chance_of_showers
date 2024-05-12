@@ -33,6 +33,7 @@ from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
 from TSModelWrappers.TCNModelWrapper import TCNModelWrapper
 from TSModelWrappers.TransformerModelWrapper import TransformerModelWrapper
 from TSModelWrappers.TFTModelWrapper import TFTModelWrapper
+from TSModelWrappers.TSMixerModelWrapper import TSMixerModelWrapper
 from TSModelWrappers.DLinearModelWrapper import DLinearModelWrapper
 from TSModelWrappers.NLinearModelWrapper import NLinearModelWrapper
 from TSModelWrappers.TiDEModelWrapper import TiDEModelWrapper
@@ -126,64 +127,65 @@ def drive_bayesian_opt(
         {"model_wrapper_class": TCNModelWrapper},  # +i_model=3
         {"model_wrapper_class": TransformerModelWrapper},  # +i_model=4
         {"model_wrapper_class": TFTModelWrapper},  # +i_model=5
-        {"model_wrapper_class": DLinearModelWrapper},  # +i_model=6
-        {"model_wrapper_class": NLinearModelWrapper},  # +i_model=7
-        {"model_wrapper_class": TiDEModelWrapper},  # +i_model=8
+        {"model_wrapper_class": TSMixerModelWrapper},  # +i_model=6
+        {"model_wrapper_class": DLinearModelWrapper},  # +i_model=7
+        {"model_wrapper_class": NLinearModelWrapper},  # +i_model=8
+        {"model_wrapper_class": TiDEModelWrapper},  # +i_model=9
         {
             "model_wrapper_class": RNNModelWrapper,
             "model_wrapper_kwargs": {"model": "RNN"},
-        },  # +i_model=9
-        {
-            "model_wrapper_class": RNNModelWrapper,
-            "model_wrapper_kwargs": {"model": "LSTM"},
         },  # +i_model=10
         {
             "model_wrapper_class": RNNModelWrapper,
-            "model_wrapper_kwargs": {"model": "GRU"},
+            "model_wrapper_kwargs": {"model": "LSTM"},
         },  # +i_model=11
         {
-            "model_wrapper_class": BlockRNNModelWrapper,
-            "model_wrapper_kwargs": {"model": "RNN"},
+            "model_wrapper_class": RNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "GRU"},
         },  # +i_model=12
         {
             "model_wrapper_class": BlockRNNModelWrapper,
-            "model_wrapper_kwargs": {"model": "LSTM"},
+            "model_wrapper_kwargs": {"model": "RNN"},
         },  # +i_model=13
         {
             "model_wrapper_class": BlockRNNModelWrapper,
-            "model_wrapper_kwargs": {"model": "GRU"},
+            "model_wrapper_kwargs": {"model": "LSTM"},
         },  # +i_model=14
+        {
+            "model_wrapper_class": BlockRNNModelWrapper,
+            "model_wrapper_kwargs": {"model": "GRU"},
+        },  # +i_model=15
         # Statistical Models
-        {"model_wrapper_class": AutoARIMAWrapper},  # +i_model=15
-        {"model_wrapper_class": BATSWrapper},  # +i_model=16
-        {"model_wrapper_class": TBATSWrapper},  # +i_model=17
-        {"model_wrapper_class": FourThetaWrapper},  # +i_model=18
-        {"model_wrapper_class": StatsForecastAutoThetaWrapper},  # +i_model=19
-        {"model_wrapper_class": FFTWrapper},  # +i_model=20
-        {"model_wrapper_class": KalmanForecasterWrapper},  # +i_model=21
+        {"model_wrapper_class": AutoARIMAWrapper},  # +i_model=16
+        {"model_wrapper_class": BATSWrapper},  # +i_model=17
+        {"model_wrapper_class": TBATSWrapper},  # +i_model=18
+        {"model_wrapper_class": FourThetaWrapper},  # +i_model=19
+        {"model_wrapper_class": StatsForecastAutoThetaWrapper},  # +i_model=20
+        {"model_wrapper_class": FFTWrapper},  # +i_model=21
+        {"model_wrapper_class": KalmanForecasterWrapper},  # +i_model=22
         {
             "model_wrapper_class": CrostonWrapper,
             "model_wrapper_kwargs": {"version": "optimized"},
-        },  # +i_model=22
-        {
-            "model_wrapper_class": CrostonWrapper,
-            "model_wrapper_kwargs": {"version": "classic"},
         },  # +i_model=23
         {
             "model_wrapper_class": CrostonWrapper,
-            "model_wrapper_kwargs": {"version": "sba"},
+            "model_wrapper_kwargs": {"version": "classic"},
         },  # +i_model=24
+        {
+            "model_wrapper_class": CrostonWrapper,
+            "model_wrapper_kwargs": {"version": "sba"},
+        },  # +i_model=25
         # Regression Models
-        {"model_wrapper_class": LinearRegressionModelWrapper},  # +i_model=25
-        {"model_wrapper_class": RandomForestWrapper},  # +i_model=26
-        {"model_wrapper_class": LightGBMModelWrapper},  # +i_model=27
-        {"model_wrapper_class": XGBModelWrapper},  # +i_model=28
-        {"model_wrapper_class": CatBoostModelWrapper},  # +i_model=29
+        {"model_wrapper_class": LinearRegressionModelWrapper},  # +i_model=26
+        {"model_wrapper_class": RandomForestWrapper},  # +i_model=27
+        {"model_wrapper_class": LightGBMModelWrapper},  # +i_model=28
+        {"model_wrapper_class": XGBModelWrapper},  # +i_model=29
+        {"model_wrapper_class": CatBoostModelWrapper},  # +i_model=30
         # Naive Models
-        {"model_wrapper_class": NaiveMeanWrapper},  # +i_model=30
-        {"model_wrapper_class": NaiveSeasonalWrapper},  # +i_model=31
-        {"model_wrapper_class": NaiveDriftWrapper},  # +i_model=32
-        {"model_wrapper_class": NaiveMovingAverageWrapper},  # +i_model=33
+        {"model_wrapper_class": NaiveMeanWrapper},  # +i_model=31
+        {"model_wrapper_class": NaiveSeasonalWrapper},  # +i_model=32
+        {"model_wrapper_class": NaiveDriftWrapper},  # +i_model=33
+        {"model_wrapper_class": NaiveMovingAverageWrapper},  # +i_model=34
     ]
 
     # accept i_model CLI argument to only run one model

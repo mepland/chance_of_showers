@@ -41,6 +41,7 @@ from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper  # noqa: TC001
 from TSModelWrappers.TCNModelWrapper import TCNModelWrapper  # noqa: TC001
 from TSModelWrappers.TransformerModelWrapper import TransformerModelWrapper  # noqa: TC001
 from TSModelWrappers.TFTModelWrapper import TFTModelWrapper  # noqa: TC001
+from TSModelWrappers.TSMixerModelWrapper import TSMixerModelWrapper  # noqa: TC001
 from TSModelWrappers.DLinearModelWrapper import DLinearModelWrapper  # noqa: TC001
 from TSModelWrappers.NLinearModelWrapper import NLinearModelWrapper  # noqa: TC001
 from TSModelWrappers.TiDEModelWrapper import TiDEModelWrapper  # noqa: TC001
@@ -90,6 +91,7 @@ WrapperTypes: TypeAlias = type[
     | TCNModelWrapper
     | TransformerModelWrapper
     | TFTModelWrapper
+    | TSMixerModelWrapper
     | DLinearModelWrapper
     | NLinearModelWrapper
     | TiDEModelWrapper
