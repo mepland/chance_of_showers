@@ -241,8 +241,7 @@ DATA_REQUIRED_HYPERPARAMS: Final = [
     "prediction_length_in_minutes",
     "y_presentation",
     "y_bin_edges",
-    # not required by all models, but we'll check
-    # supports_future_covariates and supports_past_covariates for each model later and configure appropriately
+    "covariates_to_use",
     "covariates",
     # not really data, but needed by all models for Bayesian optimization
     "random_state",
@@ -262,11 +261,27 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
-    # technically had_flow is a measured, i.e. past, covariate, but we can assume we know it in the future and that it is always 0
-    # unless we are actually making live predictions in production, then we can just take the current value from the DAQ
+    # Covariates are not used by all models, but later we'll check
+    # supports_future_covariates and supports_past_covariates
+    # for each model and configure them appropriately.
+    # Technically had_flow is a measured, i.e. past, covariate,
+    # but we can assume we know it in the future and that it is always 0,
+    # unless we are actually making live predictions in production,
+    # in which case we can just take the current value from the DAQ.
+    # 0 = None, 1 = All, 2 = had_flow, 3 = day_of_week_frac and time_of_day_frac, 4 = time_of_day_frac
+    "covariates_to_use": {
+        "min": 0,
+        "max": 4,
+        "default": 1,
+        "type": int,
+    },
     "covariates": {
         "allowed": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
-        "default": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
+        "0": [],
+        "1": ["had_flow", "day_of_week_frac", "time_of_day_frac", "is_holiday"],
+        "2": ["had_flow"],
+        "3": ["day_of_week_frac", "time_of_day_frac"],
+        "4": ["time_of_day_frac"],
     },
 }
 
@@ -1178,9 +1193,26 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["y_bin_edges"] = get_hyperparam_value("y_bin_edges")
                 else:
                     self.chosen_hyperparams["y_bin_edges"] = None
+            elif hyperparam == "covariates_to_use":
+                hyperparam_value = get_hyperparam_value(hyperparam)
+                if TYPE_CHECKING:
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+
+                hyperparam_value = int(round(hyperparam_value))
+
+                _covariates = get_hyperparam_value("covariates")
+                if TYPE_CHECKING:
+                    assert isinstance(_covariates, dict)  # noqa: SCS108 # nosec assert_used
+
+                chosen_covariates = _covariates.get(str(hyperparam_value))
+                if chosen_covariates is None:
+                    raise ValueError("Failed to setup covariates correctly via covariates_to_use")
+
+                self.chosen_hyperparams["covariates"] = chosen_covariates
             elif hyperparam in [  # noqa: R507
                 # these are not needed
                 "y_bin_edges",
+                "covariates",
                 "time_bin_size",
                 "time_bin_size_in_minutes",
                 "prediction_length_in_minutes",
