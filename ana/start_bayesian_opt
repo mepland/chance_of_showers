@@ -5,7 +5,7 @@ pkg_path="/home/mepland/chance_of_showers"
 # Models to run, see model_kwarg_list in drive_bayesian_opt.py
 # prod
 i_model_min=0
-i_model_max=33
+i_model_max=34
 # dev
 # i_model_min=30 # 0, 3, 20, 25, 30
 # i_model_max=$i_model_min

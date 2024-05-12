@@ -25,14 +25,7 @@ import sympy
 import torch
 import torchmetrics
 from darts import TimeSeries
-
-with warnings.catch_warnings():
-    warnings.simplefilter(action="ignore", category=FutureWarning)
-    # Reported in https://github.com/Nixtla/statsforecast/issues/781
-    # Fixed in https://github.com/Nixtla/statsforecast/pull/786
-    # Leaving warning filter as the patch needs to propagate through statsforecast and darts releases
-    from darts.models.forecasting.forecasting_model import ForecastingModel
-
+from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.callbacks import TFMProgressBar
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
@@ -356,7 +349,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "default": 30,
         "type": int,
     },
-    "num_blocks": {
+    "num_blocks": {  # and TSMixerModel
         "min": 1,
         "max": 10,
         "default": 1,
@@ -443,7 +436,7 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     # TFTModel hyperparams
-    "hidden_size": {  # and TiDEModel
+    "hidden_size": {  # and TiDEModel, TSMixerModel
         "min": 1,
         "max": 256,
         "default": 16,
@@ -472,6 +465,19 @@ NN_ALLOWED_VARIABLE_HYPERPARAMS: Final = {
         "max": 20,
         "default": 8,
         "type": int,
+    },
+    # TSMixerModel hyperparams
+    "ff_size": {
+        "min": 1,
+        "max": 256,
+        "default": 64,
+        "type": int,
+    },
+    "normalize_before": {
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "type": bool,
     },
     # DLinearModel and NLinearModel hyperparams
     "const_init": {

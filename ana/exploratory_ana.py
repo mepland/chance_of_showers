@@ -51,6 +51,7 @@ from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
 from TSModelWrappers.TCNModelWrapper import TCNModelWrapper
 from TSModelWrappers.TransformerModelWrapper import TransformerModelWrapper
 from TSModelWrappers.TFTModelWrapper import TFTModelWrapper
+from TSModelWrappers.TSMixerModelWrapper import TSMixerModelWrapper
 from TSModelWrappers.DLinearModelWrapper import DLinearModelWrapper
 from TSModelWrappers.NLinearModelWrapper import NLinearModelWrapper
 from TSModelWrappers.TiDEModelWrapper import TiDEModelWrapper
@@ -734,6 +735,37 @@ print(model_wrapper_TFT)
 # %%
 tensorboard_logs = pathlib.Path(
     model_wrapper_TFT.work_dir, model_wrapper_TFT.model_name, "logs"  # type: ignore[arg-type]
+)
+print(tensorboard_logs)
+
+# %%
+# # %tensorboard --logdir $tensorboard_logs
+
+# %% [markdown]
+# ### TSMixer
+
+# %%
+model_wrapper_TSMixer = TSMixerModelWrapper(
+    TSModelWrapper=PARENT_WRAPPER,
+    variable_hyperparams={"time_bin_size_in_minutes": 10},
+)
+model_wrapper_TSMixer.set_work_dir(work_dir_relative_to_base=pathlib.Path("local_dev"))
+# print(model_wrapper_TSMixer)
+
+# %%
+configurable_hyperparams = model_wrapper_TSMixer.get_configurable_hyperparams()
+pprint.pprint(configurable_hyperparams)
+
+# %%
+loss_val, metrics_val = model_wrapper_TSMixer.train_model()
+print(f"metrics_val = {pprint.pformat(metrics_val)}")
+
+# %%
+print(model_wrapper_TSMixer)
+
+# %%
+tensorboard_logs = pathlib.Path(
+    model_wrapper_TSMixer.work_dir, model_wrapper_TSMixer.model_name, "logs"  # type: ignore[arg-type]
 )
 print(tensorboard_logs)
 
