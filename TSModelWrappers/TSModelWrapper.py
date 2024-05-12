@@ -25,15 +25,7 @@ import sympy
 import torch
 import torchmetrics
 from darts import TimeSeries
-
-# TODO test removal with darts 0.29
-with warnings.catch_warnings():
-    warnings.simplefilter(action="ignore", category=FutureWarning)
-    # Reported in https://github.com/Nixtla/statsforecast/issues/781
-    # Fixed in https://github.com/Nixtla/statsforecast/pull/786
-    # Leaving warning filter as the patch needs to propagate through statsforecast and darts releases
-    from darts.models.forecasting.forecasting_model import ForecastingModel
-
+from darts.models.forecasting.forecasting_model import ForecastingModel
 from darts.utils.callbacks import TFMProgressBar
 from darts.utils.missing_values import fill_missing_values, missing_values_ratio
 from darts.utils.utils import ModelMode, SeasonalityMode
