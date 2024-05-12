@@ -1195,22 +1195,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     self.chosen_hyperparams["y_bin_edges"] = None
             elif hyperparam == "covariates_to_use":
                 hyperparam_value = get_hyperparam_value(hyperparam)
-                print(f"TODO For {hyperparam = }, starting with {hyperparam_value = }")
                 if TYPE_CHECKING:
                     assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
 
-                hyperparam_value = str(int(round(hyperparam_value)))
+                hyperparam_value = int(round(hyperparam_value))
 
                 _covariates = get_hyperparam_value("covariates")
                 if TYPE_CHECKING:
                     assert isinstance(_covariates, dict)  # noqa: SCS108 # nosec assert_used
 
-                hyperparam_value = _covariates.get(hyperparam_value)
-                if hyperparam_value is None:
+                chosen_covariates = _covariates.get(str(hyperparam_value))
+                if chosen_covariates is None:
                     raise ValueError("Failed to setup covariates correctly via covariates_to_use")
 
-                self.chosen_hyperparams["covariates"] = hyperparam_value
-                print(f"TODO For {hyperparam = }, ending with {hyperparam_value = }")
+                self.chosen_hyperparams["covariates"] = chosen_covariates
             elif hyperparam in [  # noqa: R507
                 # these are not needed
                 "y_bin_edges",

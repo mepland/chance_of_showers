@@ -873,8 +873,8 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[dict] | None = None,
-    x_axis_params_list: list[dict | None] | None = None,
-    y_axis_params_list: list[dict | None] | None = None,
+    x_axis_params_list: list[dict] | list[None] | None = None,
+    y_axis_params_list: list[dict] | list[None] | None = None,
     legend_params: dict | None = None,
 ) -> None:
     """Plot prophet figures nicely.
@@ -895,8 +895,8 @@ def plot_prophet(  # pylint: disable=too-many-arguments
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
-        x_axis_params_list (list[dict | None] | None): List of X axis parameters. (Default value = None)
-        y_axis_params_list (list[dict | None] | None): List of Y axis parameters. (Default value = None)
+        x_axis_params_list (list[dict] | list[None] | None): List of X axis parameters. (Default value = None)
+        y_axis_params_list (list[dict] | list[None] | None): List of Y axis parameters. (Default value = None)
         legend_params (dict | None): Legend parameters. (Default value = None)
     """
     fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)

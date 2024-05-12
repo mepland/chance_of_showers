@@ -492,25 +492,30 @@ with warnings.catch_warnings():
     )
     _fig_components = model_prophet.plot_components(dfp_predict)
 
+_x_axis_params_list = [
+    {"axis_label": TS_LABEL},
+    {"axis_label": TS_LABEL},
+    {"axis_label": "Day of Week"},
+    {"axis_label": "Time of Day"},
+]
+_y_axis_params_list = [
+    {"axis_label": "Trend"},
+    {"axis_label": "Holidays"},
+    {"axis_label": "Weekly"},
+    {"axis_label": "Daily"},
+]
+
+if "had_flow" in model_wrapper_Prophet.chosen_hyperparams["covariates"]:  # type: ignore[index]
+    _x_axis_params_list.append({"axis_label": TS_LABEL})
+    _y_axis_params_list.append({"axis_label": "Had Flow"})
+
 plot_prophet(
     _fig_components,
     m_path=OUTPUTS_PATH / "prophet",
     fname="prophet_components",
     tag="",
-    x_axis_params_list=[
-        {"axis_label": TS_LABEL},
-        {"axis_label": TS_LABEL},
-        {"axis_label": "Day of Week"},
-        {"axis_label": "Time of Day"},
-        {"axis_label": TS_LABEL},
-    ],
-    y_axis_params_list=[
-        {"axis_label": "Trend"},
-        {"axis_label": "Holidays"},
-        {"axis_label": "Weekly"},
-        {"axis_label": "Daily"},
-        {"axis_label": "Had Flow"},
-    ],
+    x_axis_params_list=_x_axis_params_list,
+    y_axis_params_list=_y_axis_params_list,
 )
 
 # %%
