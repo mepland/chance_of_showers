@@ -47,8 +47,8 @@ class ProphetWrapper(TSModelWrapper):
             if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
         ]
 
-        for k in self._allowed_variable_hyperparams["covariates"]:  # type: ignore[attr-defined]
-            self._allowed_variable_hyperparams["covariates"][k] = [_ for _ in self._allowed_variable_hyperparams["covariates"][k] if _ in allowed_prophet_covariates]  # type: ignore[index]
+        for k, v in self._allowed_variable_hyperparams["covariates"].items():  # type: ignore[attr-defined]
+            self._allowed_variable_hyperparams["covariates"][k] = [_ for _ in v if _ in allowed_prophet_covariates]  # type: ignore[index]
 
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
