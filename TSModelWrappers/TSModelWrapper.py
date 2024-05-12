@@ -261,13 +261,13 @@ DATA_VARIABLE_HYPERPARAMS: Final = {
         "type": int,
     },
     "y_bin_edges": [-float("inf"), 0.6, 0.8, 0.9, 1.0],
+    # Covariates are not used by all models, but later we'll check
+    # supports_future_covariates and supports_past_covariates
+    # for each model and configure them appropriately.
     # Technically had_flow is a measured, i.e. past, covariate,
     # but we can assume we know it in the future and that it is always 0,
     # unless we are actually making live predictions in production,
     # in which case we can just take the current value from the DAQ.
-    # Covariates are not used by all models, but later we'll check
-    # supports_future_covariates and supports_past_covariates
-    # for each model and configure appropriately.
     # 0 = None, 1 = All, 2 = had_flow, 3 = day_of_week_frac and time_of_day_frac, 4 = time_of_day_frac
     "covariates_to_use": {
         "min": 0,
