@@ -29,7 +29,6 @@ class TSMixerModelWrapper(TSModelWrapper):
     _model_class = TSMixerModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    # TODO log_tensorboard in NN_REQUIRED_HYPERPARAMS might be implemented differently for TSMixerModel
     _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
         "hidden_size",
         "ff_size",
