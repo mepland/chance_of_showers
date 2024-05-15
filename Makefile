@@ -73,7 +73,6 @@ bandit:
 vulture:
 	@poetry run vulture
 
-# Note: Returns an error signal, but .dev_config/.vulture_ignore.py is built fine
 .PHONY: vulture-update_ignore
 vulture-update_ignore:
 	@echo '# flake8: noqa' > .dev_config/.vulture_ignore.py
