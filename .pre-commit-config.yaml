@@ -402,7 +402,7 @@ repos:
       #### git
       # don't commit to main
       - id: no-commit-to-branch
-        args: ['-b main']
+        args: ['--branch', 'main']
       # checks for files that contain merge conflict strings
       - id: check-merge-conflict
         args: ['--assume-in-merge']
