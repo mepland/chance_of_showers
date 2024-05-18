@@ -1292,3 +1292,82 @@ Returning with current objects and {exception_status = }."""
         optimizer.dispatch(Events.OPTIMIZATION_END)
 
     return optimizer.max, optimizer, exception_status
+
+
+def write_manual_bad_point(
+    *,
+    bad_point_to_write: dict,
+    bad_point_to_write_clean: dict,
+    parent_wrapper: TSModelWrapper,
+    model_wrapper_class: WrapperTypes,
+    bayesian_opt_work_dir_name: str = "bayesian_optimization",
+) -> None:
+    """Manually write a point, raw and clean, as a failed point to the JSON and CSV logs.
+
+    This is useful when an iteration is killed by the OS with an uncatchable SIGKILL.
+
+    Args:
+        bad_point_to_write (dict): Bad hyperparameter point to write, raw.
+        bad_point_to_write_clean (dict): Bad hyperparameter point to write, clean.
+        parent_wrapper (TSModelWrapper): TSModelWrapper object containing all parent configs.
+        model_wrapper_class (WrapperTypes): TSModelWrapper class to optimize.
+        bayesian_opt_work_dir_name (str): Directory name to save logs and models in, within the parent_wrapper.work_dir_base. (Default value = 'bayesian_optimization')
+    """
+    model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
+    optimizer = bayes_opt.BayesianOptimization(f=None, pbounds={})
+
+    # Setup Logging
+    generic_model_name: Final = model_wrapper.get_generic_model_name()
+    model_type: Final = model_wrapper.get_model_type()
+    bayesian_opt_work_dir: Final = pathlib.Path(
+        model_wrapper.work_dir_base, bayesian_opt_work_dir_name, generic_model_name
+    ).expanduser()
+    fname_json_log: Final = (
+        bayesian_opt_work_dir / f"{BAYESIAN_OPT_PREFIX}{generic_model_name}.json"
+    )
+    fname_csv_log: Final = bayesian_opt_work_dir / f"{BAYESIAN_OPT_PREFIX}{generic_model_name}.csv"
+
+    # Reload prior points, must be done before json_logger is recreated to avoid duplicating past runs
+    json_logger = JSONLogger(path=str(fname_json_log), reset=False)
+    optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
+
+    id_point = get_point_hash(bad_point_to_write_clean)
+
+    model_name = model_wrapper.get_model_name()
+    if model_name is None:
+        model_name = "reusing_prior_point"
+
+    optimizer.register(params=bad_point_to_write, target=BAD_TARGET)
+    datetime_end_str = get_datetime_str_from_json(
+        enable_json_logging=True, fname_json_log=fname_json_log
+    )
+
+    write_csv_row(
+        enable_csv_logging=True,
+        fname_csv_log=fname_csv_log,
+        datetime_start_str=datetime_end_str,
+        datetime_end_str=datetime_end_str,
+        id_point=id_point,
+        target=BAD_TARGET,
+        metrics_val=BAD_METRICS,
+        point=bad_point_to_write,
+        is_clean=False,
+        model_name=model_name,
+        model_type=model_type,
+    )
+
+    optimizer.register(params=bad_point_to_write_clean, target=BAD_TARGET)
+
+    write_csv_row(
+        enable_csv_logging=True,
+        fname_csv_log=fname_csv_log,
+        datetime_start_str=datetime_end_str,
+        datetime_end_str=datetime_end_str,
+        id_point=id_point,
+        target=BAD_TARGET,
+        metrics_val=BAD_METRICS,
+        point=bad_point_to_write_clean,
+        is_clean=True,
+        model_name=model_name,
+        model_type=model_type,
+    )
