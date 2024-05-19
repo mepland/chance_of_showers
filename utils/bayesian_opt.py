@@ -1318,10 +1318,9 @@ def write_manual_bad_point(
         bayesian_opt_work_dir_name (str): Directory name to save logs and models in, within the parent_wrapper.work_dir_base. (Default value = 'bayesian_optimization')
     """
     model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-
-    hyperparam_bounds = {k: (None, None) for k, v in bad_point_to_write.items()}
-
-    optimizer = bayes_opt.BayesianOptimization(f=None, pbounds=hyperparam_bounds)
+    optimizer = bayes_opt.BayesianOptimization(
+        f=None, pbounds={k: (None, None) for k, v in bad_point_to_write.items()}
+    )
 
     # Setup Logging
     generic_model_name: Final = model_wrapper.get_generic_model_name()
