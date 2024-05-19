@@ -18,7 +18,7 @@ from utils.shared_functions import read_secure_pickle
 from utils.bayesian_opt import write_manual_bad_point
 
 # PyTorch NN Models
-from TSModelWrappers.NBEATSModelWrapper import NBEATSModelWrapper
+# from TSModelWrappers.NBEATSModelWrapper import NBEATSModelWrapper
 from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
 
 # isort: on
