@@ -10,7 +10,7 @@ from omegaconf import DictConfig  # noqa: TC002
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# pylint: disable=import-error,useless-suppression
+# pylint: disable=import-error,useless-suppression,duplicate-code
 # pylint: enable=useless-suppression
 from utils.shared_functions import read_secure_pickle
 
