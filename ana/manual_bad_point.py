@@ -19,8 +19,7 @@ from utils.bayesian_opt import write_manual_bad_point
 
 # PyTorch NN Models
 from TSModelWrappers.NBEATSModelWrapper import NBEATSModelWrapper
-
-# from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
+from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
 
 # isort: on
 # pylint: enable=import-error
@@ -53,14 +52,43 @@ def run_write_manual_bad_point(
         sys.exit(3)
 
     # Manually specify bad points and model
-    model_wrapper_class = NBEATSModelWrapper
+
+    # model_wrapper_class = NBEATSModelWrapper
+    # bad_point_to_write = {
+    #     "batch_size": 182.67288601975548,
+    #     "covariates_to_use": 4.0,
+    #     "dropout": 0.15,
+    #     "expansion_coefficient_dim": 10.0,
+    #     "input_chunk_length": 1.0,
+    #     "layer_widths": 845.7812745971257,
+    #     "num_blocks": 10.0,
+    #     "num_layers": 10.0,
+    #     "num_stacks": 50.0,
+    #     "time_bin_size_in_minutes": 20.0,
+    #     "y_presentation": 2.0,
+    # }
+    # bad_point_to_write_clean = {
+    #     "batch_size": 182,
+    #     "covariates_to_use": 4,
+    #     "dropout": 0.15,
+    #     "expansion_coefficient_dim": 10,
+    #     "input_chunk_length": 1,
+    #     "layer_widths": 845,
+    #     "num_blocks": 10,
+    #     "num_layers": 10,
+    #     "num_stacks": 50,
+    #     "time_bin_size_in_minutes": 20,
+    #     "y_presentation": 2,
+    # }
+
+    model_wrapper_class = NHiTSModelWrapper
     bad_point_to_write = {
-        "batch_size": 182.67288601975548,
+        "MaxPool1d": 0.0,
+        "batch_size": 955.0581345768601,
         "covariates_to_use": 4.0,
-        "dropout": 0.15,
-        "expansion_coefficient_dim": 10.0,
-        "input_chunk_length": 1.0,
-        "layer_widths": 845.7812745971257,
+        "dropout": 0.0,
+        "input_chunk_length": 60.0,
+        "layer_widths": 719.959976362605,
         "num_blocks": 10.0,
         "num_layers": 10.0,
         "num_stacks": 50.0,
@@ -68,12 +96,12 @@ def run_write_manual_bad_point(
         "y_presentation": 2.0,
     }
     bad_point_to_write_clean = {
-        "batch_size": 182,
+        "MaxPool1d": False,
+        "batch_size": 955,
         "covariates_to_use": 4,
-        "dropout": 0.15,
-        "expansion_coefficient_dim": 10,
-        "input_chunk_length": 1,
-        "layer_widths": 845,
+        "dropout": 0.0,
+        "input_chunk_length": 60,
+        "layer_widths": 719,
         "num_blocks": 10,
         "num_layers": 10,
         "num_stacks": 50,
