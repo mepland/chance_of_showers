@@ -388,8 +388,12 @@ def load_best_points(
                 ].index.size,
                 "minutes_elapsed_total": dfp["minutes_elapsed_total"].max(),
                 "minutes_elapsed_point_best": best_dict["minutes_elapsed_point"],
-                "minutes_elapsed_mean": dfp["minutes_elapsed_point"].mean(),
-                "minutes_elapsed_stddev": dfp["minutes_elapsed_point"].std(),
+                "minutes_elapsed_mean": dfp.loc[dfp["model_name"] != "manual_bad_point"][
+                    "minutes_elapsed_point"
+                ].mean(),
+                "minutes_elapsed_stddev": dfp.loc[dfp["model_name"] != "manual_bad_point"][
+                    "minutes_elapsed_point"
+                ].std(),
                 "id_point_best": best_dict["id_point"],
                 "datetime_end_best": best_dict["datetime_end"],
                 "params_best": ", ".join(best_params),
@@ -1314,7 +1318,10 @@ def write_manual_bad_point(
         bayesian_opt_work_dir_name (str): Directory name to save logs and models in, within the parent_wrapper.work_dir_base. (Default value = 'bayesian_optimization')
     """
     model_wrapper = model_wrapper_class(TSModelWrapper=parent_wrapper)
-    optimizer = bayes_opt.BayesianOptimization(f=None, pbounds={})
+
+    hyperparam_bounds = {k: (None, None) for k, v in bad_point_to_write.items()}
+
+    optimizer = bayes_opt.BayesianOptimization(f=None, pbounds=hyperparam_bounds)
 
     # Setup Logging
     generic_model_name: Final = model_wrapper.get_generic_model_name()
@@ -1332,10 +1339,7 @@ def write_manual_bad_point(
     optimizer.subscribe(Events.OPTIMIZATION_STEP, json_logger)
 
     id_point = get_point_hash(bad_point_to_write_clean)
-
-    model_name = model_wrapper.get_model_name()
-    if model_name is None:
-        model_name = "reusing_prior_point"
+    model_name = "manual_bad_point"
 
     optimizer.register(params=bad_point_to_write, target=BAD_TARGET)
     datetime_end_str = get_datetime_str_from_json(
