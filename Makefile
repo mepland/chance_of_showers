@@ -33,6 +33,10 @@ pre-commit-update:
 isort:
 	@poetry run isort .
 
+.PHONY: pyupgrade
+pyupgrade:
+	@poetry run pyupgrade $(shell git ls-files '*.py' '*.ipynb')
+
 .PHONY: black
 black:
 	@poetry run black .
@@ -81,10 +85,6 @@ vulture-update_ignore:
 	@echo '# pylint: skip-file' >> .dev_config/.vulture_ignore.py
 	@echo '# mypy: disable-error-code="name-defined"' >> .dev_config/.vulture_ignore.py
 	-@poetry run vulture --make-whitelist >> .dev_config/.vulture_ignore.py || true # blocklint: pragma
-
-.PHONY: pyupgrade
-pyupgrade:
-	@poetry run pyupgrade $(shell git ls-files '*.py' '*.ipynb')
 
 .PHONY: pymend
 pymend:

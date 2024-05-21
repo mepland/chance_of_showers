@@ -14,6 +14,12 @@ repos:
     hooks:
       - id: isort
 
+  # pyupgrade
+  - repo: https://github.com/asottile/pyupgrade
+    rev: 'v3.15.1'
+    hooks:
+      - id: pyupgrade
+
   # black
   - repo: https://github.com/psf/black
     rev: '24.3.0'
@@ -114,12 +120,6 @@ repos:
     rev: 'v2.11'
     hooks:
       - id: vulture
-
-  # pyupgrade
-  - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.15.1'
-    hooks:
-      - id: pyupgrade
 
   # deptry - only works when run within poetry env, but can't ensure from within pre-commit
   # - repo: https://github.com/fpgmaas/deptry.git

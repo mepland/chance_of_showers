@@ -138,6 +138,10 @@ jobs:
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run isort ${{ steps.filter.outputs.python_files }}
 
+      - name: pyupgrade
+        if: (success() || failure()) && steps.filter.outputs.python == 'true'
+        run: poetry run pyupgrade ${{ steps.filter.outputs.python_files }}
+
       - name: black
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
@@ -165,10 +169,6 @@ jobs:
       - name: vulture
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run vulture .  # Needs to run on whole package
-
-      - name: pyupgrade
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run pyupgrade ${{ steps.filter.outputs.python_files }}
 
       - name: deptry
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
