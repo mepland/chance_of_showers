@@ -23,6 +23,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.2"
 isort = "^5.13.2"
+pyupgrade = "^3.15.1"
 black = { extras = ["jupyter"], version = "^24.3.0" }
 blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
@@ -33,7 +34,6 @@ detect-secrets = "^1.4.0"
 vulture = "^2.11"
 yamllint = "^1.35.1"
 blocklint = "^0.2.4"
-pyupgrade = "^3.15.1"
 pymend = { git = "https://github.com/JanEricNitschke/pymend.git" }
 deptry = "^0.12.0"
 html5validator = "^0.4.2"
