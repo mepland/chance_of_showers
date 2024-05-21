@@ -2,11 +2,13 @@
 
 .PHONY: setupDAQ
 setupDAQ:
+	@poetry env use python3.11
 	@poetry install --with daq,web,dev --no-root
 	@poetry run pre-commit install
 
 .PHONY: setupANA
 setupANA:
+	@poetry env use python3.11
 	@poetry install --with ana,dev --no-root
 	@poetry run pre-commit install
 
