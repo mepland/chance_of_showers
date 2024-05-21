@@ -187,3 +187,8 @@ find_noqa_comments:
 .PHONY: find_double_spaces
 find_double_spaces:
 	@grep -rInE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
+
+# Find trailing spaces
+.PHONY: find_trailing_spaces
+find_trailing_spaces:
+	@grep -rInHE ' $$' $(shell git ls-files ':!:poetry.lock' ':!:media') || true
