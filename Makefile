@@ -175,18 +175,18 @@ lintprose:
 # prettier ~ <!-- prettier-ignore -->
 .PHONY: find_noqa_comments
 find_noqa_comments:
-	@grep -rIn 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py' '*.ipynb') || true
-	@grep -rIn 'yamllint' $(shell git ls-files '*.yaml' '*.yml') || true
-	@grep -rIn 'pragma\|blocklint:' $(shell git ls-files) || true
-	@grep -rIn 'markdownlint-' $(shell git ls-files '*.md') || true
-	@grep -rIn 'eslint' $(shell git ls-files '*.js') || true
-	@grep -rIn 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
+	@grep -rInH 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py' '*.ipynb') || true
+	@grep -rInH 'yamllint' $(shell git ls-files '*.yaml' '*.yml') || true
+	@grep -rInH 'pragma\|blocklint:' $(shell git ls-files) || true
+	@grep -rInH 'markdownlint-' $(shell git ls-files '*.md') || true
+	@grep -rInH 'eslint' $(shell git ls-files '*.js') || true
+	@grep -rInH 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
 
 # Find double spaces that are not leading, and that are not before a `#` character,
 # i.e. indents and `code  # comment` are fine, but `code  # comment with  extra space` is not
 .PHONY: find_double_spaces
 find_double_spaces:
-	@grep -rInE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
+	@grep -rInHE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
 
 # Find trailing spaces
 .PHONY: find_trailing_spaces
