@@ -320,7 +320,6 @@ sudo ln -s /usr/local/bin/python3.11 /usr/bin/python3
 # Should match /usr/local/bin/python3.11 -VV
 python -VV
 ```
-<!-- markdownlint-enable MD013 -->
 
 #### Additional DAQ Dependencies
 To finish setting up the DAQ system you must also:
@@ -331,6 +330,7 @@ To finish setting up the DAQ system you must also:
 `pigpio` is necessary to interface with the GPIO ports and must also be enabled via a [daemon](https://gpiozero.readthedocs.io/en/latest/remote_gpio.html)
 * Enable SPI, I2C, and Remote GPIO via `raspi-config`.
 * Prevent the [WiFi from powering off](https://desertbot.io/blog/headless-raspberry-pi-4-ssh-wifi-setup-64-bit-mac-windows).
+* It is recommended to [install](https://pimylifeup.com/raspberry-pi-log2ram) [`log2ram`](https://github.com/azlux/log2ram) to avoid unnecessary writes to the SD card, prolonging the card's lifetime.
 
 ```bash
 # Install tmux and pigpio
@@ -345,7 +345,14 @@ sudo systemctl enable pigpiod
 # Prevent the WiFi from powering off
 # Above the line that says exit 0 insert `/sbin/iw wlan0 set power_save off` and save the file
 sudo vi /etc/rc.local
+
+# Install log2ram
+echo "deb [signed-by=/usr/share/keyrings/azlux-archive-keyring.gpg] http://packages.azlux.fr/debian/ bullseye main" | sudo tee /etc/apt/sources.list.d/azlux.list
+sudo wget -O /usr/share/keyrings/azlux-archive-keyring.gpg  https://azlux.fr/repo.gpg
+sudo apt update && sudo apt full-upgrade -y
+sudo apt install -y log2ram
 ```
+<!-- markdownlint-enable MD013 -->
 
 ### Installing Dependencies with Poetry
 Install `poetry` following the [instructions here](https://python-poetry.org/docs#installation).
