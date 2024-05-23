@@ -89,6 +89,7 @@ repos:
           flake8-implicit-str-concat,
           flake8-markdown,
           flake8-executable,
+          flake8-debugger,
           dlint,
           pandas-vet,
           pydoclint,

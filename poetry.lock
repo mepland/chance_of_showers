@@ -1815,6 +1815,21 @@ files = [
 flake8 = ">=3.0.0"
 
 [[package]]
+name = "flake8-debugger"
+version = "4.1.2"
+description = "ipdb/pdb statement checker plugin for flake8"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-debugger-4.1.2.tar.gz", hash = "sha256:52b002560941e36d9bf806fca2523dc7fb8560a295d5f1a6e15ac2ded7a73840"},
+    {file = "flake8_debugger-4.1.2-py3-none-any.whl", hash = "sha256:0a5e55aeddcc81da631ad9c8c366e7318998f83ff00985a49e6b3ecf61e571bf"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0"
+pycodestyle = "*"
+
+[[package]]
 name = "flake8-dunder-all"
 version = "0.3.1"
 description = "A Flake8 plugin and pre-commit hook which checks to ensure modules have defined '__all__'."
@@ -7312,4 +7327,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "f47591873fa0e567d27f58f36ffebfdcb7665246810f3a331dd3fff2f501f5f7"
+content-hash = "0e67131015de8bca9d0c0d4063bec09f418306ad2cbc262287c7ebf2780702fe"
