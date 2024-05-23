@@ -629,7 +629,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
             return "MISSING"
 
         memory_usage_str += (
-            f", GPU RAM Current: {get_gpu_mem_key('allocated_bytes.all.current')}, "
+            f", GPU RAM Current: {get_gpu_mem_key('allocated_bytes.all.current')}, "  # noqa: ISC003
             + f"Peak: {get_gpu_mem_key('allocated_bytes.all.peak')}"
         )
 

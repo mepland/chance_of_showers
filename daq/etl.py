@@ -118,7 +118,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             .strftime(DATETIME_FMT)
         )
         raise ValueError(
-            f"Found {N_DUPLICATE_DATETIME_POST_THREADING_FIX} datetimes with multiple entries"
+            f"Found {N_DUPLICATE_DATETIME_POST_THREADING_FIX} datetimes with multiple entries"  # noqa: ISC003
             + f" after {DT_END_OF_THREADING_DUPLICATES.strftime(DATETIME_FMT)} UTC!"
             + f"\nDuplicates are between {DUPLICATE_DATETIME_POST_FIX_MIN} and {DUPLICATE_DATETIME_POST_FIX_MAX}."
         )
@@ -188,7 +188,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     parquet_total_bytes = f_parquet.stat().st_size
 
     print(
-        f"\nCombined parquet saved to {f_parquet}"
+        f"\nCombined parquet saved to {f_parquet}"  # noqa: ISC003
         + f"\n\nInput CSVs: {humanize.naturalsize(csv_total_bytes)}"
         + f", Output parquet: {humanize.naturalsize(parquet_total_bytes)}"
         + f", a reduction of {(csv_total_bytes - parquet_total_bytes) / csv_total_bytes:.0%}\n"

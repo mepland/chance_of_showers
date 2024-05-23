@@ -116,7 +116,8 @@ def fan_control(cfg: DictConfig) -> None:
 
         if VERBOSE:
             sys.stdout.write(
-                "\x1b[2K" + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
+                "\x1b[2K"  # noqa: ISC003
+                + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
             )
             sys.stdout.flush()
 

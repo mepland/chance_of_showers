@@ -452,7 +452,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                         break
 
                 conn_details_str = (
-                    f"sid: {request.sid}"  # type: ignore[attr-defined]
+                    f"sid: {request.sid}"  # type: ignore[attr-defined] # noqa: ISC003
                     + f", IP address: {ip_address}"
                     + f", MAC address: {mac_address}"
                 )
@@ -739,7 +739,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                         if t_start.minute % LOG_MEMORY_USAGE_MINUTES_MOD == 0:
                             ram_info = psutil.virtual_memory()
                             my_print(
-                                f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
+                                f"RAM Available: {humanize.naturalsize(ram_info.available)}, "  # noqa: ISC003
                                 + f"Used: {humanize.naturalsize(ram_info.used)}, "
                                 + f"Percent: {ram_info.percent:.2f}%",
                                 logger_level=logging.INFO,
