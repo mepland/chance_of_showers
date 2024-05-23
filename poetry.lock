@@ -2045,6 +2045,20 @@ files = [
 flake8 = ">=3.0.0"
 
 [[package]]
+name = "flake8-markdown"
+version = "0.5.0"
+description = "Lints Python code blocks in Markdown files using flake8"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_markdown-0.5.0-py3-none-any.whl", hash = "sha256:1930a77e883e130166da20d11ce34bddeeb2779c49783b2673498a2b21c0749c"},
+    {file = "flake8_markdown-0.5.0.tar.gz", hash = "sha256:ec2aa584edb16a7ad5a5e9ea59c287aebddd9cb92ebcb5b10efa1402e52caf1e"},
+]
+
+[package.dependencies]
+flake8 = ">=5.0.0"
+
+[[package]]
 name = "flake8-mutable"
 version = "1.2.0"
 description = "mutable defaults flake8 extension"
@@ -7284,4 +7298,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "a9c218a57ba3f16cf69c2177c8a8981b243e5e62f7fe86a147ee462373716b64"
+content-hash = "dd330bc83c00f08c73d842e41fb2bb90c88bef9541ce2d94d7ca4bee8bd177dc"
