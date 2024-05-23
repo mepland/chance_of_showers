@@ -86,6 +86,7 @@ repos:
           flake8-unused-arguments,
           flake8-use-fstring,
           flake8-use-pathlib,
+          flake8-implicit-str-concat,
           dlint,
           pandas-vet,
           pydoclint,
