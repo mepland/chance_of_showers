@@ -154,7 +154,7 @@ jobs:
             echo "::group::version and plugins"
             poetry run flake8 --version
             echo "::endgroup::"
-            poetry run flake8 ${{ steps.filter.outputs.python_files }}
+            poetry run flake8 --format github ${{ steps.filter.outputs.python_files }}
 
       - name: mypy
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
