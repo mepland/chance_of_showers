@@ -17,7 +17,7 @@ from RPi import GPIO
 __all__: list[str] = []
 
 
-# Setup global variables
+# Setup  global variables
 current_time = time.time()
 rpm = 0.0  # pylint: disable=invalid-name
 
