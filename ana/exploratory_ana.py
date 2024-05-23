@@ -618,7 +618,7 @@ print(tensorboard_logs)
 # # %tensorboard --logdir $tensorboard_logs
 
 # %% [markdown]
-# ###  N-HiTS
+# ### N-HiTS
 
 # %%
 model_wrapper_NHiTS = NHiTSModelWrapper(
