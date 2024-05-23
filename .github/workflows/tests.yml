@@ -242,6 +242,7 @@ jobs:
           if [[ $TRAILING_SPACES ]]; then
             echo "Trailing spaces found, please remove them:"
             echo "$TRAILING_SPACES"
+            echo "::error Trailing spaces found, please remove them::$TRAILING_SPACES"
             false
           else
             echo "No trailing spaces found."
