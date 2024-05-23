@@ -91,6 +91,7 @@ repos:
           flake8-executable,
           flake8-debugger,
           flake8-no-pep420,
+          flake8-datetime-import,
           dlint,
           pandas-vet,
           pydoclint,
