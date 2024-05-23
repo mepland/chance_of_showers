@@ -100,6 +100,7 @@ pandas-vet = "^2023.8.2"
 pydoclint = { extras = ["flake8"], version = "^0.4.1" }
 tryceratops = "^2.3.2"
 ruff = "^0.4.3"
+torchfix = "^0.5.0"
 
 [tool.poetry.group.daq]
 optional = true

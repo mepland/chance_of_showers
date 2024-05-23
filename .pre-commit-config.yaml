@@ -90,7 +90,8 @@ repos:
           dlint,
           pandas-vet,
           pydoclint,
-          tryceratops
+          tryceratops,
+          torchfix
         ]
 
   # mypy
