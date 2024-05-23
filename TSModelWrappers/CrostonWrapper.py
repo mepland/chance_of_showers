@@ -51,7 +51,9 @@ class CrostonWrapper(TSModelWrapper):
                 else:
                     kwargs["model_name_tag"] = version
 
-            elif isinstance(version, type) and issubclass(version, FutureCovariatesLocalForecastingModel):  # type: ignore[arg-type]
+            elif isinstance(version, type) and issubclass(
+                version, FutureCovariatesLocalForecastingModel
+            ):
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"

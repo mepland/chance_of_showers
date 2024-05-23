@@ -246,7 +246,7 @@ def drive_bayesian_opt(
 
         _, optimizer, exception_status = run_bayesian_opt(
             **run_bayesian_opt_kwargs,  # type: ignore[arg-type]
-            **model_kwarg,  # type: ignore[arg-type]
+            **model_kwarg,
         )
         # pylint: enable=duplicate-code
 

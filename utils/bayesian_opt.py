@@ -190,9 +190,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     else:
         dfp_minutes["minutes_elapsed_total"] = (
             dfp_minutes["datetime_end"] - dfp_minutes["datetime_end"].min()
-        ) / pd.Timedelta(  # type: ignore[operator]
-            minutes=1
-        )
+        ) / pd.Timedelta(minutes=1)
         dfp_minutes["minutes_elapsed_point"] = (
             dfp_minutes["minutes_elapsed_total"].diff().fillna(0.0)
         )

@@ -66,7 +66,7 @@ class RNNModelWrapper(TSModelWrapper):
                 else:
                     kwargs["model_name_tag"] = model
 
-            elif isinstance(model, type) and issubclass(model, CustomRNNModule):  # type: ignore[arg-type]
+            elif isinstance(model, type) and issubclass(model, CustomRNNModule):
                 if "model_name_tag" not in kwargs:
                     raise ValueError(
                         "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
