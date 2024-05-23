@@ -90,6 +90,7 @@ repos:
           flake8-markdown,
           flake8-executable,
           flake8-debugger,
+          flake8-no-pep420,
           dlint,
           pandas-vet,
           pydoclint,

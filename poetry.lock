@@ -2133,6 +2133,20 @@ flake8 = "*"
 dev = ["black", "codecov", "coverage", "darglint", "flake8", "flake8-2020", "flake8-black", "flake8-broken-line", "flake8-builtins", "flake8-docstrings", "flake8-isort", "flake8-rst-docstrings", "hacking (>=4)", "isort", "mypy", "pep8-naming"]
 
 [[package]]
+name = "flake8-no-pep420"
+version = "2.7.0"
+description = "A flake8 plugin to ban PEP-420 implicit namespace packages."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_no_pep420-2.7.0-py3-none-any.whl", hash = "sha256:018bbe0fba039444689d02a0857310b62b90ff9bf737aff27e0b847ec7eb9ba3"},
+    {file = "flake8_no_pep420-2.7.0.tar.gz", hash = "sha256:a1b6db4de355b87f8189714e68785a7c6a2d61d94f3e937b6cee336953f7d703"},
+]
+
+[package.dependencies]
+flake8 = ">=3.0,<3.2.0 || >3.2.0"
+
+[[package]]
 name = "flake8-noqa"
 version = "1.4.0"
 description = "Flake8 noqa comment validation"
@@ -7327,4 +7341,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "0e67131015de8bca9d0c0d4063bec09f418306ad2cbc262287c7ebf2780702fe"
+content-hash = "4bfd442cb49ccb90d40e9160a155743a5c63c0e7ebc8b9ef0c9e4092ed099859"
