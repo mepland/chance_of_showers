@@ -241,7 +241,6 @@ jobs:
           TRAILING_SPACES=$(grep -rInH ' $' ${{ steps.filter.outputs.any_files }} || true)
           if [[ $TRAILING_SPACES ]]; then
             echo "Trailing spaces found, please remove them:"
-            echo "$TRAILING_SPACES"
             echo "::error Trailing spaces found, please remove them::$TRAILING_SPACES"
             false
           else
