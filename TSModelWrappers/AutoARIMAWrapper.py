@@ -39,32 +39,38 @@ class AutoARIMAWrapper(TSModelWrapper):
     ]
 
     # Set m_AutoARIMA as either a variable or fixed hyperparameter
-    MappingProxyType(_variable_hyperparams_AutoARIMA = {
-        "m_AutoARIMA": {
-            "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-            "max": 1,  # Default
-            "default": 1,
-            "type": int,
-        },
-    })
+    MappingProxyType(
+        _variable_hyperparams_AutoARIMA={
+            "m_AutoARIMA": {
+                "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+                "max": 1,  # Default
+                "default": 1,
+                "type": int,
+            },
+        }
+    )
 
-    _allowed_variable_hyperparams = MappingProxyType({
-        **DATA_VARIABLE_HYPERPARAMS,
-        # **_variable_hyperparams_AutoARIMA,
-    })
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            # **_variable_hyperparams_AutoARIMA,
+        }
+    )
 
-    _fixed_hyperparams_AutoARIMA = MappingProxyType({
-        # m_AutoARIMA ~ 0 = 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-        "m_AutoARIMA": 1,  # Default
-        "stationary": True,
-        # Increase max values
-        "max_p": 15,
-        "max_q": 15,
-        "max_P": 5,
-        "max_D": 3,
-        "max_Q": 5,
-        "maxiter": 100,
-    })
+    _fixed_hyperparams_AutoARIMA = MappingProxyType(
+        {
+            # m_AutoARIMA ~ 0 = 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+            "m_AutoARIMA": 1,  # Default
+            "stationary": True,
+            # Increase max values
+            "max_p": 15,
+            "max_q": 15,
+            "max_P": 5,
+            "max_D": 3,
+            "max_Q": 5,
+            "maxiter": 100,
+        }
+    )
 
     # leave the following hyperparameters at their default values:
     # max_d ~ 2
@@ -97,10 +103,12 @@ class AutoARIMAWrapper(TSModelWrapper):
     # scoring_args ~ None
     # with_intercept ~ 'auto'
 
-    _fixed_hyperparams = MappingProxyType({
-        **DATA_FIXED_HYPERPARAMS,
-        **_fixed_hyperparams_AutoARIMA,
-    })
+    _fixed_hyperparams = MappingProxyType(
+        {
+            **DATA_FIXED_HYPERPARAMS,
+            **_fixed_hyperparams_AutoARIMA,
+        }
+    )
 
     def __init__(self: "AutoARIMAWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
