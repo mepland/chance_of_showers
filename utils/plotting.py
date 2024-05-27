@@ -464,7 +464,7 @@ def _process_hist_binning(
     return bin_edges, nbins, bin_size_str
 
 
-def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
+def plot_hists(  # noqa: C901,PLR0913,PLR0912 pylint: disable=too-many-locals,too-many-arguments
     hist_dicts: list[dict],
     *,
     m_path: pathlib.Path,
@@ -700,7 +700,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
+def plot_2d_hist(  # noqa: PLR0913,PLR0912 pylint: disable=too-many-locals,too-many-arguments
     x_values: list[float] | np.ndarray | pd.Series,
     y_values: list[float] | np.ndarray | pd.Series,
     *,
@@ -862,7 +862,7 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
     )
 
 
-def plot_prophet(  # pylint: disable=too-many-arguments
+def plot_prophet(  # noqa: PLR0913 pylint: disable=too-many-arguments
     fig: mpl.figure.Figure,
     *,
     m_path: pathlib.Path,
@@ -949,7 +949,7 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
+def plot_chance_of_showers_time_series(  # noqa: C901,PLR0913,PLR0912 pylint: disable=too-many-locals,too-many-arguments
     dfp_in: pd.DataFrame,
     x_axis_params: dict,
     y_axis_params: dict,
