@@ -242,6 +242,9 @@ select = ["ALL"]
 # Ignores should be re-evaluated if ruff is promoted to replacing flake8
 # Do not use inline noqa comments currently, to avoid flake8 NQA102 errors
 ignore = [
+  "ARG001",
+  "ARG002",
+  "ARG005",
   "C901",
   "COM812",
   "D107",
@@ -249,13 +252,13 @@ ignore = [
   "N",
   "PLR0912",
   "PLR0913",
+  "PLR0915",
   "PLR2004",
   "PLW0602",
   "PLW0603",
   "PLW3301",
   "RUF100",
-  "S605",
-  "S607",
+  "S",
   "SIM300",
   "T201",
   "T203",
