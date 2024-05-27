@@ -239,15 +239,23 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["ALL"]
+# Ignores should be re-evaluated if ruff is promoted to replacing flake8
+# Do not use inline noqa comments currently, to avoid flake8 NQA102 errors
 ignore = [
+  "C901",
   "COM812",
+  "D107",
   "E501",
   "N",
-  "D107",
+  "PLR0912",
+  "PLR0913",
   "PLR2004",
   "PLW0602",
   "PLW0603",
+  "PLW3301",
   "RUF100",
+  "S605",
+  "S607",
   "SIM300",
   "T201",
   "T203",
