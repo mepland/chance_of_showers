@@ -263,9 +263,10 @@ Some hyperparameter points chosen for testing by the optimizer result in crashes
 either due to memory limitations, or invalid parameter combinations that slip by pre-run checks.
 In most cases these exceptions can be caught within Python,
 allowing the point to be automatically logged as having the worst possible `BAD_TARGET = -999.0`.
-Occasionally however, the memory will be filled so fast that the Python process
-itself is killed by the operating system with an uncatchable `SIGKILL` signal.
-Resuming the run will result in repeated crashes on the same point as it is never written to disk.
+However, the Python process itself is occasionally killed
+by the operating system with an uncatchable `SIGKILL` signal,
+likely due to a request for too much memory.
+Resuming the run will only result in repeated crashes on the same point as it is never written to disk.
 Rather than rework the `bayesian-optimization` library to pre-register points before optimization,
 a [`manual_bad_point.py`](ana/manual_bad_point.py) script is included
 to easily log the few such points by hand.
@@ -276,7 +277,7 @@ to easily log the few such points by hand.
 via the `exploratory_ana.py` notebook.
 2. Configure the run in `start_bayesian_opt` and `bayesian_opt_runner.py`.
 3. Run the shell script, logging outputs to disk via:
-    * Fill any bad points that are killed by the operating system
+    * Log any bad points that are killed by the operating system
 with `manual_bad_point.py` and resume the search.
 
 ```bash
