@@ -239,7 +239,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            pass
 
         return temp
 
@@ -372,7 +371,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=None,
                     use_print=False,
                 )
-                pass
             except Exception as error:
                 # don't want to kill the DAQ just because of an OLED problem
                 my_print(
@@ -380,7 +378,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
     # Setup web page
     # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
@@ -485,7 +482,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
         @sio.on("disconnect")
         def disconnect() -> None:
@@ -502,7 +498,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
         if not (0 < VERBOSITY or DISPLAY_WEB_LOGGING_TERMINAL):
             # No messages in terminal
@@ -678,7 +673,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
                 # wait POLLING_PERIOD_SECONDS between data points to average
                 while datetime.datetime.now(UTC_TIMEZONE) - t_stop < datetime.timedelta(
@@ -732,7 +726,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
                 if LOG_MEMORY_USAGE:
                     try:
@@ -753,7 +746,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
         my_print(f"Exiting daq_loop() via {running_daq_loop = }")
 
@@ -795,7 +787,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            pass
 
     # run daq_loop() until we exit the main thread
     if thread_daq_loop is not None:
