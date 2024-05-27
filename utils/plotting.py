@@ -429,12 +429,12 @@ def _process_hist_binning(
     bin_size_str_fmt = binning.get("bin_size_str_fmt", ".2f")
 
     if current_bin_min is not None:
-        bin_min = min(current_bin_min, min(hist_values))  # noqa: PLW3301 pylint: disable=nested-min-max
+        bin_min = min(current_bin_min, min(hist_values))  # pylint: disable=nested-min-max
     else:
         bin_min = min(hist_values)
 
     if current_bin_max is not None:
-        bin_max = max(current_bin_max, max(hist_values))  # noqa: PLW3301 pylint: disable=nested-min-max
+        bin_max = max(current_bin_max, max(hist_values))  # pylint: disable=nested-min-max
     else:
         bin_max = max(hist_values)
 
@@ -540,8 +540,8 @@ def plot_hists(  # noqa: C901,PLR0913,PLR0912 pylint: disable=too-many-locals,to
             x_bin_min = min(x_values)
             x_bin_max = max(x_values)
         else:
-            x_bin_min = min(x_bin_min, min(x_values))  # noqa: PLW3301 pylint: disable=nested-min-max
-            x_bin_max = max(x_bin_max, max(x_values))  # noqa: PLW3301 pylint: disable=nested-min-max
+            x_bin_min = min(x_bin_min, min(x_values))  # pylint: disable=nested-min-max
+            x_bin_max = max(x_bin_max, max(x_values))  # pylint: disable=nested-min-max
 
     binning["bin_edges"] = x_bin_edges
     x_bin_edges, x_nbins, x_bin_size_str = _process_hist_binning(
