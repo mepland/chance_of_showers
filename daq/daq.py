@@ -77,7 +77,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
         AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+        msg = f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}"
+        raise ValueError(msg)
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     # Do not use get_local_timezone_from_cfg() due to the way utils.shared_functions is imported.

@@ -43,7 +43,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
         AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+        msg = f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}"
+        raise ValueError(msg)
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     # pylint: enable=duplicate-code
@@ -76,9 +77,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             dfpl_list.append(dfpl)
             csv_total_bytes += f_csv.stat().st_size
         except Exception as error:
-            raise OSError(
-                f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
-            ) from error
+            msg = f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
+            raise OSError(msg) from error
 
     dfpl = pl.concat(dfpl_list)
     # set UTC timezone
@@ -133,9 +133,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
     if 0 < N_ROWS_DRIFT_SECONDS:
         print(DFPL_DRIFT_SECONDS_RECORDS.collect(streaming=True))
-        raise ValueError(
-            f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
-        )
+        msg = f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
+        raise ValueError(msg)
 
     # set had_flow to -1 for dates before DT_END_OF_STICKING_FLOW
     dfpl = dfpl.with_columns(pl.col("had_flow").alias("had_flow_original")).with_columns(
@@ -153,7 +152,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
     if 0 < N_INVALID_HAD_FLOW_ROWS:
         print(DFPL_INVALID_HAD_FLOW_RECORDS.collect(streaming=True))
-        raise ValueError(f"Found {N_INVALID_HAD_FLOW_ROWS = }!")
+        msg = f"Found {N_INVALID_HAD_FLOW_ROWS = }!"
+        raise ValueError(msg)
 
     dfpl = dfpl.sort(pl.col("datetime_utc"), descending=False)
 

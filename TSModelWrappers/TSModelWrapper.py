@@ -745,7 +745,8 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
             "regression",
             "naive",
         ]:
-            raise ValueError(f"Unknown {model_type = }")
+            msg = f"Unknown {model_type = }"
+            raise ValueError(msg)
 
         self.dfp_trainable_evergreen = dfp_trainable_evergreen
         self.dt_val_start_datetime_local = dt_val_start_datetime_local.replace(tzinfo=None)
@@ -1148,7 +1149,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 hyperparam_value = self.fixed_hyperparams[hyperparam]
 
             if not return_none_if_not_found and hyperparam_value is None:
-                raise ValueError(f"Could not find value for required hyperparameter {hyperparam}!")
+                msg = f"Could not find value for required hyperparameter {hyperparam}!"
+                raise ValueError(msg)
 
             return hyperparam_value
 
@@ -1329,7 +1331,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     pass
 
                 if not (isinstance(hyperparam_value, int) and 0 <= hyperparam_value):
-                    raise ValueError(f"Invalid {hyperparam} = {hyperparam_value}!")
+                    msg = f"Invalid {hyperparam} = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             # Note: add any additional non-numeric hyperparameters to translate_hyperparameters_to_numeric
             elif hyperparam == "model_mode_FourTheta":
@@ -1348,7 +1351,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     ModelMode.MULTIPLICATIVE,
                     ModelMode.ADDITIVE,
                 ]:
-                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+                    msg = f"Invalid model_mode_FourTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             elif hyperparam == "season_mode_FourTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -1366,7 +1370,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     SeasonalityMode.MULTIPLICATIVE,
                     SeasonalityMode.ADDITIVE,
                 ]:
-                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+                    msg = f"Invalid season_mode_FourTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -1378,9 +1383,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         hyperparam_value = "additive"
 
                 if hyperparam_value not in ["multiplicative", "additive"]:
-                    raise ValueError(
-                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
-                    )
+                    msg = f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             else:
                 hyperparam_value = get_hyperparam_value(hyperparam)
@@ -1408,7 +1412,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     elif op_func == operator.ge:
                         new_value = rhs_value
                     else:
-                        raise ValueError(f"Unknown {op_func = }! Need to extend code for this use.")
+                        msg = f"Unknown {op_func = }! Need to extend code for this use."
+                        raise ValueError(msg)
 
                     if not op_func(hyperparam_value, rhs_value):
                         logger_ts_wrapper.warning(
@@ -1454,23 +1459,23 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 allowed_values = self.allowed_variable_hyperparams[_k].get("allowed")
                 if allowed_min is not None and allowed_max is not None:
                     if _v < allowed_min or allowed_max < _v:
-                        raise ValueError(
-                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
-                        )
+                        msg = f"Hyperparameter {_k} with value {_v} is not allowed, expected to be between {allowed_min} and {allowed_max}!"
+                        raise ValueError(msg)
 
                 elif allowed_values is not None and isinstance(allowed_values, list):
                     if not set(_v).issubset(set(allowed_values)):
-                        raise ValueError(
-                            f"Hyperparameter {_k} with value {_v} is not allowed, expected to be a subset of {allowed_values}!"
-                        )
+                        msg = f"Hyperparameter {_k} with value {_v} is not allowed, expected to be a subset of {allowed_values}!"
+                        raise ValueError(msg)
 
                 else:
-                    raise ValueError(f"Hyperparameter {_k} with value {_v} can not be checked!")
+                    msg = f"Hyperparameter {_k} with value {_v} can not be checked!"
+                    raise ValueError(msg)
 
             if _k == "time_bin_size_in_minutes" and 60 % _v != 0:
-                raise ValueError(
+                msg = (
                     f"Hyperparameter {_k} with value {_v} is not allowed, {60 % _v = } should be 0!"
                 )
+                raise ValueError(msg)
 
     def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict:
         """Return hyperparameters the model would actually run with if trained now, used in Bayesian optimization.
@@ -1513,7 +1518,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 elif hyperparam_value == ModelMode.ADDITIVE:
                     hyperparam_value = 2
                 else:
-                    raise ValueError(f"Invalid model_mode_FourTheta = {hyperparam_value}!")
+                    msg = f"Invalid model_mode_FourTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             elif hyperparam == "season_mode_FourTheta":
                 if hyperparam_value == SeasonalityMode.NONE:
@@ -1523,7 +1529,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 elif hyperparam_value == SeasonalityMode.ADDITIVE:
                     hyperparam_value = 2
                 else:
-                    raise ValueError(f"Invalid season_mode_FourTheta = {hyperparam_value}!")
+                    msg = f"Invalid season_mode_FourTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             elif hyperparam == "decomposition_type_StatsForecastAutoTheta":
                 if hyperparam_value == "multiplicative":
@@ -1531,9 +1538,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 elif hyperparam_value == "additive":
                     hyperparam_value = 2
                 else:
-                    raise ValueError(
-                        f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
-                    )
+                    msg = f"Invalid decomposition_type_StatsForecastAutoTheta = {hyperparam_value}!"
+                    raise ValueError(msg)
 
             hyperparams_dict[hyperparam] = hyperparam_value
 

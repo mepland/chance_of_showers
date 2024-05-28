@@ -332,15 +332,15 @@ def load_best_points(
             dfp = load_json_log_to_dfp(f_path)
 
         if dfp is None:
-            raise ValueError(f"Could load {f_path}!")
+            msg = f"Could load {f_path}!"
+            raise ValueError(msg)
 
         if TYPE_CHECKING:
             assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
 
         if generic_model_name in dfp_runs_dict:
-            raise ValueError(
-                f"Already loaded log for {generic_model_name}! Please clean the dir structure of {dir_path} and try again."
-            )
+            msg = f"Already loaded log for {generic_model_name}! Please clean the dir structure of {dir_path} and try again."
+            raise ValueError(msg)
 
         dfp_runs_dict[generic_model_name] = pd.DataFrame(dfp)
 
@@ -879,7 +879,8 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         hyperparam_min = configurable_hyperparams.get(hyperparam, {}).get("min")
         hyperparam_max = configurable_hyperparams.get(hyperparam, {}).get("max")
         if hyperparam_min is None or hyperparam_max is None:
-            raise ValueError(f"Could not load hyperparameter definition for {hyperparam = }!")
+            msg = f"Could not load hyperparameter definition for {hyperparam = }!"
+            raise ValueError(msg)
 
         hyperparam_bounds[hyperparam] = (hyperparam_min, hyperparam_max)
 

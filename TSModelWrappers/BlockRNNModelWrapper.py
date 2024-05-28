@@ -74,9 +74,8 @@ class BlockRNNModelWrapper(TSModelWrapper):
 
             else:
                 valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
-                raise ValueError(
-                    f"{model = } must be in {valid_models_str} or be a subclass of CustomBlockRNNModule"
-                )
+                msg = f"{model = } must be in {valid_models_str} or be a subclass of CustomBlockRNNModule"
+                raise ValueError(msg)
 
             _fixed_hyperparams_dict["model"] = model
             # remove model from kwargs so it does not cause later complications

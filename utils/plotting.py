@@ -673,7 +673,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
             elif reference_line["orientation"] == "h":
                 line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             if _label is not None and _label != "":
                 leg_objects.append(line_2d)
@@ -829,7 +830,8 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
             elif reference_line["orientation"] == "h":
                 line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             if _label is not None and _label != "":
                 leg_objects.append(line_2d)
@@ -1121,7 +1123,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
                     known_buttons[rangeselector_button]
                 )
             else:
-                raise ValueError(f"Unknown {rangeselector_button = }!")
+                msg = f"Unknown {rangeselector_button = }!"
+                raise ValueError(msg)
 
     if x_axis_params.get("rangeslider", True):
         trace_layout["xaxis"]["rangeslider"] = {
@@ -1153,7 +1156,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
                     "y1": reference_line["value"],
                 }
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             _name = reference_line.get("name")
             if _name is not None and isinstance(_name, str):

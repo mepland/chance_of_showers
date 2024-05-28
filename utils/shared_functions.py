@@ -77,7 +77,8 @@ def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str
 
     if local_timezone_str is None or local_timezone_str not in zoneinfo.available_timezones():
         available_timezones = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}")
+        msg = f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}"
+        raise ValueError(msg)
 
     return zoneinfo.ZoneInfo(local_timezone_str), local_timezone_str
 
@@ -153,14 +154,12 @@ def rebin_chance_of_showers_time_series(
 
         time_bin_size_minutes = time_bin_size.seconds // 60
         if not 0 < time_bin_size_minutes < 60:
-            raise ValueError(
-                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
-            )
+            msg = f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
+            raise ValueError(msg)
 
         if 60 % time_bin_size_minutes != 0:
-            raise ValueError(
-                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
-            )
+            msg = f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
+            raise ValueError(msg)
 
     cols = [time_col, y_col]
     if rebin_time:
@@ -306,7 +305,8 @@ def write_secure_pickle(
     digest = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
 
     if f_path.suffix != ".pickle":
-        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+        msg = f"f_path ends in {f_path.suffix}, must be .pickle!"
+        raise ValueError(msg)
 
     f_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -338,7 +338,8 @@ def read_secure_pickle(
         shared_key = _get_key_from_platform()
 
     if f_path.suffix != ".pickle":
-        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+        msg = f"f_path ends in {f_path.suffix}, must be .pickle!"
+        raise ValueError(msg)
 
     digest = None
     pickle_data = None
