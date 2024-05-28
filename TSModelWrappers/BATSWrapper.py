@@ -2,6 +2,7 @@
 """Wrapper for BATS."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import BATS
@@ -26,13 +27,13 @@ class BATSWrapper(TSModelWrapper):
     _model_class = BATS
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
+    _required_hyperparams_model = (
         # "seasonal_periods_BATS", # Warning, causes very long run times!
         "use_trend",
         "multiprocessing_start_method",
         "show_warnings",
         "random_state",
-    ]
+    )
 
     # leave the following hyperparameters at their default values:
     # use_box_cox ~ None
@@ -40,16 +41,20 @@ class BATSWrapper(TSModelWrapper):
     # use_arma_errors ~ True
     # n_jobs ~ None
 
-    _fixed_hyperparams_BATS = {
-        "use_trend": False,
-        "multiprocessing_start_method": "fork",  # Runs in jupyter lab with "spawn", but crashes if run in normal env
-    }
+    _fixed_hyperparams_BATS = MappingProxyType(
+        {
+            "use_trend": False,
+            "multiprocessing_start_method": "fork",  # Runs in jupyter lab with "spawn", but crashes if run in normal env
+        }
+    )
 
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
-    _fixed_hyperparams = {
-        **DATA_FIXED_HYPERPARAMS,
-        **_fixed_hyperparams_BATS,
-    }
+    _fixed_hyperparams = MappingProxyType(
+        {
+            **DATA_FIXED_HYPERPARAMS,
+            **_fixed_hyperparams_BATS,
+        }
+    )
 
     def __init__(self: "BATSWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -72,10 +77,10 @@ class BATSWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
+            self.fixed_hyperparams = dict(self._fixed_hyperparams)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -92,8 +97,8 @@ class BATSWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
+                required_hyperparams_model=list(self._required_hyperparams_model),
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
+                fixed_hyperparams=dict(self._fixed_hyperparams),
             )

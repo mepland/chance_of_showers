@@ -3,6 +3,7 @@
 # pylint: enable=invalid-name
 
 import operator
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import TransformerModel
@@ -37,17 +38,19 @@ class TransformerModelWrapper(TSModelWrapper):
         "num_decoder_layers",
         "dim_feedforward",
     ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+    _allowed_variable_hyperparams = MappingProxyType(
+        {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    )
+    _fixed_hyperparams = MappingProxyType({**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS})
 
-    _hyperparams_conditions = [
+    _hyperparams_conditions = (
         # embed_dim must be divisible by num_heads
         {
             "hyperparam": "d_model",
             "condition": operator.ge,
             "rhs": "nhead",
         },
-    ]
+    )
 
     def __init__(self: "TransformerModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -71,10 +74,10 @@ class TransformerModelWrapper(TSModelWrapper):
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
-            self.hyperparams_conditions = self._hyperparams_conditions
+            self.fixed_hyperparams = dict(self._fixed_hyperparams)
+            self.hyperparams_conditions = list(self._hyperparams_conditions)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -92,8 +95,8 @@ class TransformerModelWrapper(TSModelWrapper):
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
-                hyperparams_conditions=self._hyperparams_conditions,
+                fixed_hyperparams=dict(self._fixed_hyperparams),
+                hyperparams_conditions=list(self._hyperparams_conditions),
             )

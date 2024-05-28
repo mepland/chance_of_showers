@@ -29,16 +29,16 @@ class CrostonWrapper(TSModelWrapper):
     _model_class = Croston
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = ["version"]
+    _required_hyperparams_model = ("version",)
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    _valid_versions = [
+    _valid_versions = (
         "classic",
         "optimized",
         "sba",
         # Do not use tsb as alpha_d and alpha_p must be set
-    ]
+    )
 
     def __init__(self: "CrostonWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # setup the version parameter correctly
@@ -92,7 +92,7 @@ class CrostonWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
@@ -112,7 +112,7 @@ class CrostonWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
+                required_hyperparams_model=list(self._required_hyperparams_model),
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,

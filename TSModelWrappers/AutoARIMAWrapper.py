@@ -40,7 +40,7 @@ class AutoARIMAWrapper(TSModelWrapper):
     )
 
     # Set m_AutoARIMA as either a variable or fixed hyperparameter
-    _variable_hyperparams_AutoARIMA=MappingProxyType(
+    _variable_hyperparams_AutoARIMA = MappingProxyType(
         {
             "m_AutoARIMA": {
                 "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...

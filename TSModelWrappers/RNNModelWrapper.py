@@ -3,6 +3,7 @@
 # pylint: enable=invalid-name
 
 import operator
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import RNNModel
@@ -39,10 +40,12 @@ class RNNModelWrapper(TSModelWrapper):
         "n_rnn_layers",
         "training_length",
     ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+    _allowed_variable_hyperparams = MappingProxyType(
+        {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    )
+    _fixed_hyperparams = MappingProxyType({**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS})
 
-    _hyperparams_conditions = [
+    _hyperparams_conditions = (
         # The length of both input (target and covariates) and output (target) time series used during training.
         # Generally speaking, training_length should have a higher value than input_chunk_length
         # because otherwise during training the RNN is never run for as many iterations as it will during inference.
@@ -51,11 +54,12 @@ class RNNModelWrapper(TSModelWrapper):
             "condition": operator.ge,
             "rhs": "input_chunk_length",
         },
-    ]
+    )
 
-    _valid_models = ["RNN", "LSTM", "GRU"]
+    _valid_models = ("RNN", "LSTM", "GRU")
 
     def __init__(self: "RNNModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        _fixed_hyperparams_dict = dict(self._fixed_hyperparams)
         # setup the model parameter correctly
         if "model" in kwargs:
             model = kwargs["model"]
@@ -78,7 +82,7 @@ class RNNModelWrapper(TSModelWrapper):
                     f"{model = } must be in {valid_models_str} or be a subclass of CustomRNNModule"
                 )
 
-            self._fixed_hyperparams["model"] = model
+            _fixed_hyperparams_dict["model"] = model
             # remove model from kwargs so it does not cause later complications
             del kwargs["model"]
         else:
@@ -106,10 +110,10 @@ class RNNModelWrapper(TSModelWrapper):
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
-            self.hyperparams_conditions = self._hyperparams_conditions
+            self.fixed_hyperparams = _fixed_hyperparams_dict
+            self.hyperparams_conditions = list(self._hyperparams_conditions)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -127,8 +131,8 @@ class RNNModelWrapper(TSModelWrapper):
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
-                hyperparams_conditions=self._hyperparams_conditions,
+                fixed_hyperparams=_fixed_hyperparams_dict,
+                hyperparams_conditions=list(self._hyperparams_conditions),
             )

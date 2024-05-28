@@ -2,6 +2,7 @@
 """Wrapper for FourTheta."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import FourTheta
@@ -27,21 +28,23 @@ class FourThetaWrapper(TSModelWrapper):
     _model_class = FourTheta
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
+    _required_hyperparams_model = (
         "theta",
         "season_mode_FourTheta",
         "model_mode_FourTheta",
-    ]
+    )
 
     # leave the following hyperparameters at their default values:
     # seasonality_period ~ None, will be tentatively inferred from the training series upon calling fit().
     # trend_mode ~ TrendMode.LINEAR
     # normalization ~ True
 
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+        }
+    )
 
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
@@ -66,8 +69,8 @@ class FourThetaWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
@@ -86,8 +89,8 @@ class FourThetaWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                required_hyperparams_model=list(self._required_hyperparams_model),
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
             )

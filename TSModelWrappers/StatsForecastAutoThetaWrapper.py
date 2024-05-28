@@ -2,6 +2,7 @@
 """Wrapper for StatsForecastAutoTheta."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import StatsForecastAutoTheta
@@ -27,22 +28,25 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
     _model_class = StatsForecastAutoTheta
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
+    _required_hyperparams_model = (
         "season_length_StatsForecastAutoTheta",
         "decomposition_type_StatsForecastAutoTheta",
-    ]
+    )
 
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
-
-    # Overwrite time_bin_size_in_minutes as small values crash with too many rows
-    _allowed_variable_hyperparams["time_bin_size_in_minutes"]["min"] = 5  # type: ignore[index]
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            **OTHER_ALLOWED_VARIABLE_HYPERPARAMS,
+        }
+    )
 
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
     def __init__(self: "StatsForecastAutoThetaWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        # Overwrite time_bin_size_in_minutes as small values crash with too many rows
+        _allowed_variable_hyperparams_dict = dict(self._allowed_variable_hyperparams)
+        _allowed_variable_hyperparams_dict["time_bin_size_in_minutes"]["min"] = 5  # type: ignore[index]
+
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
         # or even `issubclass(type(kwargs["TSModelWrapper"]), TSModelWrapper)` would be preferable
@@ -63,8 +67,8 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
+            self.allowed_variable_hyperparams = _allowed_variable_hyperparams_dict
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
@@ -83,8 +87,8 @@ class StatsForecastAutoThetaWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                required_hyperparams_model=list(self._required_hyperparams_model),
+                allowed_variable_hyperparams=_allowed_variable_hyperparams_dict,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
             )

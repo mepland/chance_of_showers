@@ -2,6 +2,7 @@
 """Wrapper for Prophet."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any, Final
 
 from darts.models import Prophet
@@ -32,23 +33,24 @@ class ProphetWrapper(TSModelWrapper):
     _model_class = Prophet
     _model_type = "prophet"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = list(PROPHET_FIXED_HYPERPARAMS.keys())
+    _required_hyperparams_model = tuple(PROPHET_FIXED_HYPERPARAMS.keys())
 
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS}
+    _allowed_variable_hyperparams = MappingProxyType({**DATA_VARIABLE_HYPERPARAMS})
+    _fixed_hyperparams = MappingProxyType({**DATA_FIXED_HYPERPARAMS, **PROPHET_FIXED_HYPERPARAMS})
 
     def __init__(self: "ProphetWrapper", **kwargs: Any) -> None:  # noqa: ANN401
+        _allowed_variable_hyperparams_dict = dict(self._allowed_variable_hyperparams)
         # Internally Prophet makes use of components equivalent to
         # day_of_week_frac, time_of_day_frac, and is_holiday,
         # so remove them as potential covariates here.
         allowed_prophet_covariates = [
             _
-            for _ in self._allowed_variable_hyperparams["covariates"]["allowed"]  # type: ignore[index]
+            for _ in _allowed_variable_hyperparams_dict["covariates"]["allowed"]  # type: ignore[index]
             if _ not in ["day_of_week_frac", "time_of_day_frac", "is_holiday"]
         ]
 
-        for k, v in self._allowed_variable_hyperparams["covariates"].items():  # type: ignore[attr-defined]
-            self._allowed_variable_hyperparams["covariates"][k] = [_ for _ in v if _ in allowed_prophet_covariates]  # type: ignore[index]
+        for k, v in _allowed_variable_hyperparams_dict["covariates"].items():  # type: ignore[attr-defined]
+            _allowed_variable_hyperparams_dict["covariates"][k] = [_ for _ in v if _ in allowed_prophet_covariates]  # type: ignore[index]
 
         # boilerplate - the same for all models below here
         # NOTE using `isinstance(kwargs["TSModelWrapper"], TSModelWrapper)`,
@@ -70,10 +72,10 @@ class ProphetWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
+            self.allowed_variable_hyperparams = _allowed_variable_hyperparams_dict
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
+            self.fixed_hyperparams = dict(self._fixed_hyperparams)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -90,8 +92,8 @@ class ProphetWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                required_hyperparams_model=list(self._required_hyperparams_model),
+                allowed_variable_hyperparams=_allowed_variable_hyperparams_dict,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
+                fixed_hyperparams=dict(self._fixed_hyperparams),
             )

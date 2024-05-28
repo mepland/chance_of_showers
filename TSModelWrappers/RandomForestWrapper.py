@@ -2,6 +2,7 @@
 """Wrapper for RandomForest."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import RandomForest
@@ -32,10 +33,12 @@ class RandomForestWrapper(TSModelWrapper):
         "n_estimators",
         "max_depth",
     ]
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+        }
+    )
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
     def __init__(self: "RandomForestWrapper", **kwargs: Any) -> None:  # noqa: ANN401
@@ -60,7 +63,7 @@ class RandomForestWrapper(TSModelWrapper):
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
@@ -80,7 +83,7 @@ class RandomForestWrapper(TSModelWrapper):
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
             )
