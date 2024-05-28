@@ -109,7 +109,8 @@ def normalize_pressure_value(
     if clip:
         if normalized_pressure_value < 0.0:  # noqa: R505 pylint: disable=no-else-return
             return 0.0
-        elif 1.0 < normalized_pressure_value:
+
+        if 1.0 < normalized_pressure_value:
             return 1.0
 
     return normalized_pressure_value
