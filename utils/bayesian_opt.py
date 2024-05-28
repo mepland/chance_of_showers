@@ -684,7 +684,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
             # empty file, create header
             m_writer.writerow(
                 [_ for _ in BAYES_OPT_LOG_COLS_FIXED if _ not in NON_CSV_COLS]
-                + [f"params_{_}" for _ in point.keys()]
+                + [f"params_{_}" for _ in point]
             )
 
         m_writer.writerow(new_row)
