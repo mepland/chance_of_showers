@@ -178,6 +178,10 @@ find_noqa_comments:
 	@grep -rInH 'eslint' $(shell git ls-files '*.js') || true
 	@grep -rInH 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
 
+.PHONY: find_pymend_dummies
+find_pymend_dummies:
+	@grep -rInH '_description_\|_type_\|_summary_\|__UnknownError__' $(shell git ls-files '*.py' '*.ipynb') || true
+
 # Find double spaces that are not leading, and that are not before a `#` character,
 # i.e. indents and `code  # comment` are fine, but `code  # comment with  extra space` is not
 .PHONY: find_double_spaces
