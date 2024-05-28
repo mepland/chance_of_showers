@@ -907,12 +907,12 @@ def plot_prophet(  # pylint: disable=too-many-arguments
 
     leg_objects = []
 
-    for ax, x_axis_params, y_axis_params in zip(
+    for ax, x_axis_params_original, y_axis_params_original in zip(
         fig.axes, x_axis_params_list, y_axis_params_list, strict=True
     ):
         ax.grid(False)
         ann_texts, x_axis_params, y_axis_params = _setup_vars(
-            ann_texts_in, x_axis_params, y_axis_params
+            ann_texts_in, x_axis_params_original, y_axis_params_original
         )
 
         clean_ax(ax, x_axis_params, y_axis_params)

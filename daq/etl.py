@@ -69,9 +69,9 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     dfpl_list = []
 
     csv_total_bytes = 0
-    for f_csv in (PACKAGE_PATH / RAW_DATA_RELATIVE_PATH).glob("*.csv"):
+    for f_csv_str in (PACKAGE_PATH / RAW_DATA_RELATIVE_PATH).glob("*.csv"):
         try:
-            f_csv = pathlib.Path(f_csv)
+            f_csv = pathlib.Path(f_csv_str)
             dfpl = pl.scan_csv(f_csv)
             dfpl = dfpl.with_columns(pl.lit(f_csv.name).alias("fname"))
             dfpl_list.append(dfpl)

@@ -1509,7 +1509,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         Raises:
             ValueError: Bad configuration.
         """
-        for hyperparam, hyperparam_value in hyperparams_dict.items():
+        for hyperparam, hyperparam_value_original in hyperparams_dict.items():
+            hyperparam_value = hyperparam_value_original
             if hyperparam == "model_mode_FourTheta":
                 if hyperparam_value == ModelMode.NONE:
                     hyperparam_value = 0
