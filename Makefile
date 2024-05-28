@@ -46,17 +46,13 @@ black:
 flake8:
 	@poetry run flake8
 
-.PHONY: ruff-check
-ruff-check:
+.PHONY: ruff
+ruff:
 	@poetry run ruff check
 
 .PHONY: ruff-fix
 ruff-fix:
 	@poetry run ruff check --fix-only
-
-.PHONY: ruff-check-unsafe
-ruff-check-unsafe:
-	@poetry run ruff check --unsafe-fixes
 
 .PHONY: ruff-fix-unsafe
 ruff-fix-unsafe:
