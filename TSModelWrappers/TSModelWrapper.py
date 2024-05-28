@@ -1298,21 +1298,18 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "show_warnings":
                 hyperparam_value = 0 < self.verbose
             elif hyperparam == "seasonal_periods_BATS":
-                seasonal_periods = []
                 period_minutes = [
                     # 1 day
                     24 * 60,
                     # 1 week
                     7 * 24 * 60,
                 ]
-                for _period_minutes in period_minutes:
-                    seasonal_periods.append(
-                        math.ceil(
-                            _period_minutes * 60 / self.chosen_hyperparams["time_bin_size"].seconds
-                        )
+                hyperparam_value = [
+                    math.ceil(
+                        _period_minutes * 60 / self.chosen_hyperparams["time_bin_size"].seconds
                     )
-
-                hyperparam_value = seasonal_periods
+                    for _period_minutes in period_minutes
+                ]
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
