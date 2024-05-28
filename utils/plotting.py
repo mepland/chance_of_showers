@@ -910,7 +910,7 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     for ax, x_axis_params_original, y_axis_params_original in zip(
         fig.axes, x_axis_params_list, y_axis_params_list, strict=True
     ):
-        ax.grid(False)
+        ax.grid(visible=False)
         ann_texts, x_axis_params, y_axis_params = _setup_vars(
             ann_texts_in, x_axis_params_original, y_axis_params_original
         )
