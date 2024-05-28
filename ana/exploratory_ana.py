@@ -374,7 +374,7 @@ if torch.cuda.is_available():
     print("CUDA is available")
     print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
 else:
-    msg = "CUDA IS NOT AVAILABLE!"
+    msg = "CUDA IS NOT AVAILABLE!"  # pylint: disable=invalid-name
     raise UserWarning(msg)
 
 # %%
