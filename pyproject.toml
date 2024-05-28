@@ -270,6 +270,8 @@ explicit-preview-rules = true
 
 [tool.ruff.lint.per-file-ignores]
 "ana/exploratory_ana.py" = ["E402", "ERA001", "TCH002"]
+"daq/daq.py" = ["BLE001"]
+"utils/bayesian_opt.py" = ["BLE001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
