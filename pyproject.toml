@@ -269,7 +269,7 @@ preview = true
 explicit-preview-rules = true
 
 [tool.ruff.lint.per-file-ignores]
-"ana/exploratory_ana.py" = ["E402", "ERA001"]
+"ana/exploratory_ana.py" = ["E402", "ERA001", "TCH002"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
