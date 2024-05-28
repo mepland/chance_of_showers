@@ -30,14 +30,14 @@ class TFTModelWrapper(TSModelWrapper):
     _model_class = TFTModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
+    _required_hyperparams_model = (
         *NN_REQUIRED_HYPERPARAMS,
         "hidden_size",
         "lstm_layers",
         "num_attention_heads",
         "full_attention",
         "hidden_continuous_size",
-    ]
+    )
     _allowed_variable_hyperparams = MappingProxyType(
         {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     )
@@ -64,7 +64,7 @@ class TFTModelWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
             self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = dict(self._fixed_hyperparams)
@@ -84,7 +84,7 @@ class TFTModelWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
+                required_hyperparams_model=list(self._required_hyperparams_model),
                 allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=dict(self._fixed_hyperparams),
