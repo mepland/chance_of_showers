@@ -671,9 +671,9 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
     if TYPE_CHECKING:
         assert isinstance(_v, dict)  # noqa: SCS108 # nosec assert_used
 
-    if _v.get("type") == bool:
+    if _v.get("type") is bool:
         boolean_hyperparams.append(_k)
-    elif _v.get("type") == int:
+    elif _v.get("type") is int:
         integer_hyperparams.append(_k)
 
 
