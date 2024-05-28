@@ -108,7 +108,7 @@ def normalize_pressure_value(
 
     # could use np.clip(normalized_pressure_value, a_min=0., a_max=1.), but let's avoid the dependency
     if clip:
-        if normalized_pressure_value < 0.0:  # noqa: R505 pylint: disable=no-else-return
+        if normalized_pressure_value < 0.0:
             return 0.0
 
         if 1.0 < normalized_pressure_value:
