@@ -30,7 +30,8 @@ class NHiTSModelWrapper(TSModelWrapper):
     _model_class = NHiTSModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = [
+        *NN_REQUIRED_HYPERPARAMS,
         "num_stacks",
         "num_blocks",
         "num_layers",
