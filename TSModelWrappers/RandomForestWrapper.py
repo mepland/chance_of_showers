@@ -29,10 +29,7 @@ class RandomForestWrapper(TSModelWrapper):
     _model_class = RandomForest
     _model_type = "regression"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS + [
-        "n_estimators",
-        "max_depth",
-    ]
+    _required_hyperparams_model = [*TREE_REQUIRED_HYPERPARAMS, "n_estimators", "max_depth"]
     _allowed_variable_hyperparams = MappingProxyType(
         {
             **DATA_VARIABLE_HYPERPARAMS,

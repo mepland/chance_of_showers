@@ -31,7 +31,8 @@ class TransformerModelWrapper(TSModelWrapper):
     _model_class = TransformerModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = [
+        *NN_REQUIRED_HYPERPARAMS,
         "d_model",
         "nhead",
         "num_encoder_layers",

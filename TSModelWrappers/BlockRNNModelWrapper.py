@@ -32,11 +32,7 @@ class BlockRNNModelWrapper(TSModelWrapper):
     _model_class = BlockRNNModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
-        "model",
-        "hidden_dim",
-        "n_rnn_layers",
-    ]
+    _required_hyperparams_model = [*NN_REQUIRED_HYPERPARAMS, "model", "hidden_dim", "n_rnn_layers"]
     _allowed_variable_hyperparams = MappingProxyType(
         {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
     )

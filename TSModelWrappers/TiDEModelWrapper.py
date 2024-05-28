@@ -30,7 +30,8 @@ class TiDEModelWrapper(TSModelWrapper):
     _model_class = TiDEModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = [
+        *NN_REQUIRED_HYPERPARAMS,
         "num_encoder_layers",
         "num_decoder_layers",
         "decoder_output_dim",

@@ -30,7 +30,8 @@ class TFTModelWrapper(TSModelWrapper):
     _model_class = TFTModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = [
+        *NN_REQUIRED_HYPERPARAMS,
         "hidden_size",
         "lstm_layers",
         "num_attention_heads",

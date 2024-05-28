@@ -29,7 +29,7 @@ class LightGBMModelWrapper(TSModelWrapper):
     _model_class = LightGBMModel
     _model_type = "regression"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS + ["verbose"]
+    _required_hyperparams_model = [*TREE_REQUIRED_HYPERPARAMS, "verbose"]
 
     _allowed_variable_hyperparams = MappingProxyType(
         {

@@ -1451,7 +1451,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif _k in integer_hyperparams:
                 self.chosen_hyperparams[_k] = int(_v)
 
-            if _k in list(self.fixed_hyperparams.keys()) + ["y_bin_edges"]:
+            if _k in [*list(self.fixed_hyperparams.keys()), "y_bin_edges"]:
                 pass
             elif _k in self.allowed_variable_hyperparams:
                 allowed_min = self.allowed_variable_hyperparams[_k].get("min")
