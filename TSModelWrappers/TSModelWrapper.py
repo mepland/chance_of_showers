@@ -862,15 +862,18 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if not (
             isinstance(self.fixed_hyperparams, dict) and isinstance(self.chosen_hyperparams, dict)
         ):
-            raise TypeError("Need to assemble the hyperparams first!")
+            msg = "Need to assemble the hyperparams first!"
+            raise TypeError(msg)
 
         prediction_length_in_minutes = self.fixed_hyperparams.get("prediction_length_in_minutes")
         if not isinstance(prediction_length_in_minutes, (int, float)):
-            raise TypeError("Could not load prediction_length_in_minutes from fixed_hyperparams!")
+            msg = "Could not load prediction_length_in_minutes from fixed_hyperparams!"
+            raise TypeError(msg)
 
         time_bin_size = self.chosen_hyperparams.get("time_bin_size")
         if not isinstance(time_bin_size, datetime.timedelta):
-            raise TypeError("Could not load time_bin_size from chosen_hyperparams!")
+            msg = "Could not load time_bin_size from chosen_hyperparams!"
+            raise TypeError(msg)
 
         prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
         n_prediction_steps = math.ceil(prediction_length.seconds / time_bin_size.seconds)
@@ -984,17 +987,20 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             ValueError: Bad configuration.
         """
         if work_dir_relative_to_base is not None and work_dir_absolute is not None:
-            raise ValueError("Can not use both parameters, choose one!")
+            msg = "Can not use both parameters, choose one!"
+            raise ValueError(msg)
 
         if work_dir_relative_to_base is not None:
             if self.work_dir_base is None:
-                raise ValueError("Must have a valid work_dir_base!")
+                msg = "Must have a valid work_dir_base!"
+                raise ValueError(msg)
 
             self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
         elif work_dir_absolute is not None:
             self.work_dir = work_dir_absolute
         else:
-            raise ValueError("Must use at least one parameter!")
+            msg = "Must use at least one parameter!"
+            raise ValueError(msg)
 
     def set_model_name_tag(
         self: "TSModelWrapper",
@@ -1017,9 +1023,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             TypeError: Bad configuration.
         """
         if not issubclass(self.model_class, ForecastingModel):  # type: ignore[arg-type]
-            raise TypeError(
-                "self.model_class is not ForecastingModel, can not get model name, should not happen!"
-            )
+            msg = "self.model_class is not ForecastingModel, can not get model name, should not happen!"
+            raise TypeError(msg)
 
         if TYPE_CHECKING:
             assert isinstance(  # noqa: SCS108 # nosec assert_used
@@ -1105,7 +1110,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             and isinstance(self.variable_hyperparams, dict)
             and isinstance(self.fixed_hyperparams, dict)
         ):
-            raise ValueError("Need to give model the hyperparams first, should not happen!")
+            msg = "Need to give model the hyperparams first, should not happen!"
+            raise ValueError(msg)
 
         def get_hyperparam_value(
             hyperparam: str, *, return_none_if_not_found: bool = False
@@ -1179,7 +1185,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 minutes=time_bin_size_in_minutes
             )
         else:
-            raise ValueError("time_bin_size_in_minutes should be in required_hyperparams_all!")
+            msg = "time_bin_size_in_minutes should be in required_hyperparams_all!"
+            raise ValueError(msg)
 
         # set required hyperparams
         for hyperparam in required_hyperparams_all:
@@ -1212,7 +1219,8 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
                 chosen_covariates = _covariates.get(str(hyperparam_value))
                 if chosen_covariates is None:
-                    raise ValueError("Failed to setup covariates correctly via covariates_to_use")
+                    msg = "Failed to setup covariates correctly via covariates_to_use"
+                    raise ValueError(msg)
 
                 self.chosen_hyperparams["covariates"] = chosen_covariates
             elif hyperparam in [  # noqa: R507

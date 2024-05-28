@@ -55,9 +55,8 @@ class CrostonWrapper(TSModelWrapper):
                 version, FutureCovariatesLocalForecastingModel
             ):
                 if "model_name_tag" not in kwargs:
-                    raise ValueError(
-                        "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
-                    )
+                    msg = "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
+                    raise ValueError(msg)
 
             else:
                 valid_versions_str = ", ".join([f"{_!r}" for _ in self._valid_versions])
@@ -69,7 +68,8 @@ class CrostonWrapper(TSModelWrapper):
             # remove version from kwargs so it does not cause later complications
             del kwargs["version"]
         else:
-            raise ValueError("'version' is required in kwargs for CrostonWrapper!")
+            msg = "'version' is required in kwargs for CrostonWrapper!"
+            raise ValueError(msg)
 
         # boilerplate - the same for all models below here
 

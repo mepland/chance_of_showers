@@ -351,6 +351,7 @@ def read_secure_pickle(
 
     recomputed = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
     if not hmac.compare_digest(digest, bytes(recomputed, sys.stdin.encoding)):
-        raise ValueError("Invalid signature!")
+        msg = "Invalid signature!"
+        raise ValueError(msg)
 
     return pickle.loads(pickle_data)  # noqa: DUO103, SCS113 # nosec B301

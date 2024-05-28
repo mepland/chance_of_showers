@@ -72,9 +72,8 @@ class RNNModelWrapper(TSModelWrapper):
 
             elif isinstance(model, type) and issubclass(model, CustomRNNModule):
                 if "model_name_tag" not in kwargs:
-                    raise ValueError(
-                        "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
-                    )
+                    msg = "Require a descriptive model_name_tag in kwargs when using CustomRNNModule for model parameter!"
+                    raise ValueError(msg)
 
             else:
                 valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
@@ -86,7 +85,8 @@ class RNNModelWrapper(TSModelWrapper):
             # remove model from kwargs so it does not cause later complications
             del kwargs["model"]
         else:
-            raise ValueError("'model' is required in kwargs for RNNModelWrapper!")
+            msg = "'model' is required in kwargs for RNNModelWrapper!"
+            raise ValueError(msg)
 
         # boilerplate - the same for all models below here
 

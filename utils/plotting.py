@@ -459,7 +459,8 @@ def _process_hist_binning(
         bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
     else:
         print(binning)
-        raise ValueError("Can not work with this binning dict!")
+        msg = "Can not work with this binning dict!"
+        raise ValueError(msg)
 
     return bin_edges, nbins, bin_size_str
 
@@ -532,9 +533,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
                 x_bin_edges = list(x_values)
 
         else:
-            raise ValueError(
-                "Should not end up here, re-evaluate your hist_dicts and binning inputs!"
-            )
+            msg = "Should not end up here, re-evaluate your hist_dicts and binning inputs!"
+            raise ValueError(msg)
 
         if i_hist_dict == 0:
             x_bin_min = min(x_values)
@@ -600,7 +600,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
                 assert isinstance(_weights, list)  # noqa: SCS108 # nosec assert_used
 
             if len(_bins) - 1 != len(_weights):
-                raise ValueError("Need to write numpy code to histogram the values")
+                msg = "Need to write numpy code to histogram the values"
+                raise ValueError(msg)
 
             _nbins = len(_bins) - 1
             x_axis_labels = []
@@ -761,7 +762,8 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
     if z_norm == "log":
         z_norm = mpl.colors.LogNorm()
     elif z_norm is not None:
-        raise ValueError("Unknown Norm!")
+        msg = "Unknown Norm!"
+        raise ValueError(msg)
 
     from_datetime_to_epoch = np.vectorize(datetime.datetime.timestamp)
     from_epoch_to_datetime = np.vectorize(datetime.datetime.fromtimestamp)
@@ -1218,8 +1220,9 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
         or ann_text_std_add is not None
         or ann_texts_in is not None
     ):
+        msg = "Not implemented for these parameters:"
         raise NotImplementedError(
-            "Not implemented for these parameters:",
+            msg,
             dt_start,
             dt_stop,
             ann_text_std_add,

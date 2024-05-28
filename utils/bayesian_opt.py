@@ -774,7 +774,8 @@ def signal_handler_for_stopping(
     Raises:
         RuntimeError: Out of Time!
     """
-    raise RuntimeError("Out of Time!")
+    msg = "Out of Time!"
+    raise RuntimeError(msg)
 
 
 def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals,too-many-arguments

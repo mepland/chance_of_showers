@@ -69,9 +69,8 @@ class BlockRNNModelWrapper(TSModelWrapper):
 
             elif isinstance(model, type) and issubclass(model, CustomBlockRNNModule):
                 if "model_name_tag" not in kwargs:
-                    raise ValueError(
-                        "Require a descriptive model_name_tag in kwargs when using CustomBlockRNNModule for model parameter!"
-                    )
+                    msg = "Require a descriptive model_name_tag in kwargs when using CustomBlockRNNModule for model parameter!"
+                    raise ValueError(msg)
 
             else:
                 valid_models_str = ", ".join([f"{_!r}" for _ in self._valid_models])
@@ -83,7 +82,8 @@ class BlockRNNModelWrapper(TSModelWrapper):
             # remove model from kwargs so it does not cause later complications
             del kwargs["model"]
         else:
-            raise ValueError("'model' is required in kwargs for BlockRNNModelWrapper!")
+            msg = "'model' is required in kwargs for BlockRNNModelWrapper!"
+            raise ValueError(msg)
 
         # boilerplate - the same for all models below here
 
