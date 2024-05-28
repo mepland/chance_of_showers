@@ -352,10 +352,7 @@ def ann_then_save(
     """
     if ann_texts is not None:
         for text in ann_texts:
-            if forced_text_size is not None:
-                text_size = forced_text_size
-            else:
-                text_size = text.get("size", 18)
+            text_size = forced_text_size if forced_text_size is not None else text.get("size", 18)
 
             plt.figtext(
                 ann_text_origin_x + text.get("x", 0.0),
@@ -442,10 +439,7 @@ def _process_hist_binning(
         # possibly variable size bins from bin_edges
         nbins = len(bin_edges) - 1
         bin_edges = np.array(bin_edges)
-        if bin_size is not None:
-            bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
-        else:
-            bin_size_str = "Variable"
+        bin_size_str = f"{bin_size:{bin_size_str_fmt}}" if bin_size is not None else "Variable"
     elif bin_size is not None and bin_size > 0.0:
         # fixed bin_size
         nbins = int(round((bin_max - bin_min) / bin_size))

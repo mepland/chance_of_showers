@@ -326,10 +326,7 @@ def load_best_points(
     for f_path in sorted(dir_path.glob(f"**/*.{'csv' if use_csv else 'json'}")):
         generic_model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
 
-        if use_csv:
-            dfp = load_csv_log_to_dfp(f_path)
-        else:
-            dfp = load_json_log_to_dfp(f_path)
+        dfp = load_csv_log_to_dfp(f_path) if use_csv else load_json_log_to_dfp(f_path)
 
         if dfp is None:
             msg = f"Could load {f_path}!"
@@ -594,10 +591,7 @@ def print_memory_usage(*, header: str | None = None) -> None:
     """
     ram_info = psutil.virtual_memory()
     process = psutil.Process()
-    if header is not None and header != "":
-        header = f"{header}\n"
-    else:
-        header = ""
+    header = f"{header}\n" if header is not None and header != "" else ""
 
     memory_usage_str = (
         header
