@@ -37,7 +37,7 @@ blocklint = "^0.2.4"
 pymend = { git = "https://github.com/JanEricNitschke/pymend.git" }
 deptry = "^0.12.0"
 html5validator = "^0.4.2"
-typos = "^1.19.0"
+typos = "^1.21.0"
 proselint = "^0.13.0"
 pandas-stubs = "^2.2.0.240218"
 types-pillow = "^10.2.0.20240213"
