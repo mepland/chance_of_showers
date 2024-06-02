@@ -24,7 +24,7 @@ repos:
 
   # black
   - repo: https://github.com/psf/black
-    rev: '24.4.0'
+    rev: '24.4.2'
     hooks:
       - id: black-jupyter
   - repo: https://github.com/adamchainz/blacken-docs
@@ -102,7 +102,7 @@ repos:
 
   # mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.9.0'
+    rev: 'v1.10.0'
     hooks:
       - id: mypy
 
@@ -177,7 +177,7 @@ repos:
 
   # shellcheck
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: 'v0.9.0'
+    rev: 'v0.10.0'
     hooks:
       - id: shellcheck
 
@@ -209,7 +209,7 @@ repos:
 
   # detect-secrets
   - repo: https://github.com/Yelp/detect-secrets
-    rev: 'v1.4.0'
+    rev: 'v1.5.0'
     hooks:
       - id: detect-secrets
         args: ['--exclude-lines', 'integrity=']
@@ -368,7 +368,7 @@ repos:
 
   # pre-commit-hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 'v4.5.0'
+    rev: 'v4.6.0'
     hooks:
       #### python
       # simply checks whether the files parse as valid python
