@@ -151,13 +151,13 @@ jobs:
             echo "::endgroup::"
             poetry run flake8 --format github ${{ steps.filter.outputs.python_files }}
 
-      - name: mypy
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
-
       - name: pylint
         if: (success() || failure()) && steps.filter.outputs.python_alone == 'true'
         run: poetry run pylint ${{ steps.filter.outputs.python_alone_files }}
+
+      - name: mypy
+        if: (success() || failure()) && steps.filter.outputs.python == 'true'
+        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
 
       - name: bandit
         if: (success() || failure()) && steps.filter.outputs.python == 'true'

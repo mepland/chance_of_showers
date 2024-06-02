@@ -71,14 +71,14 @@ ruff-fix:
 ruff-fix-unsafe:
 	@poetry run ruff check --fix-only --unsafe-fixes
 
-.PHONY: mypy
-mypy:
-	@poetry run mypy .
-
 # https://stackoverflow.com/a/63044665
 .PHONY: pylint
 pylint:
 	@poetry run pylint $(shell git ls-files '*.py' '*.ipynb')
+
+.PHONY: mypy
+mypy:
+	@poetry run mypy .
 
 .PHONY: bandit
 bandit:

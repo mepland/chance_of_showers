@@ -28,8 +28,8 @@ black = { extras = ["jupyter"], version = "^24.4.2" }
 blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
 ruff = "^0.4.3"
-mypy = "^1.10.0"
 pylint = "^3.1.0"
+mypy = "^1.10.0"
 bandit = "^1.7.7"
 vulture = "^2.11"
 pymend = { git = "https://github.com/JanEricNitschke/pymend.git" }
@@ -282,26 +282,6 @@ max-locals = 30
 max-statements = 100
 max-nested-blocks = 6
 
-[tool.mypy]
-python_version = "3.11"
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disable_error_code = ["import"]
-# warn_unused_ignores = true is useful when upgrading mypy versions,
-# but leaving it as true all the time gives false positives when running mypy in the pre-commit env
-warn_unused_ignores = false
-exclude = [
-  ".cache",
-  ".direnv",
-  ".env",
-  ".git",
-  ".github",
-  ".ipynb_checkpoints",
-  ".venv",
-  "__pycache__",
-]
-
 [tool.pylint.main]
 fail-under = 10
 fail-on = "I"
@@ -354,6 +334,26 @@ method-naming-style = "snake_case"
 module-naming-style = "snake_case"
 variable-naming-style = "snake_case"
 good-names = ["i", "j", "k", "ex", "Run", "_", "x", "y", "ax", "v", "n"]
+
+[tool.mypy]
+python_version = "3.11"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disable_error_code = ["import"]
+# warn_unused_ignores = true is useful when upgrading mypy versions,
+# but leaving it as true all the time gives false positives when running mypy in the pre-commit env
+warn_unused_ignores = false
+exclude = [
+  ".cache",
+  ".direnv",
+  ".env",
+  ".git",
+  ".github",
+  ".ipynb_checkpoints",
+  ".venv",
+  "__pycache__",
+]
 
 [tool.vulture]
 paths = ["."]
