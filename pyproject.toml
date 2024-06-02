@@ -24,7 +24,7 @@ optional = true
 pre-commit = "^3.6.2"
 isort = "^5.13.2"
 pyupgrade = "^3.15.1"
-black = { extras = ["jupyter"], version = "^24.3.0" }
+black = { extras = ["jupyter"], version = "^24.4.2" }
 blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
 ruff = "^0.4.3"
