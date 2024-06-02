@@ -228,7 +228,7 @@ repos:
       - id: typos
         args: ["-c", "pyproject.toml"]
         types: [text]
-        exclude: "^.*\\.kicad_.*$"
+        exclude: "^.*\\.kicad_.*$|^.*\\.gitignore$"
 
   # pre-commit only
 
