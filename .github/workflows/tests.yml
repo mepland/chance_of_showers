@@ -98,7 +98,7 @@ jobs:
           # do not use unless necessary, i.e. when running poetry checks.
           large-packages: ${{steps.filter.outputs.poetry}}
 
-          # Needed by any dockerized github action
+          # Needed by any dockerized GitHub action
           docker-images: false
 
           # Gets the poetry cache back
@@ -119,23 +119,14 @@ jobs:
 
       - name: Install Node Dependencies
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
-        run: sudo npm install --global standard prettier
+        run: sudo npm install --global standard@latest prettier@latest
 
-      # All files
-      - name: detect-secrets
-        if: success() || failure()
-        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
+      # Python
 
-      - name: blocklint
-        if: success() || failure()
-        run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
-
-      # poetry
       - name: poetry
         if: (success() || failure()) && steps.filter.outputs.poetry == 'true'
         run: poetry check && poetry lock --no-update
 
-      # python
       - name: isort
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run isort ${{ steps.filter.outputs.python_files }}
@@ -147,6 +138,10 @@ jobs:
       - name: black
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
+
+      - name: blacken-docs
+        if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
 
       - name: flake8
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
@@ -176,12 +171,14 @@ jobs:
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run deptry .  # Runs on whole package
 
-      # javascript
+      # Javascript
+
       - name: standard
         if: (success() || failure()) && steps.filter.outputs.javascript == 'true'
         run: standard ${{ steps.filter.outputs.javascript_files }}
 
-      # html
+      # HTML
+
       - name: html5validator
         if: (success() || failure()) && steps.filter.outputs.html == 'true'
         uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
@@ -189,23 +186,27 @@ jobs:
           config: .dev_config/.html5validator.yaml
           # only configurable to run on paths, so just run on whole package
 
-      # prettier: html css scss json
+      # Prettier: HTML CSS SCSS JSON (TOML plugin broken in GitHub actions)
+
       - name: prettier
         if: (success() || failure()) && steps.filter.outputs.prettier == 'true'
         id: prettier
         run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check ${{ steps.filter.outputs.prettier_files }}  # yamllint disable-line rule:line-length
 
-      # yaml
+      # YAML
+
       - name: yamllint
         if: (success() || failure()) && steps.filter.outputs.yaml == 'true'
         run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
 
-      # makefile
+      # Makefile
+
       - name: checkmake
         if: (success() || failure()) && steps.filter.outputs.makefile == 'true'
         uses: Uno-Takashi/checkmake-action@main  # Can not pass multiple files
 
-      # shell files - no extension to filter on, always run
+      # Shell scripts - no extension to filter on, always run
+
       - name: shellcheck shfmt checkbashisms
         if: success() || failure()
         uses: luizm/action-sh-checker@master  # blocklint: pragma
@@ -214,14 +215,8 @@ jobs:
         with:
           sh_checker_checkbashisms_enable: true
 
-      # typos - always run
-      - name: typos
-        if: success() || failure()
-        uses: crate-ci/typos@v1.19.0
-        with:
-          config: pyproject.toml
+      # Markdown
 
-      # docs
       - name: markdownlint
         if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
         uses: nosborn/github-action-markdown-cli@v3.3.0
@@ -231,9 +226,21 @@ jobs:
           config_file: .dev_config/.markdownlint.yaml
           ignore_files: LICENSE.md
 
-      - name: blacken-docs
-        if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
-        run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
+      # All files
+
+      - name: detect-secrets
+        if: success() || failure()
+        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
+
+      - name: blocklint
+        if: success() || failure()
+        run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
+
+      - name: typos
+        if: success() || failure()
+        uses: crate-ci/typos@v1.21.0
+        with:
+          config: pyproject.toml
 
       - name: trailing-spaces
         if: (success() || failure()) && steps.filter.outputs.any == 'true'

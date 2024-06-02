@@ -1,6 +1,8 @@
 # See https://pre-commit.com for more information
 repos:
 
+  # Python
+
   # poetry - commented out due to long run times
   # - repo: https://github.com/python-poetry/poetry
   #   rev: '1.8.2'
@@ -16,13 +18,13 @@ repos:
 
   # pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.15.1'
+    rev: 'v3.15.2'
     hooks:
       - id: pyupgrade
 
   # black
   - repo: https://github.com/psf/black
-    rev: '24.3.0'
+    rev: '24.4.0'
     hooks:
       - id: black-jupyter
   - repo: https://github.com/adamchainz/blacken-docs
@@ -30,7 +32,7 @@ repos:
     hooks:
       - id: blacken-docs
         args: ['--line-length=100']
-        additional_dependencies: ['black==24.3.0']
+        additional_dependencies: ['black==24.4.0']
 
   # flake8
   - repo: https://github.com/pycqa/flake8
@@ -100,7 +102,7 @@ repos:
 
   # mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.8.0'
+    rev: 'v1.9.0'
     hooks:
       - id: mypy
 
@@ -116,7 +118,7 @@ repos:
 
   # bandit
   - repo: https://github.com/PyCQA/bandit
-    rev: '1.7.7'
+    rev: '1.7.8'
     hooks:
       - id: bandit
         args: ['-q']
@@ -134,12 +136,27 @@ repos:
   #     - id: deptry
   #       types: [python]
 
-  # detect-secrets
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: 'v1.4.0'
+  # Javascript
+
+  # standard
+  - repo: https://github.com/standard/standard
+    rev: v17.1.0
     hooks:
-      - id: detect-secrets
-        args: ['--exclude-lines', 'integrity=']
+      - id: standard
+
+  # HTML
+
+  # html5validator does not work with pre-commit since it checks modified files iteratively.
+  # Use `make html5validator` for local testing instead.
+
+  # Prettier: HTML CSS SCSS JSON TOML
+
+  # The https://github.com/pre-commit/mirrors-prettier
+  # pre-commit hook does not respect --ignore-path or --config,
+  # so we would have to code the settings in here independently.
+  # It also runs quite slowly, so just use `make fmt_prettier` instead.
+
+  # YAML
 
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
@@ -148,46 +165,15 @@ repos:
       - id: yamllint
         args: ['-c', '.dev_config/.yamllint.yaml', '--strict']
 
-  # blocklint
-  - repo: https://github.com/PrincetonUniversity/blocklint
-    rev: 'v0.2.4'
-    hooks:
-      - id: blocklint
-        args: ['--skip-files=poetry.lock', '--max-issue-threshold=1']
-
-  # markdownlint
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
-    hooks:
-      - id: markdownlint
-        args: ['--config', '.dev_config/.markdownlint.yaml', '--ignore', 'LICENSE.md', '--dot']
-
-  # standard
-  - repo: https://github.com/standard/standard
-    rev: v17.1.0
-    hooks:
-      - id: standard
-
-  # html5validator does not work with pre-commit since it checks modified files iteratively.
-  # Use `make html5validator` for local testing instead.
-
-  # prettier
-  # This pre-commit hook does not respect --ignore-path or --config,
-  # so we have to code the settings in here independently.
-  # It also runs quite slowly, so just use `make fmt_prettier` instead.
-  # - repo: https://github.com/pre-commit/mirrors-prettier
-  #   rev: "v4.0.0-alpha.8"
-  #   hooks:
-  #     - id: prettier
-  #       args: ['--no-config', '--print-width', '100', '--single-attribute-per-line']
-  #       types_or: [html, css, scss, text]
-  #       exclude: '.\.md|.\.yml|.\.yaml|.\.js|.\.min.css|Makefile'
+  # Makefile
 
   # checkmake
   - repo: https://github.com/mrtazz/checkmake.git
     rev: '0.2.2'
     hooks:
       - id: checkmake
+
+  # Shell scripts
 
   # shellcheck
   - repo: https://github.com/koalaman/shellcheck-precommit
@@ -202,21 +188,49 @@ repos:
       - id: shfmt
         args: ['-bn', '-ci', '-sr', '-s', '-w']
 
+  # Markdown
+
+  # markdownlint
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.dev_config/.markdownlint.yaml', '--ignore', 'LICENSE.md', '--dot']
+
+  # GitHub actions
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+        args: ['-ignore', 'SC2086']
+
+  # All files
+
+  # detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 'v1.4.0'
+    hooks:
+      - id: detect-secrets
+        args: ['--exclude-lines', 'integrity=']
+
+  # blocklint
+  - repo: https://github.com/PrincetonUniversity/blocklint
+    rev: 'v0.2.5'
+    hooks:
+      - id: blocklint
+        args: ['--skip-files=poetry.lock', '--max-issue-threshold=1']
+
   # typos
   - repo: https://github.com/crate-ci/typos
-    rev: v1.19.0
+    rev: v1.21.0
     hooks:
       - id: typos
         args: ["-c", "pyproject.toml"]
         types: [text]
         exclude: "^.*\\.kicad_.*$"
 
-  # github actions
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.27
-    hooks:
-      - id: actionlint
-        args: ['-ignore', 'SC2086']
+  # pre-commit only
 
   # Clean carriage return and line feed
   # https://github.com/Lucas-C/pre-commit-hooks

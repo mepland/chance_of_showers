@@ -1,5 +1,14 @@
 .PHONY: all clean test
 
+# Clean temporary files
+
+.PHONY: clean
+clean:
+	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache|.ruff_cache)" | xargs rm -rf
+	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -f
+
+# Setup
+
 .PHONY: setupDAQ
 setupDAQ:
 	@poetry env use python3.11
@@ -12,10 +21,7 @@ setupANA:
 	@poetry install --with ana,dev --no-root
 	@poetry run pre-commit install
 
-.PHONY: poetry
-poetry:
-	@poetry check
-	@poetry lock --no-update
+# pre-commit
 
 .PHONY: pre-commit
 pre-commit:
@@ -28,6 +34,13 @@ pre-commit-this-commit:
 .PHONY: pre-commit-update
 pre-commit-update:
 	@poetry run pre-commit autoupdate
+
+# Python
+
+.PHONY: poetry
+poetry:
+	@poetry check
+	@poetry lock --no-update
 
 .PHONY: isort
 isort:
@@ -94,38 +107,37 @@ pymend-fix:
 deptry:
 	@poetry run deptry .
 
-.PHONY: detect-secrets
-detect-secrets:
-	@poetry run detect-secrets-hook --exclude-lines 'integrity='
-
-.PHONY: yamllint
-yamllint:
-	@poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
-
-# Renamed to bklint so "make bl" autocompletes to "make black"
-.PHONY: bklint
-bklint:
-	@poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
-
-.PHONY: markdownlint
-markdownlint:
-	@markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot --fix .
+# Javascript
 
 .PHONY: standard
 standard:
 	@standard --fix
 
+# HTML
+
 .PHONY: html5validator
 html5validator:
 	@html5validator --config .dev_config/.html5validator.yaml
+
+# Prettier: HTML CSS SCSS JSON TOML
 
 .PHONY: fmt_prettier
 fmt_prettier:
 	@prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --plugin=prettier-plugin-toml --write .
 
+# YAML
+
+.PHONY: yamllint
+yamllint:
+	@poetry run yamllint -c .dev_config/.yamllint.yaml --strict .
+
+# Makefile
+
 .PHONY: checkmake
 checkmake:
 	@pre-commit run checkmake --all-files
+
+# Shell scripts
 
 .PHONY: shellcheck
 shellcheck:
@@ -134,6 +146,29 @@ shellcheck:
 .PHONY: shfmt
 shfmt:
 	@shfmt -bn -ci -sr -s -w $(shell git ls-files | grep -vE '.*\..*' | grep -v 'Makefile')
+
+# Markdown
+
+.PHONY: markdownlint
+markdownlint:
+	@markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot --fix .
+
+# GitHub actions
+
+.PHONY: actionlint
+actionlint:
+	@pre-commit run actionlint --all-files
+
+# All files
+
+.PHONY: detect-secrets
+detect-secrets:
+	@poetry run detect-secrets-hook --exclude-lines 'integrity='
+
+# Renamed to bklint so "make bl" autocompletes to "make black"
+.PHONY: bklint
+bklint:
+	@poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
 .PHONY: typos
 typos:
@@ -147,15 +182,24 @@ typos-long:
 typos-fix:
 	@poetry run typos -w
 
-.PHONY: clean
-clean:
-	@find . -type d | grep -E "(.mypy_cache|.ipynb_checkpoints|.trash|__pycache__|.pytest_cache|.ruff_cache)" | xargs rm -rf
-	@find . -type f | grep -E "(\.DS_Store|\.pyc|\.pyo)" | xargs rm -f
-
 # Reverse prose and lint to avoid autocomplete matches with pre-commit
+# Runs slowly and has many false positives, use locally only
 .PHONY: lintprose
 lintprose:
 	@poetry run proselint --config .dev_config/.proselint.json $(shell git ls-files | grep -v -E "media/|circuit_diagram/|poetry.lock|Makefile|daq/cron_jobs.txt") | grep -v -E "30ppm|né|high and dry"
+
+# Find double spaces that are not leading, and that are not before a `#` character,
+# i.e. indents and `code  # comment` are fine, but `code  # comment with  extra space` is not
+# Some false positives, so do not implement in GitHub actions tests.yml
+.PHONY: find_double_spaces
+find_double_spaces:
+	@grep -rInHE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
+
+.PHONY: find_trailing_spaces
+find_trailing_spaces:
+	@grep -rInHE ' $$' $(shell git ls-files ':!:poetry.lock' ':!:media') || true
+
+# Python linting helper commands
 
 # isort ~ isort:
 # flake8 ~ noqa
@@ -178,17 +222,6 @@ find_noqa_comments:
 	@grep -rInH 'eslint' $(shell git ls-files '*.js') || true
 	@grep -rInH 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
 
-.PHONY: find_pymend_dummies
-find_pymend_dummies:
+.PHONY: find_pymend_placeholders
+find_pymend_placeholders:
 	@grep -rInH '_description_\|_type_\|_summary_\|__UnknownError__' $(shell git ls-files '*.py' '*.ipynb') || true
-
-# Find double spaces that are not leading, and that are not before a `#` character,
-# i.e. indents and `code  # comment` are fine, but `code  # comment with  extra space` is not
-.PHONY: find_double_spaces
-find_double_spaces:
-	@grep -rInHE '[^ \n] {2,}[^#]' $(shell git ls-files ':!:poetry.lock' ':!:media' ':!:daq/logs') || true
-
-# Find trailing spaces
-.PHONY: find_trailing_spaces
-find_trailing_spaces:
-	@grep -rInHE ' $$' $(shell git ls-files ':!:poetry.lock' ':!:media') || true
