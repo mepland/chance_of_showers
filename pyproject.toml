@@ -413,7 +413,7 @@ DEP001 = [
 
 [tool.typos.default]
 locale = "en-us"
-extend-ignore-words-re = ["MAPE", "Dout"]
+extend-ignore-words-re = ["MAPE", "Dout", "thr"]
 
 [tool.typos.files]
 extend-exclude = [
@@ -426,6 +426,7 @@ extend-exclude = [
   ".venv",
   "__pycache__",
   "*.kicad*",
+  ".gitignore",
 ]
 ignore-hidden = false
 ignore-parent = false
