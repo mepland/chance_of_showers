@@ -9,6 +9,7 @@ logs the data, and creates time series forecasts of future water pressure.
 [![Darts](https://img.shields.io/badge/Darts-0023f7?style=flat&logo=data:image/svg%2bxml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMzQ4IiBoZWlnaHQ9IjM0OCIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMzQ4IDM0OCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE3NCwxNzQpIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iOCI+CiAgPGNpcmNsZSByPSIxNzAiLz4KICA8Y2lyY2xlIGN4PSIyOCIgcj0iMTI0Ii8+CiAgPGNpcmNsZSBjeD0iNTciIHI9Ijc3Ii8+CiAgPGNpcmNsZSBjeD0iODUiIHI9IjMwIi8+CiA8L2c+Cjwvc3ZnPgo=)](https://github.com/unit8co/darts)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org)
 
+[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json?style=flat)](https://python-poetry.org)
 [![Plotly](https://img.shields.io/badge/Plotly-%233F4F75.svg?style=flat&logo=plotly&logoColor=white)](https://plotly.com)
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=flat&logo=data:image/svg%2bxml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJvbGU9ImltZyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8cGF0aCBkPSJtMTIgMGMtNi42MjMgMC0xMiA1LjM3Ny0xMiAxMnM1LjM3NyAxMiAxMiAxMiAxMi01LjM3NyAxMi0xMi01LjM3Ny0xMi0xMi0xMnptMCAwLjI3YzYuNDc0IDAgMTEuNzMgNS4yNTYgMTEuNzMgMTEuNzNzLTUuMjU2IDExLjczLTExLjczIDExLjczLTExLjczLTUuMjU2LTExLjczLTExLjczIDUuMjU2LTExLjczIDExLjczLTExLjczem0wLjAxNiAxMS40OTMtMi4xMjItOS41NTEtMC4wNjYgMC4wMTRhMTAuMDU2IDEwLjA1NiAwIDAgMC00LjIwOCAyLjAzNmwtMC4wNTIgMC4wNDMgNi4xODQgNy41MDEtNy42MDUtMy42NzItMC4wMjggMC4wNjJhOC44MzMgOC44MzMgMCAwIDAtMC42OCA1LjI5OWwwLjAxMiAwLjA2NiA4LjA4Ny0xLjQxMi00LjA2OSAxLjk3MyAwLjAxNyAwLjA1NmMwLjA3NSAwLjIzNCAwLjE2NiAwLjQ2MiAwLjI3NCAwLjY4M2wwLjAzNCAwLjA3IDQuMTAzLTIuNzgtMS4zMjYgNS45NjkgMC4wNjcgMC4wMTRjMC44MSAwLjE2MSAxLjY0NCAwLjE2MSAyLjQ1NCAwbDAuMDY1LTAuMDEzLTEuMDQ0LTUuODcgNi4wNzggNy42NjQgMC4wNTMtMC4wNDJhMTAuMDQgMTAuMDQgMCAwIDAgMS42MjktMS42MjlsMC4wNDItMC4wNTMtNy43MjItNi4xMjRoMi4yOTNsOGUtMyAtMC4wNThhMi41MTMgMi41MTMgMCAwIDAgMC0wLjY5M2wtMC4wMTEtMC4wNzYtMi4zMDIgMC42NCA0LjQ5OS01LjY5LTAuMDU1LTAuMDQyYTcuNDk1IDcuNDk1IDAgMCAwLTIuMDQxLTEuMDg4bC0wLjA2Mi0wLjAyMnoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=)](https://matplotlib.org)
 [![Polars](https://img.shields.io/badge/Polars-cd792c.svg?style=flat&logo=Polars&logoColor=white)](https://github.com/pola-rs/polars)
@@ -18,23 +19,6 @@ logs the data, and creates time series forecasts of future water pressure.
 [![Socket.io](https://img.shields.io/badge/Socket.io-black?style=flat&logo=socket.io&badgeColor=010101)](https://socket.io)
 [![Raspberry Pi](https://img.shields.io/badge/-RaspberryPi-C51A4A?style=flat&logo=Raspberry-Pi)](https://www.raspberrypi.com)
 [![KiCad](https://img.shields.io/badge/KiCad-314CB0.svg?style=flat&logo=KiCad&logoColor=white)](https://www.kicad.org)
-
-[![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json?style=flat)](https://python-poetry.org)
-[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
-[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen?style=flat)](https://github.com/pylint-dev/pylint)
-[![linting: flake8](https://img.shields.io/badge/flake8-checked-blueviolet?style=flat)](https://github.com/PyCQA/flake8)
-[![checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://github.com/python/mypy)
-[![imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://github.com/PyCQA/isort)
-[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
-[![linting: markdownlint](https://img.shields.io/badge/linting-markdownlint-blue?style=flat)](https://github.com/DavidAnson/markdownlint)
-[![linting: html5validator](https://img.shields.io/badge/linting-html5validator-blue?style=flat)](https://github.com/svenkreiss/html5validator)
-[![linting: StandardJS](https://img.shields.io/badge/StandardJS-222222.svg?style=flat&logo=StandardJS&logoColor=f3df49)](https://github.com/standard/standard)
-[![linting: yamllint](https://img.shields.io/badge/linting-yamllint-blue?style=flat)](https://github.com/adrienverge/yamllint)
-[![code style: Prettier](https://img.shields.io/badge/Prettier-222222.svg?style=flat&logo=Prettier&logoColor=f7b93e)](https://prettier.io)
-[![linting: checkmake](https://img.shields.io/badge/linting-checkmake-blue?style=flat)](https://github.com/mrtazz/checkmake)
-[![linting: shellcheck](https://img.shields.io/badge/linting-shellcheck-blue?style=flat)](https://github.com/koalaman/shellcheck)
-[![linting: shfmt](https://img.shields.io/badge/linting-shfmt-blue?style=flat)](https://github.com/mvdan/sh)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 [![tests](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml/badge.svg?style=flat)](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml)
 [![healthchecks.io](https://healthchecks.io/badge/63dd8297-b724-4e7d-988b-7eeeca/0nnc0EMy.svg?style=flat)](https://healthchecks.io)
@@ -269,6 +253,34 @@ via the `exploratory_ana.py` notebook.
 ```
 
 ## Dev Notes
+
+### Linting Tools
+
+[![imports: isort](https://img.shields.io/badge/imports-isort-%231674b1?style=flat)](https://github.com/PyCQA/isort)
+[![linting: pyupgrade](https://img.shields.io/badge/linting-pyupgrade-blue?style=flat)](https://github.com/asottile/pyupgrade)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat)](https://github.com/psf/black)
+[![linting: flake8](https://img.shields.io/badge/linting-flake8-blueviolet?style=flat)](https://github.com/PyCQA/flake8)
+[![linting: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen?style=flat)](https://github.com/pylint-dev/pylint)
+[![type checking: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg?style=flat)](https://github.com/python/mypy)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat)](https://github.com/PyCQA/bandit)
+[![linting: vulture](https://img.shields.io/badge/linting-vulture-blue?style=flat)](https://github.com/jendrikseipp/vulture)
+[![docstrings: pymend](https://img.shields.io/badge/docstrings-pymend-blue?style=flat)](https://github.com/JanEricNitschke/pymend)
+[![dependencies: deptry](https://img.shields.io/badge/dependencies-deptry-blue?style=flat)](https://github.com/fpgmaas/deptry)
+
+[![linting: StandardJS](https://img.shields.io/badge/Standard-222222.svg?style=flat&logo=StandardJS&logoColor=f3df49)](https://github.com/standard/standard)
+[![linting: html5validator](https://img.shields.io/badge/linting-html5validator-blue?style=flat)](https://github.com/svenkreiss/html5validator)
+[![code style: Prettier](https://img.shields.io/badge/Prettier-222222.svg?style=flat&logo=Prettier&logoColor=f7b93e)](https://prettier.io)
+[![linting: yamllint](https://img.shields.io/badge/linting-yamllint-blue?style=flat)](https://github.com/adrienverge/yamllint)
+[![linting: checkmake](https://img.shields.io/badge/linting-checkmake-blue?style=flat)](https://github.com/mrtazz/checkmake)
+[![linting: shellcheck](https://img.shields.io/badge/linting-shellcheck-blue?style=flat)](https://github.com/koalaman/shellcheck)
+[![code style: shfmt](https://img.shields.io/badge/code%20style-shfmt-blue?style=flat)](https://github.com/mvdan/sh)
+[![linting: markdownlint](https://img.shields.io/badge/linting-markdownlint-blue?style=flat)](https://github.com/DavidAnson/markdownlint)
+[![linting: actionlint](https://img.shields.io/badge/linting-actionlint-blue?style=flat)](https://github.com/rhysd/actionlint)
+[![security: detect-secrets](https://img.shields.io/badge/security-detect--secrets-blue?style=flat)](https://github.com/Yelp/detect-secrets)
+[![linting: blocklint](https://img.shields.io/badge/linting-blocklint-blue?style=flat)](https://github.com/PrincetonUniversity/blocklint)
+[![spelling: typos](https://img.shields.io/badge/spelling-typos-blue?style=flat)](https://github.com/crate-ci/typos)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=flat&logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 ### Data Analysis Setup - Installing CUDA and PyTorch
 
