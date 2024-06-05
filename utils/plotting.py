@@ -609,7 +609,7 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-locals,too-many-argumen
                     upper_inequality = r"$\leq$"
 
                 x_axis_labels.append(
-                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # noqa: FS002 pylint: disable=consider-using-f-string
+                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # noqa: FS002 # pylint: disable=consider-using-f-string
                         low=my_large_num_formatter(_bins[i], e_precision=0),
                         high=my_large_num_formatter(_bins[i + 1], e_precision=0),
                         var=x_axis_params.get("axis_label", "Binned Variable"),
