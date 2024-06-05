@@ -591,7 +591,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
         else:
             # plot via ax.bar instead of ax.hist - better for some use cases with variable bins
             if TYPE_CHECKING:
-                assert isinstance(_weights, list)  # noqa: SCS108 # nosec assert_used
+                assert isinstance(_weights, list)  # noqa: SCS108 # nosec: B101
 
             if len(_bins) - 1 != len(_weights):
                 msg = "Need to write numpy code to histogram the values"
@@ -1109,7 +1109,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
             rangeselector_buttons = list(known_buttons.keys())
 
         if TYPE_CHECKING:
-            assert isinstance(rangeselector_buttons, list)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(rangeselector_buttons, list)  # noqa: SCS108 # nosec: B101
 
         for rangeselector_button in rangeselector_buttons:
             if rangeselector_button in known_buttons:
@@ -1229,7 +1229,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
 
     if save_html:
         if TYPE_CHECKING:
-            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec: B101
 
         save_ploty_to_html(fig, m_path, fname, tag)
 

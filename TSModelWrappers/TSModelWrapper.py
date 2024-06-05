@@ -669,7 +669,7 @@ for _k, _v in VARIABLE_HYPERPARAMS.items():
         continue
 
     if TYPE_CHECKING:
-        assert isinstance(_v, dict)  # noqa: SCS108 # nosec assert_used
+        assert isinstance(_v, dict)  # noqa: SCS108 # nosec: B101
 
     if _v.get("type") is bool:
         boolean_hyperparams.append(_k)
@@ -829,7 +829,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             random_state = default_random_state
 
         if TYPE_CHECKING:
-            assert isinstance(random_state, int)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(random_state, int)  # noqa: SCS108 # nosec: B101
 
         return random_state
 
@@ -1028,9 +1028,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             raise TypeError(msg)
 
         if TYPE_CHECKING:
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.model_class, ForecastingModel
-            )
+            assert isinstance(self.model_class, ForecastingModel)  # noqa: SCS108 # nosec: B101
 
         if self.model_name_tag is not None and self.model_name_tag != "":
             _model_name_tag = f"_{self.model_name_tag}"
@@ -1064,15 +1062,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         # construct model object
         if TYPE_CHECKING:
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.allowed_variable_hyperparams, dict
-            )
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.required_hyperparams_model, list
-            )
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.required_hyperparams_data, list
-            )
+            assert isinstance(self.allowed_variable_hyperparams, dict)  # noqa: SCS108 # nosec: B101
+            assert isinstance(self.required_hyperparams_model, list)  # noqa: SCS108 # nosec: B101
+            assert isinstance(self.required_hyperparams_data, list)  # noqa: SCS108 # nosec: B101
 
         hyperparams_to_return = [
             _
@@ -1130,13 +1122,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 ValueError: Bad configuration.
             """
             if TYPE_CHECKING:
-                assert isinstance(  # noqa: SCS108 # nosec assert_used
+                assert isinstance(  # noqa: SCS108 # nosec: B101
                     self.allowed_variable_hyperparams, dict
                 )
-                assert isinstance(  # noqa: SCS108 # nosec assert_used
-                    self.variable_hyperparams, dict
-                )
-                assert isinstance(self.fixed_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
+                assert isinstance(self.variable_hyperparams, dict)  # noqa: SCS108 # nosec: B101
+                assert isinstance(self.fixed_hyperparams, dict)  # noqa: SCS108 # nosec: B101
 
             hyperparam_value = None
             if hyperparam in self.variable_hyperparams:
@@ -1158,9 +1148,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         if "time_bin_size_in_minutes" in required_hyperparams_all:
             time_bin_size_in_minutes = get_hyperparam_value("time_bin_size_in_minutes")
             if TYPE_CHECKING:
-                assert isinstance(  # noqa: SCS108 # nosec assert_used
-                    time_bin_size_in_minutes, float
-                )
+                assert isinstance(time_bin_size_in_minutes, float)  # noqa: SCS108 # nosec: B101
 
             # Ensure that time_bin_size_in_minutes is a divisor of 60 minutes
             def get_closest_divisor(input_divisor: float, *, n: int = 60) -> int:
@@ -1201,7 +1189,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "y_presentation":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec: B101
 
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 1:  # y is binned
@@ -1211,13 +1199,13 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "covariates_to_use":
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(hyperparam_value, float)  # noqa: SCS108 # nosec: B101
 
                 hyperparam_value = int(round(hyperparam_value))
 
                 _covariates = get_hyperparam_value("covariates")
                 if TYPE_CHECKING:
-                    assert isinstance(_covariates, dict)  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(_covariates, dict)  # noqa: SCS108 # nosec: B101
 
                 chosen_covariates = _covariates.get(str(hyperparam_value))
                 if chosen_covariates is None:
@@ -1246,7 +1234,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam == "output_chunk_length":
                 prediction_length_in_minutes = get_hyperparam_value("prediction_length_in_minutes")
                 if TYPE_CHECKING:
-                    assert isinstance(  # noqa: SCS108 # nosec assert_used
+                    assert isinstance(  # noqa: SCS108 # nosec: B101
                         prediction_length_in_minutes, float
                     )
 
@@ -1313,9 +1301,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             elif hyperparam in ["season_length_StatsForecastAutoTheta", "m_AutoARIMA"]:
                 hyperparam_value = get_hyperparam_value(hyperparam)
                 if TYPE_CHECKING:
-                    assert isinstance(  # noqa: SCS108 # nosec assert_used
-                        hyperparam_value, (int, float)
-                    )
+                    assert isinstance(hyperparam_value, (int, float))  # noqa: SCS108 # nosec: B101
 
                 hyperparam_value = int(round(hyperparam_value))
                 if hyperparam_value == 0:
@@ -1488,7 +1474,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         self._assemble_hyperparams()
         if TYPE_CHECKING:
-            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec: B101
 
         return self.chosen_hyperparams
 
@@ -1563,13 +1549,9 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
         # construct model object
         if TYPE_CHECKING:
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.model_class, ForecastingModel
-            )
-            assert isinstance(  # noqa: SCS108 # nosec assert_used
-                self.required_hyperparams_model, list
-            )
-            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(self.model_class, ForecastingModel)  # noqa: SCS108 # nosec: B101
+            assert isinstance(self.required_hyperparams_model, list)  # noqa: SCS108 # nosec: B101
+            assert isinstance(self.chosen_hyperparams, dict)  # noqa: SCS108 # nosec: B101
 
         chosen_hyperparams_model = {
             k: v for k, v in self.chosen_hyperparams.items() if k in self.required_hyperparams_model
@@ -1604,7 +1586,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             self.model = _model
 
             if TYPE_CHECKING:
-                assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec assert_used
+                assert isinstance(self.model, ForecastingModel)  # noqa: SCS108 # nosec: B101
 
             # data prep
             time_bin_size = self.chosen_hyperparams["time_bin_size"]

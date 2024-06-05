@@ -241,8 +241,8 @@ def drive_bayesian_opt(
             print(f"Optimizing {_model_name}")
 
         if TYPE_CHECKING:
-            assert isinstance(run_bayesian_opt_kwargs, dict)  # noqa: SCS108 # nosec assert_used
-            assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(run_bayesian_opt_kwargs, dict)  # noqa: SCS108 # nosec: B101
+            assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec: B101
 
         _, optimizer, exception_status = run_bayesian_opt(
             **run_bayesian_opt_kwargs,  # type: ignore[arg-type]

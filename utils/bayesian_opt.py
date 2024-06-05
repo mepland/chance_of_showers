@@ -333,7 +333,7 @@ def load_best_points(
             raise ValueError(msg)
 
         if TYPE_CHECKING:
-            assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(dfp, pd.DataFrame)  # noqa: SCS108 # nosec: B101
 
         if generic_model_name in dfp_runs_dict:
             msg = f"Already loaded log for {generic_model_name}! Please clean the dir structure of {dir_path} and try again."
@@ -1143,7 +1143,7 @@ next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
                 # Setup iteration kill timer
                 if max_time_per_model_flag:
                     if TYPE_CHECKING:
-                        assert isinstance(  # noqa: SCS108 # nosec assert_used
+                        assert isinstance(  # noqa: SCS108 # nosec: B101
                             max_time_per_model, datetime.timedelta
                         )
 

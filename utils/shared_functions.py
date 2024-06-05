@@ -150,7 +150,7 @@ def rebin_chance_of_showers_time_series(
 
     if rebin_time:
         if TYPE_CHECKING:
-            assert isinstance(time_bin_size, datetime.timedelta)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(time_bin_size, datetime.timedelta)  # noqa: SCS108 # nosec: B101
 
         time_bin_size_minutes = time_bin_size.seconds // 60
         if not 0 < time_bin_size_minutes < 60:
@@ -188,7 +188,7 @@ def rebin_chance_of_showers_time_series(
 
     if rebin_y:
         if TYPE_CHECKING:
-            assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec: B101
 
         dfp[y_col] = pd.cut(dfp[y_col], bins=y_bin_edges, right=True, labels=y_bin_edges[1:])
 

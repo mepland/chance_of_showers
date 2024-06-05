@@ -417,9 +417,7 @@ print(model_wrapper_Prophet)
 n_prediction_steps, time_bin_size = model_wrapper_Prophet.get_n_prediction_steps_and_time_bin_size()
 
 if TYPE_CHECKING:
-    assert isinstance(  # noqa: SCS108 # nosec assert_used
-        model_wrapper_Prophet.model, darts_Prophet
-    )
+    assert isinstance(model_wrapper_Prophet.model, darts_Prophet)  # noqa: SCS108 # nosec: B101
 
 model_prophet = model_wrapper_Prophet.model.model
 
