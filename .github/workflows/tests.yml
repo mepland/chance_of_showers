@@ -42,11 +42,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      - name: Install Python Dependencies
+      - name: Install Python dependencies
         run: poetry install --with daq,web,ana,dev
 
       # File filters
-      - name: Paths Changes Filter
+      - name: Paths changes filter
         uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -88,7 +88,7 @@ jobs:
             any:
             - added|modified: '**'
 
-      - name: Free Disk Space
+      - name: Free disk space
         uses: jlumbroso/free-disk-space@main
         with:
           # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
@@ -117,7 +117,7 @@ jobs:
           node-version: ${{ matrix.node_version }}
           check-latest: true
 
-      - name: Install Node Dependencies
+      - name: Install Node dependencies
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: sudo npm install --global standard@latest prettier@latest
 
@@ -245,7 +245,7 @@ jobs:
         with:
           config: pyproject.toml
 
-      - name: trailing-spaces
+      - name: Trailing spaces
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
         run: |
           TRAILING_SPACES=$(grep -rInH ' $' ${{ steps.filter.outputs.any_files }} || true)
