@@ -58,6 +58,7 @@ black:
 .PHONY: flake8
 flake8:
 	@poetry run flake8
+	@poetry run flake8-markdown $(shell git ls-files '*.md')
 
 .PHONY: ruff
 ruff:

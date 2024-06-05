@@ -154,6 +154,10 @@ jobs:
             echo "::endgroup::"
             poetry run flake8 --format github ${{ steps.filter.outputs.python_files }}
 
+      - name: flake8-markdown
+        if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
+        run: poetry run flake8-markdown ${{ steps.filter.outputs.markdown_files }}
+
       - name: pylint
         if: (success() || failure()) && steps.filter.outputs.python_alone == 'true'
         run: poetry run pylint ${{ steps.filter.outputs.python_alone_files }}
