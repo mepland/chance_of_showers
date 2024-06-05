@@ -355,4 +355,4 @@ def read_secure_pickle(
         msg = "Invalid signature!"
         raise ValueError(msg)
 
-    return pickle.loads(pickle_data)  # noqa: DUO103, SCS113 # nosec: B301
+    return pickle.loads(pickle_data)  # noqa: DUO103,SCS113 # nosec: B301
