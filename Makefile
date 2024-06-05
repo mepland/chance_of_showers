@@ -204,23 +204,42 @@ find_trailing_spaces:
 # isort ~ isort:
 # flake8 ~ noqa
 # ruff ~ noqa
-# mypy ~ type:
 # pylint ~ pylint
+# mypy ~ type:
 # bandit ~ nosec
-# detect-secrets ~ pragma: allowlist
-# yamllint ~ yamllint
-# blocklint ~ blocklint: pragma
-# markdownlint ~ <!-- markdownlint-disable -->
 # standard ~ eslint
 # prettier ~ <!-- prettier-ignore -->
+# yamllint ~ yamllint
+# markdownlint ~ <!-- markdownlint-disable -->
+# detect-secrets ~ pragma: allowlist
+# blocklint ~ blocklint: pragma
 .PHONY: find_noqa_comments
 find_noqa_comments:
-	@grep -rInH 'isort:\|noqa\|type:\|pylint\|nosec' $(shell git ls-files '*.py' '*.ipynb') || true
-	@grep -rInH 'yamllint' $(shell git ls-files '*.yaml' '*.yml') || true
-	@grep -rInH 'pragma\|blocklint:' $(shell git ls-files) || true
-	@grep -rInH 'markdownlint-' $(shell git ls-files '*.md') || true
-	@grep -rInH 'eslint' $(shell git ls-files '*.js') || true
-	@grep -rInH 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css') || true
+	@TMP_FIND_NOQA_COMMENTS=$(shell mktemp /tmp/find_noqa_comments.XXXXXX); \
+	# isort, flake8, ruff, pylint, mypy, bandit; \
+	grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' $(shell git ls-files '*.py' '*.ipynb') >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# standard; \
+	grep -rInH 'eslint' $(shell git ls-files '*.js') >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# prettier; \
+	grep -rInH 'prettier-ignore' $(shell git ls-files '*.html' '*.scss' '*.css' '*.toml') >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# yamllint; \
+	grep -rInH 'yamllint [de]' $(shell git ls-files '*.yaml' '*.yml') >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# markdownlint; \
+	grep -rInH 'markdownlint-[de]' $(shell git ls-files '*.md') >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# detect-secrets, blocklint; \
+	grep -rInH 'pragma: allowlist\|blocklint:.*pragma' $(shell git ls-files) >> $$TMP_FIND_NOQA_COMMENTS || true; \
+	# Remove false positive lines from Makefile and .pre-commit-config.yaml; \
+	sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*?grep)/d' $$TMP_FIND_NOQA_COMMENTS; \
+	# CONFIG VIA COMMENTING: Remove code, keep comments; \
+	# sed -i -r 's/(^.*?:[0-9]+:).*?(#|<!-- )/\1\2/g' $$TMP_FIND_NOQA_COMMENTS; \
+	# CONFIG VIA COMMENTING: Remove filename, line number, and code, keep comments; \
+	sed -i -r 's/(^.*?:[0-9]+:).*?(#|<!-- )/\2/g' $$TMP_FIND_NOQA_COMMENTS; \
+	# Sort and remove duplicates; \
+	sort -u -o $$TMP_FIND_NOQA_COMMENTS $$TMP_FIND_NOQA_COMMENTS; \
+	# print results; \
+	cat $$TMP_FIND_NOQA_COMMENTS; \
+	# remove temporary file; \
+	rm -f $$TMP_FIND_NOQA_COMMENTS; \
 
 .PHONY: find_pymend_placeholders
 find_pymend_placeholders:
