@@ -74,7 +74,7 @@ ruff-fix-unsafe:
 # https://stackoverflow.com/a/63044665
 .PHONY: pylint
 pylint:
-	@poetry run pylint $(shell git ls-files '*.py' '*.ipynb')
+	@poetry run pylint $(shell git ls-files '*.py')
 
 .PHONY: mypy
 mypy:
