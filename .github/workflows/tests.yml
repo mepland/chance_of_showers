@@ -144,7 +144,7 @@ jobs:
 
       - name: blacken-docs
         if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
-        run: poetry run blacken-docs --line-length=100 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
+        run: poetry run blacken-docs --line-length=100 --target-version=py311 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
 
       - name: flake8
         if: (success() || failure()) && steps.filter.outputs.python == 'true'

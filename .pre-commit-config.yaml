@@ -31,7 +31,7 @@ repos:
     rev: '1.16.0'
     hooks:
       - id: blacken-docs
-        args: ['--line-length=100']
+        args: ['--line-length=100', '--target-version=py311']
         additional_dependencies: ['black==24.4.2']
 
   # flake8

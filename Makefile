@@ -53,7 +53,7 @@ pyupgrade:
 .PHONY: black
 black:
 	@poetry run black .
-	@poetry run blacken-docs --line-length=100 $(shell git ls-files '*.py' '*.ipynb' '*.md' '*.rst')
+	@poetry run blacken-docs --line-length=100 --target-version=py311 $(shell git ls-files '*.py' '*.ipynb' '*.md' '*.rst')
 
 .PHONY: flake8
 flake8:
