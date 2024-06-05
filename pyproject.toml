@@ -27,7 +27,7 @@ pyupgrade = "^3.15.2"
 black = { extras = ["jupyter"], version = "^24.4.2" }
 blacken-docs = "^1.16.0"
 flake8 = "^7.0.0"
-ruff = "^0.4.7"
+ruff = "^0.4.8"
 pylint = "^3.2.2"
 mypy = "^1.10.0"
 bandit = "^1.7.8"
