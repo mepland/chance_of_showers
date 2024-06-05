@@ -459,7 +459,7 @@ def _process_hist_binning(
     return bin_edges, nbins, bin_size_str
 
 
-def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
+def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments,too-many-statements
     hist_dicts: list[dict],
     *,
     m_path: pathlib.Path,
@@ -569,6 +569,9 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
 
             _bins = _bin_edges
             _weights = hist_dict["hist_data"]["hist"]
+        else:
+            msg = "Should not end up here, can not load bins and weights!"
+            raise ValueError(msg)
 
         if not hist_dict.get("plot_via_bar", False):
             _plotted_hist, _plotted_bin_edges, _plotted_patches = ax.hist(
