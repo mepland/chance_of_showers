@@ -121,6 +121,9 @@ jobs:
         if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
         run: sudo npm install --global standard@latest prettier@latest
 
+      # Use "success() || failure()" to run a step even if a previous step fails
+      # https://stackoverflow.com/a/58859404
+
       # Python
 
       - name: poetry
