@@ -1,4 +1,4 @@
-#: pylint: disable=invalid-name,duplicate-code
+# pylint: disable=invalid-name,duplicate-code
 """Wrapper for CatBoostModel."""
 # pylint: enable=invalid-name
 
