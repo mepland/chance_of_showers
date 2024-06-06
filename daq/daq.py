@@ -532,7 +532,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
             try:
                 # doesn't even have to be reachable
                 m_socket.connect(("10.254.254.254", 1))
-                ip_address = m_socket.getsockname()[0]
+                ip_address = str(m_socket.getsockname()[0])
             except Exception:
                 ip_address = "127.0.0.1"
             finally:
@@ -611,8 +611,9 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
             had_flow = 0  # avoid sticking high if we lose pressure while flowing
             polling_pressure_samples.fill(np.nan)
             polling_flow_samples = np.zeros(N_POLLING)
-            while running_daq_loop and t_stop - t_start < datetime.timedelta(
-                seconds=AVERAGING_PERIOD_SECONDS
+            while (
+                running_daq_loop  # type: ignore[redundant-expr]
+                and t_stop - t_start < datetime.timedelta(seconds=AVERAGING_PERIOD_SECONDS)
             ):
                 # sample pressure and flow
                 pressure_value = int(chan_0.value)
