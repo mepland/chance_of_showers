@@ -303,8 +303,6 @@ def load_csv_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
 
         return clean_log_dfp(dfp)
 
-    return None
-
 
 def load_best_points(
     dir_path: pathlib.Path, *, use_csv: bool = True
@@ -458,7 +456,7 @@ def write_search_results(  # noqa: C901
             loss_color_fmt[k] = "num"
             target_color_fmt[k] = "num"
 
-        def _fmt_worksheet(
+        def _fmt_worksheet(  # type: ignore[no-any-unimported]
             worksheet: xlsxwriter.worksheet.Worksheet,
             dfp_source: pd.DataFrame,
             *,
@@ -717,12 +715,14 @@ def get_datetime_str_from_json(*, enable_json_logging: bool, fname_json_log: pat
                 f_json.seek(0)
 
             last_line = json.loads(f_json.readline().decode())
-            return last_line.get("datetime", {}).get("datetime")
+            return str(last_line.get("datetime", {}).get("datetime", "NULL"))
 
     return "NULL"
 
 
-def get_i_point_duplicate(point: dict, optimizer: bayes_opt.BayesianOptimization) -> int:
+def get_i_point_duplicate(  # type: ignore[no-any-unimported]
+    point: dict, optimizer: bayes_opt.BayesianOptimization
+) -> int:
     """Get index of duplicate prior point from optimizer, if one exists.
 
     Args:
@@ -1050,12 +1050,10 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
 {traceback.format_exc()}"""
 
             if next_point_to_probe is not None:
-                error_msg = f"""{error_msg}
-next_point_to_probe = {pprint.pformat(next_point_to_probe)}"""
+                error_msg = f"{error_msg}\nnext_point_to_probe = {pprint.pformat(next_point_to_probe)}"  # type: ignore[unreachable]
 
-            if next_point_to_probe is not None:
-                error_msg = f"""{error_msg}
-next_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"""
+            if next_point_to_probe_cleaned is not None:
+                error_msg = f"{error_msg}\nnext_point_to_probe_cleaned = {pprint.pformat(next_point_to_probe_cleaned)}"  # type: ignore[unreachable]
 
         return error_msg  # noqa: R504
 
