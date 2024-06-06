@@ -420,7 +420,7 @@ def save_ploty_to_html(  # type: ignore[no-any-unimported]
 
 def _process_hist_binning(
     binning: BinningDictType | None,
-    hist_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
+    hist_values: list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int],
     *,
     current_bin_min: float | None = None,
     current_bin_max: float | None = None,
@@ -429,7 +429,7 @@ def _process_hist_binning(
 
     Args:
         binning (BinningDictType | None): Binning parameters.
-        hist_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): Values for filling histogram.
+        hist_values (list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int]): Values for filling histogram.
         current_bin_min (float | None): Minimum bin value. (Default value = None)
         current_bin_max (float | None): Maximum bin value. (Default value = None)
 
@@ -722,8 +722,8 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-locals,too-many-argumen
 
 
 def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
-    x_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
-    y_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
+    x_values: list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int],
+    y_values: list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int],
     *,
     m_path: pathlib.Path,
     fname: str = "hist_2d",
@@ -752,8 +752,8 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        x_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): X values for filling histogram.
-        y_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): Y values for filling histogram.
+        x_values (list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int]): X values for filling histogram.
+        y_values (list[float] | np.typing.NDArray[np.float64] | pd.Series[float | int]): Y values for filling histogram.
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist_2d')
         tag (str): Tag to append to file name. (Default value = '')
