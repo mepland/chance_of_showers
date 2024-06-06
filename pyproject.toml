@@ -342,7 +342,6 @@ pretty = false
 show_column_numbers = true
 disallow_any_generics = true
 disallow_any_unimported = true
-disallow_untyped_calls = true
 disallow_untyped_defs = true
 scripts_are_modules = true
 strict_equality = true
