@@ -2,7 +2,7 @@
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Any
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -100,7 +100,7 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
 
 def make_epoch_bins(
     dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
-) -> np.ndarray:
+) -> np.typing.NDArray[np.float64]:
     """Make Unix epoch bins between endpoints, like linspace.
 
     Args:
@@ -109,11 +109,12 @@ def make_epoch_bins(
         bin_size_seconds (int): Bin size in seconds.
 
     Returns:
-        np.ndarray: Array of bin edges in epoch seconds between dt_start and dt_stop.
+        np.typing.NDArray[np.float64]: Array of bin edges in epoch seconds between dt_start and dt_stop.
     """
-    bin_min = dt_start.timestamp()  # type: ignore[attr-defined]
-    bin_max = dt_stop.timestamp()  # type: ignore[attr-defined]
+    bin_min = float(dt_start.timestamp())  # type: ignore[attr-defined]
+    bin_max = float(dt_stop.timestamp())  # type: ignore[attr-defined]
     nbins = int(round((bin_max - bin_min) / bin_size_seconds))
+
     return np.linspace(bin_min, bin_max, nbins + 1)
 
 
@@ -190,7 +191,9 @@ def ann_text_std(
 
 
 def _setup_vars(
-    ann_texts_in: list[dict] | None, x_axis_params: dict | None, y_axis_params: dict | None
+    ann_texts_in: list[dict[str, Any]] | None,
+    x_axis_params: dict | None,
+    y_axis_params: dict | None,
 ) -> tuple[list[dict], dict, dict]:
     """Setup variables.
 
@@ -374,7 +377,7 @@ def ann_then_save(
         plt.close("all")
 
 
-def save_ploty_to_html(
+def save_ploty_to_html(  # type: ignore[no-any-unimported]
     fig: go.Figure,
     m_path: pathlib.Path,
     fname: str,
@@ -398,7 +401,7 @@ def save_ploty_to_html(
 
 def _process_hist_binning(
     binning: dict | None,
-    hist_values: list[float] | np.ndarray | pd.Series,
+    hist_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
     *,
     current_bin_min: float | None = None,
     current_bin_max: float | None = None,
@@ -407,7 +410,7 @@ def _process_hist_binning(
 
     Args:
         binning (dict | None): Binning parameters.
-        hist_values (list[float] | np.ndarray | pd.Series): Values for filling histogram.
+        hist_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): Values for filling histogram.
         current_bin_min (float | None): Minimum bin value. (Default value = None)
         current_bin_max (float | None): Maximum bin value. (Default value = None)
 
@@ -539,7 +542,7 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-locals,too-many-argumen
 
     binning["bin_edges"] = x_bin_edges
     x_bin_edges, x_nbins, x_bin_size_str = _process_hist_binning(
-        binning, x_values, current_bin_min=x_bin_min, current_bin_max=x_bin_max
+        binning, x_values, current_bin_min=x_bin_min, current_bin_max=x_bin_max  # type: ignore[possibly-undefined]
     )
 
     leg_objects = []
@@ -700,8 +703,8 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-locals,too-many-argumen
 
 
 def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
-    x_values: list[float] | np.ndarray | pd.Series,
-    y_values: list[float] | np.ndarray | pd.Series,
+    x_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
+    y_values: list[float] | np.typing.NDArray[np.float64] | pd.Series,
     *,
     m_path: pathlib.Path,
     fname: str = "hist_2d",
@@ -730,8 +733,8 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        x_values (list[float] | np.ndarray | pd.Series): X values for filling histogram.
-        y_values (list[float] | np.ndarray | pd.Series): Y values for filling histogram.
+        x_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): X values for filling histogram.
+        y_values (list[float] | np.typing.NDArray[np.float64] | pd.Series): Y values for filling histogram.
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist_2d')
         tag (str): Tag to append to file name. (Default value = '')
@@ -914,8 +917,8 @@ def plot_prophet(  # pylint: disable=too-many-arguments
         fig.axes, x_axis_params_list, y_axis_params_list, strict=True
     ):
         ax.grid(visible=False)
-        ann_texts, x_axis_params, y_axis_params = _setup_vars(
-            ann_texts_in, x_axis_params_original, y_axis_params_original
+        _, x_axis_params, y_axis_params = _setup_vars(
+            None, x_axis_params_original, y_axis_params_original
         )
 
         clean_ax(ax, x_axis_params, y_axis_params)
@@ -940,6 +943,7 @@ def plot_prophet(  # pylint: disable=too-many-arguments
 
     draw_legend(fig, leg_objects, legend_params)
 
+    ann_texts, _, _ = _setup_vars(ann_texts_in, None, None)
     ann_texts.append(
         {
             "label": ann_text_std(dt_start, dt_stop, ann_text_std_add=ann_text_std_add),
