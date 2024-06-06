@@ -124,7 +124,7 @@ def rebin_chance_of_showers_time_series(
     *,
     time_bin_size: datetime.timedelta | None = None,
     retain_DateTimeIndex: bool = True,
-    other_cols_to_agg_dict: dict | None = None,
+    other_cols_to_agg_dict: dict[str, str] | None = None,
     y_bin_edges: list[float] | None = None,
 ) -> pd.DataFrame:
     """Rebin the chance of showers time_series in time and y prior to modeling.
@@ -136,7 +136,7 @@ def rebin_chance_of_showers_time_series(
         time_bin_size (datetime.timedelta | None): The size of time bins.
             Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere. (Default value = None)
         retain_DateTimeIndex (bool): Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex. (Default value = True)
-        other_cols_to_agg_dict (dict | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
+        other_cols_to_agg_dict (dict[str, str] | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
         y_bin_edges (list[float] | None): The left bin edges for y. (Default value = None)
 
     Returns:
@@ -162,6 +162,8 @@ def rebin_chance_of_showers_time_series(
             raise ValueError(msg)
 
     cols = [time_col, y_col]
+    dfp = dfp_in[cols].copy()
+
     if rebin_time:
         if other_cols_to_agg_dict is None:
             other_cols_to_agg_dict = {}
@@ -170,9 +172,6 @@ def rebin_chance_of_showers_time_series(
 
         cols_to_agg_dict = {y_col: "mean", **other_cols_to_agg_dict}
 
-    dfp = dfp_in[cols].copy()
-
-    if rebin_time:
         dfp[time_col] = dfp.apply(
             lambda row: row[time_col].replace(
                 minute=time_bin_size_minutes * (row[time_col].minute // time_bin_size_minutes),
@@ -347,7 +346,7 @@ def read_secure_pickle(
         digest = f_pickle.readline().rstrip()
         pickle_data = f_pickle.read()
 
-    if digest is None or pickle_data is None:
+    if digest is None or pickle_data is None:  # type: ignore[redundant-expr]
         raise OSError(filename=str(f_path))
 
     recomputed = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
