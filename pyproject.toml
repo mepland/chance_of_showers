@@ -366,7 +366,7 @@ enable_error_code=[
   "unimported-reveal",
   "unused-awaitable",
 ]
-disable_error_code = ["import"]
+disable_error_code = ["import-untyped"]
 exclude = [
   ".cache",
   ".direnv",
