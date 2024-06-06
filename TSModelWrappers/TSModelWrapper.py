@@ -2,7 +2,6 @@
 """Wrapper class for time series models."""
 # pylint: enable=invalid-name
 
-
 import copy
 import datetime
 import gc
@@ -17,6 +16,7 @@ import zoneinfo
 from typing import TYPE_CHECKING, Any, Final
 
 import pandas as pd
+from typing_extensions import override
 
 if TYPE_CHECKING:
     import pytorch_lightning
@@ -160,6 +160,7 @@ def get_pl_trainer_kwargs(
             https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/callback.html#Callback.on_exception
         """
 
+        @override
         def on_exception(
             self: "MyExceptionCallback",
             trainer: "pytorch_lightning.Trainer",  # noqa: U100
@@ -774,6 +775,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.model = None
         self.is_trained = False
 
+    @override
     def __str__(self: "TSModelWrapper") -> str:
         """Redefine the str method.
 
