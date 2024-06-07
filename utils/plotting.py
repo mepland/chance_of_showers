@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING, Any, Final, TypeAlias
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import plotly.graph_objects as go
 
 ArrayNumericType: TypeAlias = (
-    list[float | int] | np.typing.NDArray[np.float64 | np.int64] | pd.Series  # type: ignore[type-arg]
+    list[float | int] | npt.NDArray[np.float64 | np.int64] | pd.Series  # type: ignore[type-arg]
 )
 
 
@@ -73,7 +74,7 @@ PNG_DPI: Final = 200
 STD_ANN_X: Final = 0.80
 STD_ANN_Y: Final = 0.95
 
-STD_CMAP: Final = mpl.cm.get_cmap("plasma")
+STD_CMAP: Final = plt.get_cmap("plasma")
 
 TOP_LINE_STD_ANN: Final = ""
 
@@ -112,7 +113,7 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
 
 def make_epoch_bins(
     dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
-) -> np.typing.NDArray[np.float64]:
+) -> npt.NDArray[np.float64]:
     """Make Unix epoch bins between endpoints, like linspace.
 
     Args:
@@ -121,7 +122,7 @@ def make_epoch_bins(
         bin_size_seconds (int): Bin size in seconds.
 
     Returns:
-        np.typing.NDArray[np.float64]: Array of bin edges in epoch seconds between dt_start and dt_stop.
+        npt.NDArray[np.float64]: Array of bin edges in epoch seconds between dt_start and dt_stop.
     """
     bin_min = float(dt_start.timestamp())  # type: ignore[attr-defined]
     bin_max = float(dt_stop.timestamp())  # type: ignore[attr-defined]
