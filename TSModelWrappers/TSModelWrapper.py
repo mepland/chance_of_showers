@@ -125,7 +125,7 @@ def get_pl_trainer_kwargs(
     max_time: str | datetime.timedelta | dict[str, int] | None,
     accelerator: str | None = None,
     log_every_n_steps: int | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Get pl_trainer_kwargs, i.e. PyTorch lightning trainer keyword arguments.
 
     Args:
@@ -147,7 +147,7 @@ def get_pl_trainer_kwargs(
         log_every_n_steps (int | None): How often to log within steps. (Default value = None)
 
     Returns:
-        dict: pl_trainer_kwargs.
+        dict[str, Any]: pl_trainer_kwargs.
     """
     if accelerator is None:
         accelerator = "auto"
@@ -201,7 +201,7 @@ def get_pl_trainer_kwargs(
 
 # ReduceLROnPlateau will lower learning rate if model is in a plateau
 # copy docs from https://pytorch.org/docs/stable/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
+def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict[str, float | int | str]:
     """Get lr_scheduler_kwargs, i.e. PyTorch learning rate scheduler keyword arguments.
 
     Args:
@@ -214,7 +214,7 @@ def get_lr_scheduler_kwargs(lr_factor: float, lr_patience: int) -> dict:
             3rd epoch if the loss still hasn't improved then.(Default value = 10)
 
     Returns:
-        dict: lr_scheduler_kwargs.
+        dict[str, float | int | str]: lr_scheduler_kwargs.
     """
     return {
         "factor": lr_factor,
@@ -698,10 +698,10 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         model_name_tag (str | None): Descriptive tag to add to the model name, optional.
         required_hyperparams_data (list[str] | None): List of required data hyperparameters for this model.
         required_hyperparams_model (list[str] | None): List of required hyperparameters for this model's constructor.
-        allowed_variable_hyperparams (dict | None): Allowed variable hyperparameters for this model.
-        variable_hyperparams (dict | None): Variable hyperparameters for this model.
-        fixed_hyperparams (dict | None): Fixed hyperparameters for this model.
-        hyperparams_conditions (list[dict] | None): List of dictionaries with hyperparameter conditions for this model.
+        allowed_variable_hyperparams (dict[str, Any] | None): Allowed variable hyperparameters for this model.
+        variable_hyperparams (dict[str, Any] | None): Variable hyperparameters for this model.
+        fixed_hyperparams (dict[str, Any] | None): Fixed hyperparameters for this model.
+        hyperparams_conditions (list[dict[str, Any]] | None): List of dictionaries with hyperparameter conditions for this model.
 
     Raises:
         ValueError: Bad configuration.
@@ -727,10 +727,10 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
-        allowed_variable_hyperparams: dict | None = None,
-        variable_hyperparams: dict | None = None,
-        fixed_hyperparams: dict | None = None,
-        hyperparams_conditions: list[dict] | None = None,
+        allowed_variable_hyperparams: dict[str, Any] | None = None,
+        variable_hyperparams: dict[str, Any] | None = None,
+        fixed_hyperparams: dict[str, Any] | None = None,
+        hyperparams_conditions: list[dict[str, Any]] | None = None,
     ) -> None:
         if required_hyperparams_data is None:
             required_hyperparams_data = []
@@ -738,7 +738,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         if required_hyperparams_model is None:
             required_hyperparams_model = []
 
-        if model_type is None or model_type not in [
+        if model_type not in [
             "base_class",
             "prophet",
             "torch",
@@ -771,7 +771,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.hyperparams_conditions = hyperparams_conditions
 
         self.model_name: str | None = None
-        self.chosen_hyperparams: dict | None = None
+        self.chosen_hyperparams: dict[str, Any] | None = None
         self.model = None
         self.is_trained = False
 
@@ -816,24 +816,13 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         self.model = None
         self.is_trained = False
 
-    def get_random_state(self: "TSModelWrapper", default_random_state: int = 42) -> int:
+    def get_random_state(self: "TSModelWrapper") -> int:
         """Get the random_state of this model wrapper.
-
-        Args:
-            default_random_state (int): Default random state to return if random_state is not set.
 
         Returns:
             int: Random state of this model wrapper.
         """
-        random_state = self.random_state
-
-        if random_state is None:
-            random_state = default_random_state
-
-        if TYPE_CHECKING:
-            assert isinstance(random_state, int)  # noqa: SCS108 # nosec: B101
-
-        return random_state
+        return self.random_state
 
     def get_model(self: "TSModelWrapper") -> ForecastingModel:
         """Get the model object from this model wrapper.
@@ -884,12 +873,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         return n_prediction_steps, time_bin_size
 
     def alter_fixed_hyperparams(
-        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: dict | None
+        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: dict[str, Any] | None
     ) -> None:
         """Alter fixed_hyperparams for this model wrapper.
 
         Args:
-            fixed_hyperparams_to_alter (dict | None): Fixed hyperparameters to alter.
+            fixed_hyperparams_to_alter (dict[str, Any] | None): Fixed hyperparameters to alter.
         """
         if fixed_hyperparams_to_alter is None:
             fixed_hyperparams_to_alter = {}
@@ -994,10 +983,6 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             raise ValueError(msg)
 
         if work_dir_relative_to_base is not None:
-            if self.work_dir_base is None:
-                msg = "Must have a valid work_dir_base!"
-                raise ValueError(msg)
-
             self.work_dir = pathlib.Path(self.work_dir_base, work_dir_relative_to_base)
         elif work_dir_absolute is not None:
             self.work_dir = work_dir_absolute
@@ -1053,14 +1038,16 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.model_name
 
-    def get_configurable_hyperparams(self: "TSModelWrapper", *, for_opt_only: bool = True) -> dict:
+    def get_configurable_hyperparams(
+        self: "TSModelWrapper", *, for_opt_only: bool = True
+    ) -> dict[str, Any]:
         """Get the configurable hyperparameters for this model.
 
         Args:
             for_opt_only (bool): Flag to only return optimizable hyperparameters, i.e. exclude covariates and y_bin_edges. (Default value = True)
 
         Returns:
-            dict: Hyperparameters showing allowed values.
+            dict[str, Any]: Hyperparameters showing allowed values.
         """
         # construct model object
         if TYPE_CHECKING:
@@ -1167,8 +1154,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                     return int(input_divisor)
 
                 divisors = sympy.divisors(n)
+
                 delta = [abs(input_divisor - _) for _ in divisors]
-                return divisors[delta.index(min(delta))]
+                divisor = divisors[delta.index(min(delta))]
+
+                if TYPE_CHECKING:
+                    assert isinstance(divisor, int)  # noqa: SCS108 # nosec: B101
+
+                return divisor
 
             time_bin_size_in_minutes = get_closest_divisor(time_bin_size_in_minutes)
 
@@ -1209,7 +1202,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 if TYPE_CHECKING:
                     assert isinstance(_covariates, dict)  # noqa: SCS108 # nosec: B101
 
-                chosen_covariates = _covariates.get(str(hyperparam_value))
+                chosen_covariates = _covariates.get(str(hyperparam_value))  # type: ignore[unreachable]
                 if chosen_covariates is None:
                     msg = "Failed to setup covariates correctly via covariates_to_use"
                     raise ValueError(msg)
@@ -1462,14 +1455,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
                 raise ValueError(msg)
 
-    def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict:
+    def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict[str, Any]:
         """Return hyperparameters the model would actually run with if trained now, used in Bayesian optimization.
 
         Args:
             **kwargs (float): Hyperparameters to change.
 
         Returns:
-            dict: Hyperparameters the model would actually run with if trained now.
+            dict[str, Any]: Hyperparameters the model would actually run with if trained now.
         """
         if kwargs:
             self.variable_hyperparams = kwargs
@@ -1481,15 +1474,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         return self.chosen_hyperparams
 
     def translate_hyperparameters_to_numeric(
-        self: "TSModelWrapper", hyperparams_dict: dict
-    ) -> dict:
+        self: "TSModelWrapper", hyperparams_dict: dict[str, Any]
+    ) -> dict[str, Any]:
         """Translate strange hyperparam_values back to their original numeric representations, used in Bayesian optimization.
 
         Args:
-            hyperparams_dict (dict): Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
+            hyperparams_dict (dict[str, Any]): Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
 
         Returns:
-            dict: Hyperparameters in their original representations.
+            dict[str, Any]: Hyperparameters in their original representations.
 
         Raises:
             ValueError: Bad configuration.
@@ -1684,7 +1677,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 (
                     dart_series_covariates_train,
                     dart_series_covariates_val,
-                ) = dart_series_covariates_trainable.split_before(
+                ) = dart_series_covariates_trainable.split_before(  # type: ignore[possibly-undefined]
                     pd.Timestamp(self.dt_val_start_datetime_local)
                 )
                 model_covariates_kwargs[f"{covariates_type}_covariates"] = (
