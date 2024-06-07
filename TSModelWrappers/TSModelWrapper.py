@@ -13,7 +13,7 @@ import pprint
 import sys
 import warnings
 import zoneinfo
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, TypeAlias
 
 import pandas as pd
 from typing_extensions import override
@@ -37,6 +37,8 @@ from utils.shared_functions import (
     create_datetime_component_cols,
     rebin_chance_of_showers_time_series,
 )
+
+HyperParamType: TypeAlias = dict[str, Any]
 
 __all__ = ["TSModelWrapper"]
 
@@ -698,10 +700,10 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         model_name_tag (str | None): Descriptive tag to add to the model name, optional.
         required_hyperparams_data (list[str] | None): List of required data hyperparameters for this model.
         required_hyperparams_model (list[str] | None): List of required hyperparameters for this model's constructor.
-        allowed_variable_hyperparams (dict[str, Any] | None): Allowed variable hyperparameters for this model.
-        variable_hyperparams (dict[str, Any] | None): Variable hyperparameters for this model.
-        fixed_hyperparams (dict[str, Any] | None): Fixed hyperparameters for this model.
-        hyperparams_conditions (list[dict[str, Any]] | None): List of dictionaries with hyperparameter conditions for this model.
+        allowed_variable_hyperparams (HyperParamType | None): Allowed variable hyperparameters for this model.
+        variable_hyperparams (HyperParamType | None): Variable hyperparameters for this model.
+        fixed_hyperparams (HyperParamType | None): Fixed hyperparameters for this model.
+        hyperparams_conditions (list[HyperParamType] | None): List of dictionaries with hyperparameter conditions for this model.
 
     Raises:
         ValueError: Bad configuration.
@@ -727,10 +729,10 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         model_name_tag: str | None = None,
         required_hyperparams_data: list[str] | None = None,
         required_hyperparams_model: list[str] | None = None,
-        allowed_variable_hyperparams: dict[str, Any] | None = None,
-        variable_hyperparams: dict[str, Any] | None = None,
-        fixed_hyperparams: dict[str, Any] | None = None,
-        hyperparams_conditions: list[dict[str, Any]] | None = None,
+        allowed_variable_hyperparams: HyperParamType | None = None,
+        variable_hyperparams: HyperParamType | None = None,
+        fixed_hyperparams: HyperParamType | None = None,
+        hyperparams_conditions: list[HyperParamType] | None = None,
     ) -> None:
         if required_hyperparams_data is None:
             required_hyperparams_data = []
@@ -771,7 +773,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self.hyperparams_conditions = hyperparams_conditions
 
         self.model_name: str | None = None
-        self.chosen_hyperparams: dict[str, Any] | None = None
+        self.chosen_hyperparams: HyperParamType | None = None
         self.model = None
         self.is_trained = False
 
@@ -873,12 +875,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         return n_prediction_steps, time_bin_size
 
     def alter_fixed_hyperparams(
-        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: dict[str, Any] | None
+        self: "TSModelWrapper", *, fixed_hyperparams_to_alter: HyperParamType | None
     ) -> None:
         """Alter fixed_hyperparams for this model wrapper.
 
         Args:
-            fixed_hyperparams_to_alter (dict[str, Any] | None): Fixed hyperparameters to alter.
+            fixed_hyperparams_to_alter (HyperParamType | None): Fixed hyperparameters to alter.
         """
         if fixed_hyperparams_to_alter is None:
             fixed_hyperparams_to_alter = {}
@@ -1040,14 +1042,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
     def get_configurable_hyperparams(
         self: "TSModelWrapper", *, for_opt_only: bool = True
-    ) -> dict[str, Any]:
+    ) -> HyperParamType:
         """Get the configurable hyperparameters for this model.
 
         Args:
             for_opt_only (bool): Flag to only return optimizable hyperparameters, i.e. exclude covariates and y_bin_edges. (Default value = True)
 
         Returns:
-            dict[str, Any]: Hyperparameters showing allowed values.
+            HyperParamType: Hyperparameters showing allowed values.
         """
         # construct model object
         if TYPE_CHECKING:
@@ -1455,14 +1457,14 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                 )
                 raise ValueError(msg)
 
-    def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> dict[str, Any]:
+    def preview_hyperparameters(self: "TSModelWrapper", **kwargs: float) -> HyperParamType:
         """Return hyperparameters the model would actually run with if trained now, used in Bayesian optimization.
 
         Args:
             **kwargs (float): Hyperparameters to change.
 
         Returns:
-            dict[str, Any]: Hyperparameters the model would actually run with if trained now.
+            HyperParamType: Hyperparameters the model would actually run with if trained now.
         """
         if kwargs:
             self.variable_hyperparams = kwargs
@@ -1474,15 +1476,15 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         return self.chosen_hyperparams
 
     def translate_hyperparameters_to_numeric(
-        self: "TSModelWrapper", hyperparams_dict: dict[str, Any]
-    ) -> dict[str, Any]:
+        self: "TSModelWrapper", hyperparams_dict: HyperParamType
+    ) -> HyperParamType:
         """Translate strange hyperparam_values back to their original numeric representations, used in Bayesian optimization.
 
         Args:
-            hyperparams_dict (dict[str, Any]): Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
+            hyperparams_dict (HyperParamType): Hyperparameters to translate, may contain str, ModelMode, or SeasonalityMode values.
 
         Returns:
-            dict[str, Any]: Hyperparameters in their original representations.
+            HyperParamType: Hyperparameters in their original representations.
 
         Raises:
             ValueError: Bad configuration.
