@@ -219,6 +219,8 @@ find_trailing_spaces:
 # detect-secrets ~ pragma: allowlist
 # blocklint ~ blocklint: pragma
 
+# mypy 'type:' has to be the first noqa tag in a comment
+
 # TODO clean version for both # and <!--, but needs non-greedy which sed does not have, would need perl
 # sed -i -r 's/(^.*?:[0-9]+:).*?(#|<!-- )/\1\2/g' $$TMP_FIND_NOQA_COMMENTS; \
 
