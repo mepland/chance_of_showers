@@ -709,7 +709,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         ValueError: Bad configuration.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # type: ignore[no-any-unimported] # pylint: disable=too-many-arguments
         self: "TSModelWrapper",
         # required
         dfp_trainable_evergreen: pd.DataFrame,
@@ -826,7 +826,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
         """
         return self.random_state
 
-    def get_model(self: "TSModelWrapper") -> ForecastingModel:
+    def get_model(self: "TSModelWrapper") -> ForecastingModel:  # type: ignore[no-any-unimported]
         """Get the model object from this model wrapper.
 
         Returns:
