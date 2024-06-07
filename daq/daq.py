@@ -120,6 +120,18 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     RAW_DATA_FULL_PATH.mkdir(parents=True, exist_ok=True)
     LOGS_FULL_PATH.mkdir(parents=True, exist_ok=True)
 
+    # Setup same type "None" variables for mypy to avoid possibly-undefined errors
+    # It would be better if we could just disable possibly-undefined for this file,
+    # but that is not an option in mypy
+    logging_fh = logging.NullHandler()
+    fname_log = ""
+    host_ip_address = ""
+    PORT_NUMBER: Final = 5000  # pylint: disable=invalid-name
+
+    t_local_str_n_last: list[str] = []
+    mean_pressure_value_normalized_n_last: list[float] = []
+    past_had_flow_n_last: list[int] = []
+
     # Setup logging
     logger_daq = logging.getLogger("daq")
     logger_daq.setLevel(logging.INFO)
@@ -131,8 +143,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
             UTC_TIMEZONE
         ).strftime(FNAME_DATETIME_FMT)
 
-        FNAME_LOG: Final = f"daq_{LOG_DATETIME}.log"  # pylint: disable=invalid-name
-        logging_fh = logging.FileHandler(LOGS_FULL_PATH / FNAME_LOG)
+        fname_log = f"daq_{LOG_DATETIME}.log"
+        logging_fh = logging.FileHandler(LOGS_FULL_PATH / fname_log)  # type: ignore[assignment]
         logging_fh.setLevel(logging.INFO)
         if 0 < VERBOSITY:
             logging_fh.setLevel(logging.DEBUG)
@@ -515,10 +527,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
         if LOG_TO_FILE:
             log_werkzeug.addHandler(logging_fh)
 
-        t_local_str_n_last: list[str] = []
-        mean_pressure_value_normalized_n_last: list[float] = []
-        past_had_flow_n_last: list[int] = []
-
         def get_ip_address() -> str:
             """Get IP address of host machine.
 
@@ -540,7 +548,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
 
             return ip_address
 
-        PORT_NUMBER: Final = 5000  # pylint: disable=invalid-name
         host_ip_address = get_ip_address()
 
     # Wait until UTC minutes is mod STARTING_TIME_MINUTES_MOD
@@ -556,7 +563,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
 
     if LOG_TO_FILE:
-        my_print(f"Logging to {FNAME_LOG}", print_prefix="\n")
+        my_print(f"Logging to {fname_log}", print_prefix="\n")
 
     if DISPLAY_WEB:
         my_print(
@@ -572,7 +579,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     if DISPLAY_OLED:
         # write to OLED display
         t_local_str_short = t_start.astimezone(LOCAL_TIMEZONE).strftime(TIME_FMT)
-        paint_oled(
+        paint_oled(  # type: ignore[possibly-undefined]
             ["Will start at:", t_local_str_short, f"SoC: {get_SoC_temp_safe()}"],
             bounding_box=True,
         )
@@ -775,8 +782,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            sio.run(
-                flask_app,
+            sio.run(  # type: ignore[possibly-undefined]
+                flask_app,  # type: ignore[possibly-undefined]
                 port=PORT_NUMBER,
                 host="0.0.0.0",  # nosec: B104
                 # debug must be false to avoid duplicate threads of the entire script!
