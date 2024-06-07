@@ -16,7 +16,7 @@ import zoneinfo
 from contextlib import suppress
 from csv import writer
 from types import FrameType  # noqa: TC003
-from typing import TYPE_CHECKING, Final, TypeAlias
+from typing import TYPE_CHECKING, Any, Final, TypeAlias
 
 import bayes_opt
 import humanize
@@ -81,6 +81,9 @@ __all__ = ["load_best_points", "load_json_log_to_dfp", "print_memory_usage", "ru
 # When showing warnings ignore everything except the message
 # https://stackoverflow.com/a/2187390
 warnings.formatwarning = lambda msg, *args, **kwargs: f"{msg}\n"  # noqa: U100
+
+PointType: TypeAlias = dict[str, Any]
+HyperParamType: TypeAlias = dict[str, Any]
 
 WrapperTypes: TypeAlias = type[
     # Prophet
@@ -639,7 +642,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
     id_point: str,
     target: float,
     metrics_val: dict[str, float],
-    point: dict,
+    point: PointType,
     is_clean: bool,
     model_name: str,
     model_type: str,
@@ -654,7 +657,7 @@ def write_csv_row(  # pylint: disable=too-many-arguments
         id_point (str): ID of this point.
         target (float): Target value.
         metrics_val (dict[str, float]): Metrics on the validation set.
-        point (dict): Hyperparameter point.
+        point (PointType): Hyperparameter point.
         is_clean (bool): Flag for if these are cleaned or raw hyperparameters.
         model_name (str): Model name with training time stamp.
         model_type (str): General type of model; prophet, torch, statistical, regression, or naive.
@@ -721,12 +724,12 @@ def get_datetime_str_from_json(*, enable_json_logging: bool, fname_json_log: pat
 
 
 def get_i_point_duplicate(  # type: ignore[no-any-unimported]
-    point: dict, optimizer: bayes_opt.BayesianOptimization
+    point: PointType, optimizer: bayes_opt.BayesianOptimization
 ) -> int:
     """Get index of duplicate prior point from optimizer, if one exists.
 
     Args:
-        point (dict): The point to check.
+        point (PointType): The point to check.
         optimizer (bayes_opt.BayesianOptimization): The optimizer to search.
 
     Returns:
@@ -739,11 +742,11 @@ def get_i_point_duplicate(  # type: ignore[no-any-unimported]
     return -1
 
 
-def get_point_hash(point: dict) -> str:
+def get_point_hash(point: PointType) -> str:
     """Get hash of prior.
 
     Args:
-        point (dict): The point to hash.
+        point (PointType): The point to hash.
 
     Returns:
         str: The SHA-256 hash of the point.
@@ -776,7 +779,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     *,
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: WrapperTypes,
-    model_wrapper_kwargs: dict | None = None,
+    model_wrapper_kwargs: dict[str, Any] | None = None,
     hyperparams_to_opt: list[str] | None = None,
     n_iter: int = 100,
     max_points: int | None = None,
@@ -791,19 +794,19 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
     disregard_training_exceptions: bool = False,
     max_time_per_model: datetime.timedelta | None = None,
     accelerator: str | None = "auto",
-    fixed_hyperparams_to_alter: dict | None = None,
+    fixed_hyperparams_to_alter: HyperParamType | None = None,
     enable_json_logging: bool = True,
     enable_reloading: bool = True,
     enable_model_saves: bool = False,
     bayesian_opt_work_dir_name: str = "bayesian_optimization",
     local_timezone: zoneinfo.ZoneInfo | None = None,
-) -> tuple[dict, bayes_opt.BayesianOptimization, int]:
+) -> tuple[dict[str, float], bayes_opt.BayesianOptimization, int]:
     """Run Bayesian optimization for this model wrapper.
 
     Args:
         parent_wrapper (TSModelWrapper): TSModelWrapper object containing all parent configs.
         model_wrapper_class (WrapperTypes): TSModelWrapper class to optimize.
-        model_wrapper_kwargs (dict | None): kwargs to pass to model_wrapper. (Default value = None)
+        model_wrapper_kwargs (dict[str, Any] | None): kwargs to pass to model_wrapper. (Default value = None)
         hyperparams_to_opt (list[str] | None): List of hyperparameters to optimize.
             If None, use all configurable hyperparameters. (Default value = None)
         n_iter (int): How many iterations of Bayesian optimization to perform.
@@ -839,7 +842,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is available e.g. Linux, Darwin. (Default value = None)
         accelerator (str | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto") (Default value = 'auto')
-        fixed_hyperparams_to_alter (dict | None): Fixed hyperparameters to alter, but not optimize. (Default value = None)
+        fixed_hyperparams_to_alter (HyperParamType | None): Fixed hyperparameters to alter, but not optimize. (Default value = None)
         enable_json_logging (bool): Enable JSON logging of points. (Default value = True)
         enable_reloading (bool): Enable reloading of prior points from JSON log. (Default value = True)
         enable_model_saves (bool): Save the trained model at each iteration. (Default value = False)
@@ -847,7 +850,7 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         local_timezone (zoneinfo.ZoneInfo | None): Local timezone. (Default value = None)
 
     Returns:
-        tuple[dict, bayes_opt.BayesianOptimization, int]: optimal_values - Optimal hyperparameter values,
+        tuple[dict[str, float], bayes_opt.BayesianOptimization, int]: optimal_values - Optimal hyperparameter values,
             optimizer - bayes_opt.BayesianOptimization object for further details,
             exception_status - Int exception status to pass on to bash scripts.
 
@@ -941,9 +944,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
         target: float,
         metrics_val: dict[str, float],
         *,
-        point_to_probe: dict,
+        point_to_probe: HyperParamType,
         point_to_probe_is_clean: bool,
-        point_to_probe_clean: dict,
+        point_to_probe_clean: HyperParamType,
     ) -> None:
         """Complete this iteration, register point(s) and clean up.
 
@@ -953,9 +956,9 @@ def run_bayesian_opt(  # noqa: C901 # pylint: disable=too-many-statements,too-ma
             model_wrapper (TSModelWrapper): Model wrapper object to reset.
             target (float): Target value to register.
             metrics_val (dict[str, float]): Metrics on the validation set.
-            point_to_probe (dict): Raw point to probe.
+            point_to_probe (HyperParamType): Raw point to probe.
             point_to_probe_is_clean (bool): If point_to_probe is clean.
-            point_to_probe_clean (dict): Point that was actually probed.
+            point_to_probe_clean (HyperParamType): Point that was actually probed.
         """
         global n_points
 
