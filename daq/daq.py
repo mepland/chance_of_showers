@@ -1,4 +1,5 @@
 """Run DAQ script."""
+
 # mypy: disable-error-code = "possibly-undefined"
 
 from __future__ import annotations
