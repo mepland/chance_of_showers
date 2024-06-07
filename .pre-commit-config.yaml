@@ -117,10 +117,15 @@ repos:
   #     - id: flake8-markdown
 
   # mypy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.10.0'
+  # Do not use https://github.com/pre-commit/mirrors-mypy
+  # Otherwise, pre-commit will run in an isolated virtualenv without the needed dependencies
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        types: [python]
 
   # bandit
   - repo: https://github.com/PyCQA/bandit
