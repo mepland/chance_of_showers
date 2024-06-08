@@ -59,7 +59,7 @@ black:
 flake8:
 	@poetry run flake8
 
-# Warning: flake8-markdown does not use pyproject.toml config correctly
+# Warning: flake8-markdown does not use the pyproject.toml config correctly
 .PHONY: flake8-markdown
 flake8-markdown:
 	@poetry run flake8-markdown $(shell git ls-files '*.md')
