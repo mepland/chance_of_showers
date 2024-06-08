@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "chance_of_showers"
-version = "0.0.0"
+version = "0.9.0"
 description = "DAQ and analysis code for chance_of_showers water metrics project"
 authors = ["Matthew Epland"]
 license = "MIT"
