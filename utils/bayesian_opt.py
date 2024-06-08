@@ -1295,8 +1295,8 @@ Returning with current objects and {exception_status = }."""
 
 def write_manual_bad_point(
     *,
-    bad_point_to_write: dict,
-    bad_point_to_write_clean: dict,
+    bad_point_to_write: PointType,
+    bad_point_to_write_clean: PointType,
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: WrapperTypes,
     bayesian_opt_work_dir_name: str = "bayesian_optimization",
@@ -1306,8 +1306,8 @@ def write_manual_bad_point(
     This is useful when an iteration is killed by the OS with an uncatchable SIGKILL.
 
     Args:
-        bad_point_to_write (dict): Bad hyperparameter point to write, raw.
-        bad_point_to_write_clean (dict): Bad hyperparameter point to write, clean.
+        bad_point_to_write (PointType): Bad hyperparameter point to write, raw.
+        bad_point_to_write_clean (PointType): Bad hyperparameter point to write, clean.
         parent_wrapper (TSModelWrapper): TSModelWrapper object containing all parent configs.
         model_wrapper_class (WrapperTypes): TSModelWrapper class to optimize.
         bayesian_opt_work_dir_name (str): Directory name to save logs and models in, within the parent_wrapper.work_dir_base. (Default value = 'bayesian_optimization')
