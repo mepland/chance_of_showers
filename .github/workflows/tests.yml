@@ -165,7 +165,17 @@ jobs:
 
       - name: mypy
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
+        run: |
+          echo "mypy verbose"
+          poetry run mypy --verbose ${{ steps.filter.outputs.python_files }}
+          echo "mypy version"
+          poetry run mypy --version
+          echo "cat utils/bayesian_opt.py"
+          cat utils/bayesian_opt.py
+          echo "git status"
+          git status
+          echo "git log -3"
+          git log -3
 
       - name: bandit
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
