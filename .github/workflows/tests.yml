@@ -165,13 +165,17 @@ jobs:
 
       - name: mypy
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
+        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
+
+      - name: mypy-debugging
+        if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: |
-          echo "mypy verbose"
-          poetry run mypy --verbose ${{ steps.filter.outputs.python_files }}
           echo "mypy version"
           poetry run mypy --version
           echo "cat utils/bayesian_opt.py"
           cat utils/bayesian_opt.py
+          echo "git diff utils/bayesian_opt.py"
+          git diff utils/bayesian_opt.py
           echo "git status"
           git status
           echo "git log -3"
