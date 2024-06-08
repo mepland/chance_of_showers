@@ -204,6 +204,7 @@ extend-select = ["B901", "B902", "B903", "B904", "B905", "B906", "B907", "B908",
 per-file-ignores = [
   "ana/exploratory_ana.py:E402,E800,DALL000",
   "ana/drive_bayesian_opt.py:E402,CM001",
+  "ana/manual_bad_point.py:E402,E800",
 ]
 extend-exclude = [
   ".cache",
