@@ -221,9 +221,6 @@ find_trailing_spaces:
 
 # mypy 'type:' has to be the first noqa tag in a comment
 
-# TODO clean version for both # and <!--, but needs non-greedy which sed does not have, would need perl
-# sed -i -r 's/(^.*?:[0-9]+:).*?(#|<!-- )/\1\2/g' $$TMP_FIND_NOQA_COMMENTS; \
-
 .PHONY: find_noqa_comments
 find_noqa_comments:
 	@TMP_FIND_NOQA_COMMENTS=$(shell mktemp /tmp/find_noqa_comments.XXXXXX); \
@@ -241,10 +238,11 @@ find_noqa_comments:
 	grep -rInH 'pragma: allowlist\|blocklint:.*pragma' $(shell git ls-files) >> $$TMP_FIND_NOQA_COMMENTS || true; \
 	# Remove false positive lines from Makefile and .pre-commit-config.yaml; \
 	sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*grep)/d' $$TMP_FIND_NOQA_COMMENTS; \
-	# CONFIG VIA COMMENTING: Remove code, keep comments; \
-	# sed -i -r 's/(^[^:]+:[0-9]+:)[^#]*(#)/\1\2/g' $$TMP_FIND_NOQA_COMMENTS; \
-	# CONFIG VIA COMMENTING: Remove filename, line number, and code, keep comments; \
-	sed -i -r 's/(^[^:]+:[0-9]+:)[^#]*(#)/\2/g' $$TMP_FIND_NOQA_COMMENTS; \
+	# CONFIG VIA COMMENTING; \
+	# Remove code, keep comments; \
+	# perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\1\2/g' $$TMP_FIND_NOQA_COMMENTS; \
+	# Remove filename, line number, and code, keep comments; \
+	perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\2/g' $$TMP_FIND_NOQA_COMMENTS; \
 	# Sort and remove duplicates; \
 	sort -u -o $$TMP_FIND_NOQA_COMMENTS $$TMP_FIND_NOQA_COMMENTS; \
 	# print results; \
