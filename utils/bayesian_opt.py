@@ -73,7 +73,11 @@ from TSModelWrappers.NaiveSeasonalWrapper import NaiveSeasonalWrapper  # noqa: T
 from TSModelWrappers.NaiveDriftWrapper import NaiveDriftWrapper  # noqa: TC001
 from TSModelWrappers.NaiveMovingAverageWrapper import NaiveMovingAverageWrapper  # noqa: TC001
 
-__all__ = ["load_best_points", "load_json_log_to_dfp", "print_memory_usage", "run_bayesian_opt"]
+__all__ = [
+    "load_best_points",
+    "print_memory_usage",
+    "run_bayesian_opt",
+]
 
 
 # isort: on
@@ -241,7 +245,7 @@ def clean_log_dfp(dfp: pd.DataFrame | None) -> None | pd.DataFrame:
     ]
 
 
-def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
+def load_log_from_json_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from JSON file as a pandas dataframe.
 
     Args:
@@ -292,7 +296,7 @@ def load_json_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
         return None
 
 
-def load_csv_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
+def load_log_from_csv_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
     """Load prior bayes_opt log from CSV file as a pandas dataframe.
 
     Args:
@@ -307,7 +311,7 @@ def load_csv_log_to_dfp(f_path: pathlib.Path) -> None | pd.DataFrame:
         return clean_log_dfp(dfp)
 
 
-def load_best_points(
+def load_best_points(  # noqa: FNE004
     dir_path: pathlib.Path, *, use_csv: bool = True
 ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
     """Load best points from all bayes_opt, CSV or JSON, log files in the dir_path.
@@ -327,7 +331,7 @@ def load_best_points(
     for f_path in sorted(dir_path.glob(f"**/*.{'csv' if use_csv else 'json'}")):
         generic_model_name = f_path.stem.replace(BAYESIAN_OPT_PREFIX, "")
 
-        dfp = load_csv_log_to_dfp(f_path) if use_csv else load_json_log_to_dfp(f_path)
+        dfp = load_log_from_csv_to_dfp(f_path) if use_csv else load_log_from_json_to_dfp(f_path)
 
         if dfp is None:
             msg = f"Could load {f_path}!"

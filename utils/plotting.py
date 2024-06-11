@@ -353,7 +353,7 @@ def draw_legend(
         leg.get_frame().set_facecolor(legend_params.get("box_color", "none"))
 
 
-def ann_then_save(
+def ann_then_save(  # noqa: FNE003
     _fig: mpl.figure.Figure,
     ann_texts: list[AnnTextType],
     plot_inline: bool,  # noqa: FBT001
