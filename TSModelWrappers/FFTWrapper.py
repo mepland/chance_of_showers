@@ -50,9 +50,7 @@ class FFTWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
