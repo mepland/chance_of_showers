@@ -29,8 +29,6 @@ from IPython.display import Image, display
 
 sys.path.append(str(pathlib.Path.cwd().parent))
 
-# pylint: disable=import-error,useless-suppression
-# pylint: enable=useless-suppression
 from utils.bayesian_opt import load_best_points, write_search_results
 from utils.shared_functions import (
     create_datetime_component_cols,
@@ -98,7 +96,6 @@ from utils.plotting import (
 )
 
 # isort: on
-# pylint: enable=import-error
 
 # %%
 initialize(version_base=None, config_path="..")

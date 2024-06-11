@@ -17,8 +17,6 @@ from omegaconf import DictConfig  # noqa: TC002
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# pylint: disable=import-error,useless-suppression
-# pylint: enable=useless-suppression
 from utils.shared_functions import get_local_timezone_from_cfg, read_secure_pickle
 
 # isort: off
@@ -67,7 +65,6 @@ __all__: list[str] = []
 
 
 # isort: on
-# pylint: enable=import-error
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
