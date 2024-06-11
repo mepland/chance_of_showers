@@ -1275,7 +1275,7 @@ Disregard_training_exceptions is set, continuing!"""
 
         error_msg = f"""{error_msg}
 Returning with current objects and {exception_status = }."""
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-exception-caught
         error_msg = _build_error_msg("Unexpected error in run_bayesian_opt():", error)
         if disregard_training_exceptions:
             error_msg = f"""{error_msg}

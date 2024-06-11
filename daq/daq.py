@@ -2,6 +2,8 @@
 
 # mypy: disable-error-code = "possibly-undefined"
 
+# pylint: disable=broad-exception-caught
+
 from __future__ import annotations
 
 import datetime
@@ -186,7 +188,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
         elif logger_level == logging.DEBUG:
             logger_daq.debug(line)
         else:
-            logger_daq.critical(
+            logger_daq.critical(  # pylint: disable=logging-fstring-interpolation
                 f"Unknown {logger_level = }, {type(logger_level) = } in my_print, logging as {logging.CRITICAL = }"
             )
             logger_daq.critical(line)
