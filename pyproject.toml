@@ -304,16 +304,10 @@ ignore = [
 disable = [
   "line-too-long",
   "global-statement",
-  "useless-return",
   "too-many-branches",
   "too-many-lines",
   "wrong-import-position",
   "ungrouped-imports",
-  "unnecessary-pass",
-  "broad-exception-caught",
-  "logging-format-interpolation",
-  "logging-fstring-interpolation",
-  "logging-not-lazy",
 ]
 enable = ["useless-suppression"]
 
