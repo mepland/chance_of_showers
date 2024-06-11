@@ -190,13 +190,8 @@ max-complexity = 20
 ignore = [
   "E501",
   "ESC102",
-  "FNE003",
-  "FNE004",
   "FNE008",
-  "PD005",
   "PIE786",
-  "SCS109",
-  "TRY003",
   "TYT03",
   "W503",
   # Duplicated in flake8-secure-coding-standard and bandit
