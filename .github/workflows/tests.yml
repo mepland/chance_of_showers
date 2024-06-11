@@ -205,7 +205,7 @@ jobs:
 
       - name: yamllint
         if: (success() || failure()) && steps.filter.outputs.yaml == 'true'
-        run: poetry run yamllint -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
+        run: poetry run yamllint --format github -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
 
       # Makefile
 
