@@ -73,7 +73,7 @@ def fan_control(cfg: DictConfig) -> None:
         fan.start(speed)
         # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
 
-    def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
+    def fell(pin: int) -> None:  # noqa: U100
         """Fell action.
 
         Calculate pulse frequency and RPM.

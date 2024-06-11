@@ -248,8 +248,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
         return temp
 
     def signal_handler(
-        dummy_signal: int,  # noqa: U100 # pylint: disable=unused-argument
-        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=unused-argument
+        dummy_signal: int,  # noqa: U100
+        dummy_frame: FrameType | None,  # noqa: U100
     ) -> None:
         """Catch ctrl+c and kill, and shut down gracefully.
 

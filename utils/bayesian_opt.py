@@ -761,8 +761,8 @@ def get_point_hash(point: PointType) -> str:
 
 
 def signal_handler_for_stopping(
-    dummy_signal: int,  # noqa: U100 # pylint: disable=unused-argument
-    dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=unused-argument
+    dummy_signal: int,  # noqa: U100
+    dummy_frame: FrameType | None,  # noqa: U100
 ) -> None:
     """Stop iteration gracefully.
 

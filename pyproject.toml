@@ -312,8 +312,9 @@ disable = [
   "wrong-import-position",
   "ungrouped-imports",
   # Duplicated in flake8 / ruff
-  "unused-variable",
   "unidiomatic-typecheck",
+  "unused-argument",
+  "unused-variable",
 ]
 enable = ["useless-suppression"]
 

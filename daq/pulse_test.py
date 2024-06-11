@@ -16,7 +16,7 @@ WAIT_TIME = 5  # [s] Time to wait between each refresh
 n_pulse = 0  # pylint: disable=invalid-name
 
 
-def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
+def fell(pin: int) -> None:  # noqa: U100
     """Fell action.
 
     Args:
