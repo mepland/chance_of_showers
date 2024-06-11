@@ -200,8 +200,8 @@ ignore = [
 ]
 extend-select = ["B901", "B902", "B903", "B904", "B905", "B906", "B907", "B908", "B909"]
 per-file-ignores = [
-  "ana/exploratory_ana.py:E402,E800,DALL000",
   "ana/drive_bayesian_opt.py:E402,CM001",
+  "ana/exploratory_ana.py:E402,E800,DALL000",
   "ana/manual_bad_point.py:E402,E800",
 ]
 extend-exclude = [
@@ -300,12 +300,12 @@ ignore = [
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
-  "line-too-long",
   "global-statement",
+  "line-too-long",
   "too-many-branches",
   "too-many-lines",
-  "wrong-import-position",
   "ungrouped-imports",
+  "wrong-import-position",
   # Duplicated in flake8 / ruff
   "unidiomatic-typecheck",
   "unused-argument",
