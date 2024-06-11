@@ -108,7 +108,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
     # Defining these arrays here first saves memory
     polling_pressure_samples = np.empty(N_POLLING)
     polling_pressure_samples.fill(np.nan)
-    polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841 # pylint: disable=unused-variable
+    polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841
 
     # Lock script, avoid launching duplicates
     sys.path.append(str(pathlib.Path.cwd().parent))

@@ -89,7 +89,7 @@ def drive_bayesian_opt(
 
     # Setup run_bayesian_opt_kwargs
 
-    dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
+    dev_kwargs = {  # noqa: F841
         "n_iter": 1,
         "verbose": 9,
         "enable_torch_warnings": True,

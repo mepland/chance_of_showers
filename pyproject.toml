@@ -308,6 +308,8 @@ disable = [
   "too-many-lines",
   "wrong-import-position",
   "ungrouped-imports",
+  # Duplicated in flake8 / ruff
+  "unused-variable",
 ]
 enable = ["useless-suppression"]
 
