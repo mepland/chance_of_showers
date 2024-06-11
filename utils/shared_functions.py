@@ -56,7 +56,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     Returns:
         float: SoC temperature.
     """
-    res = os.popen("vcgencmd measure_temp").readline()  # noqa: DUO106,SCS110 # nosec: B605, B607
+    res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
 
@@ -354,4 +354,4 @@ def read_secure_pickle(
         msg = "Invalid signature!"
         raise ValueError(msg)
 
-    return pickle.loads(pickle_data)  # noqa: DUO103,SCS113 # nosec: B301
+    return pickle.loads(pickle_data)  # noqa: SCS113 # nosec: B301

@@ -199,6 +199,9 @@ ignore = [
   "TRY003",
   "TYT03",
   "W503",
+  # Duplicated in flake8-secure-coding-standard and bandit
+  "DUO103",
+  "DUO106",
 ]
 extend-select = ["B901", "B902", "B903", "B904", "B905", "B906", "B907", "B908", "B909"]
 per-file-ignores = [
