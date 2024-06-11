@@ -647,7 +647,9 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-locals,too-many-argumen
 
             hist_bin_values = np.array(_weights)
             if hist_dict.get("density", False):
-                hist_bin_values = np.divide(hist_bin_values, float(sum(hist_bin_values)))
+                hist_bin_values = np.divide(  # noqa: PD005
+                    hist_bin_values, float(sum(hist_bin_values))
+                )
 
             _label = hist_dict.get("label")
             ax.bar(
