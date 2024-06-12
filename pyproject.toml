@@ -350,7 +350,7 @@ warn_unused_configs = true
 # warn_unused_ignores = true is useful when upgrading mypy versions,
 # but leaving it as true all the time gives false positives when running mypy in the pre-commit env
 warn_unused_ignores = false
-enable_error_code=[
+enable_error_code = [
   "explicit-override",
   "ignore-without-code",
   "mutable-override",
