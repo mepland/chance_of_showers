@@ -29,7 +29,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ValueError: A data quality check failed.
     """
     # setup variables
-    # pylint: disable=invalid-name,duplicate-code
+    # pylint: disable=duplicate-code,invalid-name
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
     SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]

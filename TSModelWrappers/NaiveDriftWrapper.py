@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for NaiveDrift."""
 # pylint: enable=invalid-name
 

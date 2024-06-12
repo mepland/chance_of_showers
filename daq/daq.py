@@ -44,7 +44,7 @@ new_connection = False
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
+def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
     cfg: DictConfig,
 ) -> None:
     """Run the DAQ script.

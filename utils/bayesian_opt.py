@@ -780,7 +780,7 @@ def signal_handler_for_stopping(_signal: int, _frame: FrameType | None) -> None:
     raise RuntimeError(msg)
 
 
-def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: disable=too-many-statements,too-many-locals,too-many-arguments
+def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
     *,
     parent_wrapper: TSModelWrapper,
     model_wrapper_class: WrapperTypes,
