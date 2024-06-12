@@ -271,7 +271,7 @@ jobs:
       - name: DEV noqa via tmp file
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
         run: |
-          TMP_FIND_NOQA_COMMENTS=$(shell mktemp /tmp/find_noqa_comments.XXXXXX); \
+          TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX); \
           echo TMP_FIND_NOQA_COMMENTS || true; \
           echo $TMP_FIND_NOQA_COMMENTS || true; \
           echo $$TMP_FIND_NOQA_COMMENTS || true; \
