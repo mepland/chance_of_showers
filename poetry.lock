@@ -5484,13 +5484,13 @@ files = [
 
 [[package]]
 name = "pyupgrade"
-version = "3.15.2"
+version = "3.16.0"
 description = "A tool to automatically upgrade syntax for newer versions."
 optional = false
 python-versions = ">=3.8.1"
 files = [
-    {file = "pyupgrade-3.15.2-py2.py3-none-any.whl", hash = "sha256:ce309e0ff8ecb73f56a45f12570be84bbbde9540d13697cacb261a7f595fb1f5"},
-    {file = "pyupgrade-3.15.2.tar.gz", hash = "sha256:c488d6896c546d25845712ef6402657123008d56c1063174e27aabe15bd6b4e5"},
+    {file = "pyupgrade-3.16.0-py2.py3-none-any.whl", hash = "sha256:7a54ee28f3024d027048d49d101e5c702e88c85edc3a1d08b636c50ebef2a97d"},
+    {file = "pyupgrade-3.16.0.tar.gz", hash = "sha256:237893a05d5b117259b31b423f23cbae4bce0b7eae57ba9a52c06098c2ddd76f"},
 ]
 
 [package.dependencies]
@@ -6920,21 +6920,21 @@ typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "typos"
-version = "1.22.0"
+version = "1.22.4"
 description = "Source Code Spelling Correction"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typos-1.22.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:db9960b691aa9adcfac50af1edd890bd7667c3a40086469cf63a2f2a7b3674a9"},
-    {file = "typos-1.22.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:b719933d92ff1abf9ce2b390424fa71bca3073b7e036c6c340461860395572de"},
-    {file = "typos-1.22.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a9baf8a52b19506bb598f9b3ad8ea3c33988ad61647bda613962f284721cd9f"},
-    {file = "typos-1.22.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:733e7e311e512f80b058697b203168c7e90cd22aa235fbb43a75f1e1c1a9669e"},
-    {file = "typos-1.22.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f4d1b51417cd5b2300a9a3bf34eb4f3a03dce730eb928caacf0ed346658653e2"},
-    {file = "typos-1.22.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:934d22bd0df0404e628e977387f8718b8dd5f60a910ecbfa4f96ee9d9e62e896"},
-    {file = "typos-1.22.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:a5d71d86cf3f6455f269fb5694b3548a09fba539312d0da9a15f4d9c4d0f3240"},
-    {file = "typos-1.22.0-py3-none-win32.whl", hash = "sha256:4b3a3cb181136e7ddf0c0c2a2422fcb561407128c790cb89a7d39231ff77fcbd"},
-    {file = "typos-1.22.0-py3-none-win_amd64.whl", hash = "sha256:3a27053b417cef148ab8d5f1a886f34b0d99f05cd4713476124424f598f6d91f"},
-    {file = "typos-1.22.0.tar.gz", hash = "sha256:abe84d585cc6c20ef245a4d5fc0ac0689c8730551f5701833c90f70e07d9d3a5"},
+    {file = "typos-1.22.4-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:a1e35f0ec977e78659d46379570ab018d32c0fdd3f192a44c982731982b693d8"},
+    {file = "typos-1.22.4-py3-none-macosx_11_0_arm64.whl", hash = "sha256:63e97187dd48123e781dd54c3be854c1af548d2e4c913c3dd92f451df1b25fbf"},
+    {file = "typos-1.22.4-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a7c3fdae08252b2d0b0b2c66d69fe4227e4b4a207b87133199386256480b195a"},
+    {file = "typos-1.22.4-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e5adb76d07fe622160a00293a6b9a518e784fa58545e99a07b59398f305daec9"},
+    {file = "typos-1.22.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:79a9184ac60127b4830ded6f98b768154385a8b63a4ed93c48316694a0407946"},
+    {file = "typos-1.22.4-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:ac4090254fef67148fc084eabd10752b04cc2ecbaa5dc742b2db69362b3bc018"},
+    {file = "typos-1.22.4-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:6dec7abe907cd74393e9be5a28d568d439101108a0964f5dbe8030d7bcc5be92"},
+    {file = "typos-1.22.4-py3-none-win32.whl", hash = "sha256:0d6f23bef5ea3d1d76c5f1aa701b739c5cf4ad5e907803597d0afbc2cb090b90"},
+    {file = "typos-1.22.4-py3-none-win_amd64.whl", hash = "sha256:05ae63c11cdaa9883fa6f2d5864a9f31ca07f62d1652b16ad2a6c75a7c34b68c"},
+    {file = "typos-1.22.4.tar.gz", hash = "sha256:2a2880834960b89f516abc98f7ec5da427a297aec7566664c5e6726386f0bb85"},
 ]
 
 [[package]]
@@ -7328,4 +7328,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "c613696f589d7d251a0b2bae87ff866bc4d7e8b750603db9fe70c05a3272997a"
+content-hash = "543f09c484e5370fd7c0c94ef636fcb9ea4ce5c24644b974422118e0404c2164"

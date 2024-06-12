@@ -18,7 +18,7 @@ repos:
 
   # pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.15.2'
+    rev: 'v3.16.0'
     hooks:
       - id: pyupgrade
 
@@ -235,7 +235,7 @@ repos:
 
   # typos
   - repo: https://github.com/crate-ci/typos
-    rev: v1.22.0
+    rev: v1.22.4
     hooks:
       - id: typos
         args: ["-c", "pyproject.toml"]
