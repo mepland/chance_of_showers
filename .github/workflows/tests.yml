@@ -159,9 +159,14 @@ jobs:
       #   if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
       #   run: poetry run flake8-markdown ${{ steps.filter.outputs.markdown_files }}
 
+      # https://pylint.pycqa.org/en/latest/user_guide/usage/output.html
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message
+      # yamllint disable rule:line-length
       - name: pylint
         if: (success() || failure()) && steps.filter.outputs.python_alone == 'true'
-        run: poetry run pylint ${{ steps.filter.outputs.python_alone_files }}
+        run: |
+          poetry run pylint --msg-template='::error file={path},line={line},endLine={end_line},col={column},endColumn={end_column},title={symbol} ({msg_id})::{obj}: {msg}' ${{ steps.filter.outputs.python_alone_files }}
+      # yamllint enable rule:line-length
 
       - name: mypy
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
