@@ -77,12 +77,10 @@ def drive_bayesian_opt(
         cfg (DictConfig): Hydra configuration.
     """
     # Setup variables
-    # pylint: disable=invalid-name
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     MODELS_PATH: Final = PACKAGE_PATH / "ana" / "models"
     BAYESIAN_OPT_WORK_DIR_NAME: Final = "bayesian_optimization"
     LOCAL_TIMEZONE, _ = get_local_timezone_from_cfg(cfg)
-    # pylint: enable=invalid-name
 
     # Setup run_bayesian_opt_kwargs
 
