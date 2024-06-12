@@ -764,17 +764,14 @@ def get_point_hash(point: PointType) -> str:
     ).hexdigest()
 
 
-def signal_handler_for_stopping(
-    dummy_signal: int,  # noqa: U100
-    dummy_frame: FrameType | None,  # noqa: U100
-) -> None:
+def signal_handler_for_stopping(_signal: int, _frame: FrameType | None) -> None:
     """Stop iteration gracefully.
 
     https://medium.com/@chamilad/timing-out-of-long-running-methods-in-python-818b3582eed6
 
     Args:
-        dummy_signal (int): signal number.
-        dummy_frame (FrameType | None): Frame object.
+        _signal (int): Unused signal number.
+        _frame (FrameType | None): Unused frame object.
 
     Raises:
         RuntimeError: Out of Time!

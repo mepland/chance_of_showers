@@ -247,18 +247,15 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements,too-many-locals
 
         return temp
 
-    def signal_handler(
-        dummy_signal: int,  # noqa: U100
-        dummy_frame: FrameType | None,  # noqa: U100
-    ) -> None:
+    def signal_handler(_signal: int, _frame: FrameType | None) -> None:
         """Catch ctrl+c and kill, and shut down gracefully.
 
         https://stackoverflow.com/a/38665760
         Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
 
         Args:
-            dummy_signal (int): signal number.
-            dummy_frame (FrameType | None): Frame object.
+            _signal (int): Unused signal number.
+            _frame (FrameType | None): Unused frame object.
         """
         global running_daq_loop
         my_print(

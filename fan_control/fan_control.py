@@ -73,13 +73,13 @@ def fan_control(cfg: DictConfig) -> None:
         fan.start(speed)
         # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
 
-    def fell(pin: int) -> None:  # noqa: U100
+    def fell(_pin: int) -> None:
         """Fell action.
 
         Calculate pulse frequency and RPM.
 
         Args:
-            pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+            _pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
         """
         global current_time
         global rpm

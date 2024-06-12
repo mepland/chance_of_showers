@@ -16,11 +16,11 @@ WAIT_TIME = 5  # [s] Time to wait between each refresh
 n_pulse = 0  # pylint: disable=invalid-name
 
 
-def fell(pin: int) -> None:  # noqa: U100
+def fell(_pin: int) -> None:
     """Fell action.
 
     Args:
-        pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+        _pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
     """
     global n_pulse
     n_pulse += 1

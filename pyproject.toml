@@ -193,6 +193,7 @@ ignore = [
   "FNE008",
   "PIE786",
   "TYT03",
+  "U101",
   "W503",
   # Duplicated in flake8-secure-coding-standard and bandit
   "DUO103",
