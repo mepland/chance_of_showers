@@ -272,6 +272,7 @@ jobs:
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
         run: |
           TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX); \
-          echo TMP_FIND_NOQA_COMMENTS || true; \
+          # isort, flake8, ruff, pylint, mypy, bandit
+          grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $$TMP_FIND_NOQA_COMMENTS || true; \
           echo $TMP_FIND_NOQA_COMMENTS || true; \
-          echo $$TMP_FIND_NOQA_COMMENTS || true; \
+          cat $TMP_FIND_NOQA_COMMENTS || true; \
