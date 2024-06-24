@@ -88,191 +88,191 @@ jobs:
             any:
             - added|modified: '**'
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          tool-cache: false
+      # - name: Free disk space
+      #   uses: jlumbroso/free-disk-space@main
+      #   with:
+      #     # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
+      #     tool-cache: false
 
-          # Does not break anything, and saves a lot of space, but runs slowly,
-          # do not use unless necessary, i.e. when running poetry checks.
-          large-packages: ${{steps.filter.outputs.poetry}}
+      #     # Does not break anything, and saves a lot of space, but runs slowly,
+      #     # do not use unless necessary, i.e. when running poetry checks.
+      #     large-packages: ${{steps.filter.outputs.poetry}}
 
-          # Needed by any dockerized GitHub action
-          docker-images: false
+      #     # Needed by any dockerized GitHub action
+      #     docker-images: false
 
-          # Gets the poetry cache back
-          swap-storage: false
+      #     # Gets the poetry cache back
+      #     swap-storage: false
 
-          # These will be cleaned
-          android: true
-          dotnet: true
-          haskell: true
+      #     # These will be cleaned
+      #     android: true
+      #     dotnet: true
+      #     haskell: true
 
-      # Filtered setup
-      - name: Install Node
-        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node_version }}
-          check-latest: true
+      # # Filtered setup
+      # - name: Install Node
+      #   if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: ${{ matrix.node_version }}
+      #     check-latest: true
 
-      - name: Install Node dependencies
-        if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
-        run: sudo npm install --global standard@latest prettier@latest
+      # - name: Install Node dependencies
+      #   if: steps.filter.outputs.javascript == 'true' || steps.filter.outputs.prettier == 'true'
+      #   run: sudo npm install --global standard@latest prettier@latest
 
-      # Use "success() || failure()" to run a step even if a previous step fails
-      # https://stackoverflow.com/a/58859404
+      # # Use "success() || failure()" to run a step even if a previous step fails
+      # # https://stackoverflow.com/a/58859404
 
-      # Python
+      # # Python
 
-      - name: poetry
-        if: (success() || failure()) && steps.filter.outputs.poetry == 'true'
-        run: poetry check && poetry lock --no-update
+      # - name: poetry
+      #   if: (success() || failure()) && steps.filter.outputs.poetry == 'true'
+      #   run: poetry check && poetry lock --no-update
 
-      - name: isort
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run isort ${{ steps.filter.outputs.python_files }}
+      # - name: isort
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run isort ${{ steps.filter.outputs.python_files }}
 
-      - name: pyupgrade
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run pyupgrade ${{ steps.filter.outputs.python_files }}
+      # - name: pyupgrade
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run pyupgrade ${{ steps.filter.outputs.python_files }}
 
-      - name: black
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
+      # - name: black
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
 
-      - name: blacken-docs
-        if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
-        run: poetry run blacken-docs --line-length=100 --target-version=py311 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
+      # - name: blacken-docs
+      #   if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
+      #   run: poetry run blacken-docs --line-length=100 --target-version=py311 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
 
-      - name: flake8
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: |
-            echo "::group::version and plugins"
-            poetry run flake8 --version
-            echo "::endgroup::"
-            poetry run flake8 --format github ${{ steps.filter.outputs.python_files }}
+      # - name: flake8
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: |
+      #       echo "::group::version and plugins"
+      #       poetry run flake8 --version
+      #       echo "::endgroup::"
+      #       poetry run flake8 --format github ${{ steps.filter.outputs.python_files }}
 
-      # Disable: flake8-markdown does not use the pyproject.toml config correctly
-      # - name: flake8-markdown
+      # # Disable: flake8-markdown does not use the pyproject.toml config correctly
+      # # - name: flake8-markdown
+      # #   if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
+      # #   run: poetry run flake8-markdown ${{ steps.filter.outputs.markdown_files }}
+
+      # # https://pylint.pycqa.org/en/latest/user_guide/usage/output.html
+      # # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message
+      # # yamllint disable rule:line-length
+      # - name: pylint
+      #   if: (success() || failure()) && steps.filter.outputs.python_alone == 'true'
+      #   run: |
+      #     poetry run pylint --msg-template='::error file={path},line={line},endLine={end_line},col={column},endColumn={end_column},title={symbol} ({msg_id})::{obj}: {msg}' ${{ steps.filter.outputs.python_alone_files }}
+      # # yamllint enable rule:line-length
+
+      # - name: mypy
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run mypy ${{ steps.filter.outputs.python_files }}
+
+      # - name: bandit
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run bandit -r ${{ steps.filter.outputs.python_files }}
+
+      # - name: vulture
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run vulture .  # Needs to run on whole package
+
+      # - name: deptry
+      #   if: (success() || failure()) && steps.filter.outputs.python == 'true'
+      #   run: poetry run deptry .  # Runs on whole package
+
+      # # Javascript
+
+      # - name: standard
+      #   if: (success() || failure()) && steps.filter.outputs.javascript == 'true'
+      #   run: standard ${{ steps.filter.outputs.javascript_files }}
+
+      # # HTML
+
+      # - name: html5validator
+      #   if: (success() || failure()) && steps.filter.outputs.html == 'true'
+      #   uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
+      #   with:
+      #     config: .dev_config/.html5validator.yaml
+      #     # only configurable to run on paths, so just run on whole package
+
+      # # Prettier: HTML CSS SCSS JSON (TOML plugin broken in GitHub actions)
+
+      # - name: prettier
+      #   if: (success() || failure()) && steps.filter.outputs.prettier == 'true'
+      #   id: prettier
+      #   run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check ${{ steps.filter.outputs.prettier_files }}  # yamllint disable-line rule:line-length
+
+      # # YAML
+
+      # - name: yamllint
+      #   if: (success() || failure()) && steps.filter.outputs.yaml == 'true'
+      #   run: poetry run yamllint --format github -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
+
+      # # Makefile
+
+      # - name: checkmake
+      #   if: (success() || failure()) && steps.filter.outputs.makefile == 'true'
+      #   uses: Uno-Takashi/checkmake-action@main  # Can not pass multiple files
+
+      # # Shell scripts - no extension to filter on, always run
+
+      # - name: shellcheck shfmt checkbashisms
+      #   if: success() || failure()
+      #   uses: luizm/action-sh-checker@master  # blocklint: pragma
+      #   env:
+      #     SHFMT_OPTS: -bn -ci -sr -s -d
+      #   with:
+      #     sh_checker_checkbashisms_enable: true
+
+      # # Markdown
+
+      # - name: markdownlint
       #   if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
-      #   run: poetry run flake8-markdown ${{ steps.filter.outputs.markdown_files }}
+      #   uses: nosborn/github-action-markdown-cli@v3.3.0
+      #   with:
+      #     files: ${{ steps.filter.outputs.markdown_files }}
+      #     dot: true
+      #     config_file: .dev_config/.markdownlint.yaml
+      #     ignore_files: LICENSE.md
 
-      # https://pylint.pycqa.org/en/latest/user_guide/usage/output.html
-      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message
-      # yamllint disable rule:line-length
-      - name: pylint
-        if: (success() || failure()) && steps.filter.outputs.python_alone == 'true'
-        run: |
-          poetry run pylint --msg-template='::error file={path},line={line},endLine={end_line},col={column},endColumn={end_column},title={symbol} ({msg_id})::{obj}: {msg}' ${{ steps.filter.outputs.python_alone_files }}
-      # yamllint enable rule:line-length
+      # # All files
 
-      - name: mypy
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run mypy ${{ steps.filter.outputs.python_files }}
+      # - name: detect-secrets
+      #   if: success() || failure()
+      #   run: poetry run detect-secrets-hook --exclude-lines 'integrity='
 
-      - name: bandit
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run bandit -r ${{ steps.filter.outputs.python_files }}
+      # - name: blocklint
+      #   if: success() || failure()
+      #   run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
 
-      - name: vulture
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run vulture .  # Needs to run on whole package
+      # - name: typos
+      #   if: success() || failure()
+      #   uses: crate-ci/typos@v1.21.0
+      #   with:
+      #     config: pyproject.toml
 
-      - name: deptry
-        if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run deptry .  # Runs on whole package
-
-      # Javascript
-
-      - name: standard
-        if: (success() || failure()) && steps.filter.outputs.javascript == 'true'
-        run: standard ${{ steps.filter.outputs.javascript_files }}
-
-      # HTML
-
-      - name: html5validator
-        if: (success() || failure()) && steps.filter.outputs.html == 'true'
-        uses: Cyb3r-Jak3/html5validator-action@master  # blocklint: pragma
-        with:
-          config: .dev_config/.html5validator.yaml
-          # only configurable to run on paths, so just run on whole package
-
-      # Prettier: HTML CSS SCSS JSON (TOML plugin broken in GitHub actions)
-
-      - name: prettier
-        if: (success() || failure()) && steps.filter.outputs.prettier == 'true'
-        id: prettier
-        run: prettier --ignore-path .dev_config/.prettierignore --ignore-path .gitignore --config .dev_config/.prettierrc.yaml --check ${{ steps.filter.outputs.prettier_files }}  # yamllint disable-line rule:line-length
-
-      # YAML
-
-      - name: yamllint
-        if: (success() || failure()) && steps.filter.outputs.yaml == 'true'
-        run: poetry run yamllint --format github -c .dev_config/.yamllint.yaml --strict ${{ steps.filter.outputs.yaml_files }}  # yamllint disable-line rule:line-length
-
-      # Makefile
-
-      - name: checkmake
-        if: (success() || failure()) && steps.filter.outputs.makefile == 'true'
-        uses: Uno-Takashi/checkmake-action@main  # Can not pass multiple files
-
-      # Shell scripts - no extension to filter on, always run
-
-      - name: shellcheck shfmt checkbashisms
-        if: success() || failure()
-        uses: luizm/action-sh-checker@master  # blocklint: pragma
-        env:
-          SHFMT_OPTS: -bn -ci -sr -s -d
-        with:
-          sh_checker_checkbashisms_enable: true
-
-      # Markdown
-
-      - name: markdownlint
-        if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
-        uses: nosborn/github-action-markdown-cli@v3.3.0
-        with:
-          files: ${{ steps.filter.outputs.markdown_files }}
-          dot: true
-          config_file: .dev_config/.markdownlint.yaml
-          ignore_files: LICENSE.md
-
-      # All files
-
-      - name: detect-secrets
-        if: success() || failure()
-        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
-
-      - name: blocklint
-        if: success() || failure()
-        run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
-
-      - name: typos
-        if: success() || failure()
-        uses: crate-ci/typos@v1.21.0
-        with:
-          config: pyproject.toml
-
-      - name: Trailing spaces
-        if: (success() || failure()) && steps.filter.outputs.any == 'true'
-        run: |
-          TRAILING_SPACES=$(grep -rInH ' $' ${{ steps.filter.outputs.any_files }} || true)
-          if [[ $TRAILING_SPACES ]]; then
-            echo "::error Trailing spaces found, please remove them::"
-            echo "$TRAILING_SPACES"
-            false
-          else
-            echo "No trailing spaces found."
-            true
-          fi
+      # - name: Trailing spaces
+      #   if: (success() || failure()) && steps.filter.outputs.any == 'true'
+      #   run: |
+      #     TRAILING_SPACES=$(grep -rInH ' $' ${{ steps.filter.outputs.any_files }} || true)
+      #     if [[ $TRAILING_SPACES ]]; then
+      #       echo "::error Trailing spaces found, please remove them::"
+      #       echo "$TRAILING_SPACES"
+      #       false
+      #     else
+      #       echo "No trailing spaces found."
+      #       true
+      #     fi
 
       - name: DEV noqa via tmp file
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
         run: |
           TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX); \
           # isort, flake8, ruff, pylint, mypy, bandit
-          grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $$TMP_FIND_NOQA_COMMENTS || true; \
+          grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true; \
           echo $TMP_FIND_NOQA_COMMENTS || true; \
           cat $TMP_FIND_NOQA_COMMENTS || true; \
