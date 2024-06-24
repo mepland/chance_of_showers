@@ -271,8 +271,26 @@ jobs:
       - name: DEV noqa via tmp file
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
         run: |
-          TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX); \
+          TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX)
           # isort, flake8, ruff, pylint, mypy, bandit
-          grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true; \
-          echo $TMP_FIND_NOQA_COMMENTS || true; \
-          cat $TMP_FIND_NOQA_COMMENTS || true; \
+          grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # standard
+          grep -rInH 'eslint' ${{ steps.filter.outputs.javascript_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # prettier
+          grep -rInH 'prettier-ignore' ${{ steps.filter.outputs.prettier_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # yamllint
+          grep -rInH 'yamllint [de]' ${{ steps.filter.outputs.yaml_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # markdownlint
+          grep -rInH 'markdownlint-[de]' ${{ steps.filter.outputs.markdown_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # detect-secrets, blocklint
+          grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # Remove false positive lines from Makefile and .pre-commit-config.yaml
+          sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*grep)/d' $TMP_FIND_NOQA_COMMENTS
+          # Remove code, keep comments
+          perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\1\2/g' $TMP_FIND_NOQA_COMMENTS
+          # Sort and remove duplicates
+          sort -u -o $TMP_FIND_NOQA_COMMENTS $TMP_FIND_NOQA_COMMENTS
+          # print results
+          cat $TMP_FIND_NOQA_COMMENTS
+          # remove temporary file
+          rm -f $TMP_FIND_NOQA_COMMENTS
