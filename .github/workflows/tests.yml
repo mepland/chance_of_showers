@@ -277,27 +277,27 @@ jobs:
           # grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # standard
           grep -rInH 'eslint' ${{ steps.filter.outputs.javascript_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          cat 'TODO standard'
+          echo 'TODO standard'
           cat $TMP_FIND_NOQA_COMMENTS
           # prettier
           grep -rInH 'prettier-ignore' ${{ steps.filter.outputs.prettier_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          cat 'TODO prettier'
+          echo 'TODO prettier'
           cat $TMP_FIND_NOQA_COMMENTS
           # yamllint
           grep -rInH 'yamllint [de]' ${{ steps.filter.outputs.yaml_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          cat 'TODO yamllint'
+          echo 'TODO yamllint'
           cat $TMP_FIND_NOQA_COMMENTS
           # markdownlint
           grep -rInH 'markdownlint-[de]' ${{ steps.filter.outputs.markdown_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          cat 'TODO markdownlint'
+          echo 'TODO markdownlint'
           cat $TMP_FIND_NOQA_COMMENTS
           # detect-secrets, blocklint
           grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          cat 'TODO detect-secrets, blocklint'
+          echo 'TODO detect-secrets, blocklint'
           cat $TMP_FIND_NOQA_COMMENTS
           # Remove false positive lines from Makefile and .pre-commit-config.yaml
           sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*grep)/d' $TMP_FIND_NOQA_COMMENTS
-          cat 'TODO Remove false positive lines from Makefile and .pre-commit-config.yaml'
+          echo 'TODO Remove false positive lines from Makefile and .pre-commit-config.yaml'
           cat $TMP_FIND_NOQA_COMMENTS
           # Remove code, keep comments
           perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\1\2/g' $TMP_FIND_NOQA_COMMENTS
