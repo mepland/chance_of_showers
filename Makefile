@@ -245,9 +245,9 @@ find_noqa_comments:
 	perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\2/g' $$TMP_FIND_NOQA_COMMENTS; \
 	# Sort and remove duplicates; \
 	sort -u -o $$TMP_FIND_NOQA_COMMENTS $$TMP_FIND_NOQA_COMMENTS; \
-	# print results; \
+	# Print results; \
 	cat $$TMP_FIND_NOQA_COMMENTS; \
-	# remove temporary file; \
+	# Remove temporary file; \
 	rm -f $$TMP_FIND_NOQA_COMMENTS; \
 
 .PHONY: find_pymend_placeholders
