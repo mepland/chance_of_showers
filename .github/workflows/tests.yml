@@ -275,7 +275,7 @@ jobs:
           TMP_FIND_NOQA_COMMENTS=$(mktemp /tmp/find_noqa_comments.XXXXXX)
           # isort, flake8, ruff, pylint, mypy, bandit
           if [[ ${{ steps.filter.outputs.python }} == 'true' ]]; then
-            # grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+            grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           fi
           # standard
           if [[ ${{ steps.filter.outputs.javascript }} == 'true' ]]; then
