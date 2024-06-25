@@ -291,6 +291,13 @@ jobs:
           # Sort and remove duplicates
           sort -u -o $TMP_FIND_NOQA_COMMENTS $TMP_FIND_NOQA_COMMENTS
           # print results
-          cat $TMP_FIND_NOQA_COMMENTS
+          if [[ -s $TMP_FIND_NOQA_COMMENTS ]]; then
+            echo "::warning The following lines contain noqa comments::"
+            cat $TMP_FIND_NOQA_COMMENTS
+          else
+            echo "No noqa flags found."
+          fi
           # remove temporary file
           rm -f $TMP_FIND_NOQA_COMMENTS
+          # Always pass, just warn
+          true
