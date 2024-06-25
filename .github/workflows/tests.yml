@@ -283,18 +283,24 @@ jobs:
           # markdownlint
           grep -rInH 'markdownlint-[de]' ${{ steps.filter.outputs.markdown_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # detect-secrets, blocklint
-          grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # TODO
+          # grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # Remove false positive lines from Makefile and .pre-commit-config.yaml
           sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*grep)/d' $TMP_FIND_NOQA_COMMENTS
           # Remove code, keep comments
-          perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\1\2/g' $TMP_FIND_NOQA_COMMENTS
+          # perl -pi -E 's/(^.*?:[0-9]+:).*?(#|<\!-- )/\1\2/g' $TMP_FIND_NOQA_COMMENTS
           # Sort and remove duplicates
-          sort -u -o $TMP_FIND_NOQA_COMMENTS $TMP_FIND_NOQA_COMMENTS
+          # sort -u -o $TMP_FIND_NOQA_COMMENTS $TMP_FIND_NOQA_COMMENTS
           # print results
+          echo "hard cat"
+          cat $TMP_FIND_NOQA_COMMENTS
+          echo "end hard cat"
           if [[ -s $TMP_FIND_NOQA_COMMENTS ]]; then
+            echo "-s is true"
             echo "::warning The following lines contain noqa comments::"
             cat $TMP_FIND_NOQA_COMMENTS
           else
+            echo "-s is false"
             echo "No noqa flags found."
           fi
           # remove temporary file
