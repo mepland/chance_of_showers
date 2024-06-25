@@ -276,13 +276,12 @@ jobs:
           # isort, flake8, ruff, pylint, mypy, bandit
           # grep -rInH 'isort:\|noqa\|pylint\| type:\|nosec' ${{ steps.filter.outputs.python_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # standard
-          grep -rInH 'eslint' ${{ steps.filter.outputs.javascript_files }} >> $TMP_FIND_NOQA_COMMENTS || true
-          echo 'TODO ${{ steps.filter.outputs.javascript_files }}'
-          echo '${{ steps.filter.outputs.javascript_files }}'
-          echo '$${{ steps.filter.outputs.javascript_files }}'
-          echo ${{ steps.filter.outputs.javascript_files }}
-          echo $${{ steps.filter.outputs.javascript_files }}
-          echo 'TODO end ${{ steps.filter.outputs.javascript_files }}'
+          if [[ ${{ steps.filter.outputs.javascript }} == 'true' ]]; then
+            echo 'bash if true'
+            grep -rInH 'eslint' ${{ steps.filter.outputs.javascript_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          else
+            echo 'bash if false'
+          fi
           # prettier
           # grep -rInH 'prettier-ignore' ${{ steps.filter.outputs.prettier_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # yamllint
