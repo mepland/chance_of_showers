@@ -278,16 +278,19 @@ jobs:
           # standard
           grep -rInH 'eslint' ${{ steps.filter.outputs.javascript_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           echo 'TODO ${{ steps.filter.outputs.javascript_files }}'
+          echo '${{ steps.filter.outputs.javascript_files }}'
+          echo '$${{ steps.filter.outputs.javascript_files }}'
           echo ${{ steps.filter.outputs.javascript_files }}
+          echo $${{ steps.filter.outputs.javascript_files }}
           echo 'TODO end ${{ steps.filter.outputs.javascript_files }}'
           # prettier
-          grep -rInH 'prettier-ignore' ${{ steps.filter.outputs.prettier_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # grep -rInH 'prettier-ignore' ${{ steps.filter.outputs.prettier_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # yamllint
-          grep -rInH 'yamllint [de]' ${{ steps.filter.outputs.yaml_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # grep -rInH 'yamllint [de]' ${{ steps.filter.outputs.yaml_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # markdownlint
-          grep -rInH 'markdownlint-[de]' ${{ steps.filter.outputs.markdown_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # grep -rInH 'markdownlint-[de]' ${{ steps.filter.outputs.markdown_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # detect-secrets, blocklint
-          grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
+          # grep -rInH 'pragma: allowlist\|blocklint:.*pragma' ${{ steps.filter.outputs.any_files }} >> $TMP_FIND_NOQA_COMMENTS || true
           # Remove false positive lines from Makefile and .pre-commit-config.yaml
           sed -i -r '/^Makefile:[0-9]+:(# detect-secrets ~|# blocklint ~|.*grep)/d' $TMP_FIND_NOQA_COMMENTS
           # Remove code, keep comments
