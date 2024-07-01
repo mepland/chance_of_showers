@@ -284,6 +284,9 @@ max-locals = 30
 max-statements = 100
 max-nested-blocks = 6
 
+[tool.ruff.lint.flake8-implicit-str-concat]
+allow-multiline = false
+
 [tool.pylint.main]
 fail-under = 10
 fail-on = "I"
