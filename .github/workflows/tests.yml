@@ -132,7 +132,7 @@ jobs:
 
       - name: isort
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
-        run: poetry run isort ${{ steps.filter.outputs.python_files }}
+        run: poetry run isort --check-only ${{ steps.filter.outputs.python_files }}
 
       - name: pyupgrade
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
