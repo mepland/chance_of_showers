@@ -265,6 +265,7 @@ ignore = [
   "TRY003",
 ]
 fixable = ["ALL"]
+unfixable = ["B905"]
 preview = true
 explicit-preview-rules = true
 
