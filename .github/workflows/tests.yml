@@ -142,9 +142,11 @@ jobs:
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
         run: poetry run black --check --diff ${{ steps.filter.outputs.python_files }}
 
+      # yamllint disable rule:line-length
       - name: blacken-docs
-        if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')  # yamllint disable-line rule:line-length
-        run: poetry run blacken-docs --line-length=100 --target-version=py311 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}  # yamllint disable-line rule:line-length
+        if: (success() || failure()) && (steps.filter.outputs.python == 'true' || steps.filter.outputs.markdown == 'true' || steps.filter.outputs.rst == 'true' || steps.filter.outputs.tex == 'true')
+        run: poetry run blacken-docs --line-length=100 --target-version=py311 ${{ steps.filter.outputs.python_files }} ${{ steps.filter.outputs.markdown_files }} ${{ steps.filter.outputs.rst_files }} ${{ steps.filter.outputs.tex_files }}
+      # yamllint enable rule:line-length
 
       - name: flake8
         if: (success() || failure()) && steps.filter.outputs.python == 'true'
@@ -242,18 +244,19 @@ jobs:
       # All files
 
       - name: detect-secrets
-        if: success() || failure()
-        run: poetry run detect-secrets-hook --exclude-lines 'integrity='
+        if: (success() || failure()) && steps.filter.outputs.any == 'true'
+        run: poetry run detect-secrets-hook --exclude-lines 'integrity=' ${{ steps.filter.outputs.any_files }}  # yamllint disable-line rule:line-length
 
       - name: blocklint
-        if: success() || failure()
-        run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1
+        if: (success() || failure()) && steps.filter.outputs.any == 'true'
+        run: poetry run blocklint --skip-files=poetry.lock --max-issue-threshold=1 ${{ steps.filter.outputs.any_files }}  # yamllint disable-line rule:line-length
 
       - name: typos
-        if: success() || failure()
+        if: (success() || failure()) && steps.filter.outputs.any == 'true'
         uses: crate-ci/typos@v1.21.0
         with:
           config: pyproject.toml
+          files: ${{ steps.filter.outputs.any_files }}
 
       - name: Trailing spaces
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
