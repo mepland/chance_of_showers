@@ -1398,9 +1398,7 @@ plot_2d_hist(
     dt_stop=dt_recent_mornings_end,
     binning={
         "x": {
-            "bin_edges": make_epoch_bins(
-                dt_common, dt_common + dt.timedelta(days=7), 60 * 60
-            ),
+            "bin_edges": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=7), 60 * 60),
             "bin_size": "1 [Hours]",
             "bin_size_str_fmt": "",
         },
@@ -1609,9 +1607,7 @@ plot_2d_hist(
     dt_stop=dt_stop_local,
     binning={
         "x": {
-            "bin_edges": make_epoch_bins(
-                dt_common, dt_common + dt.timedelta(days=1), 15 * 60
-            ),
+            "bin_edges": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=1), 15 * 60),
             "bin_size": "15 [Minutes]",
             "bin_size_str_fmt": "",
         },
@@ -1654,9 +1650,7 @@ plot_2d_hist(
     dt_stop=dt_stop_local,
     binning={
         "x": {
-            "bin_edges": make_epoch_bins(
-                dt_common, dt_common + dt.timedelta(days=7), 60 * 60
-            ),
+            "bin_edges": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=7), 60 * 60),
             "bin_size": "1 [Hours]",
             "bin_size_str_fmt": "",
         },

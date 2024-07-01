@@ -1080,9 +1080,7 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
             if 3 <= verbose:
                 print(f"\nStarting {i_iter = }, with {n_points = }")
 
-            datetime_start_str = dt.datetime.now(local_timezone).strftime(
-                BAYES_OPT_DATETIME_FMT
-            )
+            datetime_start_str = dt.datetime.now(local_timezone).strftime(BAYES_OPT_DATETIME_FMT)
 
             next_point_to_probe = optimizer.suggest(utility)
 

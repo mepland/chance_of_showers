@@ -142,8 +142,7 @@ def date_ann(dt_start: dt.date | None, dt_stop: dt.date | None) -> str:
         str: Date range.
     """
     if not (
-        isinstance(dt_start, (dt.datetime, dt.date))
-        and isinstance(dt_stop, (dt.datetime, dt.date))
+        isinstance(dt_start, (dt.datetime, dt.date)) and isinstance(dt_stop, (dt.datetime, dt.date))
     ):
         return ""
 
