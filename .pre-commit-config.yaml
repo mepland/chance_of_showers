@@ -65,6 +65,7 @@ repos:
           flake8-future-annotations,
           flake8-get-chaining,
           flake8-github-annotations,
+          flake8-implicit-str-concat,
           flake8-import-conventions,
           flake8-inflammatory-jargon,
           flake8-keyword-params,

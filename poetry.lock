@@ -1980,6 +1980,17 @@ files = [
 flake8 = ">=4.0.0"
 
 [[package]]
+name = "flake8-implicit-str-concat"
+version = "0.4.0"
+description = "Flake8 plugin to encourage correct string literal concatenation."
+optional = false
+python-versions = "~=3.7"
+files = [
+    {file = "flake8_implicit_str_concat-0.4.0-py3-none-any.whl", hash = "sha256:b91805a3e0ff30ae2890830548478af25c79a4a579ec402a6ba3538043dff60c"},
+    {file = "flake8_implicit_str_concat-0.4.0.tar.gz", hash = "sha256:b6acf233afee943dc1802ef4bc242a19f0419fac9943739e235d3f2aaf616361"},
+]
+
+[[package]]
 name = "flake8-import-conventions"
 version = "0.1.0"
 description = "An opinionated plugin for Flake8 on how certain packages should be imported or aliased."
@@ -7336,4 +7347,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "ea2719ed6542f3282d48dcad0608c3e2636981c88eaf2dc5c15d9926baabb0d0"
+content-hash = "e9d6002957c15a535cbaa58608580267ada591ce21267ce5278d8449f86f09b6"
