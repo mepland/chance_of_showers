@@ -3,7 +3,7 @@
 # pylint: enable=invalid-name
 
 import copy
-import datetime
+import datetime as dt
 import gc
 import logging
 import math
@@ -124,7 +124,7 @@ def get_pl_trainer_kwargs(
     *,
     enable_torch_model_summary: bool,
     enable_torch_progress_bars: bool,
-    max_time: str | datetime.timedelta | dict[str, int] | None,
+    max_time: str | dt.timedelta | dict[str, int] | None,
     accelerator: str | None = None,
     log_every_n_steps: int | None = None,
 ) -> dict[str, Any]:
@@ -144,7 +144,7 @@ def get_pl_trainer_kwargs(
                 epochs before being stopped.
         enable_torch_model_summary (bool): Enable torch model summary.
         enable_torch_progress_bars (bool): Enable torch progress bars.
-        max_time (str | datetime.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
+        max_time (str | dt.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         accelerator (str | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto") (Default value = None)
         log_every_n_steps (int | None): How often to log within steps. (Default value = None)
 
@@ -686,7 +686,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
 
     Args:
         dfp_trainable_evergreen (pd.DataFrame): Time series data.
-        dt_val_start_datetime_local (datetime.datetime): Date to cut the validation from the training set.
+        dt_val_start_datetime_local (dt.datetime): Date to cut the validation from the training set.
         work_dir_base (pathlib.Path): Top level directory for saving model files.
         random_state (int): Random seed.
         date_fmt (str): String format of dates.
@@ -713,7 +713,7 @@ class TSModelWrapper:  # pylint: disable=too-many-instance-attributes
         self: "TSModelWrapper",
         # required
         dfp_trainable_evergreen: pd.DataFrame,
-        dt_val_start_datetime_local: datetime.datetime,
+        dt_val_start_datetime_local: dt.datetime,
         work_dir_base: pathlib.Path,
         random_state: int,
         date_fmt: str,
@@ -844,11 +844,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
     def get_n_prediction_steps_and_time_bin_size(  # noqa: FNE007
         self: "TSModelWrapper",
-    ) -> tuple[int, datetime.timedelta]:
+    ) -> tuple[int, dt.timedelta]:
         """Get number of prediction steps from prediction_length_in_minutes and time_bin_size, used for Prophet predictions.
 
         Returns:
-            tuple[int, datetime.timedelta]: Number of prediction steps and time bin size.
+            tuple[int, dt.timedelta]: Number of prediction steps and time bin size.
 
         Raises:
             TypeError: Bad configuration.
@@ -865,11 +865,11 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             raise TypeError(msg)
 
         time_bin_size = self.chosen_hyperparams.get("time_bin_size")
-        if not isinstance(time_bin_size, datetime.timedelta):
+        if not isinstance(time_bin_size, dt.timedelta):
             msg = "Could not load time_bin_size from chosen_hyperparams!"
             raise TypeError(msg)
 
-        prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
+        prediction_length = dt.timedelta(minutes=prediction_length_in_minutes)
         n_prediction_steps = math.ceil(prediction_length.seconds / time_bin_size.seconds)
 
         return n_prediction_steps, time_bin_size
@@ -897,12 +897,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def set_max_time(
         self: "TSModelWrapper",
         *,
-        max_time: str | datetime.timedelta | dict[str, int] | None,
+        max_time: str | dt.timedelta | dict[str, int] | None,
     ) -> None:
         """Set the max_time for this model wrapper.
 
         Args:
-            max_time (str | datetime.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
+            max_time (str | dt.timedelta | dict[str, int] | None): Set the maximum amount of time for training. Training will be interrupted mid-epoch.
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
@@ -915,12 +915,12 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
     def set_accelerator(
         self: "TSModelWrapper",
         *,
-        accelerator: str | datetime.timedelta | dict[str, int] | None,
+        accelerator: str | dt.timedelta | dict[str, int] | None,
     ) -> None:
         """Set the accelerator for this model wrapper.
 
         Args:
-            accelerator (str | datetime.timedelta | dict[str, int] | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
+            accelerator (str | dt.timedelta | dict[str, int] | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto")
         """
         _fixed_hyperparams = self.fixed_hyperparams
         if not _fixed_hyperparams:
@@ -1028,7 +1028,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
 
     def _name_model(self: "TSModelWrapper") -> None:
         """Name this model, with training time stamp."""
-        self.model_name = f"{self.get_generic_model_name()}_{datetime.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
+        self.model_name = f"{self.get_generic_model_name()}_{dt.datetime.now(self.local_timezone).strftime(self.fname_datetime_fmt)}"
 
     def get_model_name(self: "TSModelWrapper") -> str | None:
         """Get the name for this model, with a time stamp.
@@ -1168,7 +1168,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
             time_bin_size_in_minutes = get_closest_divisor(time_bin_size_in_minutes)
 
             self.chosen_hyperparams["time_bin_size_in_minutes"] = time_bin_size_in_minutes
-            self.chosen_hyperparams["time_bin_size"] = datetime.timedelta(
+            self.chosen_hyperparams["time_bin_size"] = dt.timedelta(
                 minutes=time_bin_size_in_minutes
             )
         else:
@@ -1235,7 +1235,7 @@ self.chosen_hyperparams = {pprint.pformat(self.chosen_hyperparams)}
                         prediction_length_in_minutes, float
                     )
 
-                prediction_length = datetime.timedelta(minutes=prediction_length_in_minutes)
+                prediction_length = dt.timedelta(minutes=prediction_length_in_minutes)
                 hyperparam_value = math.ceil(
                     prediction_length.seconds / self.chosen_hyperparams["time_bin_size"].seconds
                 )

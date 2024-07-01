@@ -5,7 +5,7 @@ Used to brute force GPU memory resets between runs.
 Returns 10 + the number of completed points as the exit code, or a integer 0 < status < 10 for exceptions.
 """
 
-import datetime
+import datetime as dt
 import os
 import pathlib
 import sys
@@ -93,7 +93,7 @@ def drive_bayesian_opt(
         "enable_torch_model_summary": True,
         "enable_torch_progress_bars": False,
         "disregard_training_exceptions": True,
-        "max_time_per_model": datetime.timedelta(minutes=10),
+        "max_time_per_model": dt.timedelta(minutes=10),
         "fixed_hyperparams_to_alter": {"n_epochs": 4},
         "enable_reloading": False,
     }
@@ -102,7 +102,7 @@ def drive_bayesian_opt(
         "n_iter": 1,
         "verbose": 2,
         "disregard_training_exceptions": True,
-        "max_time_per_model": datetime.timedelta(minutes=45),
+        "max_time_per_model": dt.timedelta(minutes=45),
     }
 
     run_bayesian_opt_kwargs = dict(prod_kwargs)

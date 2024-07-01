@@ -1,6 +1,6 @@
 """Setup Bayesian optimization."""
 
-import datetime
+import datetime as dt
 import gc
 import hashlib
 import json
@@ -797,7 +797,7 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
     enable_torch_model_summary: bool = True,
     enable_torch_progress_bars: bool = False,
     disregard_training_exceptions: bool = False,
-    max_time_per_model: datetime.timedelta | None = None,
+    max_time_per_model: dt.timedelta | None = None,
     accelerator: str | None = "auto",
     fixed_hyperparams_to_alter: HyperParamType | None = None,
     enable_json_logging: bool = True,
@@ -843,7 +843,7 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
         enable_torch_model_summary (bool): Enable torch model summary. (Default value = True)
         enable_torch_progress_bars (bool): Enable torch progress bars. (Default value = False)
         disregard_training_exceptions (bool): Flag to disregard all exceptions raised when training a model, and return BAD_TARGET instead. (Default value = False)
-        max_time_per_model (datetime.timedelta | None): Set the maximum amount of training time for each iteration.
+        max_time_per_model (dt.timedelta | None): Set the maximum amount of training time for each iteration.
             Torch models will use max_time_per_model as the max time per epoch,
             while non-torch models will use it for the whole iteration if signal is available e.g. Linux, Darwin. (Default value = None)
         accelerator (str | None): Supports passing different accelerator types ("cpu", "gpu", "tpu", "ipu", "auto") (Default value = 'auto')
@@ -1080,7 +1080,7 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
             if 3 <= verbose:
                 print(f"\nStarting {i_iter = }, with {n_points = }")
 
-            datetime_start_str = datetime.datetime.now(local_timezone).strftime(
+            datetime_start_str = dt.datetime.now(local_timezone).strftime(
                 BAYES_OPT_DATETIME_FMT
             )
 
@@ -1150,7 +1150,7 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
                 if max_time_per_model_flag:
                     if TYPE_CHECKING:
                         assert isinstance(  # noqa: SCS108 # nosec: B101
-                            max_time_per_model, datetime.timedelta
+                            max_time_per_model, dt.timedelta
                         )
 
                     signal.alarm(max_time_per_model.seconds)

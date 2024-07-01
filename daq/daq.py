@@ -6,14 +6,14 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import pathlib
 import signal
 import socket
 import sys
 import threading
-import time
+import time as tm
 import traceback
 import zoneinfo
 from csv import writer
@@ -131,7 +131,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
         logger_daq.setLevel(logging.DEBUG)
 
     if LOG_TO_FILE:
-        LOG_DATETIME: Final = datetime.datetime.now(  # pylint: disable=invalid-name
+        LOG_DATETIME: Final = dt.datetime.now(  # pylint: disable=invalid-name
             UTC_TIMEZONE
         ).strftime(FNAME_DATETIME_FMT)
 
@@ -147,7 +147,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
         )
         # https://docs.python.org/3/library/logging.html#logging.Formatter.formatTime
         # https://docs.python.org/3/library/time.html#time.gmtime
-        logging_formatter.converter = time.gmtime  # GMT = UTC
+        logging_formatter.converter = tm.gmtime  # GMT = UTC
 
         logging_fh.setFormatter(logging_formatter)
 
@@ -263,7 +263,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
             print_prefix="\n",
         )
         running_daq_loop = False
-        time.sleep(2 * POLLING_PERIOD_SECONDS)
+        tm.sleep(2 * POLLING_PERIOD_SECONDS)
         my_print("DAQ exiting gracefully", print_prefix="\n")
         sys.exit(0)
 
@@ -546,7 +546,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
 
     # Wait until UTC minutes is mod STARTING_TIME_MINUTES_MOD
     # Then if the script is interrupted, we can resume on the same cadence
-    t_start = datetime.datetime.now(UTC_TIMEZONE)
+    t_start = dt.datetime.now(UTC_TIMEZONE)
     t_start_minute = (
         t_start.minute - (t_start.minute % STARTING_TIME_MINUTES_MOD) + STARTING_TIME_MINUTES_MOD
     ) % 60
@@ -580,7 +580,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
 
     pause.until(t_start)
 
-    t_start = datetime.datetime.now(UTC_TIMEZONE)
+    t_start = dt.datetime.now(UTC_TIMEZONE)
     t_utc_str = t_start.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
     t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
     my_print(
@@ -603,7 +603,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
         past_had_flow = -1
         while running_daq_loop:
             # Set seconds to 0 to avoid drift over multiple hours / days
-            t_start = datetime.datetime.now(UTC_TIMEZONE).replace(second=0, microsecond=0)
+            t_start = dt.datetime.now(UTC_TIMEZONE).replace(second=0, microsecond=0)
             t_stop = t_start
 
             # average over AVERAGING_PERIOD_SECONDS
@@ -614,7 +614,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
             polling_flow_samples = np.zeros(N_POLLING)
             while (
                 running_daq_loop  # type: ignore[redundant-expr]
-                and t_stop - t_start < datetime.timedelta(seconds=AVERAGING_PERIOD_SECONDS)
+                and t_stop - t_start < dt.timedelta(seconds=AVERAGING_PERIOD_SECONDS)
             ):
                 # sample pressure and flow
                 pressure_value = int(chan_0.value)
@@ -678,13 +678,13 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
                         )
 
                 # wait POLLING_PERIOD_SECONDS between data points to average
-                while datetime.datetime.now(UTC_TIMEZONE) - t_stop < datetime.timedelta(
+                while dt.datetime.now(UTC_TIMEZONE) - t_stop < dt.timedelta(
                     seconds=POLLING_PERIOD_SECONDS
                 ):
                     pass
 
                 i_polling += 1
-                t_stop = datetime.datetime.now(UTC_TIMEZONE)
+                t_stop = dt.datetime.now(UTC_TIMEZONE)
 
             # process polling results if DAQ is still running
             if running_daq_loop:
@@ -764,7 +764,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
             # wait until 0 < len(t_local_str_n_last) before serving the website to avoid crashes
             while len(t_local_str_n_last) < 1:
                 # check len(t_local_str_n_last) every ~ 6 seconds
-                time.sleep(0.1 * AVERAGING_PERIOD_SECONDS)
+                tm.sleep(0.1 * AVERAGING_PERIOD_SECONDS)
                 my_print(
                     "Waiting to start web server",
                     logger_level=logging.DEBUG,

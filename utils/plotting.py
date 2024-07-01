@@ -1,6 +1,6 @@
 """This module contains common plotting code."""
 
-import datetime
+import datetime as dt
 import pathlib
 from typing import TYPE_CHECKING, Any, Final, TypeAlias
 
@@ -112,13 +112,13 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
 
 
 def make_epoch_bins(
-    dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
+    dt_start: dt.date, dt_stop: dt.date, bin_size_seconds: int
 ) -> npt.NDArray[np.float64]:
     """Make Unix epoch bins between endpoints, like linspace.
 
     Args:
-        dt_start (datetime.date): Start date.
-        dt_stop (datetime.date): Stop date.
+        dt_start (dt.date): Start date.
+        dt_stop (dt.date): Stop date.
         bin_size_seconds (int): Bin size in seconds.
 
     Returns:
@@ -131,19 +131,19 @@ def make_epoch_bins(
     return np.linspace(bin_min, bin_max, nbins + 1)
 
 
-def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> str:
+def date_ann(dt_start: dt.date | None, dt_stop: dt.date | None) -> str:
     """Generate date range.
 
     Args:
-        dt_start (datetime.date | None): Data start date.
-        dt_stop (datetime.date | None): Data end date.
+        dt_start (dt.date | None): Data start date.
+        dt_stop (dt.date | None): Data end date.
 
     Returns:
         str: Date range.
     """
     if not (
-        isinstance(dt_start, (datetime.datetime, datetime.date))
-        and isinstance(dt_stop, (datetime.datetime, datetime.date))
+        isinstance(dt_start, (dt.datetime, dt.date))
+        and isinstance(dt_stop, (dt.datetime, dt.date))
     ):
         return ""
 
@@ -158,8 +158,8 @@ def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> s
 
 
 def ann_text_std(
-    dt_start: datetime.date | None,
-    dt_stop: datetime.date | None,
+    dt_start: dt.date | None,
+    dt_stop: dt.date | None,
     *,
     ann_text_std_add: str | None = None,
     ann_text_hard_coded: str | None = None,
@@ -168,8 +168,8 @@ def ann_text_std(
     """Generate standard annotation.
 
     Args:
-        dt_start (datetime.date | None): Data start date.
-        dt_stop (datetime.date | None): Data end date.
+        dt_start (dt.date | None): Data start date.
+        dt_stop (dt.date | None): Data end date.
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_text_hard_coded (str | None): Any hard coded text to add. (Default value = None)
         gen_date (bool): If date range should be generated. (Default value = False)
@@ -188,7 +188,7 @@ def ann_text_std(
 
     element_3 = ""
     if gen_date:
-        element_3 = f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d')}\n"  # noqa: DTZ005
+        element_3 = f"Generated: {dt.datetime.now().strftime('%Y-%m-%d')}\n"  # noqa: DTZ005
 
     element_4 = ""
     if ann_text_hard_coded is not None and ann_text_hard_coded != "":
@@ -493,8 +493,8 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-arguments,too-many-loca
     m_path: pathlib.Path,
     fname: str = "hist",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[AnnTextType] | None = None,
@@ -522,8 +522,8 @@ def plot_hists(  # noqa: C901 # pylint: disable=too-many-arguments,too-many-loca
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
@@ -736,8 +736,8 @@ def plot_2d_hist(  # pylint: disable=too-many-arguments,too-many-locals
     m_path: pathlib.Path,
     fname: str = "hist_2d",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[AnnTextType] | None = None,
@@ -765,8 +765,8 @@ def plot_2d_hist(  # pylint: disable=too-many-arguments,too-many-locals
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist_2d')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
@@ -793,8 +793,8 @@ def plot_2d_hist(  # pylint: disable=too-many-arguments,too-many-locals
         msg = "Unknown Norm!"
         raise ValueError(msg)
 
-    from_datetime_to_epoch = np.vectorize(datetime.datetime.timestamp)
-    from_epoch_to_datetime = np.vectorize(datetime.datetime.fromtimestamp)
+    from_datetime_to_epoch = np.vectorize(dt.datetime.timestamp)
+    from_epoch_to_datetime = np.vectorize(dt.datetime.fromtimestamp)
 
     if x_axis_params.get("is_datetime", False):
         x_values = from_datetime_to_epoch(np.array(x_values))
@@ -899,8 +899,8 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     m_path: pathlib.Path,
     fname: str = "prophet",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
     ann_texts_in: list[AnnTextType] | None = None,
@@ -921,8 +921,8 @@ def plot_prophet(  # pylint: disable=too-many-arguments
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'prophet')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
@@ -990,8 +990,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 # pylint: disable=too-many
     m_path: pathlib.Path | None = None,
     fname: str = "ts",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = True,
     save_html: bool = False,
     ann_text_std_add: str | None = None,
@@ -1015,8 +1015,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 # pylint: disable=too-many
         m_path (pathlib.Path | None): Path output directory for saved plots. (Default value = None)
         fname (str): Output file name. (Default value = 'ts')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = True)
         save_html (bool): Save plot as html. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)

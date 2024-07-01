@@ -1,6 +1,6 @@
 """Shared functions."""
 
-import datetime
+import datetime as dt
 import hashlib
 import hmac
 import os
@@ -122,7 +122,7 @@ def rebin_chance_of_showers_time_series(
     time_col: str,
     y_col: str,
     *,
-    time_bin_size: datetime.timedelta | None = None,
+    time_bin_size: dt.timedelta | None = None,
     retain_DateTimeIndex: bool = True,
     other_cols_to_agg_dict: dict[str, str] | None = None,
     y_bin_edges: list[float] | None = None,
@@ -133,7 +133,7 @@ def rebin_chance_of_showers_time_series(
         dfp_in (pd.DataFrame): The input dataframe to rebin.
         time_col (str): The time column.
         y_col (str): The y column.
-        time_bin_size (datetime.timedelta | None): The size of time bins.
+        time_bin_size (dt.timedelta | None): The size of time bins.
             Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere. (Default value = None)
         retain_DateTimeIndex (bool): Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex. (Default value = True)
         other_cols_to_agg_dict (dict[str, str] | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
@@ -150,7 +150,7 @@ def rebin_chance_of_showers_time_series(
 
     if rebin_time:
         if TYPE_CHECKING:
-            assert isinstance(time_bin_size, datetime.timedelta)  # noqa: SCS108 # nosec: B101
+            assert isinstance(time_bin_size, dt.timedelta)  # noqa: SCS108 # nosec: B101
 
         time_bin_size_minutes = time_bin_size.seconds // 60
         if not 0 < time_bin_size_minutes < 60:
@@ -229,7 +229,7 @@ def create_datetime_component_cols(
     dfp["time_of_day"] = dfp[datetime_col].dt.strftime(time_fmt)
     dfp["time_of_day_frac"] = dfp.apply(
         lambda row: pd.to_timedelta(row["time_of_day"]).total_seconds()
-        / datetime.timedelta(days=1).total_seconds(),
+        / dt.timedelta(days=1).total_seconds(),
         axis=1,
     )
 

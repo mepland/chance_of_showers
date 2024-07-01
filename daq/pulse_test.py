@@ -1,6 +1,6 @@
 """Quick script to test reading pulses via GPIO."""
 
-import time
+import time as tm
 
 # pylint: disable=no-member
 from RPi import GPIO
@@ -36,7 +36,7 @@ try:
     GPIO.add_event_detect(GPIO_PIN, GPIO.FALLING, fell)
 
     while True:
-        time.sleep(WAIT_TIME)
+        tm.sleep(WAIT_TIME)
         print(f"n_pulse = {n_pulse}")
         n_pulse = 0  # pylint: disable=invalid-name
 

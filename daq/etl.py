@@ -3,7 +3,7 @@
 Cleans and combines raw_data/*.csv files into a single parquet file.
 """
 
-import datetime
+import datetime as dt
 import pathlib
 import traceback
 import zoneinfo
@@ -50,17 +50,17 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     # pylint: enable=duplicate-code
 
     # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
-    DT_END_OF_DRIFTING_SECONDS: Final = datetime.datetime.strptime(
+    DT_END_OF_DRIFTING_SECONDS: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_drifting_seconds"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
 
     # when web threading was fixed, eliminating duplicate records from multiple threads
-    DT_END_OF_THREADING_DUPLICATES: Final = datetime.datetime.strptime(
+    DT_END_OF_THREADING_DUPLICATES: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_threading_duplicates"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
 
     # When sticking flow variable was fixed
-    DT_END_OF_STICKING_FLOW: Final = datetime.datetime.strptime(
+    DT_END_OF_STICKING_FLOW: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_sticking_flow"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
     # pylint: enable=invalid-name

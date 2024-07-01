@@ -14,7 +14,7 @@
 # %matplotlib inline
 # pylint: disable=wrong-import-order
 
-import datetime
+import datetime as dt
 import pathlib
 import pprint
 import shutil
@@ -117,10 +117,10 @@ FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
 DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 LOCAL_TIMEZONE, LOCAL_TIMEZONE_STR = get_local_timezone_from_cfg(cfg)
 
-DT_TRAINABLE_START_DATETIME_LOCAL: Final = datetime.datetime.strptime(
+DT_TRAINABLE_START_DATETIME_LOCAL: Final = dt.datetime.strptime(
     TRAINABLE_START_DATETIME_LOCAL, DATETIME_FMT
 ).replace(tzinfo=LOCAL_TIMEZONE)
-DT_TRAINABLE_END_DATETIME_LOCAL: Final = datetime.datetime.strptime(
+DT_TRAINABLE_END_DATETIME_LOCAL: Final = dt.datetime.strptime(
     TRAINABLE_END_DATETIME_LOCAL, DATETIME_FMT
 ).replace(tzinfo=LOCAL_TIMEZONE)
 
@@ -139,7 +139,7 @@ DT_VAL_START_DATETIME_LOCAL: Final = (
 RANDOM_SEED: Final = cfg["general"]["random_seed"]
 
 START_OF_CRON_HEARTBEAT_MONITORING: Final = cfg["daq"]["start_of_cron_heartbeat_monitoring"]
-DT_START_OF_CRON_HEARTBEAT_MONITORING: Final = datetime.datetime.strptime(
+DT_START_OF_CRON_HEARTBEAT_MONITORING: Final = dt.datetime.strptime(
     START_OF_CRON_HEARTBEAT_MONITORING, DATETIME_FMT
 ).replace(tzinfo=LOCAL_TIMEZONE)
 
@@ -205,7 +205,7 @@ dfp_data = create_datetime_component_cols(
 )
 
 # columns all in the same day or week
-dt_common = datetime.datetime(year=2023, month=1, day=1, tzinfo=LOCAL_TIMEZONE)
+dt_common = dt.datetime(year=2023, month=1, day=1, tzinfo=LOCAL_TIMEZONE)
 dfp_data["datetime_local_same_day"] = dfp_data.apply(
     lambda row: row["datetime_local"].replace(
         year=dt_common.year, month=dt_common.month, day=dt_common.day
@@ -1371,7 +1371,7 @@ write_search_results(f_excel, dfp_best_points, dfp_runs_dict)
 # ## Quick look at morning commute shower for past 30 days
 
 # %%
-dt_recent_mornings_start = dt_stop_local - datetime.timedelta(days=30)
+dt_recent_mornings_start = dt_stop_local - dt.timedelta(days=30)
 dt_recent_mornings_end = dt_stop_local
 
 dfp_recent_mornings = dfp_data.loc[
@@ -1399,7 +1399,7 @@ plot_2d_hist(
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
-                dt_common, dt_common + datetime.timedelta(days=7), 60 * 60
+                dt_common, dt_common + dt.timedelta(days=7), 60 * 60
             ),
             "bin_size": "1 [Hours]",
             "bin_size_str_fmt": "",
@@ -1412,7 +1412,7 @@ plot_2d_hist(
     x_axis_params={
         "is_datetime": True,
         "axis_label": f"Time of Week [{LOCAL_TIMEZONE_STR}]",
-        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=7), 12 * 60 * 60),
+        "ticks": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=7), 12 * 60 * 60),
         "tick_format": f"%A {TIME_FMT}",
     },
     y_axis_params={
@@ -1610,7 +1610,7 @@ plot_2d_hist(
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
-                dt_common, dt_common + datetime.timedelta(days=1), 15 * 60
+                dt_common, dt_common + dt.timedelta(days=1), 15 * 60
             ),
             "bin_size": "15 [Minutes]",
             "bin_size_str_fmt": "",
@@ -1623,7 +1623,7 @@ plot_2d_hist(
     x_axis_params={
         "is_datetime": True,
         "axis_label": f"Time of Day [{LOCAL_TIMEZONE_STR}]",
-        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=1), 2 * 60 * 60),
+        "ticks": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=1), 2 * 60 * 60),
         "tick_format": TIME_FMT,
     },
     y_axis_params={
@@ -1655,7 +1655,7 @@ plot_2d_hist(
     binning={
         "x": {
             "bin_edges": make_epoch_bins(
-                dt_common, dt_common + datetime.timedelta(days=7), 60 * 60
+                dt_common, dt_common + dt.timedelta(days=7), 60 * 60
             ),
             "bin_size": "1 [Hours]",
             "bin_size_str_fmt": "",
@@ -1668,7 +1668,7 @@ plot_2d_hist(
     x_axis_params={
         "is_datetime": True,
         "axis_label": f"Time of Week [{LOCAL_TIMEZONE_STR}]",
-        "ticks": make_epoch_bins(dt_common, dt_common + datetime.timedelta(days=7), 12 * 60 * 60),
+        "ticks": make_epoch_bins(dt_common, dt_common + dt.timedelta(days=7), 12 * 60 * 60),
         "tick_format": f"%A {TIME_FMT}",
     },
     y_axis_params={
@@ -1689,8 +1689,8 @@ display_image(OUTPUTS_PATH / "mean_pressure_value_normalized_vs_time_of_week.png
 # ## Time Series of Selected Pressure Values - For Web
 
 # %%
-dt_plotly_web_selection_start = datetime.datetime(year=2023, month=11, day=1, tzinfo=LOCAL_TIMEZONE)
-dt_plotly_web_selection_end = datetime.datetime(year=2023, month=12, day=1, tzinfo=LOCAL_TIMEZONE)
+dt_plotly_web_selection_start = dt.datetime(year=2023, month=11, day=1, tzinfo=LOCAL_TIMEZONE)
+dt_plotly_web_selection_end = dt.datetime(year=2023, month=12, day=1, tzinfo=LOCAL_TIMEZONE)
 
 dfp_plotly_web_selection = dfp_data.loc[
     (dt_plotly_web_selection_start <= dfp_data["datetime_local"])
