@@ -188,7 +188,7 @@ def ann_text_std(
 
     element_3 = ""
     if gen_date:
-        element_3 = f"Generated: {dt.datetime.now().strftime('%Y-%m-%d')}\n"  # noqa: DTZ005
+        element_3 = f"Generated: {dt.datetime.now().strftime('%Y-%m-%d')}\n"
 
     element_4 = ""
     if ann_text_hard_coded is not None and ann_text_hard_coded != "":
