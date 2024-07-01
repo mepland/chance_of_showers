@@ -1797,6 +1797,22 @@ files = [
 flake8 = ">=3.0,<3.2.0 || >3.2.0"
 
 [[package]]
+name = "flake8-datetime-import"
+version = "0.1.0"
+description = "A plugin for flake8 which enforces importing `datetime as dt` and `time as tm`."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "flake8-datetime-import-0.1.0.tar.gz", hash = "sha256:77202d350ce2ac232345b0410df8100bd90796a903cbb4dca390d211c703349d"},
+    {file = "flake8_datetime_import-0.1.0-py3-none-any.whl", hash = "sha256:cd7c8da888d77eb194e1194994fd9250e28f4613033da8d081486eb87aaef88c"},
+]
+
+[package.extras]
+build = ["build"]
+dev = ["pre-commit", "tox"]
+gh = ["tox-gh"]
+
+[[package]]
 name = "flake8-datetimez"
 version = "20.10.0"
 description = "A plugin for flake8 to ban the usage of unsafe naive datetime class."
@@ -7320,4 +7336,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~=3.11.4"
-content-hash = "71ab17838da3eb8173b42a9fd198ce606a3f21bab0b0d51e719f7e0a3ffe6fde"
+content-hash = "ea2719ed6542f3282d48dcad0608c3e2636981c88eaf2dc5c15d9926baabb0d0"
