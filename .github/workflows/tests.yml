@@ -161,6 +161,11 @@ jobs:
       #   if: (success() || failure()) && steps.filter.outputs.markdown == 'true'
       #   run: poetry run flake8-markdown ${{ steps.filter.outputs.markdown_files }}
 
+      - name: ruff - not required
+        if: (success() || failure()) && steps.filter.outputs.python == 'true'
+        run: |
+            poetry run ruff check --exit-zero ${{ steps.filter.outputs.python_files }}
+
       # https://pylint.pycqa.org/en/latest/user_guide/usage/output.html
       # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message
       # yamllint disable rule:line-length
