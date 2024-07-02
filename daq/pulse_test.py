@@ -1,6 +1,6 @@
 """Quick script to test reading pulses via GPIO."""
 
-import time
+import time as tm
 
 # pylint: disable=no-member
 from RPi import GPIO
@@ -16,11 +16,11 @@ WAIT_TIME = 5  # [s] Time to wait between each refresh
 n_pulse = 0  # pylint: disable=invalid-name
 
 
-def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
+def fell(_pin: int) -> None:
     """Fell action.
 
     Args:
-        pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+        _pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
     """
     global n_pulse
     n_pulse += 1
@@ -36,7 +36,7 @@ try:
     GPIO.add_event_detect(GPIO_PIN, GPIO.FALLING, fell)
 
     while True:
-        time.sleep(WAIT_TIME)
+        tm.sleep(WAIT_TIME)
         print(f"n_pulse = {n_pulse}")
         n_pulse = 0  # pylint: disable=invalid-name
 

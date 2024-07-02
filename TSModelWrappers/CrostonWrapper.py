@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for Croston."""
 # pylint: enable=invalid-name
 
@@ -29,16 +29,16 @@ class CrostonWrapper(TSModelWrapper):
     _model_class = Croston
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = ["version"]
+    _required_hyperparams_model = ("version",)
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
-    _valid_versions = [
+    _valid_versions = (
         "classic",
         "optimized",
         "sba",
         # Do not use tsb as alpha_d and alpha_p must be set
-    ]
+    )
 
     def __init__(self: "CrostonWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # setup the version parameter correctly
@@ -51,23 +51,24 @@ class CrostonWrapper(TSModelWrapper):
                 else:
                     kwargs["model_name_tag"] = version
 
-            elif isinstance(version, type) and issubclass(version, FutureCovariatesLocalForecastingModel):  # type: ignore[arg-type]
+            elif isinstance(version, type) and issubclass(
+                version, FutureCovariatesLocalForecastingModel
+            ):
                 if "model_name_tag" not in kwargs:
-                    raise ValueError(
-                        "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
-                    )
+                    msg = "Require a descriptive model_name_tag in kwargs when using FutureCovariatesLocalForecastingModel for version parameter!"
+                    raise ValueError(msg)
 
             else:
                 valid_versions_str = ", ".join([f"{_!r}" for _ in self._valid_versions])
-                raise ValueError(
-                    f"{version = } must be in {valid_versions_str} or be a subclass of FutureCovariatesLocalForecastingModel"
-                )
+                msg = f"{version = } must be in {valid_versions_str} or be a subclass of FutureCovariatesLocalForecastingModel"
+                raise ValueError(msg)
 
             self._fixed_hyperparams["version"] = version
             # remove version from kwargs so it does not cause later complications
             del kwargs["version"]
         else:
-            raise ValueError("'version' is required in kwargs for CrostonWrapper!")
+            msg = "'version' is required in kwargs for CrostonWrapper!"
+            raise ValueError(msg)
 
         # boilerplate - the same for all models below here
 
@@ -76,9 +77,7 @@ class CrostonWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
@@ -90,7 +89,7 @@ class CrostonWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
@@ -110,7 +109,7 @@ class CrostonWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
+                required_hyperparams_model=list(self._required_hyperparams_model),
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,

@@ -1,11 +1,11 @@
 """Shared functions."""
 
-import datetime
+import datetime as dt
 import hashlib
 import hmac
 import os
 import pathlib
-import pickle  # nosec B403
+import pickle  # nosec: B403
 import platform
 import socket
 import sys
@@ -56,7 +56,7 @@ def get_SoC_temp() -> float:  # pylint: disable=invalid-name
     Returns:
         float: SoC temperature.
     """
-    res = os.popen("vcgencmd measure_temp").readline()  # noqa: DUO106, SCS110 # nosec: B605, B607
+    res = os.popen("vcgencmd measure_temp").readline()  # noqa: SCS110 # nosec: B605, B607
 
     return float(res.replace("temp=", "").replace("'C\n", ""))
 
@@ -77,7 +77,8 @@ def get_local_timezone_from_cfg(cfg: DictConfig) -> tuple[zoneinfo.ZoneInfo, str
 
     if local_timezone_str is None or local_timezone_str not in zoneinfo.available_timezones():
         available_timezones = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}")
+        msg = f"Unknown {local_timezone_str = }, choose from:\n{available_timezones}"
+        raise ValueError(msg)
 
     return zoneinfo.ZoneInfo(local_timezone_str), local_timezone_str
 
@@ -107,9 +108,10 @@ def normalize_pressure_value(
 
     # could use np.clip(normalized_pressure_value, a_min=0., a_max=1.), but let's avoid the dependency
     if clip:
-        if normalized_pressure_value < 0.0:  # noqa: R505 pylint: disable=no-else-return
+        if normalized_pressure_value < 0.0:
             return 0.0
-        elif 1.0 < normalized_pressure_value:
+
+        if 1.0 < normalized_pressure_value:
             return 1.0
 
     return normalized_pressure_value
@@ -120,9 +122,9 @@ def rebin_chance_of_showers_time_series(
     time_col: str,
     y_col: str,
     *,
-    time_bin_size: datetime.timedelta | None = None,
+    time_bin_size: dt.timedelta | None = None,
     retain_DateTimeIndex: bool = True,
-    other_cols_to_agg_dict: dict | None = None,
+    other_cols_to_agg_dict: dict[str, str] | None = None,
     y_bin_edges: list[float] | None = None,
 ) -> pd.DataFrame:
     """Rebin the chance of showers time_series in time and y prior to modeling.
@@ -131,10 +133,10 @@ def rebin_chance_of_showers_time_series(
         dfp_in (pd.DataFrame): The input dataframe to rebin.
         time_col (str): The time column.
         y_col (str): The y column.
-        time_bin_size (datetime.timedelta | None): The size of time bins.
+        time_bin_size (dt.timedelta | None): The size of time bins.
             Must be less than 1 hour and a divisor of 60 minutes, e.g. 60 % time_bin_size_in_minutes == 0, with the current implementation. This is not an issue in the chance of showers context, but may need refactoring if this code is reused elsewhere. (Default value = None)
         retain_DateTimeIndex (bool): Keep the rebinned time_col as a pandas DateTimeIndex of the dataframe, with a regular time_col as well, or drop it for a normal RangeIndex. (Default value = True)
-        other_cols_to_agg_dict (dict | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
+        other_cols_to_agg_dict (dict[str, str] | None): Other columns to aggregate during time rebinning, and their aggregation function(s). (Default value = None)
         y_bin_edges (list[float] | None): The left bin edges for y. (Default value = None)
 
     Returns:
@@ -148,20 +150,20 @@ def rebin_chance_of_showers_time_series(
 
     if rebin_time:
         if TYPE_CHECKING:
-            assert isinstance(time_bin_size, datetime.timedelta)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(time_bin_size, dt.timedelta)  # noqa: SCS108 # nosec: B101
 
         time_bin_size_minutes = time_bin_size.seconds // 60
         if not 0 < time_bin_size_minutes < 60:
-            raise ValueError(
-                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
-            )
+            msg = f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, should be between 0 and 60!"
+            raise ValueError(msg)
 
         if 60 % time_bin_size_minutes != 0:
-            raise ValueError(
-                f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
-            )
+            msg = f"Invalid {time_bin_size = }, {time_bin_size_minutes = }, {60 % time_bin_size_minutes = } should be 0!"
+            raise ValueError(msg)
 
     cols = [time_col, y_col]
+    dfp = dfp_in[cols].copy()
+
     if rebin_time:
         if other_cols_to_agg_dict is None:
             other_cols_to_agg_dict = {}
@@ -170,9 +172,6 @@ def rebin_chance_of_showers_time_series(
 
         cols_to_agg_dict = {y_col: "mean", **other_cols_to_agg_dict}
 
-    dfp = dfp_in[cols].copy()
-
-    if rebin_time:
         dfp[time_col] = dfp.apply(
             lambda row: row[time_col].replace(
                 minute=time_bin_size_minutes * (row[time_col].minute // time_bin_size_minutes),
@@ -188,7 +187,7 @@ def rebin_chance_of_showers_time_series(
 
     if rebin_y:
         if TYPE_CHECKING:
-            assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(y_bin_edges, list)  # noqa: SCS108 # nosec: B101
 
         dfp[y_col] = pd.cut(dfp[y_col], bins=y_bin_edges, right=True, labels=y_bin_edges[1:])
 
@@ -230,7 +229,7 @@ def create_datetime_component_cols(
     dfp["time_of_day"] = dfp[datetime_col].dt.strftime(time_fmt)
     dfp["time_of_day_frac"] = dfp.apply(
         lambda row: pd.to_timedelta(row["time_of_day"]).total_seconds()
-        / datetime.timedelta(days=1).total_seconds(),
+        / dt.timedelta(days=1).total_seconds(),
         axis=1,
     )
 
@@ -305,7 +304,8 @@ def write_secure_pickle(
     digest = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
 
     if f_path.suffix != ".pickle":
-        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+        msg = f"f_path ends in {f_path.suffix}, must be .pickle!"
+        raise ValueError(msg)
 
     f_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -337,7 +337,8 @@ def read_secure_pickle(
         shared_key = _get_key_from_platform()
 
     if f_path.suffix != ".pickle":
-        raise ValueError(f"f_path ends in {f_path.suffix}, must be .pickle!")
+        msg = f"f_path ends in {f_path.suffix}, must be .pickle!"
+        raise ValueError(msg)
 
     digest = None
     pickle_data = None
@@ -345,11 +346,12 @@ def read_secure_pickle(
         digest = f_pickle.readline().rstrip()
         pickle_data = f_pickle.read()
 
-    if digest is None or pickle_data is None:
+    if digest is None or pickle_data is None:  # type: ignore[redundant-expr]
         raise OSError(filename=str(f_path))
 
     recomputed = hmac.new(shared_key, pickle_data, hashlib.blake2b).hexdigest()
     if not hmac.compare_digest(digest, bytes(recomputed, sys.stdin.encoding)):
-        raise ValueError("Invalid signature!")
+        msg = "Invalid signature!"
+        raise ValueError(msg)
 
-    return pickle.loads(pickle_data)  # noqa: DUO103, SCS113 # nosec B301
+    return pickle.loads(pickle_data)  # noqa: SCS113 # nosec: B301

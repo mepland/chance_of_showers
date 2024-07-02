@@ -5,7 +5,7 @@ Used to brute force GPU memory resets between runs.
 Returns 10 + the number of completed points as the exit code, or a integer 0 < status < 10 for exceptions.
 """
 
-import datetime
+import datetime as dt
 import os
 import pathlib
 import sys
@@ -17,8 +17,6 @@ from omegaconf import DictConfig  # noqa: TC002
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# pylint: disable=import-error,useless-suppression
-# pylint: enable=useless-suppression
 from utils.shared_functions import get_local_timezone_from_cfg, read_secure_pickle
 
 # isort: off
@@ -67,7 +65,6 @@ __all__: list[str] = []
 
 
 # isort: on
-# pylint: enable=import-error
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
@@ -89,14 +86,14 @@ def drive_bayesian_opt(
 
     # Setup run_bayesian_opt_kwargs
 
-    dev_kwargs = {  # noqa: F841 # pylint: disable=unused-variable
+    dev_kwargs = {  # noqa: F841
         "n_iter": 1,
         "verbose": 9,
         "enable_torch_warnings": True,
         "enable_torch_model_summary": True,
         "enable_torch_progress_bars": False,
         "disregard_training_exceptions": True,
-        "max_time_per_model": datetime.timedelta(minutes=10),
+        "max_time_per_model": dt.timedelta(minutes=10),
         "fixed_hyperparams_to_alter": {"n_epochs": 4},
         "enable_reloading": False,
     }
@@ -105,7 +102,7 @@ def drive_bayesian_opt(
         "n_iter": 1,
         "verbose": 2,
         "disregard_training_exceptions": True,
-        "max_time_per_model": datetime.timedelta(minutes=45),
+        "max_time_per_model": dt.timedelta(minutes=45),
     }
 
     run_bayesian_opt_kwargs = dict(prod_kwargs)
@@ -241,12 +238,12 @@ def drive_bayesian_opt(
             print(f"Optimizing {_model_name}")
 
         if TYPE_CHECKING:
-            assert isinstance(run_bayesian_opt_kwargs, dict)  # noqa: SCS108 # nosec assert_used
-            assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(run_bayesian_opt_kwargs, dict)  # noqa: SCS108 # nosec: B101
+            assert isinstance(model_kwarg, dict)  # noqa: SCS108 # nosec: B101
 
         _, optimizer, exception_status = run_bayesian_opt(
             **run_bayesian_opt_kwargs,  # type: ignore[arg-type]
-            **model_kwarg,  # type: ignore[arg-type]
+            **model_kwarg,
         )
         # pylint: enable=duplicate-code
 

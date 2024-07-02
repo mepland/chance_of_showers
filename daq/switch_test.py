@@ -1,6 +1,6 @@
 """Quick script to test reading switch via GPIO."""
 
-import time
+import time as tm
 
 from gpiozero import Button
 
@@ -34,7 +34,7 @@ try:
     switch.when_released = fall
 
     while True:
-        time.sleep(WAIT_TIME)
+        tm.sleep(WAIT_TIME)
         print(f"had_switch_on = {had_switch_on}")
 
 except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt

@@ -3,7 +3,7 @@
 Cleans and combines raw_data/*.csv files into a single parquet file.
 """
 
-import datetime
+import datetime as dt
 import pathlib
 import traceback
 import zoneinfo
@@ -29,7 +29,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
         ValueError: A data quality check failed.
     """
     # setup variables
-    # pylint: disable=invalid-name,duplicate-code
+    # pylint: disable=duplicate-code,invalid-name
     PACKAGE_PATH: Final = pathlib.Path(cfg["general"]["package_path"]).expanduser()
     RAW_DATA_RELATIVE_PATH: Final = cfg["daq"]["raw_data_relative_path"]
     SAVED_DATA_RELATIVE_PATH: Final = cfg["etl"]["saved_data_relative_path"]
@@ -43,23 +43,24 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
         AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+        msg = f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}"
+        raise ValueError(msg)
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     # pylint: enable=duplicate-code
 
     # when the issue of drifting seconds was fixed by replacing t_start's second and microsecond with 0
-    DT_END_OF_DRIFTING_SECONDS: Final = datetime.datetime.strptime(
+    DT_END_OF_DRIFTING_SECONDS: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_drifting_seconds"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
 
     # when web threading was fixed, eliminating duplicate records from multiple threads
-    DT_END_OF_THREADING_DUPLICATES: Final = datetime.datetime.strptime(
+    DT_END_OF_THREADING_DUPLICATES: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_threading_duplicates"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
 
     # When sticking flow variable was fixed
-    DT_END_OF_STICKING_FLOW: Final = datetime.datetime.strptime(
+    DT_END_OF_STICKING_FLOW: Final = dt.datetime.strptime(
         cfg["daq"]["end_of_sticking_flow"], DATETIME_FMT
     ).replace(tzinfo=UTC_TIMEZONE)
     # pylint: enable=invalid-name
@@ -68,17 +69,16 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     dfpl_list = []
 
     csv_total_bytes = 0
-    for f_csv in (PACKAGE_PATH / RAW_DATA_RELATIVE_PATH).glob("*.csv"):
+    for f_csv_str in (PACKAGE_PATH / RAW_DATA_RELATIVE_PATH).glob("*.csv"):
+        f_csv = pathlib.Path(f_csv_str)
         try:
-            f_csv = pathlib.Path(f_csv)
             dfpl = pl.scan_csv(f_csv)
             dfpl = dfpl.with_columns(pl.lit(f_csv.name).alias("fname"))
             dfpl_list.append(dfpl)
             csv_total_bytes += f_csv.stat().st_size
         except Exception as error:
-            raise OSError(
-                f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
-            ) from error
+            msg = f"Error loading file {f_csv}!\n{error = }\n{type(error) = }\n{traceback.format_exc()}"
+            raise OSError(msg) from error
 
     dfpl = pl.concat(dfpl_list)
     # set UTC timezone
@@ -118,7 +118,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
             .strftime(DATETIME_FMT)
         )
         raise ValueError(
-            f"Found {N_DUPLICATE_DATETIME_POST_THREADING_FIX} datetimes with multiple entries"
+            f"Found {N_DUPLICATE_DATETIME_POST_THREADING_FIX} datetimes with multiple entries"  # noqa: ISC003
             + f" after {DT_END_OF_THREADING_DUPLICATES.strftime(DATETIME_FMT)} UTC!"
             + f"\nDuplicates are between {DUPLICATE_DATETIME_POST_FIX_MIN} and {DUPLICATE_DATETIME_POST_FIX_MAX}."
         )
@@ -133,9 +133,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
     if 0 < N_ROWS_DRIFT_SECONDS:
         print(DFPL_DRIFT_SECONDS_RECORDS.collect(streaming=True))
-        raise ValueError(
-            f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
-        )
+        msg = f"Found {N_ROWS_DRIFT_SECONDS = } after {DT_END_OF_DRIFTING_SECONDS.strftime(DATETIME_FMT)} UTC!"
+        raise ValueError(msg)
 
     # set had_flow to -1 for dates before DT_END_OF_STICKING_FLOW
     dfpl = dfpl.with_columns(pl.col("had_flow").alias("had_flow_original")).with_columns(
@@ -153,7 +152,8 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     )
     if 0 < N_INVALID_HAD_FLOW_ROWS:
         print(DFPL_INVALID_HAD_FLOW_RECORDS.collect(streaming=True))
-        raise ValueError(f"Found {N_INVALID_HAD_FLOW_ROWS = }!")
+        msg = f"Found {N_INVALID_HAD_FLOW_ROWS = }!"
+        raise ValueError(msg)
 
     dfpl = dfpl.sort(pl.col("datetime_utc"), descending=False)
 
@@ -188,7 +188,7 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     parquet_total_bytes = f_parquet.stat().st_size
 
     print(
-        f"\nCombined parquet saved to {f_parquet}"
+        f"\nCombined parquet saved to {f_parquet}"  # noqa: ISC003
         + f"\n\nInput CSVs: {humanize.naturalsize(csv_total_bytes)}"
         + f", Output parquet: {humanize.naturalsize(parquet_total_bytes)}"
         + f", a reduction of {(csv_total_bytes - parquet_total_bytes) / csv_total_bytes:.0%}\n"

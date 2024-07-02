@@ -5,7 +5,7 @@ Adapted from https://blog.driftking.tw/en/2019/11/Using-Raspberry-Pi-to-Control-
 
 import pathlib
 import sys
-import time
+import time as tm
 from typing import Final
 
 import hydra
@@ -18,7 +18,7 @@ __all__: list[str] = []
 
 
 # Setup global variables
-current_time = time.time()
+current_time = tm.time()
 rpm = 0.0  # pylint: disable=invalid-name
 
 
@@ -73,23 +73,23 @@ def fan_control(cfg: DictConfig) -> None:
         fan.start(speed)
         # Note that fan is defined later as GPIO.PWM(FAN_PIN, PWM_FREQ_KHZ)
 
-    def fell(pin: int) -> None:  # noqa: U100 # pylint: disable=unused-argument
+    def fell(_pin: int) -> None:
         """Fell action.
 
         Calculate pulse frequency and RPM.
 
         Args:
-            pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
+            _pin (int): Unused, but needed to type annotation the callback of GPIO.add_event_detect().
         """
         global current_time
         global rpm
 
-        delta_t = time.time() - current_time
+        delta_t = tm.time() - current_time
         # Reject spuriously short pulses
         if 0.005 < delta_t:
             freq = 1 / delta_t
             rpm = (freq / PULSES_PER_REVOLUTION) * 60
-            current_time = time.time()
+            current_time = tm.time()
 
     def handle_fan_speed() -> None:
         """Handle fan speed."""
@@ -116,7 +116,8 @@ def fan_control(cfg: DictConfig) -> None:
 
         if VERBOSE:
             sys.stdout.write(
-                "\x1b[2K" + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
+                "\x1b[2K"  # noqa: ISC003
+                + f"Temp: {temp:.1f}, PWM {0.01*fan_commanded_speed:.0%}, RPM {rpm:.0f}\r"
             )
             sys.stdout.flush()
 
@@ -139,7 +140,7 @@ def fan_control(cfg: DictConfig) -> None:
         # Handle fan speed every REFRESH_PERIOD_SECONDS sec
         while True:
             handle_fan_speed()
-            time.sleep(REFRESH_PERIOD_SECONDS)
+            tm.sleep(REFRESH_PERIOD_SECONDS)
 
     except KeyboardInterrupt:  # trap a CTRL+C keyboard interrupt
         set_fan_speed(FAN_MAX)

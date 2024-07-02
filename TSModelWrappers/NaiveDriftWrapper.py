@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for NaiveDrift."""
 # pylint: enable=invalid-name
 
@@ -26,7 +26,7 @@ class NaiveDriftWrapper(TSModelWrapper):
     _model_class = NaiveDrift
     _model_type = "naive"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model: list[str] = []
+    _required_hyperparams_model: tuple[str, ...] = ()
 
     _allowed_variable_hyperparams = DATA_VARIABLE_HYPERPARAMS
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
@@ -38,9 +38,7 @@ class NaiveDriftWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
@@ -52,7 +50,7 @@ class NaiveDriftWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
             self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
@@ -72,7 +70,7 @@ class NaiveDriftWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
+                required_hyperparams_model=list(self._required_hyperparams_model),
                 allowed_variable_hyperparams=self._allowed_variable_hyperparams,
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,

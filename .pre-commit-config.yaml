@@ -1,6 +1,8 @@
 # See https://pre-commit.com for more information
 repos:
 
+  # Python
+
   # poetry - commented out due to long run times
   # - repo: https://github.com/python-poetry/poetry
   #   rev: '1.8.2'
@@ -16,21 +18,21 @@ repos:
 
   # pyupgrade
   - repo: https://github.com/asottile/pyupgrade
-    rev: 'v3.15.1'
+    rev: 'v3.16.0'
     hooks:
       - id: pyupgrade
 
   # black
   - repo: https://github.com/psf/black
-    rev: '24.3.0'
+    rev: '24.4.2'
     hooks:
       - id: black-jupyter
   - repo: https://github.com/adamchainz/blacken-docs
     rev: '1.16.0'
     hooks:
       - id: blacken-docs
-        args: ['--line-length=100']
-        additional_dependencies: ['black==24.3.0']
+        args: ['--line-length=100', '--target-version=py311']
+        additional_dependencies: ['black==24.4.2']
 
   # flake8
   - repo: https://github.com/pycqa/flake8
@@ -51,15 +53,19 @@ repos:
           flake8-coding,
           flake8-comments,
           flake8-comprehensions,
+          flake8-datetime-import,
           flake8-datetimez,
+          flake8-debugger,
           flake8-dunder-all,
           flake8-dunder-class-obj,
           flake8-eradicate,
           flake8-escaping-style,
+          flake8-executable,
           flake8-functions-names,
           flake8-future-annotations,
           flake8-get-chaining,
           flake8-github-annotations,
+          flake8-implicit-str-concat,
           flake8-import-conventions,
           flake8-inflammatory-jargon,
           flake8-keyword-params,
@@ -69,6 +75,7 @@ repos:
           flake8-mutable,
           flake8-no-debug-vars,
           flake8-no-implicit-concat,
+          flake8-no-pep420,
           flake8-noqa,
           flake8-pep3101,
           flake8-pep585,
@@ -89,14 +96,9 @@ repos:
           dlint,
           pandas-vet,
           pydoclint,
+          torchfix,
           tryceratops
         ]
-
-  # mypy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.8.0'
-    hooks:
-      - id: mypy
 
   # pylint
   # https://pylint.readthedocs.io/en/latest/user_guide/installation/pre-commit-integration.html#pre-commit-integration
@@ -108,9 +110,27 @@ repos:
         language: system
         types: [python]
 
+  # flake8-markdown
+  # Disable: flake8-markdown does not use the pyproject.toml config correctly
+  # - repo: https://github.com/johnfraney/flake8-markdown
+  #   rev: 'v0.5.0'
+  #   hooks:
+  #     - id: flake8-markdown
+
+  # mypy
+  # Do not use https://github.com/pre-commit/mirrors-mypy
+  # Otherwise, pre-commit will run in an isolated virtualenv without the needed dependencies
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        types: [python]
+
   # bandit
   - repo: https://github.com/PyCQA/bandit
-    rev: '1.7.7'
+    rev: '1.7.8'
     hooks:
       - id: bandit
         args: ['-q']
@@ -123,17 +143,32 @@ repos:
 
   # deptry - only works when run within poetry env, but can't ensure from within pre-commit
   # - repo: https://github.com/fpgmaas/deptry.git
-  #   rev: "0.12.0"
+  #   rev: "0.16.1"
   #   hooks:
   #     - id: deptry
   #       types: [python]
 
-  # detect-secrets
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: 'v1.4.0'
+  # Javascript
+
+  # standard
+  - repo: https://github.com/standard/standard
+    rev: v17.1.0
     hooks:
-      - id: detect-secrets
-        args: ['--exclude-lines', 'integrity=']
+      - id: standard
+
+  # HTML
+
+  # html5validator does not work with pre-commit since it checks modified files iteratively.
+  # Use `make html5validator` for local testing instead.
+
+  # Prettier: HTML CSS SCSS JSON TOML
+
+  # The https://github.com/pre-commit/mirrors-prettier
+  # pre-commit hook does not respect --ignore-path or --config,
+  # so we would have to code the settings in here independently.
+  # It also runs quite slowly, so just use `make fmt_prettier` instead.
+
+  # YAML
 
   # yamllint
   - repo: https://github.com/adrienverge/yamllint.git
@@ -142,40 +177,7 @@ repos:
       - id: yamllint
         args: ['-c', '.dev_config/.yamllint.yaml', '--strict']
 
-  # blocklint
-  - repo: https://github.com/PrincetonUniversity/blocklint
-    rev: 'v0.2.4'
-    hooks:
-      - id: blocklint
-        args: ['--skip-files=poetry.lock', '--max-issue-threshold=1']
-
-  # markdownlint
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
-    hooks:
-      - id: markdownlint
-        args: ['--config', '.dev_config/.markdownlint.yaml', '--ignore', 'LICENSE.md', '--dot']
-
-  # standard
-  - repo: https://github.com/standard/standard
-    rev: v17.1.0
-    hooks:
-      - id: standard
-
-  # html5validator does not work with pre-commit since it checks modified files iteratively.
-  # Use `make html5validator` for local testing instead.
-
-  # prettier
-  # This pre-commit hook does not respect --ignore-path or --config,
-  # so we have to code the settings in here independently.
-  # It also runs quite slowly, so just use `make fmt_prettier` instead.
-  # - repo: https://github.com/pre-commit/mirrors-prettier
-  #   rev: "v4.0.0-alpha.8"
-  #   hooks:
-  #     - id: prettier
-  #       args: ['--no-config', '--print-width', '100', '--single-attribute-per-line']
-  #       types_or: [html, css, scss, text]
-  #       exclude: '.\.md|.\.yml|.\.yaml|.\.js|.\.min.css|Makefile'
+  # Makefile
 
   # checkmake
   - repo: https://github.com/mrtazz/checkmake.git
@@ -183,9 +185,11 @@ repos:
     hooks:
       - id: checkmake
 
+  # Shell scripts
+
   # shellcheck
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: 'v0.9.0'
+    rev: 'v0.10.0'
     hooks:
       - id: shellcheck
 
@@ -196,21 +200,50 @@ repos:
       - id: shfmt
         args: ['-bn', '-ci', '-sr', '-s', '-w']
 
+  # Markdown
+
+  # markdownlint
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.dev_config/.markdownlint.yaml', '--ignore', 'LICENSE.md', '--dot']
+
+  # GitHub actions
+
+  # actionlint
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+        args: ['-ignore', 'SC2086']
+
+  # All files
+
+  # detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 'v1.5.0'
+    hooks:
+      - id: detect-secrets
+        args: ['--exclude-lines', 'integrity=']
+
+  # blocklint
+  - repo: https://github.com/PrincetonUniversity/blocklint
+    rev: 'v0.2.5'
+    hooks:
+      - id: blocklint
+        args: ['--skip-files=poetry.lock', '--max-issue-threshold=1']
+
   # typos
   - repo: https://github.com/crate-ci/typos
-    rev: v1.19.0
+    rev: v1.22.4
     hooks:
       - id: typos
         args: ["-c", "pyproject.toml"]
         types: [text]
-        exclude: "^.*\\.kicad_.*$"
+        exclude: "^.*\\.kicad_.*$|^.*\\.gitignore$"
 
-  # github actions
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.27
-    hooks:
-      - id: actionlint
-        args: ['-ignore', 'SC2086']
+  # pre-commit only
 
   # Clean carriage return and line feed
   # https://github.com/Lucas-C/pre-commit-hooks
@@ -226,24 +259,12 @@ repos:
   # https://github.com/Lucas-C/pre-commit-hooks
   - repo: local
     hooks:
-      # - id: forbid-unicode-non-breaking-spaces
-      #   name: Detect unicode non-breaking space character U+00A0 aka M-BM-
-      #   language: system
-      #   entry: perl -ne 'print if $m = /\xc2\xa0/; $t ||= $m; END{{exit $t}}'
-      #   exclude_types: [binary]
-      #   files: ''
       - id: remove-unicode-non-breaking-spaces
         name: Remove unicode non-breaking space character U+00A0 aka M-BM-
         language: system
         entry: perl -pi* -e 's/\xc2\xa0/ /g && ($t = 1) && print STDERR $_; END{{exit $t}}'
         exclude_types: [binary]
         files: ''
-      # - id: forbid-en-dashes
-      #   name: Detect the EXTREMELY confusing unicode character U+2013
-      #   language: system
-      #   entry: perl -ne 'print if $m = /\xe2\x80\x93/; $t ||= $m; END{{exit $t}}'
-      #   exclude_types: [binary]
-      #   files: ''
       - id: remove-en-dashes
         name: Remove the EXTREMELY confusing unicode character U+2013
         language: system
@@ -348,7 +369,7 @@ repos:
 
   # pre-commit-hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 'v4.5.0'
+    rev: 'v4.6.0'
     hooks:
       #### python
       # simply checks whether the files parse as valid python
