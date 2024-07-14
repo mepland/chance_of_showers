@@ -406,6 +406,13 @@ or
 poetry install --with ana
 ```
 
+#### Installing on Fedora
+Note you will need the `devel` packages to compile `rpi-gpio` on Fedora.
+
+```bash
+sudo dnf install python3-devel python3.11-devel
+```
+
 ### Setting up pre-commit
 It is recommended to use the [`pre-commit`](https://pre-commit.com) tool
 to automatically check your commits locally as they are created.
