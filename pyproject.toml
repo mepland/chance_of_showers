@@ -33,7 +33,7 @@ mypy = "^1.10.0"
 bandit = "^1.7.9"
 vulture = "^2.11"
 pymend = { git = "https://github.com/JanEricNitschke/pymend.git" }
-deptry = "^0.16.1"
+deptry = "^0.16.2"
 html5validator = "^0.4.2"
 yamllint = "^1.35.1"
 detect-secrets = "^1.5.0"

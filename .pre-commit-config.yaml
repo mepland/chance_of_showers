@@ -143,7 +143,7 @@ repos:
 
   # deptry - only works when run within poetry env, but can't ensure from within pre-commit
   # - repo: https://github.com/fpgmaas/deptry.git
-  #   rev: '0.16.1'
+  #   rev: '0.16.2'
   #   hooks:
   #     - id: deptry
   #       types: [python]
