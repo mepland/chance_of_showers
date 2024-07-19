@@ -156,6 +156,10 @@ shfmt:
 
 .PHONY: markdownlint
 markdownlint:
+	@markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot .
+
+.PHONY: markdownlint-fix
+markdownlint-fix:
 	@markdownlint --config .dev_config/.markdownlint.yaml --ignore LICENSE.md --dot --fix .
 
 # GitHub actions
