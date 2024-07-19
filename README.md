@@ -429,9 +429,13 @@ pre-commit install
 Markdown is linted using [`markdownlint-cli`](https://github.com/igorshubovych/markdownlint-cli),
 JavaScript by [`standard`](https://github.com/standard/standard),
 and HTML, SCSS, CSS, and TOML by [`prettier`](https://prettier.io).
-You can install these JavaScript-based linters globally with:
+You will need `npm` to run these JavaScript-based linters,
+which is provided by the `nodejs` package on Fedora.
+You can install the linters globally with:
 
 ```bash
+sudo dnf install nodejs
+
 sudo npm install --global markdownlint-cli standard prettier
 sudo npm install --global --save-dev --save-exact prettier-plugin-toml
 ```
@@ -444,6 +448,8 @@ On Fedora they are:
 ```bash
 sudo dnf install ShellCheck shfmt
 ```
+
+Note, you will need `docker` [installed](https://docs.docker.com) to run `shellcheck`.
 
 ### Using the Makefile
 A [`Makefile`](Makefile) is provided for convenience,
