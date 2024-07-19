@@ -258,7 +258,7 @@ jobs:
 
       - name: typos
         if: (success() || failure()) && steps.filter.outputs.any == 'true'
-        uses: crate-ci/typos@v1.21.0
+        uses: crate-ci/typos@v1.23.2
         with:
           config: pyproject.toml
           files: ${{ steps.filter.outputs.any_files }}
