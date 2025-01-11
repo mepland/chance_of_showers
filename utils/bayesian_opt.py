@@ -861,6 +861,8 @@ def run_bayesian_opt(  # type: ignore[no-any-unimported] # noqa: C901 # pylint: 
 
     Raises:
         ValueError: Bad configuration.
+        KeyboardInterrupt: User interrupt.
+        Exception: Unexpected error.
     """
     global n_points
 
