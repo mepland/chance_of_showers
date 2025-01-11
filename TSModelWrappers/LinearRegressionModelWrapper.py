@@ -1,7 +1,8 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for LinearRegressionModel."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import LinearRegressionModel
@@ -30,10 +31,12 @@ class LinearRegressionModelWrapper(TSModelWrapper):
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
     _required_hyperparams_model = TREE_REQUIRED_HYPERPARAMS
 
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
-    }
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            **TREE_ALLOWED_VARIABLE_HYPERPARAMS,
+        }
+    )
     _fixed_hyperparams = DATA_FIXED_HYPERPARAMS
 
     def __init__(self: "LinearRegressionModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
@@ -43,9 +46,7 @@ class LinearRegressionModelWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
@@ -58,7 +59,7 @@ class LinearRegressionModelWrapper(TSModelWrapper):
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
             self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
             self.fixed_hyperparams = self._fixed_hyperparams
         else:
@@ -78,7 +79,7 @@ class LinearRegressionModelWrapper(TSModelWrapper):
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
                 required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
                 fixed_hyperparams=self._fixed_hyperparams,
             )

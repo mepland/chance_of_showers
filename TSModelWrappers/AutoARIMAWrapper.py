@@ -1,7 +1,8 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for AutoARIMA."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import AutoARIMA
@@ -26,7 +27,7 @@ class AutoARIMAWrapper(TSModelWrapper):
     _model_class = AutoARIMA
     _model_type = "statistical"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = [
+    _required_hyperparams_model = (
         "m_AutoARIMA",
         "stationary",
         "max_p",
@@ -36,35 +37,41 @@ class AutoARIMAWrapper(TSModelWrapper):
         "max_Q",
         "maxiter",
         "random_state",
-    ]
+    )
 
     # Set m_AutoARIMA as either a variable or fixed hyperparameter
-    _variable_hyperparams_AutoARIMA = {
-        "m_AutoARIMA": {
-            "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-            "max": 1,  # Default
-            "default": 1,
-            "type": int,
-        },
-    }
+    _variable_hyperparams_AutoARIMA = MappingProxyType(
+        {
+            "m_AutoARIMA": {
+                "min": 1,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+                "max": 1,  # Default
+                "default": 1,
+                "type": int,
+            },
+        }
+    )
 
-    _allowed_variable_hyperparams = {
-        **DATA_VARIABLE_HYPERPARAMS,
-        # **_variable_hyperparams_AutoARIMA,
-    }
+    _allowed_variable_hyperparams = MappingProxyType(
+        {
+            **DATA_VARIABLE_HYPERPARAMS,
+            # **_variable_hyperparams_AutoARIMA,
+        }
+    )
 
-    _fixed_hyperparams_AutoARIMA = {
-        # "m_AutoARIMA": 0,  # 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
-        "m_AutoARIMA": 1,  # Default
-        "stationary": True,
-        # Increase max values
-        "max_p": 15,
-        "max_q": 15,
-        "max_P": 5,
-        "max_D": 3,
-        "max_Q": 5,
-        "maxiter": 100,
-    }
+    _fixed_hyperparams_AutoARIMA = MappingProxyType(
+        {
+            # m_AutoARIMA ~ 0 = 24 hours, set in _assemble_hyperparams() - Runs extremely slow...
+            "m_AutoARIMA": 1,  # Default
+            "stationary": True,
+            # Increase max values
+            "max_p": 15,
+            "max_q": 15,
+            "max_P": 5,
+            "max_D": 3,
+            "max_Q": 5,
+            "maxiter": 100,
+        }
+    )
 
     # leave the following hyperparameters at their default values:
     # max_d ~ 2
@@ -97,10 +104,12 @@ class AutoARIMAWrapper(TSModelWrapper):
     # scoring_args ~ None
     # with_intercept ~ 'auto'
 
-    _fixed_hyperparams = {
-        **DATA_FIXED_HYPERPARAMS,
-        **_fixed_hyperparams_AutoARIMA,
-    }
+    _fixed_hyperparams = MappingProxyType(
+        {
+            **DATA_FIXED_HYPERPARAMS,
+            **_fixed_hyperparams_AutoARIMA,
+        }
+    )
 
     def __init__(self: "AutoARIMAWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -109,9 +118,7 @@ class AutoARIMAWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
@@ -123,10 +130,10 @@ class AutoARIMAWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
+            self.fixed_hyperparams = dict(self._fixed_hyperparams)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -143,8 +150,8 @@ class AutoARIMAWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                required_hyperparams_model=list(self._required_hyperparams_model),
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
+                fixed_hyperparams=dict(self._fixed_hyperparams),
             )

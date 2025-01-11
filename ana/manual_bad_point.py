@@ -10,8 +10,6 @@ from omegaconf import DictConfig  # noqa: TC002
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-# pylint: disable=import-error,useless-suppression,duplicate-code
-# pylint: enable=useless-suppression
 from utils.shared_functions import read_secure_pickle
 
 # isort: off
@@ -22,7 +20,7 @@ from utils.bayesian_opt import write_manual_bad_point
 from TSModelWrappers.NHiTSModelWrapper import NHiTSModelWrapper
 
 # isort: on
-# pylint: enable=import-error
+# pylint: disable=duplicate-code
 
 __all__: list[str] = []
 

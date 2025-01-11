@@ -1,7 +1,8 @@
-# pylint: disable=invalid-name,duplicate-code
+# pylint: disable=duplicate-code,invalid-name
 """Wrapper for TFT."""
 # pylint: enable=invalid-name
 
+from types import MappingProxyType
 from typing import Any
 
 from darts.models import TFTModel
@@ -29,15 +30,18 @@ class TFTModelWrapper(TSModelWrapper):
     _model_class = TFTModel
     _model_type = "torch"
     _required_hyperparams_data = DATA_REQUIRED_HYPERPARAMS
-    _required_hyperparams_model = NN_REQUIRED_HYPERPARAMS + [
+    _required_hyperparams_model = (
+        *NN_REQUIRED_HYPERPARAMS,
         "hidden_size",
         "lstm_layers",
         "num_attention_heads",
         "full_attention",
         "hidden_continuous_size",
-    ]
-    _allowed_variable_hyperparams = {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
-    _fixed_hyperparams = {**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS}
+    )
+    _allowed_variable_hyperparams = MappingProxyType(
+        {**DATA_VARIABLE_HYPERPARAMS, **NN_ALLOWED_VARIABLE_HYPERPARAMS}
+    )
+    _fixed_hyperparams = MappingProxyType({**DATA_FIXED_HYPERPARAMS, **NN_FIXED_HYPERPARAMS})
 
     def __init__(self: "TFTModelWrapper", **kwargs: Any) -> None:  # noqa: ANN401
         # boilerplate - the same for all models below here
@@ -46,9 +50,7 @@ class TFTModelWrapper(TSModelWrapper):
         # but they do not work if the kwargs["TSModelWrapper"] parent instance was updated between child __init__ calls
         if (
             "TSModelWrapper" in kwargs
-            and type(  # noqa: E721 # pylint: disable=unidiomatic-typecheck
-                kwargs["TSModelWrapper"].__class__
-            )
+            and type(kwargs["TSModelWrapper"].__class__)  # noqa: E721
             == type(TSModelWrapper)  # <class 'type'>
             and str(kwargs["TSModelWrapper"].__class__)
             == str(TSModelWrapper)  # <class 'TSModelWrappers.TSModelWrappers.TSModelWrapper'>
@@ -60,10 +62,10 @@ class TFTModelWrapper(TSModelWrapper):
             self.work_dir = kwargs.get("work_dir")
             self.model_name_tag = kwargs.get("model_name_tag")
             self.required_hyperparams_data = self._required_hyperparams_data
-            self.required_hyperparams_model = self._required_hyperparams_model
-            self.allowed_variable_hyperparams = self._allowed_variable_hyperparams
+            self.required_hyperparams_model = list(self._required_hyperparams_model)
+            self.allowed_variable_hyperparams = dict(self._allowed_variable_hyperparams)
             self.variable_hyperparams = kwargs.get("variable_hyperparams", {})
-            self.fixed_hyperparams = self._fixed_hyperparams
+            self.fixed_hyperparams = dict(self._fixed_hyperparams)
         else:
             super().__init__(
                 dfp_trainable_evergreen=kwargs["dfp_trainable_evergreen"],
@@ -80,8 +82,8 @@ class TFTModelWrapper(TSModelWrapper):
                 work_dir=kwargs["work_dir"],
                 model_name_tag=kwargs.get("model_name_tag"),
                 required_hyperparams_data=self._required_hyperparams_data,
-                required_hyperparams_model=self._required_hyperparams_model,
-                allowed_variable_hyperparams=self._allowed_variable_hyperparams,
+                required_hyperparams_model=list(self._required_hyperparams_model),
+                allowed_variable_hyperparams=dict(self._allowed_variable_hyperparams),
                 variable_hyperparams=kwargs.get("variable_hyperparams"),
-                fixed_hyperparams=self._fixed_hyperparams,
+                fixed_hyperparams=dict(self._fixed_hyperparams),
             )

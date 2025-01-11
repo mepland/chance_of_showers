@@ -14,7 +14,7 @@
 # Checklist
 * [ ] I have performed a self-review of my own code
 * [ ] I have run the `pre-commit` checks
-* [ ] The [github `tests` action](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml) is passing
+* [ ] The [GitHub `tests` action](https://github.com/mepland/chance_of_showers/actions/workflows/tests.yml) is passing
 * [ ] I have commented my code, particularly in hard-to-understand areas
 * [ ] I have updated the documentation as required
 

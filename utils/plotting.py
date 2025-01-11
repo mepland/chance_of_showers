@@ -1,14 +1,27 @@
 """This module contains common plotting code."""
 
-import datetime
+import datetime as dt
 import pathlib
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final, TypeAlias
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import plotly.graph_objects as go
+
+ArrayNumericType: TypeAlias = (
+    list[float | int] | npt.NDArray[np.float64 | np.int64] | pd.Series  # type: ignore[type-arg]
+)
+
+
+AxisParamsType: TypeAlias = dict[str, Any]
+AnnTextType: TypeAlias = dict[str, Any]
+HistDictType: TypeAlias = dict[str, Any]
+BinningDictType: TypeAlias = dict[str, Any]
+LegendParamsType: TypeAlias = dict[str, Any]
+RefLinesType: TypeAlias = dict[str, Any]
 
 __all__ = [
     "make_epoch_bins",
@@ -61,7 +74,7 @@ PNG_DPI: Final = 200
 STD_ANN_X: Final = 0.80
 STD_ANN_Y: Final = 0.95
 
-STD_CMAP: Final = mpl.cm.get_cmap("plasma")
+STD_CMAP: Final = plt.get_cmap("plasma")
 
 TOP_LINE_STD_ANN: Final = ""
 
@@ -99,37 +112,37 @@ def my_large_num_formatter(value: float, *, e_precision: int = 3) -> str:
 
 
 def make_epoch_bins(
-    dt_start: datetime.date, dt_stop: datetime.date, bin_size_seconds: int
-) -> np.ndarray:
+    dt_start: dt.date, dt_stop: dt.date, bin_size_seconds: int
+) -> npt.NDArray[np.float64]:
     """Make Unix epoch bins between endpoints, like linspace.
 
     Args:
-        dt_start (datetime.date): Start date.
-        dt_stop (datetime.date): Stop date.
+        dt_start (dt.date): Start date.
+        dt_stop (dt.date): Stop date.
         bin_size_seconds (int): Bin size in seconds.
 
     Returns:
-        np.ndarray: Array of bin edges in epoch seconds between dt_start and dt_stop.
+        npt.NDArray[np.float64]: Array of bin edges in epoch seconds between dt_start and dt_stop.
     """
-    bin_min = dt_start.timestamp()  # type: ignore[attr-defined]
-    bin_max = dt_stop.timestamp()  # type: ignore[attr-defined]
+    bin_min = float(dt_start.timestamp())  # type: ignore[attr-defined]
+    bin_max = float(dt_stop.timestamp())  # type: ignore[attr-defined]
     nbins = int(round((bin_max - bin_min) / bin_size_seconds))
+
     return np.linspace(bin_min, bin_max, nbins + 1)
 
 
-def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> str:
+def date_ann(dt_start: dt.date | None, dt_stop: dt.date | None) -> str:
     """Generate date range.
 
     Args:
-        dt_start (datetime.date | None): Data start date.
-        dt_stop (datetime.date | None): Data end date.
+        dt_start (dt.date | None): Data start date.
+        dt_stop (dt.date | None): Data end date.
 
     Returns:
         str: Date range.
     """
     if not (
-        isinstance(dt_start, (datetime.datetime, datetime.date))
-        and isinstance(dt_stop, (datetime.datetime, datetime.date))
+        isinstance(dt_start, (dt.datetime, dt.date)) and isinstance(dt_stop, (dt.datetime, dt.date))
     ):
         return ""
 
@@ -144,8 +157,8 @@ def date_ann(dt_start: datetime.date | None, dt_stop: datetime.date | None) -> s
 
 
 def ann_text_std(
-    dt_start: datetime.date | None,
-    dt_stop: datetime.date | None,
+    dt_start: dt.date | None,
+    dt_stop: dt.date | None,
     *,
     ann_text_std_add: str | None = None,
     ann_text_hard_coded: str | None = None,
@@ -154,8 +167,8 @@ def ann_text_std(
     """Generate standard annotation.
 
     Args:
-        dt_start (datetime.date | None): Data start date.
-        dt_stop (datetime.date | None): Data end date.
+        dt_start (dt.date | None): Data start date.
+        dt_stop (dt.date | None): Data end date.
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
         ann_text_hard_coded (str | None): Any hard coded text to add. (Default value = None)
         gen_date (bool): If date range should be generated. (Default value = False)
@@ -174,7 +187,7 @@ def ann_text_std(
 
     element_3 = ""
     if gen_date:
-        element_3 = f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d')}\n"  # noqa: DTZ005
+        element_3 = f"Generated: {dt.datetime.now().strftime('%Y-%m-%d')}\n"
 
     element_4 = ""
     if ann_text_hard_coded is not None and ann_text_hard_coded != "":
@@ -190,40 +203,46 @@ def ann_text_std(
 
 
 def _setup_vars(
-    ann_texts_in: list[dict] | None, x_axis_params: dict | None, y_axis_params: dict | None
-) -> tuple[list[dict], dict, dict]:
+    ann_texts_in: list[AnnTextType] | None,
+    x_axis_params: AxisParamsType | None,
+    y_axis_params: AxisParamsType | None,
+) -> tuple[list[AnnTextType], AxisParamsType, AxisParamsType]:
     """Setup variables.
 
     Args:
-        ann_texts_in (list[dict] | None): Input annotations.
-        x_axis_params (dict | None): X axis parameters.
-        y_axis_params (dict | None): Y axis parameters.
+        ann_texts_in (list[AnnTextType] | None): Input annotations.
+        x_axis_params (AxisParamsType | None): X axis parameters.
+        y_axis_params (AxisParamsType | None): Y axis parameters.
 
     Returns:
-        tuple[list[dict], dict, dict]: Cleaned variables.
+        tuple[list[AnnTextType], AxisParamsType, AxisParamsType]: Cleaned variables.
     """
     ann_texts = []
     if ann_texts_in is not None:
         ann_texts = list(ann_texts_in)
 
-    if not isinstance(x_axis_params, dict):
+    if x_axis_params is None:
         x_axis_params = {}
 
-    if not isinstance(y_axis_params, dict):
+    if y_axis_params is None:
         y_axis_params = {}
 
     return ann_texts, x_axis_params, y_axis_params
 
 
 def set_ax_limits(
-    _ax: mpl.axes.Axes, x_axis_params: dict, y_axis_params: dict, *, allow_max_mult: bool = False
+    _ax: mpl.axes.Axes,
+    x_axis_params: AxisParamsType,
+    y_axis_params: AxisParamsType,
+    *,
+    allow_max_mult: bool = False,
 ) -> None:
     """Set the axes limits.
 
     Args:
         _ax (mpl.axes.Axes): Axes object.
-        x_axis_params (dict): X axis parameters.
-        y_axis_params (dict): Y axis parameters.
+        x_axis_params (AxisParamsType): X axis parameters.
+        y_axis_params (AxisParamsType): Y axis parameters.
         allow_max_mult (bool): Allow multiplying the y maximum to auto scale the y axis. (Default value = False)
     """
     x_min_auto, x_max_auto = _ax.get_xlim()
@@ -257,14 +276,18 @@ def set_ax_limits(
 
 
 def clean_ax(
-    _ax: mpl.axes.Axes, x_axis_params: dict, y_axis_params: dict, *, turn_off_axes: bool = False
+    _ax: mpl.axes.Axes,
+    x_axis_params: AxisParamsType,
+    y_axis_params: AxisParamsType,
+    *,
+    turn_off_axes: bool = False,
 ) -> None:
     """Clean the axes.
 
     Args:
         _ax (mpl.axes.Axes): Axes object.
-        x_axis_params (dict): X axis parameters.
-        y_axis_params (dict): Y axis parameters.
+        x_axis_params (AxisParamsType): X axis parameters.
+        y_axis_params (AxisParamsType): Y axis parameters.
         turn_off_axes (bool): Turn off axes. (Default value = False)
     """
     if turn_off_axes:
@@ -295,7 +318,11 @@ def clean_ax(
             _ax.set_yscale("log")
 
 
-def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict | None) -> None:
+def draw_legend(
+    fig: mpl.figure.Figure,
+    leg_objects: list[mpl.artist.Artist],
+    legend_params: LegendParamsType | None,
+) -> None:
     """Draw the legend from objects.
 
     Example parameter values:
@@ -303,16 +330,16 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
 
     Args:
         fig (mpl.figure.Figure): figure object.
-        leg_objects (list): List of legend objects.
-        legend_params (dict | None): Legend parameters.
+        leg_objects (list[mpl.artist.Artist]): List of legend objects.
+        legend_params (LegendParamsType | None): Legend parameters.
     """
     if len(leg_objects) > 0:
-        if not isinstance(legend_params, dict):
+        if legend_params is None:
             legend_params = {}
 
         leg = fig.legend(
             leg_objects,
-            [ob.get_label() for ob in leg_objects],
+            [str(ob.get_label()) for ob in leg_objects],
             fontsize=legend_params.get("fontsize", 18),
             bbox_to_anchor=legend_params.get("bbox_to_anchor", (0.7, 0.65, 0.2, 0.2)),
             loc=legend_params.get("loc", "upper center"),
@@ -325,9 +352,9 @@ def draw_legend(fig: mpl.figure.Figure, leg_objects: list, legend_params: dict |
         leg.get_frame().set_facecolor(legend_params.get("box_color", "none"))
 
 
-def ann_then_save(
+def ann_then_save(  # noqa: FNE003
     _fig: mpl.figure.Figure,
-    ann_texts: list[dict],
+    ann_texts: list[AnnTextType],
     plot_inline: bool,  # noqa: FBT001
     m_path: pathlib.Path,
     fname: str,
@@ -341,7 +368,7 @@ def ann_then_save(
 
     Args:
         _fig (mpl.figure.Figure): Figure object.
-        ann_texts (list[dict]): List of annotation dictionaries.
+        ann_texts (list[AnnTextType]): List of annotation dictionaries.
         plot_inline (bool): Display plot inline in a notebook, or save to file.
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name.
@@ -352,10 +379,7 @@ def ann_then_save(
     """
     if ann_texts is not None:
         for text in ann_texts:
-            if forced_text_size is not None:
-                text_size = forced_text_size
-            else:
-                text_size = text.get("size", 18)
+            text_size = forced_text_size if forced_text_size is not None else text.get("size", 18)
 
             plt.figtext(
                 ann_text_origin_x + text.get("x", 0.0),
@@ -377,7 +401,7 @@ def ann_then_save(
         plt.close("all")
 
 
-def save_ploty_to_html(
+def save_ploty_to_html(  # type: ignore[no-any-unimported]
     fig: go.Figure,
     m_path: pathlib.Path,
     fname: str,
@@ -400,8 +424,8 @@ def save_ploty_to_html(
 
 
 def _process_hist_binning(
-    binning: dict | None,
-    hist_values: list[float] | np.ndarray | pd.Series,
+    binning: BinningDictType | None,
+    hist_values: ArrayNumericType,
     *,
     current_bin_min: float | None = None,
     current_bin_max: float | None = None,
@@ -409,8 +433,8 @@ def _process_hist_binning(
     """Process binning dict for histograms.
 
     Args:
-        binning (dict | None): Binning parameters.
-        hist_values (list[float] | np.ndarray | pd.Series): Values for filling histogram.
+        binning (BinningDictType | None): Binning parameters.
+        hist_values (ArrayNumericType): Values for filling histogram.
         current_bin_min (float | None): Minimum bin value. (Default value = None)
         current_bin_max (float | None): Maximum bin value. (Default value = None)
 
@@ -442,10 +466,7 @@ def _process_hist_binning(
         # possibly variable size bins from bin_edges
         nbins = len(bin_edges) - 1
         bin_edges = np.array(bin_edges)
-        if bin_size is not None:
-            bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
-        else:
-            bin_size_str = "Variable"
+        bin_size_str = f"{bin_size:{bin_size_str_fmt}}" if bin_size is not None else "Variable"
     elif bin_size is not None and bin_size > 0.0:
         # fixed bin_size
         nbins = int(round((bin_max - bin_min) / bin_size))
@@ -459,27 +480,28 @@ def _process_hist_binning(
         bin_size_str = f"{bin_size:{bin_size_str_fmt}}"
     else:
         print(binning)
-        raise ValueError("Can not work with this binning dict!")
+        msg = "Can not work with this binning dict!"
+        raise ValueError(msg)
 
     return bin_edges, nbins, bin_size_str
 
 
-def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
-    hist_dicts: list[dict],
+def plot_hists(  # noqa: C901 # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
+    hist_dicts: list[HistDictType],
     *,
     m_path: pathlib.Path,
     fname: str = "hist",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
-    ann_texts_in: list[dict] | None = None,
-    binning: dict | None = None,
-    x_axis_params: dict | None = None,
-    y_axis_params: dict | None = None,
-    legend_params: dict | None = None,
-    reference_lines: list[dict] | None = None,
+    ann_texts_in: list[AnnTextType] | None = None,
+    binning: BinningDictType | None = None,
+    x_axis_params: AxisParamsType | None = None,
+    y_axis_params: AxisParamsType | None = None,
+    legend_params: AxisParamsType | None = None,
+    reference_lines: list[RefLinesType] | None = None,
 ) -> None:
     """Plot histograms.
 
@@ -495,20 +517,20 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        hist_dicts (list[dict]): List of histogram dictionaries.
+        hist_dicts (list[HistDictType]): List of histogram dictionaries.
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
-        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
-        binning (dict | None): Binning parameters. (Default value = None)
-        x_axis_params (dict | None): X axis parameters. (Default value = None)
-        y_axis_params (dict | None): Y axis parameters. (Default value = None)
-        legend_params (dict | None): Legend parameters. (Default value = None)
-        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
+        ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
+        binning (BinningDictType | None): Binning parameters. (Default value = None)
+        x_axis_params (AxisParamsType | None): X axis parameters. (Default value = None)
+        y_axis_params (AxisParamsType | None): Y axis parameters. (Default value = None)
+        legend_params (AxisParamsType | None): Legend parameters. (Default value = None)
+        reference_lines (list[RefLinesType] | None): List of reference line dicts. (Default value = None)
 
     Raises:
         ValueError: Bad configuration.
@@ -532,9 +554,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
                 x_bin_edges = list(x_values)
 
         else:
-            raise ValueError(
-                "Should not end up here, re-evaluate your hist_dicts and binning inputs!"
-            )
+            msg = "Should not end up here, re-evaluate your hist_dicts and binning inputs!"
+            raise ValueError(msg)
 
         if i_hist_dict == 0:
             x_bin_min = min(x_values)
@@ -545,7 +566,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
 
     binning["bin_edges"] = x_bin_edges
     x_bin_edges, x_nbins, x_bin_size_str = _process_hist_binning(
-        binning, x_values, current_bin_min=x_bin_min, current_bin_max=x_bin_max
+        binning, x_values, current_bin_min=x_bin_min, current_bin_max=x_bin_max  # type: ignore[possibly-undefined]
     )
 
     leg_objects = []
@@ -575,6 +596,9 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
 
             _bins = _bin_edges
             _weights = hist_dict["hist_data"]["hist"]
+        else:
+            msg = "Should not end up here, can not load bins and weights!"
+            raise ValueError(msg)
 
         if not hist_dict.get("plot_via_bar", False):
             _plotted_hist, _plotted_bin_edges, _plotted_patches = ax.hist(
@@ -597,10 +621,11 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
         else:
             # plot via ax.bar instead of ax.hist - better for some use cases with variable bins
             if TYPE_CHECKING:
-                assert isinstance(_weights, list)  # noqa: SCS108 # nosec assert_used
+                assert isinstance(_weights, list)  # noqa: SCS108 # nosec: B101
 
             if len(_bins) - 1 != len(_weights):
-                raise ValueError("Need to write numpy code to histogram the values")
+                msg = "Need to write numpy code to histogram the values"
+                raise ValueError(msg)
 
             _nbins = len(_bins) - 1
             x_axis_labels = []
@@ -611,7 +636,7 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
                     upper_inequality = r"$\leq$"
 
                 x_axis_labels.append(
-                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # noqa: FS002 pylint: disable=consider-using-f-string
+                    r"{low} $\leq$ {var} {upper_inequality} {high}".format(  # noqa: FS002 # pylint: disable=consider-using-f-string
                         low=my_large_num_formatter(_bins[i], e_precision=0),
                         high=my_large_num_formatter(_bins[i + 1], e_precision=0),
                         var=x_axis_params.get("axis_label", "Binned Variable"),
@@ -621,7 +646,9 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
 
             hist_bin_values = np.array(_weights)
             if hist_dict.get("density", False):
-                hist_bin_values = np.divide(hist_bin_values, float(sum(hist_bin_values)))
+                hist_bin_values = np.divide(  # noqa: PD005
+                    hist_bin_values, float(sum(hist_bin_values))
+                )
 
             _label = hist_dict.get("label")
             ax.bar(
@@ -672,7 +699,8 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
             elif reference_line["orientation"] == "h":
                 line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             if _label is not None and _label != "":
                 leg_objects.append(line_2d)
@@ -700,24 +728,24 @@ def plot_hists(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
-    x_values: list[float] | np.ndarray | pd.Series,
-    y_values: list[float] | np.ndarray | pd.Series,
+def plot_2d_hist(  # pylint: disable=too-many-arguments,too-many-locals
+    x_values: ArrayNumericType,
+    y_values: ArrayNumericType,
     *,
     m_path: pathlib.Path,
     fname: str = "hist_2d",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
-    ann_texts_in: list[dict] | None = None,
-    binning: dict | None = None,
-    x_axis_params: dict | None = None,
-    y_axis_params: dict | None = None,
-    z_axis_params: dict | None = None,
-    legend_params: dict | None = None,
-    reference_lines: list[dict] | None = None,
+    ann_texts_in: list[AnnTextType] | None = None,
+    binning: BinningDictType | None = None,
+    x_axis_params: AxisParamsType | None = None,
+    y_axis_params: AxisParamsType | None = None,
+    z_axis_params: AxisParamsType | None = None,
+    legend_params: LegendParamsType | None = None,
+    reference_lines: list[RefLinesType] | None = None,
 ) -> None:
     """Plot 2D histograms.
 
@@ -731,22 +759,22 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
       reference_lines = [{"label": None, "orientation": "v", "value": 100.0, "c": "c0", "lw": 2, "ls": "-"}]
 
     Args:
-        x_values (list[float] | np.ndarray | pd.Series): X values for filling histogram.
-        y_values (list[float] | np.ndarray | pd.Series): Y values for filling histogram.
+        x_values (ArrayNumericType): X values for filling histogram.
+        y_values (ArrayNumericType): Y values for filling histogram.
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'hist_2d')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
-        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
-        binning (dict | None): Binning parameters, for x and y axes. (Default value = None)
-        x_axis_params (dict | None): X axis parameters. (Default value = None)
-        y_axis_params (dict | None): Y axis parameters. (Default value = None)
-        z_axis_params (dict | None): Z axis parameters. (Default value = None)
-        legend_params (dict | None): Legend parameters. (Default value = None)
-        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
+        ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
+        binning (BinningDictType | None): Binning parameters, for x and y axes. (Default value = None)
+        x_axis_params (AxisParamsType | None): X axis parameters. (Default value = None)
+        y_axis_params (AxisParamsType | None): Y axis parameters. (Default value = None)
+        z_axis_params (AxisParamsType | None): Z axis parameters. (Default value = None)
+        legend_params (LegendParamsType | None): Legend parameters. (Default value = None)
+        reference_lines (list[RefLinesType] | None): List of reference line dicts. (Default value = None)
 
     Raises:
         ValueError: Bad configuration.
@@ -754,17 +782,18 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
     ann_texts, x_axis_params, y_axis_params = _setup_vars(
         ann_texts_in, x_axis_params, y_axis_params
     )
-    if not isinstance(z_axis_params, dict):
+    if z_axis_params is None:
         z_axis_params = {}
 
     z_norm = z_axis_params.get("norm")
     if z_norm == "log":
         z_norm = mpl.colors.LogNorm()
     elif z_norm is not None:
-        raise ValueError("Unknown Norm!")
+        msg = "Unknown Norm!"
+        raise ValueError(msg)
 
-    from_datetime_to_epoch = np.vectorize(datetime.datetime.timestamp)
-    from_epoch_to_datetime = np.vectorize(datetime.datetime.fromtimestamp)
+    from_datetime_to_epoch = np.vectorize(dt.datetime.timestamp)
+    from_epoch_to_datetime = np.vectorize(dt.datetime.fromtimestamp)
 
     if x_axis_params.get("is_datetime", False):
         x_values = from_datetime_to_epoch(np.array(x_values))
@@ -827,7 +856,8 @@ def plot_2d_hist(  # pylint: disable=too-many-locals,too-many-arguments
             elif reference_line["orientation"] == "h":
                 line_2d = ax.axhline(y=reference_line["value"], **_kwargs)
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             if _label is not None and _label != "":
                 leg_objects.append(line_2d)
@@ -868,14 +898,14 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     m_path: pathlib.Path,
     fname: str = "prophet",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = False,
     ann_text_std_add: str | None = None,
-    ann_texts_in: list[dict] | None = None,
-    x_axis_params_list: list[dict] | list[None] | None = None,
-    y_axis_params_list: list[dict] | list[None] | None = None,
-    legend_params: dict | None = None,
+    ann_texts_in: list[AnnTextType] | None = None,
+    x_axis_params_list: list[AxisParamsType] | list[None] | None = None,
+    y_axis_params_list: list[AxisParamsType] | list[None] | None = None,
+    legend_params: LegendParamsType | None = None,
 ) -> None:
     """Plot prophet figures nicely.
 
@@ -890,14 +920,14 @@ def plot_prophet(  # pylint: disable=too-many-arguments
         m_path (pathlib.Path): Path output directory for saved plots.
         fname (str): Output file name. (Default value = 'prophet')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
-        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
-        x_axis_params_list (list[dict] | list[None] | None): List of X axis parameters. (Default value = None)
-        y_axis_params_list (list[dict] | list[None] | None): List of Y axis parameters. (Default value = None)
-        legend_params (dict | None): Legend parameters. (Default value = None)
+        ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
+        x_axis_params_list (list[AxisParamsType] | list[None] | None): List of X axis parameters. (Default value = None)
+        y_axis_params_list (list[AxisParamsType] | list[None] | None): List of Y axis parameters. (Default value = None)
+        legend_params (LegendParamsType | None): Legend parameters. (Default value = None)
     """
     fig.set_size_inches(ASPECT_RATIO_SINGLE * VSIZE, VSIZE)
 
@@ -909,12 +939,12 @@ def plot_prophet(  # pylint: disable=too-many-arguments
 
     leg_objects = []
 
-    for ax, x_axis_params, y_axis_params in zip(
+    for ax, x_axis_params_original, y_axis_params_original in zip(
         fig.axes, x_axis_params_list, y_axis_params_list, strict=True
     ):
-        ax.grid(False)
-        ann_texts, x_axis_params, y_axis_params = _setup_vars(
-            ann_texts_in, x_axis_params, y_axis_params
+        ax.grid(visible=False)
+        _, x_axis_params, y_axis_params = _setup_vars(
+            None, x_axis_params_original, y_axis_params_original
         )
 
         clean_ax(ax, x_axis_params, y_axis_params)
@@ -939,6 +969,7 @@ def plot_prophet(  # pylint: disable=too-many-arguments
 
     draw_legend(fig, leg_objects, legend_params)
 
+    ann_texts, _, _ = _setup_vars(ann_texts_in, None, None)
     ann_texts.append(
         {
             "label": ann_text_std(dt_start, dt_stop, ann_text_std_add=ann_text_std_add),
@@ -949,22 +980,22 @@ def plot_prophet(  # pylint: disable=too-many-arguments
     ann_then_save(fig, ann_texts, plot_inline, m_path, fname, tag)
 
 
-def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-locals,too-many-arguments
+def plot_chance_of_showers_time_series(  # noqa: C901 # pylint: disable=too-many-arguments,too-many-locals
     dfp_in: pd.DataFrame,
-    x_axis_params: dict,
-    y_axis_params: dict,
+    x_axis_params: AxisParamsType,
+    y_axis_params: AxisParamsType,
     *,
-    z_axis_params: dict | None = None,
+    z_axis_params: AxisParamsType | None = None,
     m_path: pathlib.Path | None = None,
     fname: str = "ts",
     tag: str = "",
-    dt_start: datetime.date | None = None,
-    dt_stop: datetime.date | None = None,
+    dt_start: dt.date | None = None,
+    dt_stop: dt.date | None = None,
     plot_inline: bool = True,
     save_html: bool = False,
     ann_text_std_add: str | None = None,
-    ann_texts_in: list[dict] | None = None,
-    reference_lines: list[dict] | None = None,
+    ann_texts_in: list[AnnTextType] | None = None,
+    reference_lines: list[RefLinesType] | None = None,
     standard_flow_legend: bool = True,
 ) -> None:
     """Plot time series for the Chance of Showers project.
@@ -977,19 +1008,19 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
 
     Args:
         dfp_in (pd.DataFrame): Pandas dataframe containing the needed data.
-        x_axis_params (dict): X axis parameters.
-        y_axis_params (dict): Y axis parameters.
-        z_axis_params (dict | None): Z axis parameters. (Default value = None)
+        x_axis_params (AxisParamsType): X axis parameters.
+        y_axis_params (AxisParamsType): Y axis parameters.
+        z_axis_params (AxisParamsType | None): Z axis parameters. (Default value = None)
         m_path (pathlib.Path | None): Path output directory for saved plots. (Default value = None)
         fname (str): Output file name. (Default value = 'ts')
         tag (str): Tag to append to file name. (Default value = '')
-        dt_start (datetime.date | None): Data start date. (Default value = None)
-        dt_stop (datetime.date | None): Data end date. (Default value = None)
+        dt_start (dt.date | None): Data start date. (Default value = None)
+        dt_stop (dt.date | None): Data end date. (Default value = None)
         plot_inline (bool): Display plot inline in a notebook, or save to file. (Default value = True)
         save_html (bool): Save plot as html. (Default value = False)
         ann_text_std_add (str | None): Text to add to the standard annotation. (Default value = None)
-        ann_texts_in (list[dict] | None): List of annotation dictionaries. (Default value = None)
-        reference_lines (list[dict] | None): List of reference line dicts. (Default value = None)
+        ann_texts_in (list[AnnTextType] | None): List of annotation dictionaries. (Default value = None)
+        reference_lines (list[RefLinesType] | None): List of reference line dicts. (Default value = None)
         standard_flow_legend (bool): Use standard "No Flow"/"Had Flow" legend entries, instead of trace legend entries. (Default value = True)
 
     Raises:
@@ -1111,7 +1142,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
             rangeselector_buttons = list(known_buttons.keys())
 
         if TYPE_CHECKING:
-            assert isinstance(rangeselector_buttons, list)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(rangeselector_buttons, list)  # noqa: SCS108 # nosec: B101
 
         for rangeselector_button in rangeselector_buttons:
             if rangeselector_button in known_buttons:
@@ -1119,7 +1150,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
                     known_buttons[rangeselector_button]
                 )
             else:
-                raise ValueError(f"Unknown {rangeselector_button = }!")
+                msg = f"Unknown {rangeselector_button = }!"
+                raise ValueError(msg)
 
     if x_axis_params.get("rangeslider", True):
         trace_layout["xaxis"]["rangeslider"] = {
@@ -1151,7 +1183,8 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
                     "y1": reference_line["value"],
                 }
             else:
-                raise ValueError(f"Bad orientation= {reference_line.get('orientation')}!")
+                msg = f"Bad orientation= {reference_line.get('orientation')}!"
+                raise ValueError(msg)
 
             _name = reference_line.get("name")
             if _name is not None and isinstance(_name, str):
@@ -1218,8 +1251,9 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
         or ann_text_std_add is not None
         or ann_texts_in is not None
     ):
+        msg = "Not implemented for these parameters:"
         raise NotImplementedError(
-            "Not implemented for these parameters:",
+            msg,
             dt_start,
             dt_stop,
             ann_text_std_add,
@@ -1228,7 +1262,7 @@ def plot_chance_of_showers_time_series(  # noqa: C901 pylint: disable=too-many-l
 
     if save_html:
         if TYPE_CHECKING:
-            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec assert_used
+            assert isinstance(m_path, pathlib.Path)  # noqa: SCS108 # nosec: B101
 
         save_ploty_to_html(fig, m_path, fname, tag)
 

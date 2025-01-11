@@ -1,15 +1,19 @@
 """Run DAQ script."""
 
+# mypy: disable-error-code = "possibly-undefined"
+
+# pylint: disable=broad-exception-caught
+
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import logging
 import pathlib
 import signal
 import socket
 import sys
 import threading
-import time
+import time as tm
 import traceback
 import zoneinfo
 from csv import writer
@@ -40,7 +44,7 @@ new_connection = False
 
 
 @hydra.main(version_base=None, config_path="..", config_name="config")
-def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
+def daq(  # noqa: C901 # pylint: disable=too-many-locals,too-many-statements
     cfg: DictConfig,
 ) -> None:
     """Run the DAQ script.
@@ -77,7 +81,8 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
         AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-        raise ValueError(f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}")
+        msg = f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}"
+        raise ValueError(msg)
 
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     # Do not use get_local_timezone_from_cfg() due to the way utils.shared_functions is imported.
@@ -103,7 +108,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
     # Defining these arrays here first saves memory
     polling_pressure_samples = np.empty(N_POLLING)
     polling_pressure_samples.fill(np.nan)
-    polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841 # pylint: disable=unused-variable
+    polling_flow_samples = np.zeros(N_POLLING)  # noqa: F841
 
     # Lock script, avoid launching duplicates
     sys.path.append(str(pathlib.Path.cwd().parent))
@@ -126,7 +131,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         logger_daq.setLevel(logging.DEBUG)
 
     if LOG_TO_FILE:
-        LOG_DATETIME: Final = datetime.datetime.now(  # pylint: disable=invalid-name
+        LOG_DATETIME: Final = dt.datetime.now(  # pylint: disable=invalid-name
             UTC_TIMEZONE
         ).strftime(FNAME_DATETIME_FMT)
 
@@ -142,7 +147,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         )
         # https://docs.python.org/3/library/logging.html#logging.Formatter.formatTime
         # https://docs.python.org/3/library/time.html#time.gmtime
-        logging_formatter.converter = time.gmtime  # GMT = UTC
+        logging_formatter.converter = tm.gmtime  # GMT = UTC
 
         logging_fh.setFormatter(logging_formatter)
 
@@ -183,7 +188,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         elif logger_level == logging.DEBUG:
             logger_daq.debug(line)
         else:
-            logger_daq.critical(
+            logger_daq.critical(  # pylint: disable=logging-fstring-interpolation
                 f"Unknown {logger_level = }, {type(logger_level) = } in my_print, logging as {logging.CRITICAL = }"
             )
             logger_daq.critical(line)
@@ -239,22 +244,18 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            pass
 
         return temp
 
-    def signal_handler(
-        dummy_signal: int,  # noqa: U100 # pylint: disable=unused-argument
-        dummy_frame: FrameType | None,  # noqa: U100 # pylint: disable=unused-argument
-    ) -> None:
+    def signal_handler(_signal: int, _frame: FrameType | None) -> None:
         """Catch ctrl+c and kill, and shut down gracefully.
 
         https://stackoverflow.com/a/38665760
         Use the running_daq_loop variable and a pause of 2 * polling_period_seconds seconds to end the daq_loop() thread gracefully
 
         Args:
-            dummy_signal (int): signal number.
-            dummy_frame (FrameType | None): Frame object.
+            _signal (int): Unused signal number.
+            _frame (FrameType | None): Unused frame object.
         """
         global running_daq_loop
         my_print(
@@ -262,7 +263,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             print_prefix="\n",
         )
         running_daq_loop = False
-        time.sleep(2 * POLLING_PERIOD_SECONDS)
+        tm.sleep(2 * POLLING_PERIOD_SECONDS)
         my_print("DAQ exiting gracefully", print_prefix="\n")
         sys.exit(0)
 
@@ -372,7 +373,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=None,
                     use_print=False,
                 )
-                pass
             except Exception as error:
                 # don't want to kill the DAQ just because of an OLED problem
                 my_print(
@@ -380,7 +380,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
     # Setup web page
     # following https://github.com/donskytech/dht22-weather-station-python-flask-socketio
@@ -452,7 +451,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                         break
 
                 conn_details_str = (
-                    f"sid: {request.sid}"  # type: ignore[attr-defined]
+                    f"sid: {request.sid}"  # type: ignore[attr-defined] # noqa: ISC003
                     + f", IP address: {ip_address}"
                     + f", MAC address: {mac_address}"
                 )
@@ -485,7 +484,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
         @sio.on("disconnect")
         def disconnect() -> None:
@@ -502,7 +500,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                     logger_level=logging.DEBUG,
                     use_print=False,
                 )
-                pass
 
         if not (0 < VERBOSITY or DISPLAY_WEB_LOGGING_TERMINAL):
             # No messages in terminal
@@ -536,7 +533,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             try:
                 # doesn't even have to be reachable
                 m_socket.connect(("10.254.254.254", 1))
-                ip_address = m_socket.getsockname()[0]
+                ip_address = str(m_socket.getsockname()[0])
             except Exception:
                 ip_address = "127.0.0.1"
             finally:
@@ -549,7 +546,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     # Wait until UTC minutes is mod STARTING_TIME_MINUTES_MOD
     # Then if the script is interrupted, we can resume on the same cadence
-    t_start = datetime.datetime.now(UTC_TIMEZONE)
+    t_start = dt.datetime.now(UTC_TIMEZONE)
     t_start_minute = (
         t_start.minute - (t_start.minute % STARTING_TIME_MINUTES_MOD) + STARTING_TIME_MINUTES_MOD
     ) % 60
@@ -583,7 +580,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
 
     pause.until(t_start)
 
-    t_start = datetime.datetime.now(UTC_TIMEZONE)
+    t_start = dt.datetime.now(UTC_TIMEZONE)
     t_utc_str = t_start.astimezone(UTC_TIMEZONE).strftime(DATETIME_FMT)
     t_local_str = t_start.astimezone(LOCAL_TIMEZONE).strftime(DATETIME_FMT)
     my_print(
@@ -606,7 +603,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
         past_had_flow = -1
         while running_daq_loop:
             # Set seconds to 0 to avoid drift over multiple hours / days
-            t_start = datetime.datetime.now(UTC_TIMEZONE).replace(second=0, microsecond=0)
+            t_start = dt.datetime.now(UTC_TIMEZONE).replace(second=0, microsecond=0)
             t_stop = t_start
 
             # average over AVERAGING_PERIOD_SECONDS
@@ -615,8 +612,9 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             had_flow = 0  # avoid sticking high if we lose pressure while flowing
             polling_pressure_samples.fill(np.nan)
             polling_flow_samples = np.zeros(N_POLLING)
-            while running_daq_loop and t_stop - t_start < datetime.timedelta(
-                seconds=AVERAGING_PERIOD_SECONDS
+            while (
+                running_daq_loop  # type: ignore[redundant-expr]
+                and t_stop - t_start < dt.timedelta(seconds=AVERAGING_PERIOD_SECONDS)
             ):
                 # sample pressure and flow
                 pressure_value = int(chan_0.value)
@@ -678,16 +676,15 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
                 # wait POLLING_PERIOD_SECONDS between data points to average
-                while datetime.datetime.now(UTC_TIMEZONE) - t_stop < datetime.timedelta(
+                while dt.datetime.now(UTC_TIMEZONE) - t_stop < dt.timedelta(
                     seconds=POLLING_PERIOD_SECONDS
                 ):
                     pass
 
                 i_polling += 1
-                t_stop = datetime.datetime.now(UTC_TIMEZONE)
+                t_stop = dt.datetime.now(UTC_TIMEZONE)
 
             # process polling results if DAQ is still running
             if running_daq_loop:
@@ -732,14 +729,13 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
                 if LOG_MEMORY_USAGE:
                     try:
                         if t_start.minute % LOG_MEMORY_USAGE_MINUTES_MOD == 0:
                             ram_info = psutil.virtual_memory()
                             my_print(
-                                f"RAM Available: {humanize.naturalsize(ram_info.available)}, "
+                                f"RAM Available: {humanize.naturalsize(ram_info.available)}, "  # noqa: ISC003
                                 + f"Used: {humanize.naturalsize(ram_info.used)}, "
                                 + f"Percent: {ram_info.percent:.2f}%",
                                 logger_level=logging.INFO,
@@ -753,7 +749,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                             logger_level=logging.DEBUG,
                             use_print=False,
                         )
-                        pass
 
         my_print(f"Exiting daq_loop() via {running_daq_loop = }")
 
@@ -769,7 +764,7 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
             # wait until 0 < len(t_local_str_n_last) before serving the website to avoid crashes
             while len(t_local_str_n_last) < 1:
                 # check len(t_local_str_n_last) every ~ 6 seconds
-                time.sleep(0.1 * AVERAGING_PERIOD_SECONDS)
+                tm.sleep(0.1 * AVERAGING_PERIOD_SECONDS)
                 my_print(
                     "Waiting to start web server",
                     logger_level=logging.DEBUG,
@@ -795,7 +790,6 @@ def daq(  # noqa: C901 # pylint: disable=too-many-statements, too-many-locals
                 logger_level=logging.DEBUG,
                 use_print=False,
             )
-            pass
 
     # run daq_loop() until we exit the main thread
     if thread_daq_loop is not None:
