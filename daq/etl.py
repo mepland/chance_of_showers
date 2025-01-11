@@ -39,13 +39,6 @@ def etl(cfg: DictConfig) -> None:  # pylint: disable=too-many-locals
     FNAME_DATETIME_FMT: Final = cfg["general"]["fname_datetime_fmt"]
     DATETIME_FMT: Final = f"{DATE_FMT} {TIME_FMT}"
 
-    LOCAL_TIMEZONE_STR: Final = cfg["general"]["local_timezone"]
-
-    if LOCAL_TIMEZONE_STR not in zoneinfo.available_timezones():
-        AVAILABLE_TIMEZONES: Final = "\n".join(list(zoneinfo.available_timezones()))
-        msg = f"Unknown {LOCAL_TIMEZONE_STR = }, choose from:\n{AVAILABLE_TIMEZONES}"
-        raise ValueError(msg)
-
     UTC_TIMEZONE: Final = zoneinfo.ZoneInfo("UTC")
     # pylint: enable=duplicate-code
 
